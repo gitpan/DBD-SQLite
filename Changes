@@ -1,5 +1,8 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.21
+    - Ooops - forgot new opcodes files from MANIFEST
+
 0.20
     - Port to SQLite 2.7.2
     - Fixed bug in not freeing memory if you re-execute a $sth

@@ -19,6 +19,8 @@ hash.h
 insert.c
 lib/DBD/SQLite.pm
 main.c
+opcodes.c
+opcodes.h
 os.c
 os.h
 pager.c
