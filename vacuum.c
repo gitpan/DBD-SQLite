@@ -14,7 +14,7 @@
 ** Most of the code in this file may be omitted by defining the
 ** SQLITE_OMIT_VACUUM macro.
 **
-** $Id: vacuum.c,v 1.8 2004/08/09 13:08:31 matt Exp $
+** $Id: vacuum.c,v 1.9 2004/09/10 15:33:02 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -141,7 +141,7 @@ int sqlite3RunVacuum(char **pzErrMsg, sqlite *db){
   **
   ** An optimisation would be to use a non-journaled pager.
   */
-  zSql = sqlite3MPrintf("ATTACH '%s' AS vacuum_db;", zTemp);
+  zSql = sqlite3MPrintf("ATTACH '%q' AS vacuum_db;", zTemp);
   if( !zSql ){
     rc = SQLITE_NOMEM;
     goto end_of_vacuum;

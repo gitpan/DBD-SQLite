@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.49 2004/08/10 18:17:42 matt Exp $ */
+/* $Id: dbdimp.c,v 1.50 2004/08/29 10:11:57 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -240,7 +240,13 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
     int retval;
 
     if (!DBIc_ACTIVE(imp_dbh)) {
-      die("prepare on an inactive database handle");
+      sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, "attempt to prepare on inactive database handle");
+      return FALSE;
+    }
+
+    if (strlen(statement) < 1) {
+      sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, "attempt to prepare empty statement");
+      return FALSE;
     }
 
     sqlite_trace(2, "prepare statement: %s", statement);
@@ -408,6 +414,11 @@ sqlite_st_rows (SV *sth, imp_sth_t *imp_sth)
     return imp_sth->nrow;
 }
 
+/* bind parameter
+ * NB: We store the params instead of bind immediately because
+ *     we might need to re-create the imp_sth->stmt (see top of execute() function)
+ *     and so we can't lose these params
+ */
 int
 sqlite_bind_ph (SV *sth, imp_sth_t *imp_sth,
                 SV *param, SV *value, IV sql_type, SV *attribs,

@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.26 2004/08/09 13:08:31 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.27 2004/09/10 15:33:02 matt Exp $
 */
 #ifndef _SQLITEINT_H_
 #define _SQLITEINT_H_
@@ -888,8 +888,6 @@ struct WhereInfo {
   int iContinue;       /* Jump here to continue with next record */
   int iBreak;          /* Jump here to break out of the loop */
   int nLevel;          /* Number of nested loop */
-  int savedNTab;       /* Value of pParse->nTab before WhereBegin() */
-  int peakNTab;        /* Value of pParse->nTab after WhereBegin() */
   WhereLevel a[1];     /* Information about each nest loop in the WHERE */
 };
 
@@ -1210,6 +1208,7 @@ int sqlite3KeywordCode(const char*, int);
 int sqlite3RunParser(Parse*, const char*, char **);
 void sqlite3FinishCoding(Parse*);
 Expr *sqlite3Expr(int, Expr*, Expr*, Token*);
+Expr *sqlite3ExprAnd(Expr*, Expr*);
 void sqlite3ExprSpan(Expr*,Token*,Token*);
 Expr *sqlite3ExprFunction(ExprList*, Token*);
 void sqlite3ExprDelete(Expr*);
@@ -1272,12 +1271,12 @@ void sqlite3UnlinkAndDeleteIndex(sqlite*,int,const char*);
 void sqlite3UnlinkAndDeleteTrigger(sqlite*,int,const char*);
 void sqlite3Vacuum(Parse*, Token*);
 int sqlite3RunVacuum(char**, sqlite*);
-int sqlite3GlobCompare(const unsigned char*,const unsigned char*);
 char *sqlite3NameFromToken(Token*);
 int sqlite3ExprCheck(Parse*, Expr*, int, int*);
 int sqlite3ExprCompare(Expr*, Expr*);
 int sqliteFuncId(Token*);
 int sqlite3ExprResolveIds(Parse*, SrcList*, ExprList*, Expr*);
+int sqlite3ExprResolveAndCheck(Parse*,SrcList*,ExprList*,Expr*,int,int*);
 int sqlite3ExprAnalyzeAggregates(Parse*, Expr*);
 Vdbe *sqlite3GetVdbe(Parse*);
 void sqlite3Randomness(int, void*);
@@ -1294,7 +1293,7 @@ void sqlite3GenerateRowIndexDelete(sqlite*, Vdbe*, Table*, int, char*);
 void sqlite3GenerateIndexKey(Vdbe*, Index*, int);
 void sqlite3GenerateConstraintChecks(Parse*,Table*,int,char*,int,int,int,int);
 void sqlite3CompleteInsertion(Parse*, Table*, int, char*, int, int, int);
-int sqlite3OpenTableAndIndices(Parse*, Table*, int);
+void sqlite3OpenTableAndIndices(Parse*, Table*, int, int);
 void sqlite3BeginWriteOperation(Parse*, int, int);
 void sqlite3EndWriteOperation(Parse*);
 Expr *sqlite3ExprDup(Expr*);
@@ -1355,7 +1354,7 @@ int sqlite3GetInt32(const char *, int*);
 int sqlite3FitsIn64Bits(const char *);
 int sqlite3utf16ByteLen(const void *pData, int nChar);
 int sqlite3utf8CharLen(const char *pData, int nByte);
-int sqlite3utf8LikeCompare(const unsigned char*, const unsigned char*);
+int sqlite3ReadUtf8(const unsigned char *);
 int sqlite3PutVarint(unsigned char *, u64);
 int sqlite3GetVarint(const unsigned char *, u64 *);
 int sqlite3GetVarint32(const unsigned char *, u32 *);
@@ -1389,5 +1388,6 @@ void sqlite3ValueSetStr(sqlite3_value*, int, const void *,u8, void(*)(void*));
 void sqlite3ValueFree(sqlite3_value*);
 sqlite3_value *sqlite3ValueNew();
 sqlite3_value *sqlite3GetTransientValue(sqlite *db);
+extern const unsigned char sqlite3UpperToLower[];
 
 #endif

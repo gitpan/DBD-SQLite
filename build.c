@@ -23,7 +23,7 @@
 **     ROLLBACK
 **     PRAGMA
 **
-** $Id: build.c,v 1.24 2004/08/09 13:08:30 matt Exp $
+** $Id: build.c,v 1.25 2004/09/10 15:32:59 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -96,7 +96,8 @@ void sqlite3FinishCoding(Parse *pParse){
   if( v && pParse->nErr==0 ){
     FILE *trace = (db->flags & SQLITE_VdbeTrace)!=0 ? stdout : 0;
     sqlite3VdbeTrace(v, trace);
-    sqlite3VdbeMakeReady(v, pParse->nVar, pParse->explain);
+    sqlite3VdbeMakeReady(v, pParse->nVar, pParse->nMem+3,
+                         pParse->nTab+3, pParse->explain);
     pParse->rc = pParse->nErr ? SQLITE_ERROR : SQLITE_DONE;
     pParse->colNamesSet = 0;
   }else if( pParse->rc==SQLITE_OK ){
@@ -646,31 +647,6 @@ void sqlite3StartTable(
     }
   }
 #endif
-
-  /* Before trying to create a temporary table, make sure the Btree for
-  ** holding temporary tables is open.
-  */
-  if( isTemp && db->aDb[1].pBt==0 && !pParse->explain ){
-    int rc = sqlite3BtreeFactory(db, 0, 0, MAX_PAGES, &db->aDb[1].pBt);
-    if( rc!=SQLITE_OK ){
-      sqlite3ErrorMsg(pParse, "unable to open a temporary database "
-        "file for storing temporary tables");
-      pParse->nErr++;
-      pParse->rc = rc;
-      sqliteFree(zName);
-      return;
-    }
-    if( db->flags & !db->autoCommit ){
-      rc = sqlite3BtreeBeginTrans(db->aDb[1].pBt, 1);
-      if( rc!=SQLITE_OK ){
-        sqlite3ErrorMsg(pParse, "unable to get a write lock on "
-          "the temporary database file");
-        sqliteFree(zName);
-        pParse->rc = rc;
-        return;
-      }
-    }
-  }
 
   /* Make sure the new table name does not collide with an existing
   ** index or table name in the same database.  Issue an error message if
@@ -1398,7 +1374,7 @@ void sqlite3EndTable(Parse *pParse, Token *pEnd, Select *pSelect){
       n = Addr(pEnd->z) - Addr(pParse->sNameToken.z) + 1;
       sqlite3VdbeAddOp(v, OP_String8, 0, 0);
       sqlite3VdbeChangeP3(v, -1, pParse->sNameToken.z, n);
-      sqlite3VdbeAddOp(v, OP_Concat8, 2, 0);
+      sqlite3VdbeAddOp(v, OP_Concat, 0, 0);
     }
     sqlite3VdbeOp3(v, OP_MakeRecord, 5, 0, "tttit", P3_STATIC);
     sqlite3VdbeAddOp(v, OP_PutIntKey, 0, 0);
@@ -2140,7 +2116,7 @@ void sqlite3CreateIndex(
       sqlite3VdbeAddOp(v, OP_String8, 0, 0);
       n = Addr(pEnd->z) - Addr(pName->z) + 1;
       sqlite3VdbeChangeP3(v, -1, pName->z, n);
-      sqlite3VdbeAddOp(v, OP_Concat8, 2, 0);
+      sqlite3VdbeAddOp(v, OP_Concat, 0, 0);
     }
     sqlite3VdbeOp3(v, OP_MakeRecord, 5, 0, "tttit", P3_STATIC);
     sqlite3VdbeAddOp(v, OP_PutIntKey, 0, 0);
@@ -2476,6 +2452,33 @@ void sqlite3RollbackTransaction(Parse *pParse){
 }
 
 /*
+** Make sure the TEMP database is open and available for use.  Return
+** the number of errors.  Leave any error messages in the pParse structure.
+*/
+static int sqlite3OpenTempDatabase(Parse *pParse){
+  sqlite3 *db = pParse->db;
+  if( db->aDb[1].pBt==0 && !pParse->explain ){
+    int rc = sqlite3BtreeFactory(db, 0, 0, MAX_PAGES, &db->aDb[1].pBt);
+    if( rc!=SQLITE_OK ){
+      sqlite3ErrorMsg(pParse, "unable to open a temporary database "
+        "file for storing temporary tables");
+      pParse->rc = rc;
+      return 1;
+    }
+    if( db->flags & !db->autoCommit ){
+      rc = sqlite3BtreeBeginTrans(db->aDb[1].pBt, 1);
+      if( rc!=SQLITE_OK ){
+        sqlite3ErrorMsg(pParse, "unable to get a write lock on "
+          "the temporary database file");
+        pParse->rc = rc;
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+/*
 ** Generate VDBE code that will verify the schema cookie and start
 ** a read-transaction for all named database files.
 **
@@ -2516,6 +2519,9 @@ void sqlite3CodeVerifySchema(Parse *pParse, int iDb){
     if( (pParse->cookieMask & mask)==0 ){
       pParse->cookieMask |= mask;
       pParse->cookieValue[iDb] = db->aDb[iDb].schema_cookie;
+      if( iDb==1 ){
+        sqlite3OpenTempDatabase(pParse);
+      }
     }
   }
 }
@@ -2546,7 +2552,7 @@ void sqlite3BeginWriteOperation(Parse *pParse, int setStatement, int iDb){
   if( setStatement ){
     sqlite3VdbeAddOp(v, OP_Statement, iDb, 0);
   }
-  if( iDb!=1 ){
+  if( iDb!=1 && pParse->db->aDb[1].pBt!=0 ){
     sqlite3BeginWriteOperation(pParse, setStatement, 1);
   }
 }

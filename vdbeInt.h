@@ -311,13 +311,10 @@ struct Vdbe {
   int nCursor;        /* Number of slots in apCsr[] */
   Cursor **apCsr;     /* One element of this array for each open cursor */
   Sorter *pSort;      /* A linked list of objects to be sorted */
-  FILE *pFile;        /* At most one open file handler */
-  int nField;         /* Number of file fields */
-  char **azField;     /* Data for each file field */
-  int nVar;           /* Number of entries in apVar[] */
-  Mem *apVar;         /* Values for the OP_Variable opcode. */
-  char *zLine;            /* A single line from the input file */
-  int nLineAlloc;         /* Number of spaces allocated for zLine */
+  int nVar;           /* Number of entries in aVar[] */
+  Mem *aVar;          /* Values for the OP_Variable opcode. */
+  char **azVar;       /* Name of variables */
+  int okVar;          /* True if azVar[] has been initialized */
   int magic;              /* Magic number for sanity checking */
   int nMem;               /* Number of memory locations currently allocated */
   Mem *aMem;              /* The memory locations */
@@ -341,7 +338,6 @@ struct Vdbe {
   char *zErrMsg;          /* Error message written here */
   u8 resOnStack;          /* True if there are result values on the stack */
   u8 explain;             /* True if EXPLAIN present on SQL command */
-  u8 autoCommitOn;        /* True if autocommit got turned on by this program */
   u8 changeCntOn;         /* True to update the change-counter */
   u8 aborted;             /* True if ROLLBACK in another VM causes an abort */
   int nChange;            /* Number of db changes made since last reset */
@@ -382,8 +378,10 @@ int sqlite3VdbeRecordCompare(void*,int,const void*,int, const void*);
 int sqlite3VdbeIdxRowidLen(int,const u8*);
 int sqlite3VdbeExec(Vdbe*);
 int sqlite3VdbeList(Vdbe*);
+int sqlite3VdbeHalt(Vdbe*);
 int sqlite3VdbeChangeEncoding(Mem *, int);
 int sqlite3VdbeMemCopy(Mem*, const Mem*);
+void sqlite3VdbeMemShallowCopy(Mem*, const Mem*, int);
 int sqlite3VdbeMemMove(Mem*, Mem*);
 int sqlite3VdbeMemNulTerminate(Mem*);
 int sqlite3VdbeMemSetStr(Mem*, const char*, int, u8, void(*)(void*));

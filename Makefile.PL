@@ -43,7 +43,9 @@ WriteMakefile(
     'OBJECT'        => '$(O_FILES)',
     'INC'           => '-I$(DBI_INSTARCH_DIR)',
     'OPTIMIZE'      => "-O2",
-    'DEFINE'        => "-DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize} $nlid",
+    'DEFINE'        => "-DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}" .
+                       ($Config{d_usleep} ? " -DHAVE_USLEEP=1" : "") .
+                       ($DBI::VERSION > 1.42 ? '' : '-Dno_last_insert_id'),
     'clean'         => { FILES => 'SQLite.xsi config.h' },
     'PL_FILES'      => {},
     'EXE_FILES'     => [],

@@ -12,7 +12,7 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.24 2004/08/09 13:08:30 matt Exp $
+** $Id: expr.c,v 1.25 2004/09/10 15:32:59 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -217,6 +217,20 @@ Expr *sqlite3Expr(int op, Expr *pLeft, Expr *pRight, Token *pToken){
     }
   }
   return pNew;
+}
+
+/*
+** Join two expressions using an AND operator.  If either expression is
+** NULL, then just return the other expression.
+*/
+Expr *sqlite3ExprAnd(Expr *pLeft, Expr *pRight){
+  if( pLeft==0 ){
+    return pRight;
+  }else if( pRight==0 ){
+    return pLeft;
+  }else{
+    return sqlite3Expr(TK_AND, pLeft, pRight, 0);
+  }
 }
 
 /*
@@ -1080,6 +1094,27 @@ int sqlite3ExprCheck(Parse *pParse, Expr *pExpr, int allowAgg, int *pIsAgg){
 }
 
 /*
+** Call sqlite3ExprResolveIds() followed by sqlite3ExprCheck().
+**
+** This routine is provided as a convenience since it is very common
+** to call ResolveIds() and Check() back to back.
+*/
+int sqlite3ExprResolveAndCheck(
+  Parse *pParse,     /* The parser context */
+  SrcList *pSrcList, /* List of tables used to resolve column names */
+  ExprList *pEList,  /* List of expressions used to resolve "AS" */
+  Expr *pExpr,       /* The expression to be analyzed. */
+  int allowAgg,      /* True to allow aggregate expressions */
+  int *pIsAgg        /* Set to TRUE if aggregates are found */
+){
+  if( pExpr==0 ) return 0;
+  if( sqlite3ExprResolveIds(pParse,pSrcList,pEList,pExpr) ){
+    return 1;
+  }
+  return sqlite3ExprCheck(pParse, pExpr, allowAgg, pIsAgg);
+}
+
+/*
 ** Generate an instruction that will put the integer describe by
 ** text z[0..n-1] on the stack.
 */
@@ -1126,8 +1161,9 @@ void sqlite3ExprCode(Parse *pParse, Expr *pExpr){
     case TK_RSHIFT:   op = OP_ShiftRight; break;
     case TK_REM:      op = OP_Remainder;  break;
     case TK_FLOAT:    op = OP_Real;       break;
-    case TK_STRING:   op = OP_String8;     break;
+    case TK_STRING:   op = OP_String8;    break;
     case TK_BLOB:     op = OP_HexBlob;    break;
+    case TK_CONCAT:   op = OP_Concat;     break;
     default: op = 0; break;
   }
   switch( pExpr->op ){
@@ -1162,6 +1198,9 @@ void sqlite3ExprCode(Parse *pParse, Expr *pExpr){
     }
     case TK_VARIABLE: {
       sqlite3VdbeAddOp(v, OP_Variable, pExpr->iTable, 0);
+      if( pExpr->token.n>1 ){
+        sqlite3VdbeChangeP3(v, -1, pExpr->token.z, pExpr->token.n);
+      }
       break;
     }
     case TK_LT:
@@ -1185,16 +1224,11 @@ void sqlite3ExprCode(Parse *pParse, Expr *pExpr){
     case TK_BITOR:
     case TK_SLASH:
     case TK_LSHIFT:
-    case TK_RSHIFT: {
-      sqlite3ExprCode(pParse, pExpr->pLeft);
-      sqlite3ExprCode(pParse, pExpr->pRight);
-      sqlite3VdbeAddOp(v, op, 0, 0);
-      break;
-    }
+    case TK_RSHIFT: 
     case TK_CONCAT: {
       sqlite3ExprCode(pParse, pExpr->pLeft);
       sqlite3ExprCode(pParse, pExpr->pRight);
-      sqlite3VdbeAddOp(v, OP_Concat8, 2, 0);
+      sqlite3VdbeAddOp(v, op, 0, 0);
       break;
     }
     case TK_UMINUS: {

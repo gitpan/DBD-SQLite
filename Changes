@@ -1,5 +1,10 @@
 Revision history for Perl extension DBD::SQLite.
 
+1.05
+    - Enabled HAVE_USLEEP where available which should massively
+      improve concurrent usage of DBD::SQLite
+    - Update to sqlite 3.0.6
+
 1.04
     - Patched to make it compile on Windows (Steve Hay)
     - Fetch next row at end of DBI's fetch() so that one-row

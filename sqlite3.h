@@ -12,7 +12,7 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite3.h,v 1.2 2004/08/09 13:08:31 matt Exp $
+** @(#) $Id: sqlite3.h,v 1.3 2004/09/10 15:33:02 matt Exp $
 */
 #ifndef _SQLITE_H_
 #define _SQLITE_H_
@@ -28,14 +28,17 @@ extern "C" {
 /*
 ** The version of the SQLite library.
 */
-#define SQLITE_VERSION         "3.0.4"
+#define SQLITE_VERSION         "3.0.6"
 
 /*
 ** The version string is also compiled into the library so that a program
 ** can check to make sure that the lib*.a file and the *.h file are from
-** the same version.
+** the same version.  The sqlite3_libversion() function returns a pointer
+** to the sqlite3_version variable - useful in DLLs which cannot access
+** global variables.
 */
 extern const char sqlite3_version[];
+const char *sqlite3_libversion();
 
 /*
 ** Each open sqlite database is represented by an instance of the
@@ -632,10 +635,16 @@ int sqlite3_bind_value(sqlite3_stmt*, int, const sqlite3_value*);
 /*
 ** Return the number of wildcards in a compiled SQL statement.  This
 ** routine was added to support DBD::SQLite.
-**
-**** EXPERIMENTAL *****
 */
 int sqlite3_bind_parameter_count(sqlite3_stmt*);
+
+/*
+** Return the name of the i-th parameter.  Ordinary wildcards "?" are
+** nameless and a NULL is returned.  For wildcards of the form :N: or
+** $vvvv the complete text of the wildcard is returned.
+** NULL is returned if the index is out of range.
+*/
+const char *sqlite3_bind_parameter_name(sqlite3_stmt*, int);
 
 /*
 ** Return the number of columns in the result set returned by the compiled
@@ -1114,6 +1123,19 @@ int sqlite3_rekey(
   sqlite3 *db,                   /* Database to be rekeyed */
   const void *pKey, int nKey     /* The new key */
 );
+
+/*
+** If the following global variable is made to point to a constant
+** string which is the name of a directory, then all temporary files
+** created by SQLite will be placed in that directory.  If this variable
+** is NULL pointer, then SQLite does a search for an appropriate temporary
+** file directory.
+**
+** This variable should only be changed when there are no open databases.
+** Once sqlite3_open() has been called, this variable should not be changed
+** until all database connections are closed.
+*/
+extern const char *sqlite3_temp_directory;
 
 #ifdef __cplusplus
 }  /* End of the 'extern "C"' block */

@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.24 2004/08/09 13:08:30 matt Exp $
+** $Id: main.c,v 1.25 2004/09/10 15:33:00 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -184,7 +184,10 @@ static int sqlite3InitOne(sqlite *db, int iDb, char **pzErrMsg){
 
   /* Create a cursor to hold the database open
   */
-  if( db->aDb[iDb].pBt==0 ) return SQLITE_OK;
+  if( db->aDb[iDb].pBt==0 ){
+    if( iDb==1 ) DbSetProperty(db, 1, DB_SchemaLoaded);
+    return SQLITE_OK;
+  }
   rc = sqlite3BtreeCursor(db->aDb[iDb].pBt, MASTER_ROOT, 0, 0, 0, &curMain);
   if( rc!=SQLITE_OK && rc!=SQLITE_EMPTY ){
     sqlite3SetString(pzErrMsg, sqlite3ErrStr(rc), (char*)0);
@@ -197,7 +200,7 @@ static int sqlite3InitOne(sqlite *db, int iDb, char **pzErrMsg){
   **    meta[0]   Schema cookie.  Changes with each schema change.
   **    meta[1]   File format of schema layer.
   **    meta[2]   Size of the page cache.
-  **    meta[3]
+  **    meta[3]   Use freelist if 0.  Autovacuum if greater than zero.
   **    meta[4]   Db text encoding. 1:UTF-8 3:UTF-16 LE 4:UTF-16 BE
   **    meta[5]
   **    meta[6]   
@@ -369,6 +372,7 @@ int sqlite3ReadSchema(Parse *pParse){
 */
 const char rcsid3[] = "@(#) \044Id: SQLite version " SQLITE_VERSION " $";
 const char sqlite3_version[] = SQLITE_VERSION;
+const char *sqlite3_libversion(void){ return sqlite3_version; }
 
 /*
 ** This is the default collating function named "BINARY" which is always
@@ -403,7 +407,7 @@ static int nocaseCollatingFunc(
   int nKey2, const void *pKey2
 ){
   int r = sqlite3StrNICmp(
-      (const char *)pKey1, (const char *)pKey2, (nKey1>nKey2)?nKey1:nKey2);
+      (const char *)pKey1, (const char *)pKey2, (nKey1<nKey2)?nKey1:nKey2);
   if( 0==r ){
     r = nKey1-nKey2;
   }
@@ -517,7 +521,6 @@ void sqlite3RollbackAll(sqlite *db){
     }
   }
   sqlite3ResetInternalSchema(db, 0);
-  /* sqlite3RollbackInternalChanges(db); */
 }
 
 /*
@@ -575,8 +578,8 @@ static int sqliteDefaultBusyCallback(
   static const short int totals[] =
      { 0, 1, 3,  8, 18, 33, 53, 78, 103, 128, 178, 228, 287};
 # define NDELAY (sizeof(delays)/sizeof(delays[0]))
-  int timeout = (int)Timeout;
-  int delay, prior;
+  ptr timeout = (ptr)Timeout;
+  ptr delay, prior;
 
   if( count <= NDELAY ){
     delay = delays[count-1];
@@ -646,7 +649,7 @@ void sqlite3_progress_handler(
 */
 int sqlite3_busy_timeout(sqlite3 *db, int ms){
   if( ms>0 ){
-    sqlite3_busy_handler(db, sqliteDefaultBusyCallback, (void*)ms);
+    sqlite3_busy_handler(db, sqliteDefaultBusyCallback, (void*)(ptr)ms);
   }else{
     sqlite3_busy_handler(db, 0, 0);
   }
@@ -817,7 +820,6 @@ int sqlite3BtreeFactory(
 ){
   int btree_flags = 0;
   int rc;
-  int useMem = 0;
   
   assert( ppBtree != 0);
   if( omitJournal ){
@@ -825,24 +827,20 @@ int sqlite3BtreeFactory(
   }
   if( zFilename==0 ){
 #ifndef TEMP_STORE
-# define TEMP_STORE 2
+# define TEMP_STORE 1
 #endif
 #if TEMP_STORE==0
-    useMem = 0;
+    /* Do nothing */
 #endif
 #if TEMP_STORE==1
-    useMem = db->temp_store==2;
+    if( db->temp_store==2 ) zFilename = ":memory:";
 #endif
 #if TEMP_STORE==2
-    useMem = db->temp_store!=1;
+    if( db->temp_store!=1 ) zFilename = ":memory:";
 #endif
 #if TEMP_STORE==3
-    useMem = 1;
+    zFilename = ":memory:";
 #endif
-  }
-  if( (zFilename && strcmp(zFilename, ":memory:")==0)
-         || (zFilename==0 && useMem) ){
-    btree_flags |= BTREE_MEMORY;
   }
 
   rc = sqlite3BtreeOpen(zFilename, ppBtree, btree_flags);
@@ -988,7 +986,7 @@ int sqlite3_prepare(
     ** Make a copy of that part of the SQL string since zSQL is const
     ** and we must pass a zero terminated string to the trace function
     ** The copy is unnecessary if the tail pointer is pointing at the
-    ** beginnig or end of the SQL string.
+    ** beginning or end of the SQL string.
     */
     if( sParse.zTail && sParse.zTail!=zSql && *sParse.zTail ){
       char *tmpSql = sqliteStrNDup(zSql, sParse.zTail - zSql);
@@ -1242,7 +1240,13 @@ int sqlite3_open16(
 ** sqlite3_errcode(), sqlite3_errmsg() and sqlite3_errmsg16().
 */
 int sqlite3_finalize(sqlite3_stmt *pStmt){
-  return pStmt ? sqlite3VdbeFinalize((Vdbe*)pStmt) : SQLITE_OK;
+  int rc;
+  if( pStmt==0 ){
+    rc = SQLITE_OK;
+  }else{
+    rc = sqlite3VdbeFinalize((Vdbe*)pStmt);
+  }
+  return rc;
 }
 
 /*
@@ -1254,8 +1258,13 @@ int sqlite3_finalize(sqlite3_stmt *pStmt){
 ** sqlite3_errcode(), sqlite3_errmsg() and sqlite3_errmsg16().
 */
 int sqlite3_reset(sqlite3_stmt *pStmt){
-  int rc = sqlite3VdbeReset((Vdbe*)pStmt);
-  sqlite3VdbeMakeReady((Vdbe*)pStmt, -1, 0);
+  int rc;
+  if( pStmt==0 ){
+    rc = SQLITE_OK;
+  }else{
+    rc = sqlite3VdbeReset((Vdbe*)pStmt);
+    sqlite3VdbeMakeReady((Vdbe*)pStmt, -1, 0, 0, 0);
+  }
   return rc;
 }
 

@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle DELETE FROM statements.
 **
-** $Id: delete.c,v 1.24 2004/08/09 13:08:30 matt Exp $
+** $Id: delete.c,v 1.25 2004/09/10 15:32:59 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -24,11 +24,10 @@
 Table *sqlite3SrcListLookup(Parse *pParse, SrcList *pSrc){
   Table *pTab = 0;
   int i;
-  for(i=0; i<pSrc->nSrc; i++){
-    const char *zTab = pSrc->a[i].zName;
-    const char *zDb = pSrc->a[i].zDatabase;
-    pTab = sqlite3LocateTable(pParse, zTab, zDb);
-    pSrc->a[i].pTab = pTab;
+  struct SrcList_item *pItem;
+  for(i=0, pItem=pSrc->a; i<pSrc->nSrc; i++, pItem++){
+    pTab = sqlite3LocateTable(pParse, pItem->zName, pItem->zDatabase);
+    pItem->pTab = pTab;
   }
   return pTab;
 }
@@ -121,13 +120,8 @@ void sqlite3DeleteFrom(
   */
   assert( pTabList->nSrc==1 );
   iCur = pTabList->a[0].iCursor = pParse->nTab++;
-  if( pWhere ){
-    if( sqlite3ExprResolveIds(pParse, pTabList, 0, pWhere) ){
-      goto delete_from_cleanup;
-    }
-    if( sqlite3ExprCheck(pParse, pWhere, 0, 0) ){
-      goto delete_from_cleanup;
-    }
+  if( sqlite3ExprResolveAndCheck(pParse, pTabList, 0, pWhere, 0, 0) ){
+    goto delete_from_cleanup;
   }
 
   /* Start the view context
@@ -262,8 +256,7 @@ void sqlite3DeleteFrom(
       ** before the trigger fires.  If there are no row triggers, the
       ** cursors are opened only once on the outside the loop.
       */
-      pParse->nTab = iCur + 1;
-      sqlite3OpenTableAndIndices(pParse, pTab, iCur);
+      sqlite3OpenTableAndIndices(pParse, pTab, iCur, OP_OpenWrite);
 
       /* This is the beginning of the delete loop when there are no
       ** row triggers */
@@ -301,7 +294,6 @@ void sqlite3DeleteFrom(
         sqlite3VdbeAddOp(v, OP_Close, iCur + i, pIdx->tnum);
       }
       sqlite3VdbeAddOp(v, OP_Close, iCur, 0);
-      pParse->nTab = iCur;
     }
   }
   sqlite3EndWriteOperation(pParse);

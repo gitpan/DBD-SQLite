@@ -16,7 +16,7 @@
 ** sqlite3RegisterDateTimeFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: date.c,v 1.5 2004/08/09 13:08:30 matt Exp $
+** $Id: date.c,v 1.6 2004/09/10 15:32:59 matt Exp $
 **
 ** NOTES:
 **
@@ -504,7 +504,7 @@ static int parseModifier(const char *zMod, DateTime *p){
       /*
       **    weekday N
       **
-      ** Move the date to the same time on the next occurrance of
+      ** Move the date to the same time on the next occurrence of
       ** weekday N where 0==Sunday, 1==Monday, and so forth.  If the
       ** date is already on the appropriate weekday, this is a no-op.
       */

@@ -138,7 +138,7 @@ int sqlite3_step(sqlite3_stmt *pStmt){
   sqlite *db;
   int rc;
 
-  if( p->magic!=VDBE_MAGIC_RUN ){
+  if( p==0 || p->magic!=VDBE_MAGIC_RUN ){
     return SQLITE_MISUSE;
   }
   if( p->aborted ){
@@ -262,7 +262,7 @@ int sqlite3_aggregate_count(sqlite3_context *p){
 */
 int sqlite3_column_count(sqlite3_stmt *pStmt){
   Vdbe *pVm = (Vdbe *)pStmt;
-  return pVm->nResColumn;
+  return pVm ? pVm->nResColumn : 0;
 }
 
 /*
@@ -271,7 +271,7 @@ int sqlite3_column_count(sqlite3_stmt *pStmt){
 */
 int sqlite3_data_count(sqlite3_stmt *pStmt){
   Vdbe *pVm = (Vdbe *)pStmt;
-  if( !pVm->resOnStack ) return 0;
+  if( pVm==0 || !pVm->resOnStack ) return 0;
   return pVm->nResColumn;
 }
 
@@ -405,7 +405,7 @@ const void *sqlite3_column_decltype16(sqlite3_stmt *pStmt, int N){
 */
 static int vdbeUnbind(Vdbe *p, int i){
   Mem *pVar;
-  if( p->magic!=VDBE_MAGIC_RUN || p->pc>=0 ){
+  if( p==0 || p->magic!=VDBE_MAGIC_RUN || p->pc>=0 ){
     sqlite3Error(p->db, SQLITE_MISUSE, 0);
     return SQLITE_MISUSE;
   }
@@ -414,7 +414,7 @@ static int vdbeUnbind(Vdbe *p, int i){
     return SQLITE_RANGE;
   }
   i--;
-  pVar = &p->apVar[i];
+  pVar = &p->aVar[i];
   sqlite3VdbeMemRelease(pVar);
   pVar->flags = MEM_Null;
   sqlite3Error(p->db, SQLITE_OK, 0);
@@ -439,7 +439,7 @@ int sqlite3_bind_blob(
   if( rc || zData==0 ){
     return rc;
   }
-  pVar = &p->apVar[i-1];
+  pVar = &p->aVar[i-1];
   rc = sqlite3VdbeMemSetStr(pVar, zData, nData, 0, xDel);
   return rc;
 }
@@ -448,7 +448,7 @@ int sqlite3_bind_double(sqlite3_stmt *pStmt, int i, double rValue){
   Vdbe *p = (Vdbe *)pStmt;
   rc = vdbeUnbind(p, i);
   if( rc==SQLITE_OK ){
-    sqlite3VdbeMemSetDouble(&p->apVar[i-1], rValue);
+    sqlite3VdbeMemSetDouble(&p->aVar[i-1], rValue);
   }
   return rc;
 }
@@ -460,7 +460,7 @@ int sqlite3_bind_int64(sqlite3_stmt *pStmt, int i, sqlite_int64 iValue){
   Vdbe *p = (Vdbe *)pStmt;
   rc = vdbeUnbind(p, i);
   if( rc==SQLITE_OK ){
-    sqlite3VdbeMemSetInt64(&p->apVar[i-1], iValue);
+    sqlite3VdbeMemSetInt64(&p->aVar[i-1], iValue);
   }
   return rc;
 }
@@ -482,7 +482,7 @@ int sqlite3_bind_text(
   if( rc || zData==0 ){
     return rc;
   }
-  pVar = &p->apVar[i-1];
+  pVar = &p->aVar[i-1];
   rc = sqlite3VdbeMemSetStr(pVar, zData, nData, SQLITE_UTF8, xDel);
   if( rc ){
     return rc;
@@ -505,7 +505,7 @@ int sqlite3_bind_text16(
   if( rc || zData==0 ){
     return rc;
   }
-  pVar = &p->apVar[i-1];
+  pVar = &p->aVar[i-1];
 
   rc = sqlite3VdbeMemSetStr(pVar, zData, nData, SQLITE_UTF16NATIVE, xDel);
   if( rc ){
@@ -518,9 +518,33 @@ int sqlite3_bind_text16(
 /*
 ** Return the number of wildcards that can be potentially bound to.
 ** This routine is added to support DBD::SQLite.  
-**
-******** EXPERIMENTAL *******
 */
 int sqlite3_bind_parameter_count(sqlite3_stmt *pStmt){
-  return ((Vdbe*)pStmt)->nVar;
+  Vdbe *p = (Vdbe*)pStmt;
+  return p ? p->nVar : 0;
+}
+
+/*
+** Return the name of a wildcard parameter.  Return NULL if the index
+** is out of range or if the wildcard is unnamed.
+**
+** The result is always UTF-8.
+*/
+const char *sqlite3_bind_parameter_name(sqlite3_stmt *pStmt, int i){
+  Vdbe *p = (Vdbe*)pStmt;
+  if( p==0 || i<1 || i>p->nVar ){
+    return 0;
+  }
+  if( !p->okVar ){
+    int j;
+    Op *pOp;
+    for(j=0, pOp=p->aOp; j<p->nOp; j++, pOp++){
+      if( pOp->opcode==OP_Variable ){
+        assert( pOp->p1>0 && pOp->p1<=p->nVar );
+        p->azVar[pOp->p1-1] = pOp->p3;
+      }
+    }
+    p->okVar = 1;
+  }
+  return p->azVar[i-1];
 }

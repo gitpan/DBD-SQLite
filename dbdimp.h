@@ -1,4 +1,4 @@
-/* $Id: dbdimp.h,v 1.14 2004/08/08 16:09:27 matt Exp $ */
+/* $Id: dbdimp.h,v 1.15 2004/09/10 15:24:28 matt Exp $ */
 
 #ifndef _DBDIMP_H
 #define _DBDIMP_H   1

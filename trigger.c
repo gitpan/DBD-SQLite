@@ -219,7 +219,7 @@ void sqlite3FinishTrigger(
       { OP_Integer,    0, 0,  0          },
       { OP_String8,    0, 0,  "CREATE TRIGGER "},
       { OP_String8,    0, 0,  0          },  /* 6: SQL */
-      { OP_Concat8,    2, 0,  0          }, 
+      { OP_Concat,     0, 0,  0          }, 
       { OP_MakeRecord, 5, 0,  "tttit"    },
       { OP_PutIntKey,  0, 0,  0          },
     };
@@ -647,8 +647,6 @@ static int codeTriggerProgram(
   int orconf;
 
   while( pTriggerStep ){
-    int saveNTab = pParse->nTab;
- 
     orconf = (orconfin == OE_Default)?pTriggerStep->orconf:orconfin;
     pParse->trigStack->orconf = orconf;
     switch( pTriggerStep->op ){
@@ -696,7 +694,6 @@ static int codeTriggerProgram(
       default:
         assert(0);
     } 
-    pParse->nTab = saveNTab;
     pTriggerStep = pTriggerStep->pNext;
   }
 
