@@ -1,0 +1,19 @@
+Revision history for Perl extension DBD::SQLite.
+
+0.05
+    - Added all DBD::CSV tests (ported, of course)
+    - Fixed bugs that the above revealed.
+
+0.04
+    - Fix multiple placeholders bug
+
+0.03
+    - Fixed multiple execute on single $sth
+
+0.02
+    - Fixed transactions
+
+0.01  Sat Feb 16 16:10:42 2002
+    - original version; created by h2xs 1.20 with options
+        -A -X -n DBD::SQLite
+

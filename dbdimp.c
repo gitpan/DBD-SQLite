@@ -1,0 +1,490 @@
+/* $Id: dbdimp.c,v 1.8 2002/02/19 18:50:59 matt Exp $ */
+
+#include "sqlite.h"
+
+DBISTATE_DECLARE;
+
+void
+sqlite_init(dbistate_t *dbistate)
+{
+    dTHR;
+    DBIS = dbistate;
+}
+
+void
+do_error(SV *h, int rc, char *what)
+{
+    dTHR;
+    D_imp_xxh(h);
+
+    SV *errstr = DBIc_ERRSTR(imp_xxh);
+    sv_setiv(DBIc_ERR(imp_xxh), (IV)rc);
+    sv_setpv(errstr, what);
+    DBIh_EVENT2(h, ERROR_event, DBIc_ERR(imp_xxh), errstr);
+
+    if (dbis->debug >= 2) {
+        fprintf(DBILOGFP, "%s error %d recorded: %s\n",
+            what, rc, SvPV(errstr, PL_na));
+    }
+}
+
+int
+sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pass)
+{
+    dTHR;
+    char *errmsg = NULL;
+    if ((imp_dbh->db = sqlite_open(dbname, 0, &errmsg)) == NULL) {
+        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        free(errmsg);
+        return FALSE;
+    }
+
+    sqlite_busy_timeout(imp_dbh->db, SQL_TIMEOUT);
+
+    DBIc_IMPSET_on(imp_dbh);
+    DBIc_ACTIVE_on(imp_dbh);
+
+    return TRUE;
+}
+
+int
+sqlite_db_disconnect (SV *dbh, imp_dbh_t *imp_dbh)
+{
+    dTHR;
+    sqlite_close(imp_dbh->db);
+    imp_dbh->db = NULL;
+    DBIc_ACTIVE_off(imp_dbh);
+
+    return TRUE;
+}
+
+void
+sqlite_db_destroy (SV *dbh, imp_dbh_t *imp_dbh)
+{
+    dTHR;
+    if (DBIc_ACTIVE(imp_dbh)) {
+        sqlite_db_disconnect(dbh, imp_dbh);
+    }
+    DBIc_IMPSET_off(imp_dbh);
+}
+
+int
+sqlite_db_rollback(SV *dbh, imp_dbh_t *imp_dbh)
+{
+    dTHR;
+    int retval;
+    char *errmsg;
+
+    if (DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
+        warn("rollback ineffective with AutoCommit");
+        return TRUE;
+    }
+
+    if (retval = sqlite_exec(imp_dbh->db, "ROLLBACK TRANSACTION",
+        NULL, NULL, &errmsg)
+        != SQLITE_OK)
+    {
+        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        return retval;
+    }
+    if (retval = sqlite_exec(imp_dbh->db, "BEGIN TRANSACTION",
+        NULL, NULL, &errmsg)
+        != SQLITE_OK)
+    {
+        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        return retval;
+    }
+    return TRUE;
+}
+
+int
+sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
+{
+    dTHR;
+    int retval;
+    char *errmsg;
+
+    if (DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
+        warn("commit ineffective with AutoCommit");
+        return TRUE;
+    }
+
+    if (retval = sqlite_exec(imp_dbh->db, "COMMIT TRANSACTION",
+        NULL, NULL, &errmsg)
+        != SQLITE_OK)
+    {
+        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        return retval;
+    }
+    if (retval = sqlite_exec(imp_dbh->db, "BEGIN TRANSACTION",
+        NULL, NULL, &errmsg)
+        != SQLITE_OK)
+    {
+        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        return retval;
+    }
+    return TRUE;
+}
+
+int
+sqlite_discon_all(SV *drh, imp_drh_t *imp_drh)
+{
+    dTHR;
+    /* no way to do this. Just return OK */
+    return TRUE;
+}
+
+void
+sqlite_st_parse_sql(imp_sth_t *imp_sth, char *statement)
+{
+    bool in_literal = FALSE;
+    SV *chunk;
+    int num_params = 0;
+
+    imp_sth->sql = newAV();
+
+    chunk = NEWSV(0, strlen(statement)); /* 20 is just a guess */
+    sv_setpv(chunk, "");
+
+    // warn("parsing: %s\n", statement);
+
+    while (*statement) {
+        // warn("parse: %c => %s\n", *statement, SvPV(chunk, PL_na));
+        if (*statement == '\'') {
+            if (in_literal) {
+                // either end of literal, or escape
+                if (statement[1] && statement[1] == '\'') {
+                    statement++;
+                    sv_catpvn(chunk, "''", 2);
+                }
+                else {
+                    sv_catpvn(chunk, "'", 1);
+                    in_literal = FALSE;
+                }
+            }
+            else {
+                in_literal = TRUE;
+                sv_catpvn(chunk, "'", 1);
+            }
+        }
+        else if (*statement == '?') {
+            if (in_literal) {
+                sv_catpvn(chunk, "?", 1);
+            }
+            else {
+                num_params++;
+                SvUTF8_on(chunk);
+                av_push(imp_sth->sql, chunk);
+                chunk = NEWSV(0, 20);
+                sv_setpvn(chunk, "", 0);
+            }
+        }
+        else {
+            sv_catpvn(chunk, statement, 1);
+        }
+        statement++;
+    }
+    av_push(imp_sth->sql, chunk);
+    DBIc_NUM_PARAMS(imp_sth) = num_params;
+}
+
+int
+sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
+                char *statement, SV *attribs)
+{
+    dTHR;
+    D_imp_dbh_from_sth;
+
+    sv_setpv(DBIc_ERRSTR(imp_dbh), "");
+
+    imp_sth->nrow = 0;
+    imp_sth->ncols = 0;
+    imp_sth->params = newAV();
+    sqlite_st_parse_sql(imp_sth, statement);
+
+    return TRUE;
+}
+
+char *
+sqlite_quote(SV *val)
+{
+    char *cval = SvPV(val, PL_na);
+    SV *ret = NEWSV(0, SvCUR(val));
+    sv_setpvn(ret, "", 0);
+
+    while (*cval) {
+        if (*cval == '\'') {
+            sv_catpvn(ret, "''", 2);
+        }
+        else {
+            sv_catpvn(ret, cval, 1);
+        }
+        *cval++;
+    }
+    return SvPV(ret, PL_na);
+}
+
+int
+sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
+{
+    dTHR;
+    D_imp_dbh_from_sth;
+    SV *sql;
+    I32 pos = 0;
+    char *errmsg;
+
+    int num_params = DBIc_NUM_PARAMS(imp_sth);
+    I32 i;
+    int retval;
+
+    sv_setpv(DBIc_ERRSTR(imp_dbh), "");
+
+    sql = newSVsv(AvARRAY(imp_sth->sql)[pos++]);
+
+    for (i = 0; i < num_params; i++) {
+        SV *value = av_shift(imp_sth->params);
+        if (value && SvOK(value)) {
+            // warn("binding param: %s\n", SvPV(value, PL_na));
+            sv_catpvn(sql, "'", 1);
+            sv_catpv(sql, sqlite_quote(value));
+            sv_catpvn(sql, "'", 1);
+        }
+        else {
+            // warn("binding NULL\n");
+            sv_catpvn(sql, "NULL", 4);
+        }
+        sv_catsv(sql, AvARRAY(imp_sth->sql)[pos++]);
+    }
+    //warn("Executing: %s\n", SvPV(sql, PL_na));
+
+    if (retval = sqlite_exec(imp_dbh->db, "PRAGMA empty_result_callbacks = ON",
+        NULL, NULL, &errmsg)
+        != SQLITE_OK)
+    {
+        // warn("failed to set pragma: %s\n", errmsg);
+        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        sv_setiv(DBIc_ERR(imp_dbh), retval);
+        return -2;
+    }
+
+    if (retval = sqlite_get_table(imp_dbh->db, SvPV(sql, PL_na), &(imp_sth->results),
+        &(imp_sth->nrow), &(imp_sth->ncols), &errmsg) != SQLITE_OK)
+    {
+        // warn("exec failed: %s\n", errmsg);
+        SvREFCNT_dec(sql);
+        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        sv_setiv(DBIc_ERR(imp_dbh), retval);
+        return -2;
+    }
+
+    SvREFCNT_dec(sql);
+    // warn("exec ok - %d rows\n", imp_sth->nrow);
+    DBIc_NUM_FIELDS(imp_sth) = imp_sth->ncols;
+    imp_sth->c_row = 1;
+    if (imp_sth->results) { DBIc_ACTIVE_on(imp_sth); }
+    DBIc_IMPSET_on(imp_sth);
+    return imp_sth->nrow;
+}
+
+int
+sqlite_st_rows (SV *sth, imp_sth_t *imp_sth)
+{
+    return imp_sth->nrow;
+}
+
+int
+sqlite_bind_ph (SV *sth, imp_sth_t *imp_sth,
+                SV *param, SV *value, IV sql_type, SV *attribs,
+                                int is_inout, IV maxlen)
+{
+    if (is_inout) {
+        croak("InOut bind params not implemented");
+    }
+    // warn("bind: %s => %s\n", SvPV(param, PL_na), SvPV(value, PL_na));
+    if (sql_type >= SQL_NUMERIC && sql_type <= SQL_DOUBLE) {
+        av_store(imp_sth->params, SvIV(param) - 1, newSViv(SvIV(value)));
+    }
+    else {
+        av_store(imp_sth->params, SvIV(param) - 1, value);
+    }
+}
+
+AV *
+sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
+{
+    AV *av;
+    int numFields = DBIc_NUM_FIELDS(imp_sth);
+    int chopBlanks = DBIc_is(imp_sth, DBIcf_ChopBlanks);
+    int current_entry = imp_sth->c_row * numFields;
+    int i;
+
+    /* warn("current_entry == %d\nnumFields == %d\nnrow == %d",
+        current_entry, numFields, imp_sth->nrow); */
+
+    if (current_entry >= ((imp_sth->nrow * numFields) + 1)) {
+        DBIc_ACTIVE_off(imp_sth);
+        return Nullav;
+    }
+
+    av = DBIS->get_fbav(imp_sth);
+    for (i = 0; i < numFields; i++) {
+        char *val = imp_sth->results[current_entry + i];
+        /* warn("fetching: %d == %s\n", (current_entry + i), val); */
+        if (val != NULL) {
+            int len = strlen(val);
+            if (chopBlanks) {
+                while((len > 0) && (val[len-1] == ' ')) {
+                    len--;
+                }
+                val[len] = '\0';
+            }
+            sv_setpvn(AvARRAY(av)[i], val, len);
+            SvUTF8_on(AvARRAY(av)[i]);
+        }
+        else {
+            sv_setsv(AvARRAY(av)[i], Nullsv);
+            SvUTF8_on(AvARRAY(av)[i]);
+        }
+    }
+    imp_sth->c_row++;
+    return av;
+}
+
+int
+sqlite_st_finish (SV *sth, imp_sth_t *imp_sth)
+{
+    DBIc_ACTIVE_off(imp_sth);
+    return TRUE;
+}
+
+void
+sqlite_st_destroy (SV *sth, imp_sth_t *imp_sth)
+{
+    SvREFCNT_dec((SV*)imp_sth->sql);
+    SvREFCNT_dec((SV*)imp_sth->params);
+    sqlite_free_table(imp_sth->results);
+    DBIc_IMPSET_off(imp_sth);
+}
+
+int
+sqlite_st_blob_read (SV *sth, imp_sth_t *imp_sth,
+                int field, long offset, long len, SV *destrv, long destoffset)
+{
+}
+
+int
+sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
+{
+    dTHR;
+    char *key = SvPV(keysv, PL_na);
+    char *errmsg;
+    int retval;
+
+    if (strncmp(key, "AutoCommit", 10) == 0) {
+        if (SvTRUE(valuesv)) {
+            /* commit tran? */
+            if (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
+                if (retval = sqlite_exec(imp_dbh->db, "COMMIT TRANSACTION",
+                    NULL, NULL, &errmsg)
+                    != SQLITE_OK)
+                {
+                    sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+                    return retval;
+                }
+            }
+        }
+        else {
+            /* begin tran? */
+            if (DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
+                if (retval = sqlite_exec(imp_dbh->db, "BEGIN TRANSACTION",
+                    NULL, NULL, &errmsg)
+                    != SQLITE_OK)
+                {
+                    sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+                    return retval;
+                }
+            }
+        }
+        DBIc_set(imp_dbh, DBIcf_AutoCommit, SvTRUE(valuesv));
+        return TRUE;
+    }
+    return FALSE;
+}
+
+SV *
+sqlite_db_FETCH_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv)
+{
+    dTHR;
+    char *key = SvPV(keysv, PL_na);
+
+    if (strncmp(key, "AutoCommit", 10) == 0) {
+        // warn("fetching autocommit\n");
+        return newSViv(DBIc_is(imp_dbh, DBIcf_AutoCommit));
+    }
+    return NULL;
+}
+
+int
+sqlite_db_STORE_attrib_k (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, int dbikey, SV *valuesv)
+{
+    dTHR;
+    return FALSE;
+}
+
+SV *
+sqlite_db_FETCH_attrib_k (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, int dbikey)
+{
+    dTHR;
+}
+
+int
+sqlite_st_STORE_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv, SV *valuesv)
+{
+    char *key = SvPV(keysv, PL_na);
+
+    if (strEQ(key, "ChopBlanks")) {
+        DBIc_set(imp_sth, DBIcf_ChopBlanks, SvIV(valuesv));
+    }
+    return TRUE;
+}
+
+SV *
+sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
+{
+    char *key = SvPV(keysv, PL_na);
+    SV *retsv = NULL;
+    int i;
+
+    if (!imp_sth->results) {
+        return retsv;
+    }
+
+    i = DBIc_NUM_FIELDS(imp_sth);
+
+    if (strEQ(key, "NAME")) {
+        AV *av = newAV();
+        retsv = sv_2mortal(newRV(sv_2mortal((SV*)av)));
+        while (--i >= 0) {
+            av_store(av, i, newUTF8SVpv(imp_sth->results[i], 0));
+        }
+    }
+    else if (strEQ(key, "NUM_OF_FIELDS")) {
+        retsv = sv_2mortal(newSViv(imp_sth->ncols));
+    }
+    else if (strEQ(key, "ChopBlanks")) {
+        retsv = sv_2mortal(newSViv(DBIc_has(imp_sth, DBIcf_ChopBlanks)));
+    }
+
+    return retsv;
+}
+
+int
+sqlite_st_STORE_attrib_k (SV *sth, imp_sth_t *imp_sth, SV *keysv, int dbikey, SV *valuesv)
+{
+}
+
+SV *
+sqlite_st_FETCH_attrib_k (SV *sth, imp_sth_t *imp_sth, SV *keysv, int dbikey)
+{
+}
+
