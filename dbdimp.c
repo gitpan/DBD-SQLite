@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.43 2003/11/04 08:46:46 matt Exp $ */
+/* $Id: dbdimp.c,v 1.44 2004/02/14 17:36:38 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -479,7 +479,7 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
             size_t len = strlen(val);
             char *decoded;
             if (chopBlanks) {
-                val = strdup(val);
+                val = savepv(val);
                 while((len > 0) && (val[len-1] == ' ')) {
                     len--;
                 }
@@ -487,8 +487,8 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
             }
             decoded = sqlite_decode(imp_dbh, val, &len);
             sv_setpvn(AvARRAY(av)[i], decoded, len);
-            free(decoded);
-            if (chopBlanks) free(val);
+            Safefree(decoded);
+            if (chopBlanks) Safefree(val);
 
             if (!imp_dbh->no_utf8_flag) {
             /* sv_utf8_encode(AvARRAY(av)[i]); */

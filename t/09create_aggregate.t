@@ -88,10 +88,10 @@ ok( @$result == 3 && $result->[0][0] == 1 && $result->[1][0] == 1 );
 $dbh->do( "DROP TABLE aggr_empty_test;" );
 $dbh->do( "CREATE TABLE aggr_empty_test ( field )" );
 $result = $dbh->selectrow_arrayref( "SELECT newcount() FROM aggr_empty_test" );
-ok( $result && $result->[0] == 0 );
+ok( $result && !$result->[0] );
 # Make sure that the init() function is called correctly
 $result = $dbh->selectrow_arrayref( "SELECT newcount() FROM aggr_empty_test" );
-ok( $result && $result->[0] == 0 );
+ok( $result && !$result->[0] );
 
 $dbh->func( "defined", 1, 'obj_aggregate', "create_aggregate" );
 $result = $dbh->selectrow_arrayref( "SELECT defined(field) FROM aggr_test" );
@@ -99,9 +99,9 @@ ok( $result && $result->[0] == 2 );
 $result = $dbh->selectrow_arrayref( "SELECT defined(field) FROM aggr_test" );
 ok( $result && $result->[0] == 2 );
 $result = $dbh->selectrow_arrayref( "SELECT defined(field) FROM aggr_empty_test" );
-ok( $result && $result->[0] == 0 );
+ok( $result && !$result->[0] );
 $result = $dbh->selectrow_arrayref( "SELECT defined(field) FROM aggr_empty_test" );
-ok( $result && $result->[0] == 0 );
+ok( $result && !$result->[0] );
 
 my $last_warn;
 local $SIG{__WARN__} = sub { $last_warn = join "", @_ };

@@ -14,7 +14,7 @@
 ** systems that do not need this facility may omit it by recompiling
 ** the library with -DSQLITE_OMIT_AUTHORIZATION=1
 **
-** $Id: auth.c,v 1.7 2004/02/03 14:24:35 matt Exp $
+** $Id: auth.c,v 1.8 2004/02/14 19:14:48 matt Exp $
 */
 #include "sqliteInt.h"
 

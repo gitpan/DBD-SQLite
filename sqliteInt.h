@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.23 2004/02/03 14:24:36 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.24 2004/02/14 19:14:50 matt Exp $
 */
 #include "config.h"
 #include "sqlite.h"
@@ -322,6 +322,8 @@ struct sqlite {
   int nTable;                   /* Number of tables in the database */
   void *pBusyArg;               /* 1st Argument to the busy callback */
   int (*xBusyCallback)(void *,const char*,int);  /* The busy callback */
+  void *pCommitArg;             /* Argument to xCommitCallback() */   
+  int (*xCommitCallback)(void*);/* Invoked at every commit. */
   Hash aFunc;                   /* All functions that can be in SQL exprs */
   int lastRowid;                /* ROWID of most recent insert */
   int priorNewRowid;            /* Last randomly generated ROWID */
@@ -585,6 +587,10 @@ struct Index {
 /*
 ** Each token coming out of the lexer is an instance of
 ** this structure.  Tokens are also used as part of an expression.
+**
+** Note if Token.z==0 then Token.dyn and Token.n are undefined and
+** may contain random values.  Do not make any assuptions about Token.dyn
+** and Token.n when Token.z==0.
 */
 struct Token {
   const char *z;      /* Text of the token.  Not NULL-terminated! */

@@ -11,7 +11,7 @@
 *************************************************************************
 ** This file contains code used to implement the COPY command.
 **
-** $Id: copy.c,v 1.5 2004/02/03 14:24:36 matt Exp $
+** $Id: copy.c,v 1.6 2004/02/14 19:14:48 matt Exp $
 */
 #include "sqliteInt.h"
 

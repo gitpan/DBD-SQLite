@@ -1,5 +1,10 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.31
+    - Fixed a free() bug on Win32
+    - Silence warnings in test suite
+    - Updated to sqlite 2.8.12
+
 0.30
     - Updated to sqlite 2.8.11
     - A few minor bugs fixed

@@ -25,7 +25,7 @@
 #define OP_ShiftLeft                    24
 #define OP_ShiftRight                   25
 #define OP_AddImm                       26
-#define OP_IsNumeric                    27
+#define OP_ForceInt                     27
 #define OP_MustBeInt                    28
 #define OP_Eq                           29
 #define OP_Ne                           30
