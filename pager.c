@@ -18,7 +18,7 @@
 ** file simultaneously, or one process from reading the database while
 ** another is writing.
 **
-** @(#) $Id: pager.c,v 1.15 2002/12/18 17:59:16 matt Exp $
+** @(#) $Id: pager.c,v 1.16 2002/12/26 16:08:19 matt Exp $
 */
 #include "os.h"         /* Must be first to enable large file support */
 #include "sqliteInt.h"

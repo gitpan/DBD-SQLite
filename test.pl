@@ -155,8 +155,7 @@ TimeMe("Testing SELECT speed (large table) ...",
         $sth->execute();
         ($sth->rows() == 10000)
            or die "Expected 10000 rows for id = $num, got " . $sth->rows();
-        while ($sth->fetch()) {
-        }
+        1 while $sth->fetch();
        },
     100);
 

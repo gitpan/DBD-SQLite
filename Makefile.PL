@@ -14,6 +14,9 @@ WriteMakefile(
     'clean'         => { FILES => 'SQLite.xsi' },
 );
 
-sub MY::postamble {
-    return DBI::DBD::dbd_postamble();
+package MY;
+sub postamble { DBI::DBD::dbd_postamble(@_); }
+sub libscan {
+    my ($self, $path) = @_;
+    ($path =~ m/\~$/) ? undef : $path;
 }

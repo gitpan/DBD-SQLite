@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#   $Id: 40blobs.t,v 1.2 2002/02/19 18:51:01 matt Exp $
+#   $Id: 40blobs.t,v 1.3 2002/12/19 18:37:12 matt Exp $
 #
 #   This is a test for correct handling of BLOBS; namely $dbh->quote
 #   is expected to work correctly.
@@ -69,6 +69,8 @@ while (Testing()) {
     #   Connect to the database
     Test($state or $dbh = DBI->connect($test_dsn, $test_user, $test_password))
 	or ServerError();
+
+    $dbh->{NoUTF8Flag} = 1;
 
     #
     #   Find a possible new table name

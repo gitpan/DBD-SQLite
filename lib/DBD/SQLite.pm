@@ -1,4 +1,4 @@
-# $Id: SQLite.pm,v 1.23 2002/12/18 17:59:24 matt Exp $
+# $Id: SQLite.pm,v 1.25 2002/12/29 16:24:53 matt Exp $
 
 package DBD::SQLite;
 use strict;
@@ -6,7 +6,7 @@ use strict;
 use DBI;
 
 use vars qw($err $errstr $state $drh $VERSION @ISA);
-$VERSION = '0.22';
+$VERSION = '0.23';
 
 use DynaLoader();
 @ISA = ('DynaLoader');
@@ -123,13 +123,14 @@ Yes, DBD::SQLite is small and light, but it supports full transactions!
 
 =back
 
-There's lots more to it, but this is early development stages, so please
-refer to the docs on the SQLite web page, listed above, for SQL details.
+There's lots more to it, so please refer to the docs on the SQLite web
+page, listed above, for SQL details. Also refer to L<DBI> for details
+on how to use DBI itself.
 
 =head1 API
 
 The API works exactly as every DBI module does. Please see L<DBI> for more
-details.
+details about core features.
 
 =head2 $dbh->func('last_insert_rowid')
 

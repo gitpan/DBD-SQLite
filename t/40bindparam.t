@@ -1,13 +1,12 @@
 #!/usr/local/bin/perl
 #
-#   $Id: 40bindparam.t,v 1.1 2002/02/19 17:19:57 matt Exp $
+#   $Id: 40bindparam.t,v 1.5 2002/12/29 16:24:55 matt Exp $
 #
 #   This is a skeleton test. For writing new tests, take this file
 #   and modify/extend it.
 #
 
 $^W = 1;
-
 
 #
 #   Make -w happy
@@ -64,6 +63,13 @@ while (Testing()) {
     Test($state or $dbh = DBI->connect($test_dsn, $test_user, $test_password),
 	 'connect')
 	or ServerError();
+    
+    # For some reason this test is fscked with the utf8 flag on.
+    # It seems to be because the string "K\x{00f6}nig" which to
+    # me looks like unicode, should set the UTF8 flag on that
+    # scalar. But no. It doesn't. Stupid fscking piece of crap.
+    # (the test works if I manually set that flag with utf8::upgrade())
+    # $dbh->{NoUTF8Flag} = 1 if $] > 5.007;
 
     #
     #   Find a possible new table name
@@ -89,6 +95,9 @@ while (Testing()) {
     #   Insert some rows
     #
 
+    my $konig = "Andreas K\xf6nig";
+    # warn("Konig: $konig\n");
+
     # Automatic type detection
     my $numericVal = 1;
     my $charVal = "Alligator Descartes";
@@ -107,7 +116,7 @@ while (Testing()) {
     # Now try the explicit type settings
     Test($state or $cursor->bind_param(1, " 4", SQL_INTEGER()), 'bind 1')
 	or DbiError($dbh->err, $dbh->errstr);
-    Test($state or $cursor->bind_param(2, "Andreas König"), 'bind 2')
+    Test($state or $cursor->bind_param(2, $konig), 'bind 2')
 	or DbiError($dbh->err, $dbh->errstr);
     Test($state or $cursor->execute, 'execute binds')
 	or DbiError($dbh->err, $dbh->errstr);
@@ -139,6 +148,8 @@ while (Testing()) {
 	 'connect for read')
 	or ServerError();
 
+    # $dbh->{NoUTF8Flag} = 1 if $] > 5.007;
+
     Test($state or $cursor = $dbh->prepare("SELECT * FROM $table"
 					   . " ORDER BY id"))
 	   or DbiError($dbh->err, $dbh->errstr);
@@ -164,11 +175,13 @@ while (Testing()) {
 	or printf("Query returned id = %s, name = %s, ref = %s, %d\n",
 		  $id, $name, $ref, scalar(@$ref));
 
-    Test($state or (($ref = $cursor->fetch)  &&  $id == 4  &&
-		    $name eq 'Andreas König'))
+    # warn("Konig: $konig\n");
+    Test($state or (($ref = $cursor->fetch)  &&  $id == 4 &&
+                   $name eq $konig))
 	or printf("Query returned id = %s, name = %s, ref = %s, %d\n",
 		  $id, $name, $ref, scalar(@$ref));
 
+    # warn("$konig == $name ?\n");
     Test($state or (($ref = $cursor->fetch)  &&  $id == 5  &&
 		    !defined($name)))
 	or printf("Query returned id = %s, name = %s, ref = %s, %d\n",

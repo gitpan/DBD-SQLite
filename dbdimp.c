@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.24 2002/10/17 16:24:56 matt Exp $ */
+/* $Id: dbdimp.c,v 1.29 2002/12/29 16:24:40 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -154,11 +154,12 @@ sqlite_discon_all(SV *drh, imp_drh_t *imp_drh)
 void
 sqlite_st_parse_sql(imp_sth_t *imp_sth, char *statement)
 {
+    D_imp_dbh_from_sth;
     bool in_literal = FALSE;
     SV *chunk;
     int num_params = 0;
 
-    chunk = NEWSV(0, strlen(statement)); /* 20 is just a guess */
+    chunk = NEWSV(0, strlen(statement));
     sv_setpv(chunk, "");
 
     /* warn("parsing: %s\n", statement); */
@@ -188,7 +189,9 @@ sqlite_st_parse_sql(imp_sth_t *imp_sth, char *statement)
             }
             else {
                 num_params++;
-                SvUTF8_on(chunk);
+		if (!imp_dbh->no_utf8_flag) {
+                    /* sv_utf8_encode(chunk); */
+		}
                 av_push(imp_sth->sql, chunk);
                 chunk = NEWSV(0, 20);
                 sv_setpvn(chunk, "", 0);
@@ -222,7 +225,7 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
 }
 
 char *
-sqlite_quote(SV *val)
+sqlite_quote(imp_dbh_t *imp_dbh, SV *val)
 {
     char *cval = SvPV(val, myPL_na);
     SV *ret = sv_2mortal(NEWSV(0, SvCUR(val) + 2));
@@ -268,7 +271,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         if (value && SvOK(value)) {
             /* warn("binding param: %s\n", SvPV(value, myPL_na)); */
             sv_catpvn(sql, "'", 1);
-            sv_catpv(sql, sqlite_quote(value));
+            sv_catpv(sql, sqlite_quote(imp_dbh, value));
             sv_catpvn(sql, "'", 1);
         }
         else {
@@ -299,7 +302,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     if (retval = sqlite_get_table(imp_dbh->db, SvPV(sql, myPL_na), &(imp_sth->results),
         &(imp_sth->nrow), &(imp_sth->ncols), &errmsg) != SQLITE_OK)
     {
-        /*  warn("exec failed: %s\n", errmsg); */
+        /* warn("exec failed: %s\n", errmsg); */
         sqlite_error(sth, retval, errmsg);
         Safefree(errmsg);
         return -2;
@@ -372,15 +375,12 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
                 val[len] = '\0';
             }
             sv_setpvn(AvARRAY(av)[i], val, len);
-            if (!imp_dbh->no_utf8_flag) {
-                SvUTF8_on(AvARRAY(av)[i]);
-            }
         }
         else {
             sv_setsv(AvARRAY(av)[i], Nullsv);
-            if (!imp_dbh->no_utf8_flag) {
-                SvUTF8_on(AvARRAY(av)[i]);
-            }
+        }
+        if (!imp_dbh->no_utf8_flag && SvPOK(AvARRAY(av)[i])) {
+            /* sv_utf8_encode(AvARRAY(av)[i]); */
         }
     }
     imp_sth->c_row++;
@@ -441,6 +441,7 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
         return TRUE;
     }
     else if (strncmp(key, "NoUTF8Flag", 10) == 0) {
+        warn("NoUTF8Flag is deprecated due to perl unicode weirdness\n");
         if (SvTRUE(valuesv)) {
             imp_dbh->no_utf8_flag = TRUE;
         }
@@ -479,6 +480,7 @@ SV *
 sqlite_db_FETCH_attrib_k (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, int dbikey)
 {
     dTHR;
+    return NULL;
 }
 
 int
@@ -488,8 +490,9 @@ sqlite_st_STORE_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv, SV *valuesv)
 
     if (strEQ(key, "ChopBlanks")) {
         DBIc_set(imp_sth, DBIcf_ChopBlanks, SvIV(valuesv));
+        return TRUE;
     }
-    return TRUE;
+    return FALSE;
 }
 
 SV *
@@ -509,7 +512,7 @@ sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
         AV *av = newAV();
         retsv = sv_2mortal(newRV(sv_2mortal((SV*)av)));
         while (--i >= 0) {
-            av_store(av, i, newUTF8SVpv(imp_sth->results[i], 0));
+            av_store(av, i, newSVpv(imp_sth->results[i], 0));
         }
     }
     else if (strEQ(key, "NUM_OF_FIELDS")) {

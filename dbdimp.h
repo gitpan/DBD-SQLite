@@ -1,4 +1,4 @@
-/* $Id: dbdimp.h,v 1.7 2002/03/28 15:53:21 matt Exp $ */
+/* $Id: dbdimp.h,v 1.8 2002/12/29 16:24:40 matt Exp $ */
 
 #ifndef _DBDIMP_H
 #define _DBDIMP_H   1
@@ -86,6 +86,7 @@ newUTF8SVpvn(char *s, STRLEN len) {
 #define newUTF8SVpv newSVpv
 #define newUTF8SVpvn newSVpvn
 #define SvUTF8_on(a) (a)
+#define sv_utf8_upgrade(a) (a)
 
 #endif
 
