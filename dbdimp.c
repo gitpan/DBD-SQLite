@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.12 2002/02/22 07:26:00 matt Exp $ */
+/* $Id: dbdimp.c,v 1.15 2002/02/23 11:17:18 matt Exp $ */
 
 #include "sqlite.h"
 
@@ -37,13 +37,24 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
 {
     dTHR;
     char *errmsg = NULL;
+
     if ((imp_dbh->db = sqlite_open(dbname, 0, &errmsg)) == NULL) {
         sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
-        free(errmsg);
+        Safefree(errmsg);
         return FALSE;
     }
 
     sqlite_busy_timeout(imp_dbh->db, SQL_TIMEOUT);
+
+    if (sqlite_exec(imp_dbh->db, "PRAGMA empty_result_callbacks = ON",
+        NULL, NULL, &errmsg)
+        != SQLITE_OK)
+    {
+        /*  warn("failed to set pragma: %s\n", errmsg); */
+        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        Safefree(errmsg);
+        return FALSE;
+    }
 
     DBIc_IMPSET_on(imp_dbh);
     DBIc_ACTIVE_on(imp_dbh);
@@ -57,16 +68,8 @@ sqlite_db_disconnect (SV *dbh, imp_dbh_t *imp_dbh)
     dTHR;
     DBIc_ACTIVE_off(imp_dbh);
 
-    if (DBIc_has(imp_dbh, DBIcf_AutoCommit)) {
-        int retval;
-        char *errmsg;
-        if (retval = sqlite_exec(imp_dbh->db, "ROLLBACK TRANSACTION",
-            NULL, NULL, &errmsg)
-            != SQLITE_OK)
-        {
-            sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
-            return FALSE;
-        }
+    if (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
+        sqlite_db_rollback(dbh, imp_dbh);
     }
 
     sqlite_close(imp_dbh->db);
@@ -102,6 +105,7 @@ sqlite_db_rollback(SV *dbh, imp_dbh_t *imp_dbh)
         != SQLITE_OK)
     {
         sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        Safefree(errmsg);
         return retval;
     }
     if (retval = sqlite_exec(imp_dbh->db, "BEGIN TRANSACTION",
@@ -109,6 +113,7 @@ sqlite_db_rollback(SV *dbh, imp_dbh_t *imp_dbh)
         != SQLITE_OK)
     {
         sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        Safefree(errmsg);
         return retval;
     }
     return TRUE;
@@ -131,6 +136,7 @@ sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
         != SQLITE_OK)
     {
         sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        Safefree(errmsg);
         return retval;
     }
     if (retval = sqlite_exec(imp_dbh->db, "BEGIN TRANSACTION",
@@ -138,6 +144,7 @@ sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
         != SQLITE_OK)
     {
         sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        Safefree(errmsg);
         return retval;
     }
     return TRUE;
@@ -157,8 +164,6 @@ sqlite_st_parse_sql(imp_sth_t *imp_sth, char *statement)
     bool in_literal = FALSE;
     SV *chunk;
     int num_params = 0;
-
-    imp_sth->sql = newAV();
 
     chunk = NEWSV(0, strlen(statement)); /* 20 is just a guess */
     sv_setpv(chunk, "");
@@ -217,6 +222,7 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
     imp_sth->nrow = 0;
     imp_sth->ncols = 0;
     imp_sth->params = newAV();
+    imp_sth->sql = newAV();
     sqlite_st_parse_sql(imp_sth, statement);
 
     return TRUE;
@@ -226,19 +232,24 @@ char *
 sqlite_quote(SV *val)
 {
     char *cval = SvPV(val, PL_na);
-    SV *ret = NEWSV(0, SvCUR(val));
-    sv_setpvn(ret, "", 0);
-
-    while (*cval) {
-        if (*cval == '\'') {
-            sv_catpvn(ret, "''", 2);
+    SV *ret = sv_2mortal(NEWSV(0, SvCUR(val) + 2));
+    if (strchr(cval, '\'')) {
+        sv_setpvn(ret, "", 0);
+    
+        while (*cval) {
+            if (*cval == '\'') {
+                sv_catpvn(ret, "''", 2);
+            }
+            else {
+                sv_catpvn(ret, cval, 1);
+            }
+            *cval++;
         }
-        else {
-            sv_catpvn(ret, cval, 1);
-        }
-        *cval++;
+        return SvPV(ret, PL_na);
     }
-    return SvPV(ret, PL_na);
+    else {
+        return cval;
+    }
 }
 
 int
@@ -249,14 +260,15 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     SV *sql;
     I32 pos = 0;
     char *errmsg;
-
     int num_params = DBIc_NUM_PARAMS(imp_sth);
     I32 i;
     int retval;
 
+    // warn("execute\n");
+
     sv_setpv(DBIc_ERRSTR(imp_dbh), "");
 
-    sql = newSVsv(AvARRAY(imp_sth->sql)[pos++]);
+    sql = sv_2mortal(newSVsv(AvARRAY(imp_sth->sql)[pos++]));
 
     for (i = 0; i < num_params; i++) {
         SV *value = av_shift(imp_sth->params);
@@ -270,32 +282,24 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
             /* warn("binding NULL\n"); */
             sv_catpvn(sql, "NULL", 4);
         }
+        if (value) {
+            SvREFCNT_dec(value);
+        }
         sv_catsv(sql, AvARRAY(imp_sth->sql)[pos++]);
     }
     /* warn("Executing: %s\n", SvPV(sql, PL_na)); */
-
-    if (retval = sqlite_exec(imp_dbh->db, "PRAGMA empty_result_callbacks = ON",
-        NULL, NULL, &errmsg)
-        != SQLITE_OK)
-    {
-        /*  warn("failed to set pragma: %s\n", errmsg); */
-        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
-        sv_setiv(DBIc_ERR(imp_dbh), retval);
-        return -2;
-    }
 
     imp_sth->results = NULL;
     if (retval = sqlite_get_table(imp_dbh->db, SvPV(sql, PL_na), &(imp_sth->results),
         &(imp_sth->nrow), &(imp_sth->ncols), &errmsg) != SQLITE_OK)
     {
         /*  warn("exec failed: %s\n", errmsg); */
-        SvREFCNT_dec(sql);
         sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        Safefree(errmsg);
         sv_setiv(DBIc_ERR(imp_dbh), retval);
         return -2;
     }
 
-    SvREFCNT_dec(sql);
     /* warn("exec ok - %d rows\n", imp_sth->nrow); */
     DBIc_NUM_FIELDS(imp_sth) = imp_sth->ncols;
     imp_sth->c_row = 1;
@@ -317,15 +321,17 @@ sqlite_bind_ph (SV *sth, imp_sth_t *imp_sth,
                 SV *param, SV *value, IV sql_type, SV *attribs,
                                 int is_inout, IV maxlen)
 {
+    // warn("bind\n");
+
     if (is_inout) {
         croak("InOut bind params not implemented");
     }
     /* warn("bind: %s => %s\n", SvPV(param, PL_na), SvPV(value, PL_na)); */
     if (sql_type >= SQL_NUMERIC && sql_type <= SQL_DOUBLE) {
-        av_store(imp_sth->params, SvIV(param) - 1, newSViv(SvIV(value)));
+        av_store(imp_sth->params, SvIV(param) - 1, newSVnv(SvNV(value)));
     }
     else {
-        av_store(imp_sth->params, SvIV(param) - 1, value);
+        av_store(imp_sth->params, SvIV(param) - 1, SvREFCNT_inc(value));
     }
 }
 
@@ -409,6 +415,7 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
                     != SQLITE_OK)
                 {
                     sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+                    Safefree(errmsg);
                     return retval;
                 }
             }
@@ -421,6 +428,7 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
                     != SQLITE_OK)
                 {
                     sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+                    Safefree(errmsg);
                     return retval;
                 }
             }

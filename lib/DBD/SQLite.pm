@@ -1,4 +1,4 @@
-# $Id: SQLite.pm,v 1.7 2002/02/22 07:16:52 matt Exp $
+# $Id: SQLite.pm,v 1.8 2002/02/22 14:32:36 matt Exp $
 
 package DBD::SQLite;
 use strict;
@@ -6,7 +6,7 @@ use strict;
 use DBI;
 
 use vars qw($err $errstr $state $drh $VERSION @ISA);
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 use DynaLoader();
 @ISA = ('DynaLoader');
@@ -125,6 +125,38 @@ Yes, DBD::SQLite is small and light, but it supports full transactions!
 
 There's lots more to it, but this is early development stages, so please
 refer to the docs on the SQLite web page, listed above, for SQL details.
+
+=head1 API
+
+The API works exactly as every DBI module does. Please see L<DBI> for more
+details.
+
+=head2 $dbh->last_insert_rowid
+
+This method returns the last inserted rowid. If you specify an INTEGER PRIMARY
+KEY as the first column in your table, that is the column that is returned.
+Otherwise, it is the hidden ROWID column. See the sqlite docs for details.
+
+=head1 PERFORMANCE
+
+SQLite is fast, very fast. I recently processed my 72MB log file with it,
+inserting the data (400,000+ rows) by using transactions and only committing
+every 1000 rows (otherwise the insertion is quite slow), and then performing
+queries on the data.
+
+Queries like count(*) and avg(bytes) took fractions of a second to return,
+but what surprised me most of all was:
+
+  SELECT url, count(*) as count FROM access_log
+    GROUP BY url
+    ORDER BY count desc
+    LIMIT 20
+
+To discover the top 20 hit URLs on the site (http://axkit.org), and it
+returned within 2 seconds. I'm seriously considering switching my log
+analysis code to use this little speed demon!
+
+Oh yeah, and that was with no indexes on the table, on a 400MHz PIII.
 
 =head1 BUGS
 
