@@ -1,5 +1,9 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.29
+    - Updated to sqlite 2.8.7
+    - A number of bugs fixed
+
 0.28
     - Perl 5.8.0 removed long deprecated SvOK_off()
     - Aliases for perl_call_*

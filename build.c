@@ -23,7 +23,7 @@
 **     ROLLBACK
 **     PRAGMA
 **
-** $Id: build.c,v 1.19 2003/08/23 10:52:50 matt Exp $
+** $Id: build.c,v 1.20 2003/12/05 15:10:23 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -51,6 +51,7 @@ void sqliteBeginParse(Parse *pParse, int explainFlag){
       DbClearProperty(db, i, DB_Cookie);
     }
   }
+  pParse->nVar = 0;
 }
 
 /*
@@ -86,7 +87,8 @@ void sqliteExec(Parse *pParse){
   if( v && pParse->nErr==0 ){
     FILE *trace = (db->flags & SQLITE_VdbeTrace)!=0 ? stdout : 0;
     sqliteVdbeTrace(v, trace);
-    sqliteVdbeMakeReady(v, xCallback, pParse->pArg, pParse->explain);
+    sqliteVdbeMakeReady(v, pParse->nVar, xCallback, pParse->pArg,
+                        pParse->explain);
     if( pParse->useCallback ){
       if( pParse->explain ){
         rc = sqliteVdbeList(v);
@@ -110,6 +112,7 @@ void sqliteExec(Parse *pParse){
   pParse->nMem = 0;
   pParse->nSet = 0;
   pParse->nAgg = 0;
+  pParse->nVar = 0;
 }
 
 /*
@@ -702,7 +705,7 @@ void sqliteAddDefaultValue(Parse *pParse, Token *pVal, int minusFlag){
 void sqliteAddPrimaryKey(Parse *pParse, IdList *pList, int onError){
   Table *pTab = pParse->pNewTable;
   char *zType = 0;
-  int iCol = -1;
+  int iCol = -1, i;
   if( pTab==0 ) goto primary_key_exit;
   if( pTab->hasPrimKey ){
     sqliteSetString(&pParse->zErrMsg, "table \"", pTab->zName, 
@@ -713,10 +716,15 @@ void sqliteAddPrimaryKey(Parse *pParse, IdList *pList, int onError){
   pTab->hasPrimKey = 1;
   if( pList==0 ){
     iCol = pTab->nCol - 1;
-  }else if( pList->nId==1 ){
-    for(iCol=0; iCol<pTab->nCol; iCol++){
-      if( sqliteStrICmp(pList->a[0].zName, pTab->aCol[iCol].zName)==0 ) break;
+    pTab->aCol[iCol].isPrimKey = 1;
+  }else{
+    for(i=0; i<pList->nId; i++){
+      for(iCol=0; iCol<pTab->nCol; iCol++){
+        if( sqliteStrICmp(pList->a[i].zName, pTab->aCol[iCol].zName)==0 ) break;
+      }
+      if( iCol<pTab->nCol ) pTab->aCol[iCol].isPrimKey = 1;
     }
+    if( pList->nId>1 ) iCol = -1;
   }
   if( iCol>=0 && iCol<pTab->nCol ){
     zType = pTab->aCol[iCol].zType;
@@ -726,7 +734,7 @@ void sqliteAddPrimaryKey(Parse *pParse, IdList *pList, int onError){
     pTab->iPKey = iCol;
     pTab->keyConf = onError;
   }else{
-    sqliteCreateIndex(pParse, 0, 0, pList, onError, 0, 0, 0);
+    sqliteCreateIndex(pParse, 0, 0, pList, onError, 0, 0);
     pList = 0;
   }
 
@@ -1529,7 +1537,6 @@ void sqliteCreateIndex(
   SrcList *pTable, /* Name of the table to index.  Use pParse->pNewTable if 0 */
   IdList *pList,   /* A list of columns to be indexed */
   int onError,     /* OE_Abort, OE_Ignore, OE_Replace, or OE_None */
-  int isTemp,      /* True if this is a temporary index */
   Token *pStart,   /* The CREATE token that begins a CREATE TABLE statement */
   Token *pEnd      /* The ")" that closes the CREATE INDEX statement */
 ){
@@ -1539,10 +1546,11 @@ void sqliteCreateIndex(
   int i, j;
   Token nullId;    /* Fake token for an empty ID list */
   DbFixer sFix;    /* For assigning database names to pTable */
+  int isTemp;      /* True for a temporary index */
   sqlite *db = pParse->db;
 
   if( pParse->nErr || sqlite_malloc_failed ) goto exit_create_index;
-  if( !isTemp && pParse->initFlag 
+  if( pParse->initFlag 
      && sqliteFixInit(&sFix, pParse, pParse->iDb, "index", pName)
      && sqliteFixSrcList(&sFix, pTable)
   ){
@@ -1567,9 +1575,9 @@ void sqliteCreateIndex(
     pParse->nErr++;
     goto exit_create_index;
   }
-  if( !isTemp && pTab->iDb>=2 && pParse->initFlag==0 ){
+  if( pTab->iDb>=2 && pParse->initFlag==0 ){
     sqliteSetString(&pParse->zErrMsg, "table ", pTab->zName, 
-      " may not have non-temporary indices added", 0);
+      " may not have indices added", 0);
     pParse->nErr++;
     goto exit_create_index;
   }
@@ -1578,9 +1586,7 @@ void sqliteCreateIndex(
     pParse->nErr++;
     goto exit_create_index;
   }
-  if( pTab->iDb==1 ){
-    isTemp = 1;
-  }
+  isTemp = pTab->iDb==1;
 
   /*
   ** Find the name of the index.  Make sure there is not already another
@@ -1631,8 +1637,7 @@ void sqliteCreateIndex(
   {
     const char *zDb = db->aDb[pTab->iDb].zName;
 
-    assert( isTemp==0 || isTemp==1 );
-    assert( pTab->iDb==pParse->iDb || isTemp==1 );
+    assert( pTab->iDb==pParse->iDb || isTemp );
     if( sqliteAuthCheck(pParse, SQLITE_INSERT, SCHEMA_TABLE(isTemp), 0, zDb) ){
       goto exit_create_index;
     }

@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.19 2003/08/23 10:52:51 matt Exp $
+** $Id: main.c,v 1.20 2003/12/05 15:10:24 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -695,6 +695,7 @@ int sqlite_compile(
   return sqliteMain(db, zSql, 0, 0, pzTail, ppVm, pzErrMsg);
 }
 
+
 /*
 ** The following routine destroys a virtual machine that is created by
 ** the sqlite_compile() routine.
@@ -716,16 +717,18 @@ int sqlite_finalize(
 }
 
 /*
-** Destroy a virtual machine in the same manner as sqlite_finalize(). If 
-** possible, leave *ppVm pointing at a new virtual machine which may be
-** used to re-execute the query.
+** Terminate the current execution of a virtual machine then
+** reset the virtual machine back to its starting state so that it
+** can be reused.  Any error message resulting from the prior execution
+** is written into *pzErrMsg.  A success code from the prior execution
+** is returned.
 */
 int sqlite_reset(
   sqlite_vm *pVm,            /* The virtual machine to be destroyed */
-  char **pzErrMsg,           /* OUT: Write error messages here */
-  sqlite_vm **ppVm           /* OUT: The new virtual machine */
+  char **pzErrMsg            /* OUT: Write error messages here */
 ){
-  int rc = sqliteVdbeReset((Vdbe*)pVm, pzErrMsg, (Vdbe **)ppVm);
+  int rc = sqliteVdbeReset((Vdbe*)pVm, pzErrMsg);
+  sqliteVdbeMakeReady((Vdbe*)pVm, -1, 0, 0, 0);
   sqliteStrRealloc(pzErrMsg);
   return rc;
 }
@@ -762,6 +765,7 @@ const char *sqlite_error_string(int rc){
     case SQLITE_NOLFS:      z = "kernel lacks large file support";       break;
     case SQLITE_AUTH:       z = "authorization denied";                  break;
     case SQLITE_FORMAT:     z = "auxiliary database format error";       break;
+    case SQLITE_RANGE:      z = "bind index out of range";               break;
     default:                z = "unknown error";                         break;
   }
   return z;
@@ -821,6 +825,31 @@ void sqlite_busy_handler(
   db->xBusyCallback = xBusy;
   db->pBusyArg = pArg;
 }
+
+#ifndef SQLITE_OMIT_PROGRESS_CALLBACK
+/*
+** This routine sets the progress callback for an Sqlite database to the
+** given callback function with the given argument. The progress callback will
+** be invoked every nOps opcodes.
+*/
+void sqlite_progress_handler(
+  sqlite *db, 
+  int nOps,
+  int (*xProgress)(void*), 
+  void *pArg
+){
+  if( nOps>0 ){
+    db->xProgress = xProgress;
+    db->nProgressOps = nOps;
+    db->pProgressArg = pArg;
+  }else{
+    db->xProgress = 0;
+    db->nProgressOps = 0;
+    db->pProgressArg = 0;
+  }
+}
+#endif
+
 
 /*
 ** This routine installs a default busy handler that waits for the

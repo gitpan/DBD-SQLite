@@ -1,5 +1,5 @@
 use Test;
-BEGIN { plan tests => 17 }
+BEGIN { plan tests => 18 }
 use DBI;
 
 sub now {
@@ -51,9 +51,16 @@ my $result = $dbh->selectrow_arrayref( "SELECT now()" );
 
 ok( $result->[0] );
 
+$dbh->do( 'CREATE TEMP TABLE func_test ( a, b )' );
+$dbh->do( 'INSERT INTO func_test VALUES ( 1, 3 )' );
+$dbh->do( 'INSERT INTO func_test VALUES ( 0, 4 )' );
+
 $dbh->func( "add2", 2, \&add2, "create_function" );
 $result = $dbh->selectrow_arrayref( "SELECT add2(1,3)" );
 ok( $result->[0] == 4 );
+
+$result = $dbh->selectall_arrayref( "SELECT add2(a,b) FROM func_test" );
+ok( $result->[0][0] = 4  && $result->[1][0] == 4 );
 
 $dbh->func( "my_sum", -1, \&my_sum, "create_function" );
 $result = $dbh->selectrow_arrayref( "SELECT my_sum( '2', 3, 4, '5')" );

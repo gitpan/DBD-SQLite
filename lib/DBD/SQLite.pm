@@ -1,4 +1,4 @@
-# $Id: SQLite.pm,v 1.35 2003/08/23 10:54:50 matt Exp $
+# $Id: SQLite.pm,v 1.37 2003/12/05 15:12:48 matt Exp $
 
 package DBD::SQLite;
 use strict;
@@ -6,7 +6,7 @@ use strict;
 use DBI;
 
 use vars qw($err $errstr $state $drh $VERSION @ISA);
-$VERSION = '0.28';
+$VERSION = '0.29';
 
 use DynaLoader();
 @ISA = ('DynaLoader');
@@ -384,7 +384,7 @@ After this, it could be use from SQL as:
 
     INSERT INTO mytable ( now() );
 
-=head2 $dbh->func( $name, $argc, $obj, 'create_aggregate' )
+=head2 $dbh->func( $name, $argc, $pkg, 'create_aggregate' )
 
 This method will register a new aggregate function which can then used
 from SQL. The method's parameters are:
@@ -402,9 +402,9 @@ This is an integer which tells the SQL parser how many arguments the
 function takes. If that number is -1, the function can take any number
 of arguments.
 
-=item $obj
+=item $pkg
 
-This is the object which implements the aggregator interface.
+This is the package which implements the aggregator interface.
 
 =back
 
@@ -412,9 +412,12 @@ The aggregator interface consists of defining three methods:
 
 =over
 
-=item init()
+=item new()
 
-This method will be called once before any values are seen.
+This method will be called once to create an object which should
+be used to aggregate the rows in a particular group. The step() and
+finalize() methods will be called upon the reference return by
+the method.
 
 =item step(@_)
 
@@ -425,7 +428,7 @@ This method will be called once for each rows in the aggregate.
 This method will be called once all rows in the aggregate were
 processed and it should return the aggregate function's result. When
 there is no rows in the aggregate, finalize() will be called right
-after init().
+after new().
 
 =back
 
@@ -435,12 +438,6 @@ Here is a simple aggregate function which returns the variance
     package variance;
 
     sub new { bless [], shift; }
-
-    sub init {
-        my $self = $_[0];
-
-        @$self = ();
-    }
 
     sub step {
         my ( $self, $value ) = @_;
@@ -471,8 +468,7 @@ Here is a simple aggregate function which returns the variance
         return $sigma;
     }
 
-    my $aggr = new variance();
-    $dbh->func( "variance", 1, $aggr, "create_aggregate" );
+    $dbh->func( "variance", 1, 'variance', "create_aggregate" );
 
 The aggregate function can then be used as:
 
@@ -528,6 +524,10 @@ Likely to be many, please use http://rt.cpan.org/ for reporting bugs.
 =head1 AUTHOR
 
 Matt Sergeant, matt@sergeant.org
+
+Perl extension functions contributed by Francis J. Lacoste
+<flacoste@logreport.org> and Wolfgang Sourdeau
+<wolfgang@logreport.org>
 
 =head1 SEE ALSO
 

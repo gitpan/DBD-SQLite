@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.39 2003/08/23 10:45:57 matt Exp $ */
+/* $Id: dbdimp.c,v 1.43 2003/11/04 08:46:46 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -240,6 +240,10 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
     dTHR;
     D_imp_dbh_from_sth;
 
+    if (!DBIc_ACTIVE(imp_dbh)) {
+      die("prepare on an inactive database handle");
+    }
+
     /* warn("prepare statement\n"); */
     imp_sth->nrow = 0;
     imp_sth->ncols = 0;
@@ -386,8 +390,6 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
 
     imp_sth->results = NULL;
     if (retval = sqlite_compile(imp_dbh->db, SvPV_nolen(sql), 0, &(imp_sth->vm), &errmsg) != SQLITE_OK)
-    // if (retval = sqlite_get_table(imp_dbh->db, SvPV_nolen(sql), &(imp_sth->results),
-    //    &(imp_sth->nrow), &(imp_sth->ncols), &errmsg) != SQLITE_OK)
     {
         sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, errmsg);
         sqlite_freemem(errmsg);
@@ -472,11 +474,12 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
     av = DBIS->get_fbav(imp_sth);
     for (i = 0; i < numFields; i++) {
         char *val = imp_sth->results[i];
-        /* warn("fetching: %d == %s\n", (current_entry + i), val); */
+        /* warn("fetching: %d == %s\n", i, val); */
         if (val != NULL) {
             size_t len = strlen(val);
             char *decoded;
             if (chopBlanks) {
+                val = strdup(val);
                 while((len > 0) && (val[len-1] == ' ')) {
                     len--;
                 }
@@ -485,6 +488,7 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
             decoded = sqlite_decode(imp_dbh, val, &len);
             sv_setpvn(AvARRAY(av)[i], decoded, len);
             free(decoded);
+            if (chopBlanks) free(val);
 
             if (!imp_dbh->no_utf8_flag) {
             /* sv_utf8_encode(AvARRAY(av)[i]); */
@@ -764,60 +768,94 @@ sqlite_db_create_function( SV *dbh, const char *name, int argc, SV *func )
     }
 }
 
-static SV *
-sqlite_db_aggr_init_dispatcher( sqlite_func *context, SV *aggr)
+typedef struct aggrInfo aggrInfo;
+struct aggrInfo {
+  SV *aggr_inst;
+  SV *err;
+  int inited;
+};
+
+static void
+sqlite_db_aggr_new_dispatcher( sqlite_func *context, aggrInfo *aggr_info )
 {
     dSP;
-    SV *err= NULL;
+    SV *pkg = NULL;
+    int count = 0;
+
+    aggr_info->err = NULL;
+    aggr_info->aggr_inst = NULL;
+    
+    pkg = sqlite_user_data(context);
+    if ( !pkg )
+        return;
 
     ENTER;
     SAVETMPS;
-
+    
     PUSHMARK(SP);
-    XPUSHs( sv_2mortal( newSVsv(aggr) ));
+    XPUSHs( sv_2mortal( newSVsv(pkg) ) );
     PUTBACK;
 
-    call_method( "init", G_EVAL|G_DISCARD|G_SCALAR);
-    if ( SvTRUE(ERRSV) ) {
-        err = newSVpvf( "error during aggregator's init(): %s", 
-                        SvPV_nolen(ERRSV) );
+    count = call_method ("new", G_EVAL|G_SCALAR);
+    SPAGAIN;
+
+    aggr_info->inited = 1;
+
+    if ( SvTRUE( ERRSV ) ) {
+        aggr_info->err =  newSVpvf ("error during aggregator's new(): %s",
+                                    SvPV_nolen (ERRSV));
+        POPs;
+    } else if ( count != 1 ) {
+        int i;
+        
+        aggr_info->err = newSVpvf( "new() should return one value, got %d", 
+                                  count );
+        /* Clear the stack */
+        for ( i=0; i < count; i++ ) {
+            POPs;
+        }
+    } else {
+        SV *aggr = POPs;
+        if ( SvROK(aggr) ) {
+            aggr_info->aggr_inst = newSVsv(aggr);
+        } else{
+            aggr_info->err = newSVpvf( "new() should return a blessed reference" );
+        }
     }
-    
+
+    PUTBACK;
+
     FREETMPS;
     LEAVE;
 
-    return err;
+    return;
 }
 
 static void
-sqlite_db_aggr_step_dispatcher( sqlite_func *context, int argc, const char **argv)
+sqlite_db_aggr_step_dispatcher (sqlite_func *context,
+                                int argc, const char **argv)
 {
     dSP;
-    SV *aggr;
-    SV **aggr_err;
     int i;
+    aggrInfo *aggr;
 
-    aggr_err = sqlite_aggregate_context(context, sizeof(SV *));
-    aggr = sqlite_user_data(context);
-
-    /* Quick exit in case of error */
-    if (*aggr_err)
+    aggr = sqlite_aggregate_context (context, sizeof (aggrInfo));
+    if ( !aggr )
         return;
     
     ENTER;
     SAVETMPS;
-
+    
     /* initialize on first step */
-    if ( sqlite_aggregate_count(context) == 1 ) {
-        *aggr_err = sqlite_db_aggr_init_dispatcher( context, aggr );
-        SPAGAIN;
-        if ( *aggr_err )
-            goto cleanup;
+    if ( !aggr->inited ) {
+        sqlite_db_aggr_new_dispatcher( context, aggr );
     }
 
+    if ( aggr->err || !aggr->aggr_inst ) 
+        goto cleanup;
+
     PUSHMARK(SP);
-    XPUSHs( sv_2mortal( newSVsv(aggr) ) );
-    
+    XPUSHs( sv_2mortal( newSVsv( aggr->aggr_inst ) ));
     for ( i=0; i < argc; i++ ) {
         SV *arg;
         
@@ -826,18 +864,19 @@ sqlite_db_aggr_step_dispatcher( sqlite_func *context, int argc, const char **arg
         } else {
             arg = sv_2mortal( newSVpv(argv[i], 0));
         }
-        
+
         XPUSHs(arg);
     }
     PUTBACK;
 
-    call_method( "step", G_SCALAR|G_EVAL|G_DISCARD );
-    
+    call_method ("step", G_SCALAR|G_EVAL|G_DISCARD);
+
     /* Check for an error */
     if (SvTRUE(ERRSV) ) {
-        *aggr_err = newSVpvf( "error during aggregator's step(): %s",
-                              SvPV_nolen(ERRSV) );
-    } 
+      aggr->err = newSVpvf( "error during aggregator's step(): %s",
+                            SvPV_nolen(ERRSV));
+      POPs;
+    }
 
  cleanup:
     FREETMPS;
@@ -848,91 +887,80 @@ static void
 sqlite_db_aggr_finalize_dispatcher( sqlite_func *context )
 {
     dSP;
-    SV *aggr;
-    SV **aggr_err;
+    aggrInfo *aggr, myAggr;
     int count = 0;
 
-    aggr_err = sqlite_aggregate_context(context, sizeof(SV *));
-    aggr = sqlite_user_data(context);
-
-    if ( !aggr_err ) 
-    {
-        /* There was no rows */
-        SV *err = sqlite_db_aggr_init_dispatcher( context, aggr );
-        if ( err )
-        {
-            /* This can be uncommented, once reporting errors in
-               aggregator function is working. SQLite <= 2.8.2 do
-               not check the isError value after calls to xFinalize.
-
-               This bug is SQLite ticket #330
-            */
-            /* sqlite_db_set_result( context, err, 1 ); */
-            warn( "DBD::SQLite: error in aggregator cannot be reported to SQLite: %s",
-                  SvPV_nolen( err ) );
-            return;
-        }
-    } else if ( *aggr_err ) {
-        warn( "DBD::SQLite: error in aggregator cannot be reported to SQLite: %s",
-              SvPV_nolen( *aggr_err ) );
-        /* sqlite_db_set_result( context, *aggr_err, 1 ); */
-        SvREFCNT_dec(*aggr_err);
-        return;
-    }
-
+    aggr = sqlite_aggregate_context (context, sizeof (aggrInfo));
+    
     ENTER;
     SAVETMPS;
     
-    PUSHMARK(SP);
-    XPUSHs( sv_2mortal( newSVsv(aggr) ) );
-    PUTBACK;
-    
-    count = call_method( "finalize", G_SCALAR|G_EVAL );
-    SPAGAIN;
-    
-    if ( SvTRUE(ERRSV) ) {
-        SV *err = sv_2mortal( newSVpvf( "error during aggregator's finalize(): %s",
-                                        SvPV_nolen(ERRSV) ));
-        warn( "DBD::SQLite: error in aggregator cannot be reported to SQLite: %s",
-              SvPV_nolen( err ) );
-        /* sqlite_db_set_result( context, err, 1 ); */
-        POPs;
-    } else if ( count != 1 ) {
-        int i;
-        SV *err = sv_2mortal( newSVpvf( "finalize() should return 1 value, got %d",
-                                        count ));
-        warn( "DBD::SQLite: error in aggregator cannot be reported to SQLite: %s",
-              SvPV_nolen( err ) );
-        
-        /* sqlite_db_set_result( context, err, 1 ); */
-        /* Clear the stack */
-        for ( i=0; i<count; i++ ) {
-            POPs;
-        }
-    } else {
-        sqlite_db_set_result( context, POPs, 0 );
-    }
-     
-    PUTBACK;
+    if ( !aggr ) {
+        /* SQLite seems to refuse to create a context structure
+           from finalize() */
+        aggr = &myAggr;
+        aggr->aggr_inst = NULL;
+        aggr->err = NULL;
+        sqlite_db_aggr_new_dispatcher (context, aggr);
+    } 
 
+    if  ( ! aggr->err && aggr->aggr_inst ) {
+        PUSHMARK(SP);
+        XPUSHs( sv_2mortal( newSVsv( aggr->aggr_inst )) );
+        PUTBACK;
+
+        count = call_method( "finalize", G_SCALAR|G_EVAL );
+        SPAGAIN;
+
+        if ( SvTRUE(ERRSV) ) {
+            aggr->err = newSVpvf ("error during aggregator's finalize(): %s",
+                                  SvPV_nolen(ERRSV) ) ;
+            POPs;
+        } else if ( count != 1 ) {
+            int i;
+            aggr->err = newSVpvf( "finalize() should return 1 value, got %d",
+                                  count );
+            /* Clear the stack */
+            for ( i=0; i<count; i++ ) {
+                POPs;
+            }
+        } else {
+            sqlite_db_set_result( context, POPs, 0 );
+        }
+        PUTBACK;
+    }
+    
+    if ( aggr->err ) {
+        warn( "DBD::SQLite: error in aggregator cannot be reported to SQLite: %s",               SvPV_nolen( aggr->err ) );
+        
+        /* sqlite_db_set_result( context, aggr->err, 1 ); */
+        SvREFCNT_dec( aggr->err );
+        aggr->err = NULL;
+    }
+    
+    if ( aggr->aggr_inst ) {
+         SvREFCNT_dec( aggr->aggr_inst );
+         aggr->aggr_inst = NULL;
+    }
+    
     FREETMPS;
     LEAVE;
 }
 
 void
-sqlite_db_create_aggregate( SV *dbh, const char *name, int argc, SV *aggr )
+sqlite_db_create_aggregate( SV *dbh, const char *name, int argc, SV *aggr_pkg )
 {
     D_imp_dbh(dbh);
     int rv;
     
     /* Copy the aggregate reference */
-    SV *aggr_copy = newSVsv(aggr);
-    av_push( imp_dbh->aggregates, aggr_copy );
+    SV *aggr_pkg_copy = newSVsv(aggr_pkg);
+    av_push( imp_dbh->aggregates, aggr_pkg_copy );
 
     rv = sqlite_create_aggregate( imp_dbh->db, name, argc, 
                                   sqlite_db_aggr_step_dispatcher, 
                                   sqlite_db_aggr_finalize_dispatcher, 
-                                  aggr_copy );
+                                  aggr_pkg_copy );
     
     if ( rv != SQLITE_OK )
     {
