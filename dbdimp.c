@@ -308,10 +308,10 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     }
     
     for (i = 0; i < num_params; i++) {
-        sqlite_trace(4, "params left in 0x%p: %d", imp_sth->params, 1+av_len(imp_sth->params));
         SV *value = av_shift(imp_sth->params);
         SV *sql_type_sv = av_shift(imp_sth->params);
         int sql_type = SvIV(sql_type_sv);
+        sqlite_trace(4, "params left in 0x%p: %d", imp_sth->params, 1+av_len(imp_sth->params));
         
         sqlite_trace(4, "bind %d type %d as %s", i, sql_type, SvPV_nolen(value));
         if (!SvOK(value)) {
