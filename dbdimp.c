@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.20 2002/03/26 22:35:25 matt Exp $ */
+/* $Id: dbdimp.c,v 1.21 2002/03/28 15:53:21 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -45,6 +45,7 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
     }
 
     imp_dbh->in_tran = FALSE;
+    imp_dbh->no_utf8_flag = FALSE;
 
     sqlite_busy_timeout(imp_dbh->db, SQL_TIMEOUT);
 
@@ -346,6 +347,7 @@ AV *
 sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
 {
     AV *av;
+    D_imp_dbh_from_sth;
     int numFields = DBIc_NUM_FIELDS(imp_sth);
     int chopBlanks = DBIc_is(imp_sth, DBIcf_ChopBlanks);
     int current_entry = imp_sth->c_row * numFields;
@@ -372,11 +374,15 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
                 val[len] = '\0';
             }
             sv_setpvn(AvARRAY(av)[i], val, len);
-            SvUTF8_on(AvARRAY(av)[i]);
+            if (!imp_dbh->no_utf8_flag) {
+                SvUTF8_on(AvARRAY(av)[i]);
+            }
         }
         else {
             sv_setsv(AvARRAY(av)[i], Nullsv);
-            SvUTF8_on(AvARRAY(av)[i]);
+            if (!imp_dbh->no_utf8_flag) {
+                SvUTF8_on(AvARRAY(av)[i]);
+            }
         }
     }
     imp_sth->c_row++;
@@ -434,6 +440,15 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
         DBIc_set(imp_dbh, DBIcf_AutoCommit, SvTRUE(valuesv));
         return TRUE;
     }
+    else if (strncmp(key, "NoUTF8Flag", 10) == 0) {
+        if (SvTRUE(valuesv)) {
+            imp_dbh->no_utf8_flag = TRUE;
+        }
+        else {
+            imp_dbh->no_utf8_flag = FALSE;
+        }
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -446,6 +461,9 @@ sqlite_db_FETCH_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv)
     if (strncmp(key, "AutoCommit", 10) == 0) {
         /* warn("fetching autocommit\n"); */
         return newSViv(DBIc_is(imp_dbh, DBIcf_AutoCommit));
+    }
+    if (strncmp(key, "NoUTF8Flag", 10) == 0) {
+        return newSViv(imp_dbh->no_utf8_flag ? 1 : 0);
     }
     return NULL;
 }

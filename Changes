@@ -1,5 +1,9 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.14
+    - Added NoUTF8Flag option, so that returned strings don't get flagged
+      with SvUTF8_on() - needed when you're storing non-unicode in the database
+
 0.13
     - Upgraded to SQLite 2.4.3
     - Added script to download sqlite core library when it's upgraded
