@@ -1,11 +1,11 @@
-# $Id: SQLite.pm,v 1.40 2004/02/14 19:13:51 matt Exp $
+# $Id: SQLite.pm,v 1.41 2004/07/21 20:56:09 matt Exp $
 
 package DBD::SQLite;
 use strict;
 
 use DBI;
 use vars qw($err $errstr $state $drh $VERSION @ISA);
-$VERSION = '0.31';
+$VERSION = '1.00';
 
 use DynaLoader();
 @ISA = ('DynaLoader');

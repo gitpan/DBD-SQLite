@@ -1,4 +1,4 @@
-/* $Id: SQLite.xs,v 1.5 2003/07/31 15:11:46 matt Exp $ */
+/* $Id: SQLite.xs,v 1.6 2004/07/21 20:50:42 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -24,7 +24,7 @@ last_insert_rowid(dbh)
     CODE:
     {
         D_imp_dbh(dbh);
-        RETVAL = sqlite_last_insert_rowid(imp_dbh->db);
+        RETVAL = sqlite3_last_insert_rowid(imp_dbh->db);
     }
     OUTPUT:
         RETVAL
@@ -50,6 +50,15 @@ create_aggregate(dbh, name, argc, aggr)
     {
         sqlite_db_create_aggregate( dbh, name, argc, aggr );
     }
+
+int
+busy_timeout(dbh, timeout=0)
+  SV *dbh
+  int timeout
+  CODE:
+    RETVAL = sqlite_busy_timeout( dbh, timeout );
+  OUTPUT:
+    RETVAL
 
 MODULE = DBD::SQLite          PACKAGE = DBD::SQLite::st
 

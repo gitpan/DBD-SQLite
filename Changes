@@ -1,5 +1,11 @@
 Revision history for Perl extension DBD::SQLite.
 
+1.00
+    - Port to sqlite3 API
+    - Support bind types SQL_BLOB, SQL_NUMBER, SQL_TEXT etc
+    - Support $dbh->last_insert_id()
+    - Added timeout API
+
 0.31
     - Fixed a free() bug on Win32
     - Silence warnings in test suite

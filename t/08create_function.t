@@ -36,6 +36,7 @@ sub return_null {
 }
 
 sub my_defined {
+#        warn("defined($_[0])\n");
         return defined $_[0];
 }
 
@@ -88,6 +89,7 @@ $result = $dbh->selectrow_arrayref( "SELECT my_defined(1)" );
 ok( $result &&  $result->[0] );
 
 $result = $dbh->selectrow_arrayref( "SELECT my_defined('')" );
+print "# Result: @$result\n";
 ok( $result &&  $result->[0] );
 
 $result = $dbh->selectrow_arrayref( "SELECT my_defined('abc')" );

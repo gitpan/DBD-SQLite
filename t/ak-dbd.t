@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#   $Id: ak-dbd.t,v 1.2 2002/02/19 18:51:01 matt Exp $
+#   $Id: ak-dbd.t,v 1.3 2004/07/21 20:50:46 matt Exp $
 #
 #   This is a skeleton test. For writing new tests, take this file
 #   and modify/extend it.
@@ -206,7 +206,7 @@ while (Testing()) {
     }
     Test($state or $sth->execute)
 	or ErrMsgF("execute failed: query $query, error %s.\n", $sth->errstr);
-    Test($state  or  ($sth->rows == 1)  or  ($sth->rows == -1))
+    Test($state  or  ($sth->rows == 0)  or  ($sth->rows == -1))
 	or ErrMsgF("sth->rows returned wrong result %s after 'execute'.\n",
 		   $sth->rows);
     Test($state or $sth->finish)

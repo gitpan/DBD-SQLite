@@ -1,4 +1,4 @@
-/* $Id: dbdimp.h,v 1.12 2003/08/19 07:43:10 matt Exp $ */
+/* $Id: dbdimp.h,v 1.13 2004/07/21 20:50:42 matt Exp $ */
 
 #ifndef _DBDIMP_H
 #define _DBDIMP_H   1
@@ -19,10 +19,11 @@ struct imp_drh_st {
 struct imp_dbh_st {
     dbih_dbc_t com;
     /* sqlite specific bits */
-    struct sqlite *db;
+    sqlite3 *db;
     bool in_tran;
     bool no_utf8_flag;
     bool handle_binary_nulls;
+    int timeout;
     AV *functions;
     AV *aggregates;
 };
@@ -31,14 +32,15 @@ struct imp_dbh_st {
 struct imp_sth_st {
     dbih_stc_t com;
     /* sqlite specific bits */
-    AV *sql;
-    sqlite_vm *vm;
+    sqlite3_stmt *stmt;
+    /*
     char **results;
     char **coldata;
+    */
     int retval;
     int nrow;
-    int ncols;
     AV *params;
+    char *statement;
 };
 
 #define dbd_init                sqlite_init
@@ -53,6 +55,7 @@ struct imp_sth_st {
 #define dbd_db_FETCH_attrib     sqlite_db_FETCH_attrib
 #define dbd_db_STORE_attrib_k   sqlite_db_STORE_attrib_k
 #define dbd_db_FETCH_attrib_k   sqlite_db_FETCH_attrib_k
+#define dbd_db_last_insert_id   sqlite_db_last_insert_id
 #define dbd_st_prepare          sqlite_st_prepare
 #define dbd_st_rows             sqlite_st_rows
 #define dbd_st_execute          sqlite_st_execute

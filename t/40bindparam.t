@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#   $Id: 40bindparam.t,v 1.5 2002/12/29 16:24:55 matt Exp $
+#   $Id: 40bindparam.t,v 1.6 2004/07/21 20:50:45 matt Exp $
 #
 #   This is a skeleton test. For writing new tests, take this file
 #   and modify/extend it.
@@ -81,7 +81,7 @@ while (Testing()) {
     #   Create a new table; EDIT THIS!
     #
     Test($state or ($def = TableDefinition($table,
-					   ["id",   "INTEGER",  4, 0],
+					   ["r_id",   "INTEGER",  4, 0],
 					   ["name", "CHAR",    64, $COL_NULLABLE]) and
 		    $dbh->do($def)), 'create', $def)
 	or DbiError($dbh->err, $dbh->errstr);
@@ -151,7 +151,7 @@ while (Testing()) {
     # $dbh->{NoUTF8Flag} = 1 if $] > 5.007;
 
     Test($state or $cursor = $dbh->prepare("SELECT * FROM $table"
-					   . " ORDER BY id"))
+					   . " ORDER BY abs(r_id)"))
 	   or DbiError($dbh->err, $dbh->errstr);
 
     Test($state or $cursor->execute)
@@ -162,23 +162,23 @@ while (Testing()) {
 
     Test($state or ($ref = $cursor->fetch)  &&  $id == 1  &&
 	 $name eq 'Alligator Descartes')
-	or printf("Query returned id = %s, name = %s, ref = %s, %d\n",
+	or printf("Alligator Query returned id = %s, name = %s, ref = %s, %d\n",
 		  $id, $name, $ref, scalar(@$ref));
 
     Test($state or (($ref = $cursor->fetch)  &&  $id == 2  &&
 		    $name eq 'Tim Bunce'))
-	or printf("Query returned id = %s, name = %s, ref = %s, %d\n",
+	or printf("Tim Query returned id = %s, name = %s, ref = %s, %d\n",
 		  $id, $name, $ref, scalar(@$ref));
 
     Test($state or (($ref = $cursor->fetch)  &&  $id == 3  &&
 		    $name eq 'Jochen Wiedmann'))
-	or printf("Query returned id = %s, name = %s, ref = %s, %d\n",
+	or printf("Jochen Query returned id = %s, name = %s, ref = %s, %d\n",
 		  $id, $name, $ref, scalar(@$ref));
 
     # warn("Konig: $konig\n");
     Test($state or (($ref = $cursor->fetch)  &&  $id == 4 &&
                    $name eq $konig))
-	or printf("Query returned id = %s, name = %s, ref = %s, %d\n",
+	or printf("Andreas Query returned id = %s, name = %s, ref = %s, %d\n",
 		  $id, $name, $ref, scalar(@$ref));
 
     # warn("$konig == $name ?\n");

@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#   $Id: 40blobs.t,v 1.4 2003/07/31 14:09:16 matt Exp $
+#   $Id: 40blobs.t,v 1.5 2004/07/21 20:50:45 matt Exp $
 #
 #   This is a test for correct handling of BLOBS; namely $dbh->quote
 #   is expected to work correctly.
@@ -20,7 +20,9 @@ $test_password = '';
 #
 #   Include lib.pl
 #
-require DBI;
+
+use DBI qw(:sql_types);
+
 $mdriver = "";
 foreach $file ("lib.pl", "t/lib.pl") {
     do $file; if ($@) { print STDERR "Error while executing lib.pl: $@\n";
@@ -125,7 +127,7 @@ while (Testing()) {
 	#
 	#   Insert a row into the test table.......
 	#
-	my($query);
+	my($query, $sth);
 	if (!$state) {
      	  $query = "INSERT INTO $table VALUES (1, ?)";
 	    if ($ENV{'SHOW_BLOBS'}  &&  open(OUT, ">" . $ENV{'SHOW_BLOBS'})) {
@@ -133,7 +135,11 @@ while (Testing()) {
 		close(OUT);
 	    }
 	}
-        Test($state or $dbh->do($query,undef,$blob))
+	Test($state or ($sth = $dbh->prepare($query)))
+           or DbiError($dbh->err, $dbh->errstr);
+        Test($state or $sth->bind_param(1, $blob, SQL_BLOB))
+           or DbiError($dbh->err, $dbh->errstr);
+        Test($state or $sth->execute())
            or DbiError($dbh->err, $dbh->errstr);
 
 	#

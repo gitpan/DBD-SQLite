@@ -1,6 +1,6 @@
 use Test;
-BEGIN { plan tests => 9 }
 use DBI;
+BEGIN { plan tests => 10 }
 my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "");
 ok($dbh);
 my $sth = $dbh->prepare("INSERT INTO f VALUES (?, ?, ?)");
@@ -8,6 +8,12 @@ ok($sth);
 ok(my $rows = $sth->execute("Fred", "Bloggs", "fred\@bloggs.com"));
 ok($rows == 1);
 ok($dbh->func('last_insert_rowid'));
+if ($DBI::VERSION <= 1.38) {
+  skip("last_insert_id requires DBI v1.38");
+}
+else {
+  ok($dbh->last_insert_id(undef, undef, undef, undef));
+}
 ok($sth->execute("test", "test", "1"));
 ok($sth->execute("test", "test", "2"));
 ok($sth->execute("test", "test", "3"));

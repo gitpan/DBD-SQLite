@@ -1,5 +1,5 @@
 use Test;
-BEGIN { plan tests => 24 }
+BEGIN { plan tests => 25 }
 use DBI;
 my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "", { });
 ok($dbh);
@@ -37,8 +37,10 @@ ok $dbh->do("insert into meta4 values ('xyz', 'b')");
 $sth = $dbh->prepare("select * from meta4");
 ok $sth;
 ok $sth->execute();
+ok $sth->fetch();
 my $types = $sth->{TYPE};
 my $names = $sth->{NAME};
+# warn("Types: @$types, Names: @$names\n");
 ok( @$types == @$names );
 print "# Types: @$types\n";
 print "# Names: @$names\n";

@@ -1,3 +1,4 @@
+$|++;
 use strict;
 use Test;
 BEGIN { plan tests => 4 }
@@ -10,7 +11,7 @@ my $sth = $dbh->prepare("SELECT f.f1, f.* FROM f");
 ok($sth->execute());
 my $names = $sth->{NAME};
 ok(@$names == 4);
-print(join(', ', @$names), "\n");
+print("# ", join(', ', @$names), "\n");
 ok($names->[0] eq "f1");	# make sure the "f." is removed
 $sth->finish;
 $dbh->disconnect;

@@ -1,6 +1,7 @@
 use Test;
 BEGIN { plan tests => 2 }
 use DBI;
+unlink("foo");
 my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "",
   {AutoCommit => 0, RaiseError => 1});
 
