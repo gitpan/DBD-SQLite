@@ -16,7 +16,7 @@
 ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: func.c,v 1.21 2004/07/21 20:50:42 matt Exp $
+** $Id: func.c,v 1.22 2004/08/09 13:08:30 matt Exp $
 */
 #include <ctype.h>
 #include <math.h>
@@ -201,27 +201,27 @@ static void roundFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
 ** Implementation of the upper() and lower() SQL functions.
 */
 static void upperFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
-  char *z;
+  unsigned char *z;
   int i;
   if( argc<1 || SQLITE_NULL==sqlite3_value_type(argv[0]) ) return;
   z = sqliteMalloc(sqlite3_value_bytes(argv[0])+1);
   if( z==0 ) return;
   strcpy(z, sqlite3_value_text(argv[0]));
   for(i=0; z[i]; i++){
-    if( islower(z[i]) ) z[i] = toupper(z[i]);
+    z[i] = toupper(z[i]);
   }
   sqlite3_result_text(context, z, -1, SQLITE_TRANSIENT);
   sqliteFree(z);
 }
 static void lowerFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
-  char *z;
+  unsigned char *z;
   int i;
   if( argc<1 || SQLITE_NULL==sqlite3_value_type(argv[0]) ) return;
   z = sqliteMalloc(sqlite3_value_bytes(argv[0])+1);
   if( z==0 ) return;
   strcpy(z, sqlite3_value_text(argv[0]));
   for(i=0; z[i]; i++){
-    if( isupper(z[i]) ) z[i] = tolower(z[i]);
+    z[i] = tolower(z[i]);
   }
   sqlite3_result_text(context, z, -1, SQLITE_TRANSIENT);
   sqliteFree(z);
@@ -691,7 +691,7 @@ static void quoteFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
 */
 static void soundexFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
   char zResult[8];
-  const char *zIn;
+  const u8 *zIn;
   int i, j;
   static const unsigned char iCode[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -704,7 +704,7 @@ static void soundexFunc(sqlite3_context *context, int argc, sqlite3_value **argv
     1, 2, 6, 2, 3, 0, 1, 0, 2, 0, 2, 0, 0, 0, 0, 0,
   };
   assert( argc==1 );
-  zIn = sqlite3_value_text(argv[0]);
+  zIn = (u8*)sqlite3_value_text(argv[0]);
   for(i=0; zIn[i] && !isalpha(zIn[i]); i++){}
   if( zIn[i] ){
     zResult[0] = toupper(zIn[i]);
@@ -979,13 +979,16 @@ struct MinMaxCtx {
 ** Routines to implement min() and max() aggregate functions.
 */
 static void minmaxStep(sqlite3_context *context, int argc, sqlite3_value **argv){
-  int max = 0;
-  int cmp = 0;
   Mem *pArg  = (Mem *)argv[0];
-  Mem *pBest = (Mem *)sqlite3_aggregate_context(context, sizeof(*pBest));
+  Mem *pBest;
+
+  if( sqlite3_value_type(argv[0])==SQLITE_NULL ) return;
+  pBest = (Mem *)sqlite3_aggregate_context(context, sizeof(*pBest));
   if( !pBest ) return;
 
   if( pBest->flags ){
+    int max;
+    int cmp;
     CollSeq *pColl = sqlite3GetFuncCollSeq(context);
     /* This step function is used for both the min() and max() aggregates,
     ** the only difference between the two being that the sense of the

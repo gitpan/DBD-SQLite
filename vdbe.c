@@ -43,7 +43,7 @@
 ** in this file for details.  If in doubt, do not deviate from existing
 ** commenting and indentation practices when changing or adding code.
 **
-** $Id: vdbe.c,v 1.24 2004/07/21 20:50:45 matt Exp $
+** $Id: vdbe.c,v 1.25 2004/08/09 13:08:31 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -290,54 +290,43 @@ static Cursor *allocateCursor(Vdbe *p, int iCur){
 **
 */
 static void applyAffinity(Mem *pRec, char affinity, u8 enc){
-  switch( affinity ){
-    case SQLITE_AFF_INTEGER:
-    case SQLITE_AFF_NUMERIC:
-      if( 0==(pRec->flags&(MEM_Real|MEM_Int)) ){
-        /* pRec does not have a valid integer or real representation. 
-        ** Attempt a conversion if pRec has a string representation and
-        ** it looks like a number.
-        */
-        int realnum;
-        sqlite3VdbeMemNulTerminate(pRec);
-        if( pRec->flags&MEM_Str && sqlite3IsNumber(pRec->z, &realnum, enc) ){
-          if( realnum ){
-            Realify(pRec);
-          }else{
-            Integerify(pRec);
-          }
-        }
-      }
-
-      if( affinity==SQLITE_AFF_INTEGER ){
-        /* For INTEGER affinity, try to convert a real value to an int */
-        if( (pRec->flags&MEM_Real) && !(pRec->flags&MEM_Int) ){
-          pRec->i = pRec->r;
-          if( ((double)pRec->i)==pRec->r ){
-            pRec->flags |= MEM_Int;
-          }
-        }
-      }
-      break;
-
-    case SQLITE_AFF_TEXT:
-      /* Only attempt the conversion if there is an integer or real
-      ** representation (blob and NULL do not get converted) but no string
-      ** representation.
+  if( affinity==SQLITE_AFF_NONE ){
+    /* do nothing */
+  }else if( affinity==SQLITE_AFF_TEXT ){
+    /* Only attempt the conversion to TEXT if there is an integer or real
+    ** representation (blob and NULL do not get converted) but no string
+    ** representation.
+    */
+    if( 0==(pRec->flags&MEM_Str) && (pRec->flags&(MEM_Real|MEM_Int)) ){
+      sqlite3VdbeMemStringify(pRec, enc);
+    }
+    pRec->flags &= ~(MEM_Real|MEM_Int);
+  }else{
+    if( 0==(pRec->flags&(MEM_Real|MEM_Int)) ){
+      /* pRec does not have a valid integer or real representation. 
+      ** Attempt a conversion if pRec has a string representation and
+      ** it looks like a number.
       */
-      if( 0==(pRec->flags&MEM_Str) && (pRec->flags&(MEM_Real|MEM_Int)) ){
-        sqlite3VdbeMemStringify(pRec, enc);
+      int realnum;
+      sqlite3VdbeMemNulTerminate(pRec);
+      if( pRec->flags&MEM_Str && sqlite3IsNumber(pRec->z, &realnum, enc) ){
+        if( realnum ){
+          Realify(pRec);
+        }else{
+          Integerify(pRec);
+        }
       }
-      pRec->flags &= ~(MEM_Real|MEM_Int);
+    }
 
-      break;
-
-    case SQLITE_AFF_NONE:
-      /* Affinity NONE. Do nothing. */
-      break;
-
-    default:
-      assert(0);
+    if( affinity==SQLITE_AFF_INTEGER ){
+      /* For INTEGER affinity, try to convert a real value to an int */
+      if( (pRec->flags&MEM_Real) && !(pRec->flags&MEM_Int) ){
+        pRec->i = pRec->r;
+        if( ((double)pRec->i)==pRec->r ){
+          pRec->flags |= MEM_Int;
+        }
+      }
+    }
   }
 }
 
@@ -519,9 +508,19 @@ int sqlite3VdbeExec(
     */
 #ifndef NDEBUG
     if( p->trace ){
+      if( pc==0 ){
+        printf("VDBE Execution Trace:\n");
+        sqlite3VdbePrintSql(p);
+      }
       sqlite3VdbePrintOp(p->trace, pc, pOp);
     }
 #endif
+#ifdef SQLITE_TEST
+    if( p->trace==0 && pc==0 && sqlite3OsFileExists("vdbe_sqltrace") ){
+      sqlite3VdbePrintSql(p);
+    }
+#endif
+      
 
     /* Check to see if we need to simulate an interrupt.  This only happens
     ** if we have a special test build.
@@ -608,11 +607,7 @@ case OP_Goto: {
 ** with a fatal error.
 */
 case OP_Gosub: {
-  if( p->returnDepth>=sizeof(p->returnStack)/sizeof(p->returnStack[0]) ){
-    sqlite3SetString(&p->zErrMsg, "return address stack overflow", (char*)0);
-    p->rc = SQLITE_INTERNAL;
-    return SQLITE_ERROR;
-  }
+  assert( p->returnDepth<sizeof(p->returnStack)/sizeof(p->returnStack[0]) );
   p->returnStack[p->returnDepth++] = pc+1;
   pc = pOp->p2 - 1;
   break;
@@ -625,11 +620,7 @@ case OP_Gosub: {
 ** processing aborts with a fatal error.
 */
 case OP_Return: {
-  if( p->returnDepth<=0 ){
-    sqlite3SetString(&p->zErrMsg, "return address stack underflow", (char*)0);
-    p->rc = SQLITE_INTERNAL;
-    return SQLITE_ERROR;
-  }
+  assert( p->returnDepth>0 );
   p->returnDepth--;
   pc = p->returnStack[p->returnDepth] - 1;
   break;
@@ -658,9 +649,7 @@ case OP_Halt: {
   if( pOp->p1!=SQLITE_OK ){
     p->rc = pOp->p1;
     p->errorAction = pOp->p2;
-    if( pOp->p3 ){
-      sqlite3SetString(&p->zErrMsg, pOp->p3, (char*)0);
-    }
+    sqlite3SetString(&p->zErrMsg, pOp->p3, (char*)0);
     return SQLITE_ERROR;
   }else{
     p->rc = SQLITE_OK;
@@ -813,6 +802,7 @@ case OP_Variable: {
   assert( j>=0 && j<p->nVar );
 
   pTos++;
+  /* sqlite3VdbeMemCopyStatic(pTos, &p->apVar[j]); */
   memcpy(pTos, &p->apVar[j], sizeof(*pTos)-NBFS);
   pTos->xDel = 0;
   if( pTos->flags&(MEM_Str|MEM_Blob) ){
@@ -1297,15 +1287,15 @@ case OP_Function: {
 /* Opcode: ShiftLeft * * *
 **
 ** Pop the top two elements from the stack.  Convert both elements
-** to integers.  Push back onto the stack the top element shifted
-** left by N bits where N is the second element on the stack.
+** to integers.  Push back onto the stack the second element shifted
+** left by N bits where N is the top element on the stack.
 ** If either operand is NULL, the result is NULL.
 */
 /* Opcode: ShiftRight * * *
 **
 ** Pop the top two elements from the stack.  Convert both elements
-** to integers.  Push back onto the stack the top element shifted
-** right by N bits where N is the second element on the stack.
+** to integers.  Push back onto the stack the second element shifted
+** right by N bits where N is the top element on the stack.
 ** If either operand is NULL, the result is NULL.
 */
 case OP_BitAnd:
@@ -1322,8 +1312,8 @@ case OP_ShiftRight: {
     pTos->flags = MEM_Null;
     break;
   }
-  a = sqlite3VdbeIntValue(pTos);
-  b = sqlite3VdbeIntValue(pNos);
+  a = sqlite3VdbeIntValue(pNos);
+  b = sqlite3VdbeIntValue(pTos);
   switch( pOp->opcode ){
     case OP_BitAnd:      a &= b;     break;
     case OP_BitOr:       a |= b;     break;
@@ -1366,8 +1356,8 @@ case OP_AddImm: {
 case OP_ForceInt: {
   int v;
   assert( pTos>=p->aStack );
-  if( (pTos->flags & (MEM_Int|MEM_Real))==0 && ((pTos->flags & MEM_Str)==0 
-      || sqlite3IsNumber(pTos->z, 0, db->enc)==0) ){
+  applyAffinity(pTos, SQLITE_AFF_INTEGER, db->enc);
+  if( (pTos->flags & (MEM_Int|MEM_Real))==0 ){
     Release(pTos);
     pTos--;
     pc = pOp->p2 - 1;
@@ -1400,48 +1390,18 @@ case OP_ForceInt: {
 */
 case OP_MustBeInt: {
   assert( pTos>=p->aStack );
-  if( pTos->flags & MEM_Int ){
-    /* Do nothing */
-  }else if( pTos->flags & MEM_Real ){
-    int i = (int)pTos->r;
-    double r = (double)i;
-    if( r!=pTos->r ){
-      goto mismatch;
+  applyAffinity(pTos, SQLITE_AFF_INTEGER, db->enc);
+  if( (pTos->flags & MEM_Int)==0 ){
+    if( pOp->p2==0 ){
+      rc = SQLITE_MISMATCH;
+      goto abort_due_to_error;
+    }else{
+      if( pOp->p1 ) popStack(&pTos, 1);
+      pc = pOp->p2 - 1;
     }
-    pTos->i = i;
-  }else if( pTos->flags & MEM_Str ){
-    i64 v;
-    if( sqlite3VdbeChangeEncoding(pTos, SQLITE_UTF8)
-       || sqlite3VdbeMemNulTerminate(pTos) ){
-      goto no_mem;
-    }
-    if( !sqlite3atoi64(pTos->z, &v) ){
-      double r;
-      if( !sqlite3IsNumber(pTos->z, 0, SQLITE_UTF8) ){
-        goto mismatch;
-      }
-      Realify(pTos);
-      v = (int)pTos->r;
-      r = (double)v;
-      if( r!=pTos->r ){
-        goto mismatch;
-      }
-    }
-    pTos->i = v;
   }else{
-    goto mismatch;
-  }
-  Release(pTos);
-  pTos->flags = MEM_Int;
-  break;
-
-mismatch:
-  if( pOp->p2==0 ){
-    rc = SQLITE_MISMATCH;
-    goto abort_due_to_error;
-  }else{
-    if( pOp->p1 ) popStack(&pTos, 1);
-    pc = pOp->p2 - 1;
+    Release(pTos);
+    pTos->flags = MEM_Int;
   }
   break;
 }
@@ -1996,7 +1956,9 @@ case OP_Column: {
     zData = sMem.z;
   }
   sqlite3VdbeSerialGet(zData, aType[p2], pTos);
-  sqlite3VdbeMemMakeWriteable(pTos);
+  if( sqlite3VdbeMemMakeWriteable(pTos)==SQLITE_NOMEM ){
+    goto no_mem;
+  }
   pTos->enc = db->enc;
   if( rc!=SQLITE_OK ){
     goto abort_due_to_error;
@@ -2119,11 +2081,6 @@ case OP_MakeRecord: {
   /* Add the initial header varint and total the size */
   nHdr += sqlite3VarintLen(nHdr);
   nByte = nHdr+nData;
-
-  if( nByte>MAX_BYTES_PER_ROW ){
-    rc = SQLITE_TOOBIG;
-    goto abort_due_to_error;
-  }
 
   /* Allocate space for the new record. */
   if( nByte>sizeof(zTemp) ){
@@ -2333,13 +2290,20 @@ case OP_ReadCookie: {
 ** A transaction must be started before executing this opcode.
 */
 case OP_SetCookie: {
+  Db *pDb;
   assert( pOp->p2<SQLITE_N_BTREE_META );
   assert( pOp->p1>=0 && pOp->p1<db->nDb );
-  assert( db->aDb[pOp->p1].pBt!=0 );
+  pDb = &db->aDb[pOp->p1];
+  assert( pDb->pBt!=0 );
   assert( pTos>=p->aStack );
   Integerify(pTos);
   /* See note about index shifting on OP_ReadCookie */
-  rc = sqlite3BtreeUpdateMeta(db->aDb[pOp->p1].pBt, 1+pOp->p2, (int)pTos->i);
+  rc = sqlite3BtreeUpdateMeta(pDb->pBt, 1+pOp->p2, (int)pTos->i);
+  if( pOp->p2==0 ){
+    /* When the schema cookie changes, record the new cookie internally */
+    pDb->schema_cookie = pTos->i;
+    db->flags |= SQLITE_InternChanges;
+  }
   assert( (pTos->flags & MEM_Dyn)==0 );
   pTos--;
   break;
@@ -2363,8 +2327,15 @@ case OP_SetCookie: {
 */
 case OP_VerifyCookie: {
   int iMeta;
+  Btree *pBt;
   assert( pOp->p1>=0 && pOp->p1<db->nDb );
-  rc = sqlite3BtreeGetMeta(db->aDb[pOp->p1].pBt, 1, (u32 *)&iMeta);
+  pBt = db->aDb[pOp->p1].pBt;
+  if( pBt ){
+    rc = sqlite3BtreeGetMeta(pBt, 1, (u32 *)&iMeta);
+  }else{
+    rc = SQLITE_OK;
+    iMeta = 0;
+  }
   if( rc==SQLITE_OK && iMeta!=pOp->p2 ){
     sqlite3SetString(&p->zErrMsg, "database schema has changed", (char*)0);
     rc = SQLITE_SCHEMA;
@@ -2661,9 +2632,8 @@ case OP_MoveGt: {
       if( res<0 ){
         sqlite3BtreeNext(pC->pCursor, &res);
         pC->recnoIsValid = 0;
-        if( res && pOp->p2>0 ){
-          pc = pOp->p2 - 1;
-        }
+      }else{
+        res = 0;
       }
     }else{
       assert( oc==OP_MoveLt || oc==OP_MoveLe );
@@ -2676,8 +2646,12 @@ case OP_MoveGt: {
         */
         res = sqlite3BtreeEof(pC->pCursor);
       }
-      if( res && pOp->p2>0 ){
+    }
+    if( res ){
+      if( pOp->p2>0 ){
         pc = pOp->p2 - 1;
+      }else{
+        pC->nullRow = 1;
       }
     }
   }
@@ -3710,16 +3684,11 @@ case OP_Clear: {
   break;
 }
 
-/* Opcode: CreateTable * P2 P3
+/* Opcode: CreateTable P1 * *
 **
 ** Allocate a new table in the main database file if P2==0 or in the
 ** auxiliary database file if P2==1.  Push the page number
 ** for the root page of the new table onto the stack.
-**
-** The root page number is also written to a memory location that P3
-** points to.  This is the mechanism is used to write the root page
-** number into the parser's internal data structures that describe the
-** new table.
 **
 ** The difference between a table and an index is this:  A table must
 ** have a 4-byte integer key and can have arbitrary data.  An index
@@ -3727,7 +3696,7 @@ case OP_Clear: {
 **
 ** See also: CreateIndex
 */
-/* Opcode: CreateIndex * P2 P3
+/* Opcode: CreateIndex P1 * *
 **
 ** Allocate a new index in the main database file if P2==0 or in the
 ** auxiliary database file if P2==1.  Push the page number of the
@@ -3739,27 +3708,96 @@ case OP_CreateIndex:
 case OP_CreateTable: {
   int pgno;
   int flags;
-  assert( pOp->p3!=0 && pOp->p3type==P3_POINTER );
-  assert( pOp->p2>=0 && pOp->p2<db->nDb );
-  assert( db->aDb[pOp->p2].pBt!=0 );
+  Db *pDb;
+  assert( pOp->p1>=0 && pOp->p1<db->nDb );
+  pDb = &db->aDb[pOp->p1];
+  assert( pDb->pBt!=0 );
   if( pOp->opcode==OP_CreateTable ){
     /* flags = BTREE_INTKEY; */
     flags = BTREE_LEAFDATA|BTREE_INTKEY;
   }else{
     flags = BTREE_ZERODATA;
   }
-  rc = sqlite3BtreeCreateTable(db->aDb[pOp->p2].pBt, &pgno, flags);
+  rc = sqlite3BtreeCreateTable(pDb->pBt, &pgno, flags);
   pTos++;
   if( rc==SQLITE_OK ){
     pTos->i = pgno;
     pTos->flags = MEM_Int;
-    *(u32*)pOp->p3 = pgno;
-    pOp->p3 = 0;
   }else{
     pTos->flags = MEM_Null;
   }
   break;
 }
+
+/* Opcode: ParseSchema P1 * P3
+**
+** Read and parse all entries from the SQLITE_MASTER table of database P1
+** that match the WHERE clause P3.
+**
+** This opcode invokes the parser to create a new virtual machine,
+** then runs the new virtual machine.  It is thus a reentrant opcode.
+*/
+case OP_ParseSchema: {
+  char *zSql;
+  int iDb = pOp->p1;
+  const char *zMaster;
+  InitData initData;
+
+  assert( iDb>=0 && iDb<db->nDb );
+  if( !DbHasProperty(db, iDb, DB_SchemaLoaded) ) break;
+  zMaster = iDb==1 ? TEMP_MASTER_NAME : MASTER_NAME;
+  initData.db = db;
+  initData.pzErrMsg = &p->zErrMsg;
+  zSql = sqlite3MPrintf(
+     "SELECT name, rootpage, sql, %d FROM '%q'.%s WHERE %s",
+     pOp->p1, db->aDb[iDb].zName, zMaster, pOp->p3);
+  if( zSql==0 ) goto no_mem;
+  sqlite3SafetyOff(db);
+  assert( db->init.busy==0 );
+  db->init.busy = 1;
+  rc = sqlite3_exec(db, zSql, sqlite3InitCallback, &initData, 0);
+  db->init.busy = 0;
+  sqlite3SafetyOn(db);
+  sqliteFree(zSql);
+  break;  
+}
+
+/* Opcode: DropTable P1 * P3
+**
+** Remove the internal (in-memory) data structures that describe
+** the table named P3 in database P1.  This is called after a table
+** is dropped in order to keep the internal representation of the
+** schema consistent with what is on disk.
+*/
+case OP_DropTable: {
+  sqlite3UnlinkAndDeleteTable(db, pOp->p1, pOp->p3);
+  break;
+}
+
+/* Opcode: DropIndex P1 * P3
+**
+** Remove the internal (in-memory) data structures that describe
+** the index named P3 in database P1.  This is called after an index
+** is dropped in order to keep the internal representation of the
+** schema consistent with what is on disk.
+*/
+case OP_DropIndex: {
+  sqlite3UnlinkAndDeleteIndex(db, pOp->p1, pOp->p3);
+  break;
+}
+
+/* Opcode: DropTrigger P1 * P3
+**
+** Remove the internal (in-memory) data structures that describe
+** the trigger named P3 in database P1.  This is called after a trigger
+** is dropped in order to keep the internal representation of the
+** schema consistent with what is on disk.
+*/
+case OP_DropTrigger: {
+  sqlite3UnlinkAndDeleteTrigger(db, pOp->p1, pOp->p3);
+  break;
+}
+
 
 /* Opcode: IntegrityCk * P2 *
 **

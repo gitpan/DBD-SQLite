@@ -40,9 +40,10 @@ WriteMakefile(
     'PREREQ_PM'     => {DBI => 1.21}, # e.g., Module::Name => 1.1
     'OBJECT'        => '$(O_FILES)',
     'INC'           => '-I$(DBI_INSTARCH_DIR)',
-    'OPTIMIZE'      => "-O2 -DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}",
+    'OPTIMIZE'      => "-O6 -DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}",
     'clean'         => { FILES => 'SQLite.xsi config.h' },
     'PL_FILES'      => {},
+    'EXE_FILES'     => [],
 );
 
 package MY;

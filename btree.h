@@ -13,7 +13,7 @@
 ** subsystem.  See comments in the source code for a detailed description
 ** of what each interface routine does.
 **
-** @(#) $Id: btree.h,v 1.23 2004/07/21 20:50:42 matt Exp $
+** @(#) $Id: btree.h,v 1.24 2004/08/09 13:08:30 matt Exp $
 */
 #ifndef _BTREE_H_
 #define _BTREE_H_
@@ -31,11 +31,9 @@ typedef struct BtCursor BtCursor;
 
 
 int sqlite3BtreeOpen(
-  const char *zFilename, 
-  Btree **, 
-  int nCache, 
-  int flags,
-  void *pBusyHandler
+  const char *zFilename,   /* Name of database file to open */
+  Btree **,                /* Return open Btree* here */
+  int flags                /* Flags */
 );
 
 /* The flags parameter to sqlite3BtreeOpen can be the bitwise or of the
@@ -45,8 +43,12 @@ int sqlite3BtreeOpen(
 #define BTREE_MEMORY        2  /* In-memory DB.  No argument */
 
 int sqlite3BtreeClose(Btree*);
+int sqlite3BtreeSetBusyHandler(Btree*,BusyHandler*);
 int sqlite3BtreeSetCacheSize(Btree*,int);
 int sqlite3BtreeSetSafetyLevel(Btree*,int);
+int sqlite3BtreeSetPageSize(Btree*,int,int);
+int sqlite3BtreeGetPageSize(Btree*);
+int sqlite3BtreeGetReserve(Btree*);
 int sqlite3BtreeBeginTrans(Btree*,int);
 int sqlite3BtreeCommit(Btree*);
 int sqlite3BtreeRollback(Btree*);
@@ -113,7 +115,7 @@ struct Pager *sqlite3BtreePager(Btree*);
 
 
 #ifdef SQLITE_TEST
-int sqlite3BtreeCursorInfo(BtCursor*, int*);
+int sqlite3BtreeCursorInfo(BtCursor*, int*, int);
 void sqlite3BtreeCursorList(Btree*);
 int sqlite3BtreePageDump(Btree*, int, int recursive);
 #endif

@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: legacy.c,v 1.1 2004/07/21 20:50:42 matt Exp $
+** $Id: legacy.c,v 1.2 2004/08/09 13:08:30 matt Exp $
 */
 
 #include "sqliteInt.h"
@@ -108,7 +108,7 @@ int sqlite3_exec(
         if( rc!=SQLITE_SCHEMA ){
           nRetry = 0;
           zSql = zLeftover;
-          while( isspace(zSql[0]) ) zSql++;
+          while( isspace((unsigned char)zSql[0]) ) zSql++;
         }
         break;
       }
@@ -122,6 +122,9 @@ exec_out:
   if( pStmt ) sqlite3_finalize(pStmt);
   if( azCols ) sqliteFree(azCols);
 
+  if( sqlite3_malloc_failed ){
+    rc = SQLITE_NOMEM;
+  }
   if( rc!=SQLITE_OK && rc==sqlite3_errcode(db) && pzErrMsg ){
     *pzErrMsg = malloc(1+strlen(sqlite3_errmsg(db)));
     if( *pzErrMsg ){

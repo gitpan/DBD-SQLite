@@ -1,10 +1,10 @@
 use Test;
-BEGIN { plan tests => 25 }
+BEGIN { plan tests => 27 }
 use DBI;
 my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "", { });
 ok($dbh);
 $dbh->{PrintError} = 0;
-$dbh->do("drop table meta$_") for 1..4;
+$dbh->do("drop table meta$_") for 1..5;
 $dbh->{PrintError} = 1;
 ok $dbh->do("create table meta1 (f1 varchar(2) PRIMARY KEY, f2 char(1))");
 ok $dbh->do("create table meta2 (f1 varchar(2), f2 char(1), PRIMARY KEY (f1))");
@@ -46,3 +46,7 @@ print "# Types: @$types\n";
 print "# Names: @$names\n";
 ok($types->[0] eq 'varchar(2)');
 ok($types->[1] eq 'char(1)');
+
+ok $dbh->do("create table meta5 ( f1 integer PRIMARY KEY )");
+@pk = $dbh->primary_key(undef, undef, 'meta5');
+ok($pk[0] eq 'f1');

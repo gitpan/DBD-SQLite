@@ -61,7 +61,7 @@
 */
 #include "os_common.h"
 
-#if defined(THREADSAFE) && defined(__linux__)
+#if defined(THREADSAFE) && THREADSAFE && defined(__linux__)
 #define getpid pthread_self
 #endif
 
@@ -433,6 +433,11 @@ int sqlite3OsOpenReadWrite(
   id->dirfd = -1;
   id->h = open(zFilename, O_RDWR|O_CREAT|O_LARGEFILE|O_BINARY, 0644);
   if( id->h<0 ){
+#ifdef EISDIR
+    if( errno==EISDIR ){
+      return SQLITE_CANTOPEN;
+    }
+#endif
     id->h = open(zFilename, O_RDONLY|O_LARGEFILE|O_BINARY);
     if( id->h<0 ){
       return SQLITE_CANTOPEN; 
@@ -612,7 +617,7 @@ int sqlite3OsRead(OsFile *id, void *pBuf, int amt){
   TIMER_START;
   got = read(id->h, pBuf, amt);
   TIMER_END;
-  TRACE4("READ    %-3d %7d %d\n", id->h, last_page, elapse);
+  TRACE4("READ    %-3d %7d %d\n", id->h, last_page, TIMER_ELAPSED);
   SEEK(0);
   /* if( got<0 ) got = 0; */
   if( got==amt ){
@@ -636,7 +641,7 @@ int sqlite3OsWrite(OsFile *id, const void *pBuf, int amt){
     pBuf = &((char*)pBuf)[wrote];
   }
   TIMER_END;
-  TRACE4("WRITE   %-3d %7d %d\n", id->h, last_page, elapse);
+  TRACE4("WRITE   %-3d %7d %d\n", id->h, last_page, TIMER_ELAPSED);
   SEEK(0);
   if( amt>0 ){
     return SQLITE_FULL;
@@ -655,6 +660,22 @@ int sqlite3OsSeek(OsFile *id, off_t offset){
 }
 
 /*
+** The fsync() system call does not work as advertised on many
+** unix systems.  The following procedure is an attempt to make
+** it work better.
+*/
+static int full_fsync(int fd){
+  int rc;
+#ifdef F_FULLFSYNC
+  rc = fcntl(fd, F_FULLFSYNC, 0);
+  if( rc ) rc = fsync(fd);
+#else
+  rc = fsync(fd);
+#endif
+  return rc;
+}
+
+/*
 ** Make sure all writes to a particular file are committed to disk.
 **
 ** Under Unix, also make sure that the directory entry for the file
@@ -669,12 +690,12 @@ int sqlite3OsSync(OsFile *id){
   assert( id->isOpen );
   SimulateIOError(SQLITE_IOERR);
   TRACE2("SYNC    %-3d\n", id->h);
-  if( fsync(id->h) ){
+  if( full_fsync(id->h) ){
     return SQLITE_IOERR;
   }
   if( id->dirfd>=0 ){
     TRACE2("DIRSYNC %-3d\n", id->dirfd);
-    fsync(id->dirfd);
+    full_fsync(id->dirfd);
     close(id->dirfd);  /* Only need to sync once, so close the directory */
     id->dirfd = -1;    /* when we are done. */
   }

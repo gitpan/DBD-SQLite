@@ -16,7 +16,7 @@
 ** sqlite3RegisterDateTimeFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: date.c,v 1.4 2004/07/21 20:50:42 matt Exp $
+** $Id: date.c,v 1.5 2004/08/09 13:08:30 matt Exp $
 **
 ** NOTES:
 **
@@ -104,7 +104,7 @@ static int getDigits(const char *zDate, ...){
     pVal = va_arg(ap, int*);
     val = 0;
     while( N-- ){
-      if( !isdigit(*zDate) ){
+      if( !isdigit(*(u8*)zDate) ){
         return cnt;
       }
       val = val*10 + *zDate - '0';
@@ -145,7 +145,7 @@ static int getValue(const char *z, double *pR){
 static int parseTimezone(const char *zDate, DateTime *p){
   int sgn = 0;
   int nHr, nMn;
-  while( isspace(*zDate) ){ zDate++; }
+  while( isspace(*(u8*)zDate) ){ zDate++; }
   p->tz = 0;
   if( *zDate=='-' ){
     sgn = -1;
@@ -160,7 +160,7 @@ static int parseTimezone(const char *zDate, DateTime *p){
   }
   zDate += 5;
   p->tz = sgn*(nMn + nHr*60);
-  while( isspace(*zDate) ){ zDate++; }
+  while( isspace(*(u8*)zDate) ){ zDate++; }
   return *zDate!=0;
 }
 
@@ -184,10 +184,10 @@ static int parseHhMmSs(const char *zDate, DateTime *p){
       return 1;
     }
     zDate += 2;
-    if( *zDate=='.' && isdigit(zDate[1]) ){
+    if( *zDate=='.' && isdigit((u8)zDate[1]) ){
       double rScale = 1.0;
       zDate++;
-      while( isdigit(*zDate) ){
+      while( isdigit(*(u8*)zDate) ){
         ms = ms*10.0 + *zDate - '0';
         rScale *= 10.0;
         zDate++;
@@ -272,7 +272,7 @@ static int parseYyyyMmDd(const char *zDate, DateTime *p){
     return 1;
   }
   zDate += 10;
-  while( isspace(*zDate) ){ zDate++; }
+  while( isspace(*(u8*)zDate) ){ zDate++; }
   if( parseHhMmSs(zDate, p)==0 ){
     /* We got the time */
   }else if( *zDate==0 ){
@@ -575,7 +575,7 @@ static int parseModifier(const char *zMod, DateTime *p){
         const char *z2 = z;
         DateTime tx;
         int day;
-        if( !isdigit(*z2) ) z2++;
+        if( !isdigit(*(u8*)z2) ) z2++;
         memset(&tx, 0, sizeof(tx));
         if( parseHhMmSs(z2, &tx) ) break;
         computeJD(&tx);
@@ -590,7 +590,7 @@ static int parseModifier(const char *zMod, DateTime *p){
         break;
       }
       z += n;
-      while( isspace(z[0]) ) z++;
+      while( isspace(*(u8*)z) ) z++;
       n = strlen(z);
       if( n>10 || n<3 ) break;
       if( z[n-1]=='s' ){ z[n-1] = 0; n--; }
@@ -822,18 +822,20 @@ static void strftimeFunc(
         case 'H':  sprintf(&z[j],"%02d",x.h); j+=2; break;
         case 'W': /* Fall thru */
         case 'j': {
-          int n;
+          int n;             /* Number of days since 1st day of year */
           DateTime y = x;
           y.validJD = 0;
           y.M = 1;
           y.D = 1;
           computeJD(&y);
-          n = x.rJD - y.rJD + 1;
+          n = x.rJD - y.rJD;
           if( zFmt[i]=='W' ){
-            sprintf(&z[j],"%02d",(n+6)/7);
+            int wd;   /* 0=Monday, 1=Tuesday, ... 6=Sunday */
+            wd = ((int)(x.rJD+0.5)) % 7;
+            sprintf(&z[j],"%02d",(n+7-wd)/7);
             j += 2;
           }else{
-            sprintf(&z[j],"%03d",n);
+            sprintf(&z[j],"%03d",n+1);
             j += 3;
           }
           break;
@@ -869,18 +871,17 @@ static void strftimeFunc(
 ** external linkage.
 */
 void sqlite3RegisterDateTimeFunctions(sqlite *db){
+#ifndef SQLITE_OMIT_DATETIME_FUNCS
   static struct {
      char *zName;
      int nArg;
      void (*xFunc)(sqlite3_context*,int,sqlite3_value**);
   } aFuncs[] = {
-#ifndef SQLITE_OMIT_DATETIME_FUNCS
     { "julianday", -1, juliandayFunc   },
     { "date",      -1, dateFunc        },
     { "time",      -1, timeFunc        },
     { "datetime",  -1, datetimeFunc    },
     { "strftime",  -1, strftimeFunc    },
-#endif
   };
   int i;
 
@@ -888,4 +889,5 @@ void sqlite3RegisterDateTimeFunctions(sqlite *db){
     sqlite3_create_function(db, aFuncs[i].zName, aFuncs[i].nArg,
         SQLITE_UTF8, 0, aFuncs[i].xFunc, 0, 0);
   }
+#endif
 }

@@ -391,12 +391,6 @@ const void *sqlite3_column_decltype16(sqlite3_stmt *pStmt, int N){
   return sqlite3_value_text16(pColName);
 }
 
-int sqlite3_bind_count( sqlite3_stmt *pStmt )
-{
-  Vdbe *p = (Vdbe *)pStmt;
-  return p->nVar;
-}
-
 /******************************* sqlite3_bind_  ***************************
 ** 
 ** Routines used to attach values to wildcards in a compiled SQL statement.
@@ -442,7 +436,7 @@ int sqlite3_bind_blob(
   int rc;
 
   rc = vdbeUnbind(p, i);
-  if( rc ){
+  if( rc || zData==0 ){
     return rc;
   }
   pVar = &p->apVar[i-1];
@@ -485,7 +479,7 @@ int sqlite3_bind_text(
   int rc;
 
   rc = vdbeUnbind(p, i);
-  if( rc ){
+  if( rc || zData==0 ){
     return rc;
   }
   pVar = &p->apVar[i-1];
@@ -508,7 +502,7 @@ int sqlite3_bind_text16(
   int rc;
 
   rc = vdbeUnbind(p, i);
-  if( rc ){
+  if( rc || zData==0 ){
     return rc;
   }
   pVar = &p->apVar[i-1];
@@ -519,4 +513,14 @@ int sqlite3_bind_text16(
   }
   rc = sqlite3VdbeChangeEncoding(pVar, p->db->enc);
   return rc;
+}
+
+/*
+** Return the number of wildcards that can be potentially bound to.
+** This routine is added to support DBD::SQLite.  
+**
+******** EXPERIMENTAL *******
+*/
+int sqlite3_bind_parameter_count(sqlite3_stmt *pStmt){
+  return ((Vdbe*)pStmt)->nVar;
 }

@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle SELECT statements in SQLite.
 **
-** $Id: select.c,v 1.23 2004/07/21 20:50:44 matt Exp $
+** $Id: select.c,v 1.24 2004/08/09 13:08:31 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -321,6 +321,30 @@ static void pushOntoSorter(Parse *pParse, Vdbe *v, ExprList *pOrderBy){
 }
 
 /*
+** Add code to implement the OFFSET and LIMIT
+*/
+static void codeLimiter(
+  Vdbe *v,          /* Generate code into this VM */
+  Select *p,        /* The SELECT statement being coded */
+  int iContinue,    /* Jump here to skip the current record */
+  int iBreak,       /* Jump here to end the loop */
+  int nPop          /* Number of times to pop stack when jumping */
+){
+  if( p->iOffset>=0 ){
+    int addr = sqlite3VdbeCurrentAddr(v) + 2;
+    if( nPop>0 ) addr++;
+    sqlite3VdbeAddOp(v, OP_MemIncr, p->iOffset, addr);
+    if( nPop>0 ){
+      sqlite3VdbeAddOp(v, OP_Pop, nPop, 0);
+    }
+    sqlite3VdbeAddOp(v, OP_Goto, 0, iContinue);
+  }
+  if( p->iLimit>=0 ){
+    sqlite3VdbeAddOp(v, OP_MemIncr, p->iLimit, iBreak);
+  }
+}
+
+/*
 ** This routine generates the code for the inside of the inner loop
 ** of a SELECT.
 **
@@ -345,6 +369,7 @@ static int selectInnerLoop(
 ){
   Vdbe *v = pParse->pVdbe;
   int i;
+  int hasDistinct;        /* True if the DISTINCT keyword is present */
 
   if( v==0 ) return 0;
   assert( pEList!=0 );
@@ -352,15 +377,9 @@ static int selectInnerLoop(
   /* If there was a LIMIT clause on the SELECT statement, then do the check
   ** to see if this row should be output.
   */
-  if( pOrderBy==0 ){
-    if( p->iOffset>=0 ){
-      int addr = sqlite3VdbeCurrentAddr(v);
-      sqlite3VdbeAddOp(v, OP_MemIncr, p->iOffset, addr+2);
-      sqlite3VdbeAddOp(v, OP_Goto, 0, iContinue);
-    }
-    if( p->iLimit>=0 ){
-      sqlite3VdbeAddOp(v, OP_MemIncr, p->iLimit, iBreak);
-    }
+  hasDistinct = distinct>=0 && pEList && pEList->nExpr>0;
+  if( pOrderBy==0 && !hasDistinct ){
+    codeLimiter(v, p, iContinue, iBreak, 0);
   }
 
   /* Pull the requested columns.
@@ -380,7 +399,7 @@ static int selectInnerLoop(
   ** and this row has been seen before, then do not make this row
   ** part of the result.
   */
-  if( distinct>=0 && pEList && pEList->nExpr>0 ){
+  if( hasDistinct ){
 #if NULL_ALWAYS_DISTINCT
     sqlite3VdbeAddOp(v, OP_IsNull, -pEList->nExpr, sqlite3VdbeCurrentAddr(v)+7);
 #endif
@@ -392,6 +411,9 @@ static int selectInnerLoop(
     sqlite3VdbeAddOp(v, OP_Goto, 0, iContinue);
     sqlite3VdbeAddOp(v, OP_String8, 0, 0);
     sqlite3VdbeAddOp(v, OP_PutStrKey, distinct, 0);
+    if( pOrderBy==0 ){
+      codeLimiter(v, p, iContinue, iBreak, nColumn);
+    }
   }
 
   switch( eDest ){
@@ -559,14 +581,7 @@ static void generateSortTail(
   }
   sqlite3VdbeOp3(v, OP_Sort, 0, 0, (char*)pInfo, P3_KEYINFO_HANDOFF);
   addr = sqlite3VdbeAddOp(v, OP_SortNext, 0, end1);
-  if( p->iOffset>=0 ){
-    sqlite3VdbeAddOp(v, OP_MemIncr, p->iOffset, addr+4);
-    sqlite3VdbeAddOp(v, OP_Pop, 1, 0);
-    sqlite3VdbeAddOp(v, OP_Goto, 0, addr);
-  }
-  if( p->iLimit>=0 ){
-    sqlite3VdbeAddOp(v, OP_MemIncr, p->iLimit, end2);
-  }
+  codeLimiter(v, p, addr, end2, 1);
   switch( eDest ){
     case SRT_Table:
     case SRT_TempTable: {
@@ -830,6 +845,7 @@ Table *sqlite3ResultSetOfSelect(Parse *pParse, char *zTabName, Select *pSelect){
       sprintf(zBuf, "column%d", i+1);
       pTab->aCol[i].zName = sqliteStrDup(zBuf);
     }
+    sqlite3Dequote(aCol[i].zName);
 
     zType = sqliteStrDup(columnType(pParse, pSelect->pSrc ,p));
     pTab->aCol[i].zType = zType;
@@ -972,11 +988,11 @@ static int fillInColumnList(Parse *pParse, Select *p){
         /* This expression is a "*" or a "TABLE.*" and needs to be
         ** expanded. */
         int tableSeen = 0;      /* Set to 1 when TABLE matches */
-        Token *pName;           /* text of name of TABLE */
+        char *zTName;            /* text of name of TABLE */
         if( pE->op==TK_DOT && pE->pLeft ){
-          pName = &pE->pLeft->token;
+          zTName = sqlite3NameFromToken(&pE->pLeft->token);
         }else{
-          pName = 0;
+          zTName = 0;
         }
         for(i=0; i<pTabList->nSrc; i++){
           Table *pTab = pTabList->a[i].pTab;
@@ -984,9 +1000,8 @@ static int fillInColumnList(Parse *pParse, Select *p){
           if( zTabName==0 || zTabName[0]==0 ){ 
             zTabName = pTab->zName;
           }
-          if( pName && (zTabName==0 || zTabName[0]==0 || 
-                 sqlite3StrNICmp(pName->z, zTabName, pName->n)!=0 ||
-                 zTabName[pName->n]!=0) ){
+          if( zTName && (zTabName==0 || zTabName[0]==0 || 
+                 sqlite3StrICmp(zTName, zTabName)!=0) ){
             continue;
           }
           tableSeen = 1;
@@ -1031,13 +1046,14 @@ static int fillInColumnList(Parse *pParse, Select *p){
           }
         }
         if( !tableSeen ){
-          if( pName ){
-            sqlite3ErrorMsg(pParse, "no such table: %T", pName);
+          if( zTName ){
+            sqlite3ErrorMsg(pParse, "no such table: %s", zTName);
           }else{
             sqlite3ErrorMsg(pParse, "no tables specified");
           }
           rc = 1;
         }
+        sqliteFree(zTName);
       }
     }
     sqlite3ExprListDelete(pEList);
@@ -2075,6 +2091,11 @@ static int simpleMinMaxQuery(Parse *pParse, Select *p, int eDest, int iParm){
     sqlite3VdbeAddOp(v, OP_Integer, pIdx->iDb, 0);
     sqlite3VdbeOp3(v, OP_OpenRead, base+1, pIdx->tnum,
                    (char*)&pIdx->keyInfo, P3_KEYINFO);
+    if( seekOp==OP_Rewind ){
+      sqlite3VdbeAddOp(v, OP_String, 0, 0);
+      sqlite3VdbeAddOp(v, OP_MakeRecord, 1, 0);
+      seekOp = OP_MoveGt;
+    }
     sqlite3VdbeAddOp(v, seekOp, base+1, 0);
     sqlite3VdbeAddOp(v, OP_IdxRecno, base+1, 0);
     sqlite3VdbeAddOp(v, OP_Close, base+1, 0);
@@ -2221,7 +2242,6 @@ int sqlite3Select(
     case SRT_Union:
     case SRT_Except:
     case SRT_Discard:
-    case SRT_Set:
       pOrderBy = 0;
       break;
     default:

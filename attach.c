@@ -11,7 +11,7 @@
 *************************************************************************
 ** This file contains code used to implement the ATTACH and DETACH commands.
 **
-** $Id: attach.c,v 1.8 2004/07/21 20:50:42 matt Exp $
+** $Id: attach.c,v 1.9 2004/08/09 13:08:29 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -23,7 +23,13 @@
 ** The pFilename and pDbname arguments are the tokens that define the
 ** filename and dbname in the ATTACH statement.
 */
-void sqlite3Attach(Parse *pParse, Token *pFilename, Token *pDbname, Token *pKey){
+void sqlite3Attach(
+  Parse *pParse,       /* The parser context */
+  Token *pFilename,    /* Name of database file */
+  Token *pDbname,      /* Name of the database to use internally */
+  int keyType,         /* 0: no key.  1: TEXT,  2: BLOB */
+  Token *pKey          /* Text of the key for keytype 2 and 3 */
+){
   Db *aNew;
   int rc, i;
   char *zFile, *zName;
@@ -92,24 +98,36 @@ void sqlite3Attach(Parse *pParse, Token *pFilename, Token *pDbname, Token *pKey)
   }
 #if SQLITE_HAS_CODEC
   {
-    extern int sqliteCodecAttach(sqlite*, int, void*, int);
-    char *zKey = 0;
+    extern int sqlite3CodecAttach(sqlite3*, int, void*, int);
+    char *zKey;
     int nKey;
-    if( pKey && pKey->z && pKey->n ){
-      sqlite3SetNString(&zKey, pKey->z, pKey->n, 0);
-      sqlite3Dequote(zKey);
+    if( keyType==0 ){
+      /* No key specified.  Use the key from the main database */
+      extern void sqlite3CodecGetKey(sqlite3*, int, void**, int*);
+      sqlite3CodecGetKey(db, 0, (void**)&zKey, &nKey);
+    }else if( keyType==1 ){
+      /* Key specified as text */
+      zKey = sqlite3NameFromToken(pKey);
       nKey = strlen(zKey);
     }else{
-      zKey = 0;
-      nKey = 0;
+      /* Key specified as a BLOB */
+      char *zTemp;
+      assert( keyType==2 );
+      pKey->z++;
+      pKey->n--;
+      zTemp = sqlite3NameFromToken(pKey);
+      zKey = sqlite3HexToBlob(zTemp);
+      sqliteFree(zTemp);
     }
-    sqliteCodecAttach(db, db->nDb-1, zKey, nKey);
+    sqlite3CodecAttach(db, db->nDb-1, zKey, nKey);
+    if( keyType ){
+      sqliteFree(zKey);
+    }
   }
 #endif
   sqliteFree(zFile);
   db->flags &= ~SQLITE_Initialized;
-  if( pParse->nErr ) return;
-  if( rc==SQLITE_OK ){
+  if( pParse->nErr==0 && rc==SQLITE_OK ){
     rc = sqlite3ReadSchema(pParse);
   }
   if( rc ){
@@ -171,14 +189,7 @@ void sqlite3Detach(Parse *pParse, Token *pDbname){
 #endif /* SQLITE_OMIT_AUTHORIZATION */
   sqlite3BtreeClose(pDb->pBt);
   pDb->pBt = 0;
-  sqliteFree(pDb->zName);
-  sqlite3ResetInternalSchema(db, i);
-  db->nDb--;
-  if( i<db->nDb ){
-    db->aDb[i] = db->aDb[db->nDb];
-    memset(&db->aDb[db->nDb], 0, sizeof(db->aDb[0]));
-    sqlite3ResetInternalSchema(db, i);
-  }
+  sqlite3ResetInternalSchema(db, 0);
 }
 
 /*

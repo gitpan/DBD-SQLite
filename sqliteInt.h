@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.25 2004/07/21 20:50:44 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.26 2004/08/09 13:08:31 matt Exp $
 */
 #ifndef _SQLITEINT_H_
 #define _SQLITEINT_H_
@@ -99,6 +99,9 @@
 #ifndef UINT16_TYPE
 # define UINT16_TYPE unsigned short int
 #endif
+#ifndef INT16_TYPE
+# define INT16_TYPE short int
+#endif
 #ifndef UINT8_TYPE
 # define UINT8_TYPE unsigned char
 #endif
@@ -115,14 +118,22 @@
 #   define INTPTR_TYPE sqlite_int64
 # endif
 #endif
+#ifndef UINTPTR_TYPE
+# if SQLITE_PTR_SZ==4
+#   define UINTPTR_TYPE unsigned int
+# else
+#   define UINTPTR_TYPE sqlite_uint64
+# endif
+#endif
 typedef sqlite_int64 i64;          /* 8-byte signed integer */
 typedef UINT64_TYPE u64;           /* 8-byte unsigned integer */
 typedef UINT32_TYPE u32;           /* 4-byte unsigned integer */
 typedef UINT16_TYPE u16;           /* 2-byte unsigned integer */
+typedef INT16_TYPE i16;            /* 2-byte signed integer */
 typedef UINT8_TYPE u8;             /* 1-byte unsigned integer */
 typedef UINT8_TYPE i8;             /* 1-byte signed integer */
 typedef INTPTR_TYPE ptr;           /* Big enough to hold a pointer */
-typedef unsigned INTPTR_TYPE uptr; /* Big enough to hold a pointer */
+typedef UINTPTR_TYPE uptr;         /* Big enough to hold a pointer */
 
 /*
 ** Macros to determine whether the machine is big or little endian,
@@ -135,7 +146,23 @@ extern const int sqlite3one;
 typedef struct sqlite sqlite;
 
 /*
-** Defer sourcing vdbe.h until after the "u8" typedef is defined.
+** An instance of the following structure is used to store the busy-handler
+** callback for a given sqlite handle. 
+**
+** The sqlite.busyHandler member of the sqlite struct contains the busy
+** callback for the database handle. Each pager opened via the sqlite
+** handle is passed a pointer to sqlite.busyHandler. The busy-handler
+** callback is currently invoked only from within pager.c.
+*/
+typedef struct BusyHandler BusyHandler;
+struct BusyHandler {
+  int (*xFunc)(void *,int);  /* The busy callback */
+  void *pArg;                /* First arg to busy callback */
+};
+
+/*
+** Defer sourcing vdbe.h and btree.h until after the "u8" and 
+** "BusyHandler typedefs.
 */
 #include "vdbe.h"
 #include "btree.h"
@@ -145,18 +172,6 @@ typedef struct sqlite sqlite;
 ** pointer arithmetic.
 */
 #define Addr(X)  ((uptr)X)
-
-/*
-** The maximum number of bytes of data that can be put into a single
-** row of a single table.  The upper bound on this limit is
-** 9223372036854775808 bytes (or 2**63).  We have arbitrarily set the
-** limit to just 1MB here because the overflow page chain is inefficient
-** for really big records and we want to discourage people from thinking that 
-** multi-megabyte records are OK.  If your needs are different, you can
-** change this define and recompile to increase or decrease the record
-** size.
-*/
-#define MAX_BYTES_PER_ROW  1048576
 
 /*
 ** If memory allocation problems are found, recompile with
@@ -258,7 +273,6 @@ typedef struct AuthContext AuthContext;
 typedef struct KeyClass KeyClass;
 typedef struct CollSeq CollSeq;
 typedef struct KeyInfo KeyInfo;
-typedef struct BusyHandler BusyHandler;
 
 /*
 ** Each database file to be accessed by the system is an instance
@@ -275,8 +289,8 @@ struct Db {
   Hash idxHash;        /* All (named) indices indexed by name */
   Hash trigHash;       /* All triggers indexed by name */
   Hash aFKey;          /* Foreign keys indexed by to-table */
-  u8 inTrans;          /* 0: not writable.  1: Transaction.  2: Checkpoint */
   u16 flags;           /* Flags associated with this database */
+  u8 inTrans;          /* 0: not writable.  1: Transaction.  2: Checkpoint */
   u8 safety_level;     /* How aggressive at synching data to disk */
   int cache_size;      /* Number of pages to use in the cache */
   void *pAux;          /* Auxiliary data.  Usually NULL */
@@ -306,20 +320,6 @@ struct Db {
 #define DB_UnresetViews    0x0002  /* Some views have defined column names */
 
 #define SQLITE_UTF16NATIVE (SQLITE_BIGENDIAN?SQLITE_UTF16BE:SQLITE_UTF16LE)
-
-/*
-** An instance of the following structure is used to store the busy-handler
-** callback for a given sqlite handle. 
-**
-** The sqlite.busyHandler member of the sqlite struct contains the busy
-** callback for the database handle. Each pager opened via the sqlite
-** handle is passed a pointer to sqlite.busyHandler. The busy-handler
-** callback is currently invoked only from within pager.c.
-*/
-struct BusyHandler {
-  int (*xFunc)(void *,int);  /* The busy callback */
-  void *pArg;                /* First arg to busy callback */
-};
 
 /*
 ** Each database is an instance of the following structure.
@@ -353,6 +353,7 @@ struct sqlite {
   Db aDbStatic[2];              /* Static space for the 2 default backends */
   int flags;                    /* Miscellanous flags. See below */
   u8 file_format;               /* What file format version is this database? */
+  u8 temp_store;                /* 1: file 2: memory 0: default */
   int nTable;                   /* Number of tables in the database */
   BusyHandler busyHandler;      /* Busy callback */
   void *pCommitArg;             /* Argument to xCommitCallback() */   
@@ -460,7 +461,6 @@ struct Column {
   u8 notNull;      /* True if there is a NOT NULL constraint */
   u8 isPrimKey;    /* True if this column is part of the PRIMARY KEY */
   char affinity;   /* One of the SQLITE_AFF_... values */
-  u8 dottedName;   /* True if zName contains a "." character */
 };
 
 /*
@@ -700,9 +700,9 @@ struct Index {
 ** and Token.n when Token.z==0.
 */
 struct Token {
-  const char *z;      /* Text of the token.  Not NULL-terminated! */
-  unsigned dyn  : 1;  /* True for malloced memory, false for static */
-  unsigned n    : 31; /* Number of characters in this token */
+  const unsigned char *z; /* Text of the token.  Not NULL-terminated! */
+  unsigned dyn  : 1;      /* True for malloced memory, false for static */
+  unsigned n    : 31;     /* Number of characters in this token */
 };
 
 /*
@@ -830,8 +830,8 @@ struct IdList {
 ** now be identified by a database name, a dot, then the table name: ID.ID.
 */
 struct SrcList {
-  u16 nSrc;        /* Number of tables or subqueries in the FROM clause */
-  u16 nAlloc;      /* Number of entries allocated in a[] below */
+  i16 nSrc;        /* Number of tables or subqueries in the FROM clause */
+  i16 nAlloc;      /* Number of entries allocated in a[] below */
   struct SrcList_item {
     char *zDatabase;  /* Name of database holding this table */
     char *zName;      /* Name of the table */
@@ -978,6 +978,7 @@ struct Parse {
   Token sErrToken;     /* The token at which the error occurred */
   Token sNameToken;    /* Token with unqualified schema object name */
   Token sLastToken;    /* The last token parsed */
+  const char *zSql;    /* All SQL text */
   const char *zTail;   /* All SQL text past the last semicolon parsed */
   Table *pNewTable;    /* A table being constructed by CREATE TABLE */
   Vdbe *pVdbe;         /* An engine for executing database bytecode */
@@ -1155,6 +1156,16 @@ struct DbFixer {
 };
 
 /*
+** A pointer to this structure is used to communicate information
+** from sqlite3Init and OP_ParseSchema into the sqlite3InitCallback.
+*/
+typedef struct {
+  sqlite *db;         /* The database being initialized */
+  char **pzErrMsg;    /* Error message stored here */
+} InitData;
+
+
+/*
  * This global flag is set for performance testing of triggers. When it is set
  * SQLite will perform the overhead of building new and old trigger references 
  * even when no triggers exist
@@ -1205,6 +1216,7 @@ void sqlite3ExprDelete(Expr*);
 ExprList *sqlite3ExprListAppend(ExprList*,Expr*,Token*);
 void sqlite3ExprListDelete(ExprList*);
 int sqlite3Init(sqlite*, char**);
+int sqlite3InitCallback(void*, int, char**, char**);
 void sqlite3Pragma(Parse*,Token*,Token*,Token*,int);
 void sqlite3ResetInternalSchema(sqlite*, int);
 void sqlite3BeginParse(Parse*,int);
@@ -1255,7 +1267,9 @@ void sqlite3ExprIfFalse(Parse*, Expr*, int, int);
 Table *sqlite3FindTable(sqlite*,const char*, const char*);
 Table *sqlite3LocateTable(Parse*,const char*, const char*);
 Index *sqlite3FindIndex(sqlite*,const char*, const char*);
-void sqlite3UnlinkAndDeleteIndex(sqlite*,Index*);
+void sqlite3UnlinkAndDeleteTable(sqlite*,int,const char*);
+void sqlite3UnlinkAndDeleteIndex(sqlite*,int,const char*);
+void sqlite3UnlinkAndDeleteTrigger(sqlite*,int,const char*);
 void sqlite3Vacuum(Parse*, Token*);
 int sqlite3RunVacuum(char**, sqlite*);
 int sqlite3GlobCompare(const unsigned char*,const unsigned char*);
@@ -1325,10 +1339,10 @@ void sqlite3DeferForeignKey(Parse*, int);
 # define sqlite3AuthContextPush(a,b,c)
 # define sqlite3AuthContextPop(a)  ((void)(a))
 #endif
-void sqlite3Attach(Parse*, Token*, Token*, Token*);
+void sqlite3Attach(Parse*, Token*, Token*, int, Token*);
 void sqlite3Detach(Parse*, Token*);
 int sqlite3BtreeFactory(const sqlite *db, const char *zFilename,
-                       int mode, int nPg, Btree **ppBtree);
+                       int omitJournal, int nCache, Btree **ppBtree);
 int sqlite3FixInit(DbFixer*, Parse*, int, const char*, const Token*);
 int sqlite3FixSrcList(DbFixer*, SrcList*);
 int sqlite3FixSelect(DbFixer*, Select*);

@@ -1,5 +1,19 @@
 Revision history for Perl extension DBD::SQLite.
 
+1.03
+    - Update to sqlite 3.0.4
+    - More bug fixes
+    - Don't hang forever when db is BUSY
+    - Make trace macro work where vararg macros don't
+
+1.02
+    - Cleanup docs
+    - More bug fixes
+
+1.01
+    - Bug fixes
+    - Implement get_info
+
 1.00
     - Port to sqlite3 API
     - Support bind types SQL_BLOB, SQL_NUMBER, SQL_TEXT etc

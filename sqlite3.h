@@ -12,7 +12,7 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite3.h,v 1.1 2004/07/21 20:50:44 matt Exp $
+** @(#) $Id: sqlite3.h,v 1.2 2004/08/09 13:08:31 matt Exp $
 */
 #ifndef _SQLITE_H_
 #define _SQLITE_H_
@@ -28,7 +28,7 @@ extern "C" {
 /*
 ** The version of the SQLite library.
 */
-#define SQLITE_VERSION         "3.0.2"
+#define SQLITE_VERSION         "3.0.4"
 
 /*
 ** The version string is also compiled into the library so that a program
@@ -51,8 +51,10 @@ typedef struct sqlite sqlite3;
 */
 #if defined(_MSC_VER) || defined(__BORLANDC__)
   typedef __int64 sqlite_int64;
+  typedef unsigned __int64 sqlite_uint64;
 #else
   typedef long long int sqlite_int64;
+  typedef unsigned long long int sqlite_uint64;
 #endif
 
 
@@ -362,7 +364,9 @@ void sqlite3_free_table(char **result);
 char *sqlite3_mprintf(const char*,...);
 char *sqlite3_vmprintf(const char*, va_list);
 void sqlite3_free(char *z);
+char *sqlite3_snprintf(int,char*,const char*, ...);
 
+#ifndef SQLITE_OMIT_AUTHORIZATION
 /*
 ** This routine registers a callback with the SQLite library.  The
 ** callback is invoked (at compile-time, not at run-time) for each
@@ -376,6 +380,7 @@ int sqlite3_set_authorizer(
   int (*xAuth)(void*,int,const char*,const char*,const char*,const char*),
   void *pUserData
 );
+#endif
 
 /*
 ** The second parameter to the access authorization function above will
@@ -603,16 +608,18 @@ typedef struct Mem sqlite3_value;
 ** index of the wildcard.  The first "?" has an index of 1.  ":N:" wildcards
 ** use the index N.
 **
-** When the eCopy parameter is true, a copy of the value is made into
-** memory obtained and managed by SQLite.  When eCopy is false, SQLite
-** assumes that the value is a constant and just stores a pointer to the
-** value without making a copy.
+** The fifth parameter to sqlite3_bind_blob(), sqlite3_bind_text(), and
+** sqlite3_bind_text16() is a destructor used to dispose of the BLOB or
+** text after SQLite has finished with it.  If the fifth argument is the
+** special value SQLITE_STATIC, then the library assumes that the information
+** is in static, unmanaged space and does not need to be freed.  If the
+** fifth argument has the value SQLITE_TRANSIENT, then SQLite makes its
+** own private copy of the data.
 **
 ** The sqlite3_bind_* routine must be called before sqlite3_step() after
 ** an sqlite3_prepare() or sqlite3_reset().  Unbound wildcards are interpreted
 ** as NULL.
 */
-int sqlite3_bind_count(sqlite3_stmt*);
 int sqlite3_bind_blob(sqlite3_stmt*, int, const void*, int n, void(*)(void*));
 int sqlite3_bind_double(sqlite3_stmt*, int, double);
 int sqlite3_bind_int(sqlite3_stmt*, int, int);
@@ -621,6 +628,14 @@ int sqlite3_bind_null(sqlite3_stmt*, int);
 int sqlite3_bind_text(sqlite3_stmt*, int, const char*, int n, void(*)(void*));
 int sqlite3_bind_text16(sqlite3_stmt*, int, const void*, int, void(*)(void*));
 int sqlite3_bind_value(sqlite3_stmt*, int, const sqlite3_value*);
+
+/*
+** Return the number of wildcards in a compiled SQL statement.  This
+** routine was added to support DBD::SQLite.
+**
+**** EXPERIMENTAL *****
+*/
+int sqlite3_bind_parameter_count(sqlite3_stmt*);
 
 /*
 ** Return the number of columns in the result set returned by the compiled
@@ -1075,6 +1090,30 @@ int sqlite3_collation_needed16(
   void(*)(void*,sqlite3*,int eTextRep,const void*)
 );
 
+/*
+** Specify the key for an encrypted database.  This routine should be
+** called right after sqlite3_open().
+**
+** The code to implement this API is not available in the public release
+** of SQLite.
+*/
+int sqlite3_key(
+  sqlite3 *db,                   /* Database to be rekeyed */
+  const void *pKey, int nKey     /* The key */
+);
+
+/*
+** Change the key on an open database.  If the current database is not
+** encrypted, this routine will encrypt it.  If pNew==0 or nNew==0, the
+** database is decrypted.
+**
+** The code to implement this API is not available in the public release
+** of SQLite.
+*/
+int sqlite3_rekey(
+  sqlite3 *db,                   /* Database to be rekeyed */
+  const void *pKey, int nKey     /* The new key */
+);
 
 #ifdef __cplusplus
 }  /* End of the 'extern "C"' block */
