@@ -12,7 +12,7 @@
 ** This is the implementation of generic hash-tables
 ** used in SQLite.
 **
-** $Id: hash.c,v 1.18 2003/03/04 07:51:43 matt Exp $
+** $Id: hash.c,v 1.20 2003/07/31 14:37:21 matt Exp $
 */
 #include "sqliteInt.h"
 #include <assert.h>
@@ -108,8 +108,7 @@ static int binHash(const void *pKey, int nKey){
   while( nKey-- > 0 ){
     h = (h<<3) ^ h ^ *(z++);
   }
-  if( h<0 ) h = -h;
-  return h;
+  return h & 0x7fffffff;
 }
 static int binCompare(const void *pKey1, int n1, const void *pKey2, int n2){
   if( n1!=n2 ) return n2-n1;

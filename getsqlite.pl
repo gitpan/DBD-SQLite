@@ -1,6 +1,7 @@
 use strict;
 use LWP::Simple qw(getstore);
 use Fatal qw(chdir);
+use ExtUtils::Command;
 
 my $version = shift || die "Usage: getsqlite.pl <version>\n";
 
@@ -12,14 +13,18 @@ if (getstore(
 }
 print("done\n");
 
-xsystem("rm -fR sqlite");
+rm_rf('sqlite');
 xsystem("tar zxvf sqlite.tar.gz");
 chdir("sqlite");
 xsystem("sh configure --enable-utf8");
 xsystem("make parse.c sqlite.h opcodes.h opcodes.c");
 
-while (<DATA>) {
+my %skip = map { $_ => 1 } map { chomp; $_ } <DATA>;
+warn("Skip: $_\n") for keys %skip;
+
+foreach (<*.[ch]>, `find src -name \\*.[ch]`) {
     chomp;
+    next if $skip{$_};
     xsystem("cp $_ ../");
 }
 
@@ -35,35 +40,13 @@ sub xsystem {
 }
 
 __DATA__
-parse.c
-parse.h
-sqlite.h
-opcodes.h
-opcodes.c
-src/auth.c
-src/btree.h
-src/btree.c
-src/build.c
-src/delete.c
-src/expr.c
-src/func.c
-src/hash.c
-src/hash.h
-src/insert.c
-src/main.c
-src/os.c
-src/os.h
-src/pager.c
-src/pager.h
-src/printf.c
-src/random.c
-src/select.c
-src/sqliteInt.h
-src/table.c
-src/trigger.c
-src/tokenize.c
-src/update.c
-src/util.c
-src/vdbe.c
-src/vdbe.h
-src/where.c
+lempar.c
+src/threadtest.c
+src/test1.c
+src/test2.c
+src/test3.c
+src/tclsqlite.c
+src/shell.c
+src/lemon.c
+src/md5.c
+

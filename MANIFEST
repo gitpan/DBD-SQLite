@@ -5,13 +5,17 @@ Makefile.PL
 README
 SQLite.xs
 SQLiteXS.h
+attach.c
 auth.c
 btree.c
 btree.h
+btree_rb.c
 build.c
+copy.c
 dbdimp.c
 dbdimp.h
 delete.c
+encode.c
 expr.c
 func.c
 getsqlite.pl
@@ -28,6 +32,7 @@ pager.c
 pager.h
 parse.c
 parse.h
+pragma.c
 printf.c
 random.c
 select.c
@@ -40,6 +45,8 @@ t/03insert.t
 t/04select.t
 t/05tran.t
 t/06error.t
+t/08create_function.t
+t/09create_aggregate.t
 t/10dsnlist.t
 t/20createdrop.t
 t/30insertfetch.t
@@ -60,6 +67,7 @@ tokenize.c
 trigger.c
 update.c
 util.c
+vacuum.c
 vdbe.c
 vdbe.h
 where.c

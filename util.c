@@ -14,7 +14,7 @@
 ** This file contains functions for allocating memory, comparing
 ** strings, and stuff like that.
 **
-** $Id: util.c,v 1.16 2003/03/04 07:51:44 matt Exp $
+** $Id: util.c,v 1.18 2003/07/31 14:37:22 matt Exp $
 */
 #include "sqliteInt.h"
 #include <stdarg.h>
@@ -317,7 +317,8 @@ char *sqliteStrNDup(const char *z, int n){
 ** Create a string from the 2nd and subsequent arguments (up to the
 ** first NULL argument), store the string in memory obtained from
 ** sqliteMalloc() and make the pointer indicated by the 1st argument
-** point to that string.
+** point to that string.  The 1st argument must either be NULL or 
+** point to memory obtained from sqliteMalloc().
 */
 void sqliteSetString(char **pz, const char *zFirst, ...){
   va_list ap;
@@ -355,7 +356,9 @@ void sqliteSetString(char **pz, const char *zFirst, ...){
 /*
 ** Works like sqliteSetString, but each string is now followed by
 ** a length integer which specifies how much of the source string 
-** to copy (in bytes).  -1 means use the whole string.
+** to copy (in bytes).  -1 means use the whole string.  The 1st 
+** argument must either be NULL or point to memory obtained from 
+** sqliteMalloc().
 */
 void sqliteSetNString(char **pz, ...){
   va_list ap;
@@ -390,6 +393,134 @@ void sqliteSetNString(char **pz, ...){
 #endif
 #endif
   va_end(ap);
+}
+
+/*
+** Add an error message to pParse->zErrMsg and increment pParse->nErr.
+** The following formatting characters are allowed:
+**
+**      %s      Insert a string
+**      %z      A string that should be freed after use
+**      %d      Insert an integer
+**      %T      Insert a token
+**      %S      Insert the first element of a SrcList
+*/
+void sqliteErrorMsg(Parse *pParse, const char *zFormat, ...){
+  va_list ap;
+  int nByte;
+  int i, j;
+  char *z;
+  static char zNull[] = "NULL";
+
+  pParse->nErr++;
+  nByte = 1 + strlen(zFormat);
+  va_start(ap, zFormat);
+  for(i=0; zFormat[i]; i++){
+    if( zFormat[i]!='%' || zFormat[i+1]==0 ) continue;
+    i++;
+    switch( zFormat[i] ){
+      case 'd': {
+        (void)va_arg(ap, int);
+        nByte += 20;
+        break;
+      }
+      case 'z':
+      case 's': {
+        char *z2 = va_arg(ap, char*);
+        if( z2==0 ) z2 = zNull;
+        nByte += strlen(z2);
+        break;
+      }
+      case 'T': {
+        Token *p = va_arg(ap, Token*);
+        nByte += p->n;
+        break;
+      }
+      case 'S': {
+        SrcList *p = va_arg(ap, SrcList*);
+        int k = va_arg(ap, int);
+        assert( p->nSrc>k && k>=0 );
+        nByte += strlen(p->a[k].zName);
+        if( p->a[k].zDatabase && p->a[k].zDatabase[0] ){
+          nByte += strlen(p->a[k].zDatabase)+1;
+        }
+        break;
+      }
+      default: {
+        nByte++;
+        break;
+      }
+    }
+  }
+  va_end(ap);
+  z = sqliteMalloc( nByte );
+  if( z==0 ) return;
+  sqliteFree(pParse->zErrMsg);
+  pParse->zErrMsg = z;
+  va_start(ap, zFormat);
+  for(i=j=0; zFormat[i]; i++){
+    if( zFormat[i]!='%' || zFormat[i+1]==0 ) continue;
+    if( i>j ){
+      memcpy(z, &zFormat[j], i-j);
+      z += i-j;
+    }
+    j = i+2;
+    i++;
+    switch( zFormat[i] ){
+      case 'd': {
+        int x = va_arg(ap, int);
+        sprintf(z, "%d", x);
+        z += strlen(z);
+        break;
+      }
+      case 'z':
+      case 's': {
+        int len;
+        char *z2 = va_arg(ap, char*);
+        if( z2==0 ) z2 = zNull;
+        len = strlen(z2);
+        memcpy(z, z2, len);
+        z += len;
+        if( zFormat[i]=='z' && z2!=zNull ){
+          sqliteFree(z2);
+        }
+        break;
+      }
+      case 'T': {
+        Token *p = va_arg(ap, Token*);
+        memcpy(z, p->z, p->n);
+        z += p->n;
+        break;
+      }
+      case 'S': {
+        int len;
+        SrcList *p = va_arg(ap, SrcList*);
+        int k = va_arg(ap, int);
+        assert( p->nSrc>k && k>=0 );
+        if( p->a[k].zDatabase && p->a[k].zDatabase[0] ){
+          len = strlen(p->a[k].zDatabase);
+          memcpy(z, p->a[k].zDatabase, len);
+          z += len;
+          *(z++) = '.';
+        }
+        len = strlen(p->a[k].zName);
+        memcpy(z, p->a[k].zName, len);
+        z += len;
+        break;
+      }
+      default: {
+        *(z++) = zFormat[i];
+        break;
+      }
+    }
+  }
+  va_end(ap);
+  if( i>j ){
+    memcpy(z, &zFormat[j], i-j);
+    z += i-j;
+  }
+  assert( (z - pParse->zErrMsg) < nByte );
+  *z = 0;
 }
 
 /*
@@ -460,8 +591,7 @@ int sqliteHashNoCase(const char *z, int n){
     h = (h<<3) ^ h ^ UpperToLower[(unsigned char)*z++];
     n--;
   }
-  if( h<0 ) h = -h;
-  return h;
+  return h & 0x7fffffff;
 }
 
 /*
@@ -483,198 +613,16 @@ int sqliteStrNICmp(const char *zLeft, const char *zRight, int N){
   return N<0 ? 0 : *a - *b;
 }
 
-#if 0  /* NOT USED */
-/* 
-** The sortStrCmp() function below is used to order elements according
-** to the ORDER BY clause of a SELECT.  The sort order is a little different
-** from what one might expect.  This note attempts to describe what is
-** going on.
-**
-** We want the main string comparision function used for sorting to
-** sort both numbers and alphanumeric words into the correct sequence.
-** The same routine should do both without prior knowledge of which
-** type of text the input represents.  It should even work for strings
-** which are a mixture of text and numbers.  (It does not work for
-** numeric substrings in exponential notation, however.)
-**
-** To accomplish this, we keep track of a state number while scanning
-** the two strings.  The states are as follows:
-**
-**    1      Beginning of word
-**    2      Arbitrary text
-**    3      Integer
-**    4      Negative integer
-**    5      Real number
-**    6      Negative real
-**
-** The scan begins in state 1, beginning of word.  Transitions to other
-** states are determined by characters seen, as shown in the following
-** chart:
-**
-**      Current State         Character Seen  New State
-**      --------------------  --------------  -------------------
-**      0 Beginning of word   "-"             3 Negative integer
-**                            digit           2 Integer
-**                            space           0 Beginning of word
-**                            otherwise       1 Arbitrary text
-**
-**      1 Arbitrary text      space           0 Beginning of word
-**                            digit           2 Integer
-**                            otherwise       1 Arbitrary text
-**
-**      2 Integer             space           0 Beginning of word
-**                            "."             4 Real number
-**                            digit           2 Integer
-**                            otherwise       1 Arbitrary text
-**
-**      3 Negative integer    space           0 Beginning of word
-**                            "."             5 Negative Real num
-**                            digit           3 Negative integer
-**                            otherwise       1 Arbitrary text
-**
-**      4 Real number         space           0 Beginning of word
-**                            digit           4 Real number
-**                            otherwise       1 Arbitrary text
-**
-**      5 Negative real num   space           0 Beginning of word
-**                            digit           5 Negative real num
-**                            otherwise       1 Arbitrary text
-**
-** To implement this state machine, we first classify each character
-** into on of the following categories:
-**
-**      0  Text
-**      1  Space
-**      2  Digit
-**      3  "-"
-**      4  "."
-**
-** Given an arbitrary character, the array charClass[] maps that character
-** into one of the atove categories.
-*/
-static const unsigned char charClass[] = {
-        /* x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 xA xB xC xD xE xF */
-/* 0x */   0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0,
-/* 1x */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 2x */   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 4, 0,
-/* 3x */   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0,
-/* 4x */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 5x */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 6x */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 7x */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 8x */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 9x */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* Ax */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* Bx */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* Cx */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* Dx */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* Ex */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* Fx */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-};
-#define N_CHAR_CLASS 5
-
-/*
-** Given the current state number (0 thru 5), this array figures
-** the new state number given the character class.
-*/
-static const unsigned char stateMachine[] = {
- /* Text,  Space, Digit, "-", "." */
-      1,      0,    2,    3,   1,      /* State 0: Beginning of word */
-      1,      0,    2,    1,   1,      /* State 1: Arbitrary text */
-      1,      0,    2,    1,   4,      /* State 2: Integer */
-      1,      0,    3,    1,   5,      /* State 3: Negative integer */
-      1,      0,    4,    1,   1,      /* State 4: Real number */
-      1,      0,    5,    1,   1,      /* State 5: Negative real num */
-};
-
-/* This routine does a comparison of two strings.  Case is used only
-** if useCase!=0.  Numeric substrings compare in numerical order for the
-** most part but this routine does not understand exponential notation.
-*/
-static int sortStrCmp(const char *atext, const char *btext, int useCase){
-  register unsigned char *a, *b, *map, ca, cb;
-  int result;
-  register int cclass = 0;
-
-  a = (unsigned char *)atext;
-  b = (unsigned char *)btext;
-  if( useCase ){
-    do{
-      if( (ca= *a++)!=(cb= *b++) ) break;
-      cclass = stateMachine[cclass*N_CHAR_CLASS + charClass[ca]];
-    }while( ca!=0 );
-  }else{
-    map = UpperToLower;
-    do{
-      if( (ca=map[*a++])!=(cb=map[*b++]) ) break;
-      cclass = stateMachine[cclass*N_CHAR_CLASS + charClass[ca]];
-    }while( ca!=0 );
-    if( ca>='[' && ca<='`' ) cb = b[-1];
-    if( cb>='[' && cb<='`' ) ca = a[-1];
-  }
-  switch( cclass ){
-    case 0:
-    case 1: {
-      if( isdigit(ca) && isdigit(cb) ){
-        cclass = 2;
-      }
-      break;
-    }
-    default: {
-      break;
-    }
-  }
-  switch( cclass ){
-    case 2:
-    case 3: {
-      if( isdigit(ca) ){
-        if( isdigit(cb) ){
-          int acnt, bcnt;
-          acnt = bcnt = 0;
-          while( isdigit(*a++) ) acnt++;
-          while( isdigit(*b++) ) bcnt++;
-          result = acnt - bcnt;
-          if( result==0 ) result = ca-cb;
-        }else{
-          result = 1;
-        }
-      }else if( isdigit(cb) ){
-        result = -1;
-      }else if( ca=='.' ){
-        result = 1;
-      }else if( cb=='.' ){
-        result = -1;
-      }else{
-        result = ca - cb;
-        cclass = 2;
-      }
-      if( cclass==3 ) result = -result;
-      break;
-    }
-    case 0:
-    case 1:
-    case 4: {
-      result = ca - cb;
-      break;
-    }
-    case 5: {
-      result = cb - ca;
-    };
-  }
-  return result;
-}
-#endif /* NOT USED */
-
 /*
 ** Return TRUE if z is a pure numeric string.  Return FALSE if the
 ** string contains any character which is not part of a number.
 **
-** Am empty string is considered numeric.
+** Am empty string is considered non-numeric.
 */
-static int sqliteIsNumber(const char *z){
+int sqliteIsNumber(const char *z){
   if( *z=='-' || *z=='+' ) z++;
   if( !isdigit(*z) ){
-    return *z==0;
+    return 0;
   }
   z++;
   while( isdigit(*z) ){ z++; }
@@ -682,12 +630,12 @@ static int sqliteIsNumber(const char *z){
     z++;
     if( !isdigit(*z) ) return 0;
     while( isdigit(*z) ){ z++; }
-    if( *z=='e' || *z=='E' ){
-      z++;
-      if( *z=='+' || *z=='-' ) z++;
-      if( !isdigit(*z) ) return 0;
-      while( isdigit(*z) ){ z++; }
-    }
+  }
+  if( *z=='e' || *z=='E' ){
+    z++;
+    if( *z=='+' || *z=='-' ) z++;
+    if( !isdigit(*z) ) return 0;
+    while( isdigit(*z) ){ z++; }
   }
   return *z==0;
 }
@@ -780,7 +728,6 @@ int sqliteCompare(const char *atext, const char *btext){
 ** 2.6.3 and earlier.
 */
 int sqliteSortCompare(const char *a, const char *b){
-  int len;
   int res = 0;
   int isNumA, isNumB;
   int dir = 0;
@@ -832,9 +779,8 @@ int sqliteSortCompare(const char *a, const char *b){
         if( res ) break;
       }
     }
-    len = strlen(&a[1]) + 2;
-    a += len;
-    b += len;
+    a += strlen(&a[1]) + 2;
+    b += strlen(&b[1]) + 2;
   }
   if( dir=='-' || dir=='D' ) res = -res;
   return res;

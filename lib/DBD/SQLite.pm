@@ -1,4 +1,4 @@
-# $Id: SQLite.pm,v 1.29 2003/03/06 19:47:08 matt Exp $
+# $Id: SQLite.pm,v 1.33 2003/07/31 15:11:46 matt Exp $
 
 package DBD::SQLite;
 use strict;
@@ -6,7 +6,7 @@ use strict;
 use DBI;
 
 use vars qw($err $errstr $state $drh $VERSION @ISA);
-$VERSION = '0.25';
+$VERSION = '0.26';
 
 use DynaLoader();
 @ISA = ('DynaLoader');
@@ -298,6 +298,11 @@ easier to move things around than with DBD::CSV.
 
 Yes, DBD::SQLite is small and light, but it supports full transactions!
 
+=item Extensible
+
+User-defined aggregate or regular functions can be registered with the
+SQL parser.
+
 =back
 
 There's lots more to it, so please refer to the docs on the SQLite web
@@ -326,6 +331,17 @@ Returns the version of the SQLite library which DBD::SQLite is using, e.g., "2.8
 
 Returns either "UTF-8" or "iso8859" to indicate how the SQLite library was compiled.
 
+=item sqlite_handle_binary_nulls
+
+Set this attribute to 1 to transparently handle binary nulls in quoted
+and returned data.
+
+B<NOTE:> This will cause all backslash characters (C<\>) to be doubled
+up in all columns regardless of whether or not they contain binary
+data or not. This may break your database if you use it from another
+application. This does not use the built in sqlite_encode_binary
+and sqlite_decode_binary functions, which may be considered a bug.
+
 =back
 
 =head1 DRIVER PRIVATE METHODS
@@ -335,6 +351,133 @@ Returns either "UTF-8" or "iso8859" to indicate how the SQLite library was compi
 This method returns the last inserted rowid. If you specify an INTEGER PRIMARY
 KEY as the first column in your table, that is the column that is returned.
 Otherwise, it is the hidden ROWID column. See the sqlite docs for details.
+
+=head2 $dbh->func( $name, $argc, $func_ref, "create_function" )
+
+This method will register a new function which will be useable in SQL
+query. The method's parameters are:
+
+=over
+
+=item $name
+
+The name of the function. This is the name of the function as it will
+be used from SQL.
+
+=item $argc
+
+The number of arguments taken by the function. If this number is -1,
+the function can take any number of arguments.
+
+=item $func_ref
+
+This should be a reference to the function's implementation.
+
+=back
+
+For example, here is how to define a now() function which returns the
+current number of seconds since the epoch:
+
+    $dbh->func( 'now', 0, sub { return time }, 'create_function' );
+
+After this, it could be use from SQL as:
+
+    INSERT INTO mytable ( now() );
+
+=head2 $dbh->func( $name, $argc, $obj, 'create_aggregate' )
+
+This method will register a new aggregate function which can then used
+from SQL. The method's parameters are:
+
+=over
+
+=item $name
+
+The name of the aggregate function, this is the name under which the
+function will be available from SQL.
+
+=item $argc
+
+This is an integer which tells the SQL parser how many arguments the
+function takes. If that number is -1, the function can take any number
+of arguments.
+
+=item $obj
+
+This is the object which implements the aggregator interface.
+
+=back
+
+The aggregator interface consists of defining three methods:
+
+=over
+
+=item init()
+
+This method will be called once before any values are seen.
+
+=item step(@_)
+
+This method will be called once for each rows in the aggregate.
+
+=item finalize()
+
+This method will be called once all rows in the aggregate were
+processed and it should return the aggregate function's result. When
+there is no rows in the aggregate, finalize() will be called right
+after init().
+
+=back
+
+Here is a simple aggregate function which returns the variance
+(example adapted from pysqlite):
+
+    package variance;
+
+    sub new { bless [], shift; }
+
+    sub init {
+        my $self = $_[0];
+
+        @$self = ();
+    }
+
+    sub step {
+        my ( $self, $value ) = @_;
+
+        push @$self, $value;
+    }
+
+    sub finalize {
+        my $self = $_[0];
+
+        my $n = @$self;
+
+        # Variance is NULL unless there is more than one row
+        return undef unless $n || $n == 1;
+
+        my $mu = 0;
+        foreach my $v ( @$self ) {
+            $mu += $v;
+        }
+        $mu /= $n;
+
+        my $sigma = 0;
+        foreach my $v ( @$self ) {
+            $sigma += ($x - $mu)**2;
+        }
+        $sigma = $sigma / ($n - 1);
+
+        return $sigma;
+    }
+
+    my $aggr = new variance();
+    $dbh->func( "variance", 1, $aggr, "create_aggregate" );
+
+The aggregate function can then be used as:
+
+    SELECT group_name, variance(score) FROM results
+    GROUP BY group_name;
 
 =head1 NOTES
 
@@ -376,7 +519,7 @@ using linux. Also you might want to set:
 
 Which will prevent sqlite from doing fsync's when writing (which
 slows down non-transactional writes significantly) at the expense of some
-piece of mind. Also try playing with the cache_size pragma.
+peace of mind. Also try playing with the cache_size pragma.
 
 =head1 BUGS
 

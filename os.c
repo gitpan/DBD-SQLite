@@ -31,7 +31,11 @@
 # ifndef O_NOFOLLOW
 #  define O_NOFOLLOW 0
 # endif
+# ifndef O_BINARY
+#  define O_BINARY 0
+# endif
 #endif
+
 
 #if OS_WIN
 # include <winbase.h>
@@ -45,6 +49,16 @@
 # include <Folders.h>
 # include <Timer.h>
 # include <OSUtils.h>
+#endif
+
+/*
+** The DJGPP compiler environment looks mostly like Unix, but it
+** lacks the fcntl() system call.  So redefine fcntl() to be something
+** that always succeeds.  This means that locking does not occur under
+** DJGPP.  But its DOS - what did you expect?
+*/
+#ifdef __DJGPP__
+# define fcntl(A,B,C) 0
 #endif
 
 /*
@@ -93,7 +107,7 @@ static unsigned int elapse;
 **       int fd1 = open("./file1", O_RDWR|O_CREAT, 0644);
 **       int fd2 = open("./file2", O_RDWR|O_CREAT, 0644);
 **
-** Suppose ./file1 and ./file2 are really be the same file (because
+** Suppose ./file1 and ./file2 are really the same file (because
 ** one is a hard or symbolic link to the other) then if you set
 ** an exclusive lock on fd1, then try to get an exclusive lock
 ** on fd2, it works.  I would have expected the second lock to
@@ -268,6 +282,31 @@ int sqliteOsFileExists(const char *zFilename){
 }
 
 
+#if 0 /* NOT USED */
+/*
+** Change the name of an existing file.
+*/
+int sqliteOsFileRename(const char *zOldName, const char *zNewName){
+#if OS_UNIX
+  if( link(zOldName, zNewName) ){
+    return SQLITE_ERROR;
+  }
+  unlink(zOldName);
+  return SQLITE_OK;
+#endif
+#if OS_WIN
+  if( !MoveFile(zOldName, zNewName) ){
+    return SQLITE_ERROR;
+  }
+  return SQLITE_OK;
+#endif
+#if OS_MAC
+  /**** FIX ME ***/
+  return SQLITE_ERROR;
+#endif
+}
+#endif /* NOT USED */
+
 /*
 ** Attempt to open a file for both reading and writing.  If that
 ** fails, try opening it read-only.  If the file does not exist,
@@ -287,9 +326,9 @@ int sqliteOsOpenReadWrite(
   int *pReadonly
 ){
 #if OS_UNIX
-  id->fd = open(zFilename, O_RDWR|O_CREAT|O_LARGEFILE, 0644);
+  id->fd = open(zFilename, O_RDWR|O_CREAT|O_LARGEFILE|O_BINARY, 0644);
   if( id->fd<0 ){
-    id->fd = open(zFilename, O_RDONLY|O_LARGEFILE);
+    id->fd = open(zFilename, O_RDONLY|O_LARGEFILE|O_BINARY);
     if( id->fd<0 ){
       return SQLITE_CANTOPEN; 
     }
@@ -411,7 +450,8 @@ int sqliteOsOpenExclusive(const char *zFilename, OsFile *id, int delFlag){
   if( access(zFilename, 0)==0 ){
     return SQLITE_CANTOPEN;
   }
-  id->fd = open(zFilename, O_RDWR|O_CREAT|O_EXCL|O_NOFOLLOW|O_LARGEFILE, 0600);
+  id->fd = open(zFilename,
+                O_RDWR|O_CREAT|O_EXCL|O_NOFOLLOW|O_LARGEFILE|O_BINARY, 0600);
   if( id->fd<0 ){
     return SQLITE_CANTOPEN;
   }
@@ -496,7 +536,7 @@ int sqliteOsOpenExclusive(const char *zFilename, OsFile *id, int delFlag){
 */
 int sqliteOsOpenReadOnly(const char *zFilename, OsFile *id){
 #if OS_UNIX
-  id->fd = open(zFilename, O_RDONLY|O_LARGEFILE);
+  id->fd = open(zFilename, O_RDONLY|O_LARGEFILE|O_BINARY);
   if( id->fd<0 ){
     return SQLITE_CANTOPEN;
   }
@@ -607,7 +647,7 @@ int sqliteOsTempFileName(char *zBuf){
     sprintf(zBuf, "%s\\"TEMP_FILE_PREFIX, zTempPath);
     j = strlen(zBuf);
     for(i=0; i<15; i++){
-      int n = sqliteRandomByte() % sizeof(zChars);
+      int n = sqliteRandomByte() % (sizeof(zChars) - 1);
       zBuf[j++] = zChars[n];
     }
     zBuf[j] = 0;
@@ -952,6 +992,13 @@ int sqliteOsFileSize(OsFile *id, off_t *pSize){
 /*
 ** Return true (non-zero) if we are running under WinNT, Win2K or WinXP.
 ** Return false (zero) for Win95, Win98, or WinME.
+**
+** Here is an interesting observation:  Win95, Win98, and WinME lack
+** the LockFileEx() API.  But we can still statically link against that
+** API as long as we don't call it win running Win95/98/ME.  A call to
+** this routine is used to determine if the host is Win95/98/ME or
+** WinNT/2K/XP so that we will know whether or not we can safely call
+** the LockFileEx() API.
 */
 int isNT(void){
   static osType = 0;   /* 0=unknown 1=win95 2=winNT */
@@ -966,10 +1013,10 @@ int isNT(void){
 #endif
 
 /*
-** Windows file locking notes:  [the same/equivalent applies to MacOS]
+** Windows file locking notes:  [similar issues apply to MacOS]
 **
-** We cannot use LockFileEx() or UnlockFileEx() because those functions
-** are not available under Win95/98/ME.  So we use only LockFile() and
+** We cannot use LockFileEx() or UnlockFileEx() on Win95/98/ME because
+** those functions are not available.  So we use only LockFile() and
 ** UnlockFile().
 **
 ** LockFile() prevents not just writing but also reading by other processes.
@@ -993,6 +1040,14 @@ int isNT(void){
 ** byte allows us to drop the old write lock and get the read lock without
 ** another process jumping into the middle and messing us up.  The same
 ** argument applies to sqliteOsWriteLock().
+**
+** On WinNT/2K/XP systems, LockFileEx() and UnlockFileEx() are available,
+** which means we can use reader/writer locks.  When reader writer locks
+** are used, the lock is placed on the same range of bytes that is used
+** for probabilistic locking in Win95/98/ME.  Hence, the locking scheme
+** will support two or more Win95 readers or two or more WinNT readers.
+** But a single Win95 reader will lock out all WinNT readers and a single
+** WinNT reader will lock out all other Win95 readers.
 **
 ** Note: On MacOS we use the resource fork for locking.
 **
@@ -1036,7 +1091,7 @@ int sqliteOsReadLock(OsFile *id){
     lock.l_start = lock.l_len = 0L;
     s = fcntl(id->fd, F_SETLK, &lock);
     if( s!=0 ){
-      rc = (s==EINVAL) ? SQLITE_NOLFS : SQLITE_BUSY;
+      rc = (errno==EINVAL) ? SQLITE_NOLFS : SQLITE_BUSY;
     }else{
       rc = SQLITE_OK;
       id->pLock->cnt = 1;
@@ -1056,14 +1111,22 @@ int sqliteOsReadLock(OsFile *id){
     int lk = (sqliteRandomInteger() & 0x7ffffff)%N_LOCKBYTE+1;
     int res;
     int cnt = 100;
-    int page = isNT() ? 0xffffffff : 0;
-    while( cnt-->0 && (res = LockFile(id->h, FIRST_LOCKBYTE, page, 1, 0))==0 ){
+    while( cnt-->0 && (res = LockFile(id->h, FIRST_LOCKBYTE, 0, 1, 0))==0 ){
       Sleep(1);
     }
     if( res ){
-      UnlockFile(id->h, FIRST_LOCKBYTE+1, page, N_LOCKBYTE, 0);
-      res = LockFile(id->h, FIRST_LOCKBYTE+lk, page, 1, 0);
-      UnlockFile(id->h, FIRST_LOCKBYTE, page, 1, 0);
+      UnlockFile(id->h, FIRST_LOCKBYTE+1, 0, N_LOCKBYTE, 0);
+      if( isNT() ){
+        OVERLAPPED ovlp;
+        ovlp.Offset = FIRST_LOCKBYTE+1;
+        ovlp.OffsetHigh = 0;
+        ovlp.hEvent = 0;
+        res = LockFileEx(id->h, LOCKFILE_FAIL_IMMEDIATELY, 
+                          0, N_LOCKBYTE, 0, &ovlp);
+      }else{
+        res = LockFile(id->h, FIRST_LOCKBYTE+lk, 0, 1, 0);
+      }
+      UnlockFile(id->h, FIRST_LOCKBYTE, 0, 1, 0);
     }
     if( res ){
       id->locked = lk;
@@ -1132,7 +1195,7 @@ int sqliteOsWriteLock(OsFile *id){
     lock.l_start = lock.l_len = 0L;
     s = fcntl(id->fd, F_SETLK, &lock);
     if( s!=0 ){
-      rc = (s==EINVAL) ? SQLITE_NOLFS : SQLITE_BUSY;
+      rc = (errno==EINVAL) ? SQLITE_NOLFS : SQLITE_BUSY;
     }else{
       rc = SQLITE_OK;
       id->pLock->cnt = -1;
@@ -1151,18 +1214,23 @@ int sqliteOsWriteLock(OsFile *id){
   }else{
     int res;
     int cnt = 100;
-    int page = isNT() ? 0xffffffff : 0;
-    while( cnt-->0 && (res = LockFile(id->h, FIRST_LOCKBYTE, page, 1, 0))==0 ){
+    while( cnt-->0 && (res = LockFile(id->h, FIRST_LOCKBYTE, 0, 1, 0))==0 ){
       Sleep(1);
     }
     if( res ){
-      if( id->locked==0 
-            || UnlockFile(id->h, FIRST_LOCKBYTE + id->locked, page, 1, 0) ){
-        res = LockFile(id->h, FIRST_LOCKBYTE+1, page, N_LOCKBYTE, 0);
+      if( id->locked>0 ){
+        if( isNT() ){
+          UnlockFile(id->h, FIRST_LOCKBYTE+1, 0, N_LOCKBYTE, 0);
+        }else{
+          res = UnlockFile(id->h, FIRST_LOCKBYTE + id->locked, 0, 1, 0);
+        }
+      }
+      if( res ){
+        res = LockFile(id->h, FIRST_LOCKBYTE+1, 0, N_LOCKBYTE, 0);
       }else{
         res = 0;
       }
-      UnlockFile(id->h, FIRST_LOCKBYTE, page, 1, 0);
+      UnlockFile(id->h, FIRST_LOCKBYTE, 0, 1, 0);
     }
     if( res ){
       id->locked = -1;
@@ -1239,7 +1307,7 @@ int sqliteOsUnlock(OsFile *id){
     lock.l_start = lock.l_len = 0L;
     s = fcntl(id->fd, F_SETLK, &lock);
     if( s!=0 ){
-      rc = (s==EINVAL) ? SQLITE_NOLFS : SQLITE_BUSY;
+      rc = (errno==EINVAL) ? SQLITE_NOLFS : SQLITE_BUSY;
     }else{
       rc = SQLITE_OK;
       id->pLock->cnt = 0;
@@ -1251,15 +1319,14 @@ int sqliteOsUnlock(OsFile *id){
 #endif
 #if OS_WIN
   int rc;
-  int page = isNT() ? 0xffffffff : 0;
   if( id->locked==0 ){
     rc = SQLITE_OK;
-  }else if( id->locked<0 ){
-    UnlockFile(id->h, FIRST_LOCKBYTE+1, page, N_LOCKBYTE, 0);
+  }else if( isNT() || id->locked<0 ){
+    UnlockFile(id->h, FIRST_LOCKBYTE+1, 0, N_LOCKBYTE, 0);
     rc = SQLITE_OK;
     id->locked = 0;
   }else{
-    UnlockFile(id->h, FIRST_LOCKBYTE+id->locked, page, 1, 0);
+    UnlockFile(id->h, FIRST_LOCKBYTE+id->locked, 0, 1, 0);
     rc = SQLITE_OK;
     id->locked = 0;
   }

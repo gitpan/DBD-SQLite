@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.33 2003/03/06 19:38:52 matt Exp $ */
+/* $Id: dbdimp.c,v 1.35 2003/07/31 15:11:46 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -51,6 +51,10 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
 
     imp_dbh->in_tran = FALSE;
     imp_dbh->no_utf8_flag = FALSE;
+    imp_dbh->functions = newAV();
+    imp_dbh->aggregates = newAV();
+    
+    imp_dbh->handle_binary_nulls = FALSE;
 
     sqlite_busy_timeout(imp_dbh->db, SQL_TIMEOUT);
 
@@ -81,6 +85,12 @@ sqlite_db_disconnect (SV *dbh, imp_dbh_t *imp_dbh)
 
     sqlite_close(imp_dbh->db);
     imp_dbh->db = NULL;
+
+    av_undef(imp_dbh->functions);
+    imp_dbh->functions = (AV *)NULL;
+
+    av_undef(imp_dbh->aggregates);
+    imp_dbh->aggregates = (AV *)NULL;
 
     return TRUE;
 }
@@ -224,25 +234,64 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
 char *
 sqlite_quote(imp_dbh_t *imp_dbh, SV *val)
 {
-    char *cval = SvPV_nolen(val);
+    STRLEN len;
+    char *cval = SvPV(val, len);
     SV *ret = sv_2mortal(NEWSV(0, SvCUR(val) + 2));
-    if (strchr(cval, '\'')) {
-        sv_setpvn(ret, "", 0);
+    sv_setpvn(ret, "", 0);
 
-        while (*cval) {
-            if (*cval == '\'') {
-                sv_catpvn(ret, "''", 2);
-            }
-            else {
-                sv_catpvn(ret, cval, 1);
-            }
-            *cval++;
+    while (len) {
+      switch (*cval) {
+        case '\'':
+          sv_catpvn(ret, "''", 2);
+          break;
+        case 0:
+          if (imp_dbh->handle_binary_nulls) {
+            sv_catpvn(ret, "\\0", 2);
+            break;
+          }
+          else {
+            die("attempt to quote binary null without sqlite_handle_binary_nulls on");
+          }
+        case '\\':
+          if (imp_dbh->handle_binary_nulls) {
+            sv_catpvn(ret, "\\\\", 2);
+            break;
+          }
+        default:
+          sv_catpvn(ret, cval, 1);
+      }
+      *cval++; len--;
+    }
+    return SvPV_nolen(ret);
+}
+
+char *
+sqlite_decode(imp_dbh_t *imp_dbh, char *input, size_t *len)
+{
+  char *ret = malloc(*len);
+  char *swit = ret;
+
+  while (*input) {
+    switch (*input) {
+      case '\\':
+        if (imp_dbh->handle_binary_nulls && input[1] && input[1] == '0') {
+          *swit++ = '\0';
+          *input++;
+          (*len)--;
+          break;
         }
-        return SvPV_nolen(ret);
+        else if (imp_dbh->handle_binary_nulls && input[1] && input[1] == '\\') {
+          *swit++ = '\\';
+          *input++;
+          (*len)--;
+          break;
+        }
+      default:
+        *swit++ = *input;
     }
-    else {
-        return cval;
-    }
+    *input++;
+  }
+  return ret;
 }
 
 int
@@ -272,6 +321,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
             sv_catpvn(sql, "'", 1);
             sv_catpv(sql, sqlite_quote(imp_dbh, value));
             sv_catpvn(sql, "'", 1);
+            /* warn("inserting string length: %d\n", SvCUR(sql)); */
         }
         else {
             /* warn("binding NULL\n"); */
@@ -368,13 +418,16 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
         /* warn("fetching: %d == %s\n", (current_entry + i), val); */
         if (val != NULL) {
             int len = strlen(val);
+            char *decoded;
             if (chopBlanks) {
                 while((len > 0) && (val[len-1] == ' ')) {
                     len--;
                 }
                 val[len] = '\0';
             }
-            sv_setpvn(AvARRAY(av)[i], val, len);
+            decoded = sqlite_decode(imp_dbh, val, &len);
+            sv_setpvn(AvARRAY(av)[i], decoded, len);
+            free(decoded);
 
 	    if (!imp_dbh->no_utf8_flag) {
 		/* sv_utf8_encode(AvARRAY(av)[i]); */
@@ -452,6 +505,15 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
         }
         return TRUE;
     }
+    else if (strEQ(key, "sqlite_handle_binary_nulls")) {
+        if (SvTRUE(valuesv)) {
+          imp_dbh->handle_binary_nulls = TRUE;
+        }
+        else {
+          imp_dbh->handle_binary_nulls = FALSE;
+        }
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -509,6 +571,280 @@ sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
     }
 
     return retsv;
+}
+
+static void
+sqlite_db_set_result(sqlite_func *context, SV *result, int is_error )
+{
+    STRLEN len;
+    char *s;
+    
+    if ( is_error ) {
+        s = SvPV(result, len);
+        sqlite_set_result_error( context, s, len );
+        return;
+    }
+
+    if ( !SvOK(result) ) {
+        sqlite_set_result_string( context, NULL, -1 );
+    } else if( SvIOK(result) ) {
+        sqlite_set_result_int( context, SvIV(result));
+    } else if ( !is_error && SvIOK(result) ) {
+        sqlite_set_result_double( context, SvNV(result));
+    } else {
+        s = SvPV(result, len);
+        sqlite_set_result_string( context, s, len );
+    } 
+}
+
+static void
+sqlite_db_func_dispatcher(sqlite_func *context, int argc, const char **argv)
+{
+    dSP;
+    int count;
+    int i;
+    SV *func;
+    
+    func = sqlite_user_data(context);
+    
+    ENTER;
+    SAVETMPS;
+    
+    PUSHMARK(SP);
+    for ( i=0; i < argc; i++ ) {
+        SV *arg;
+        
+        if ( !argv[i] ) {
+            arg = &PL_sv_undef;
+        } else {
+            arg = sv_2mortal( newSVpv(argv[i], 0));
+        }
+        
+        XPUSHs(arg);
+    }
+    PUTBACK;
+
+    count = call_sv(func, G_SCALAR|G_EVAL);
+    
+    SPAGAIN;
+
+    /* Check for an error */
+    if (SvTRUE(ERRSV) ) {
+        sqlite_db_set_result( context, ERRSV, 1);
+        POPs;
+    } else if ( count != 1 ) {
+        SV *err = sv_2mortal(newSVpvf( "function should return 1 argument, got %d",
+                                       count ));
+
+        sqlite_db_set_result( context, err, 1);
+        /* Clear the stack */
+        for ( i=0; i < count; i++ ) {
+            POPs;
+        }
+    } else {
+        sqlite_db_set_result( context, POPs, 0 );
+    }
+    
+    PUTBACK;
+    
+    FREETMPS;
+    LEAVE;
+}
+
+void
+sqlite_db_create_function( SV *dbh, const char *name, int argc, SV *func )
+{
+    D_imp_dbh(dbh);
+    int rv;
+    
+    /* Copy the function reference */
+    SV *func_sv = newSVsv(func);
+    av_push( imp_dbh->functions, func_sv );
+
+    rv = sqlite_create_function( imp_dbh->db, name, argc, 
+                                 sqlite_db_func_dispatcher, func_sv );
+    if ( rv != SQLITE_OK )
+    {
+        croak( "sqlite_create_function failed with error %s", 
+               sqlite_error_string(rv) );
+    }
+}
+
+static SV *
+sqlite_db_aggr_init_dispatcher( sqlite_func *context, SV *aggr)
+{
+    dSP;
+    SV *err= NULL;
+
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    XPUSHs( sv_2mortal( newSVsv(aggr) ));
+    PUTBACK;
+
+    call_method( "init", G_EVAL|G_DISCARD|G_SCALAR);
+    if ( SvTRUE(ERRSV) ) {
+        err = newSVpvf( "error during aggregator's init(): %s", 
+                        SvPV_nolen(ERRSV) );
+    }
+    
+    FREETMPS;
+    LEAVE;
+
+    return err;
+}
+
+static void
+sqlite_db_aggr_step_dispatcher( sqlite_func *context, int argc, const char **argv)
+{
+    dSP;
+    SV *aggr;
+    SV **aggr_err;
+    int i;
+
+    aggr_err = sqlite_aggregate_context(context, sizeof(SV *));
+    aggr = sqlite_user_data(context);
+
+    /* Quick exit in case of error */
+    if (*aggr_err)
+        return;
+    
+    ENTER;
+    SAVETMPS;
+
+    /* initialize on first step */
+    if ( sqlite_aggregate_count(context) == 1 ) {
+        *aggr_err = sqlite_db_aggr_init_dispatcher( context, aggr );
+        SPAGAIN;
+        if ( *aggr_err )
+            goto cleanup;
+    }
+
+    PUSHMARK(SP);
+    XPUSHs( sv_2mortal( newSVsv(aggr) ) );
+    
+    for ( i=0; i < argc; i++ ) {
+        SV *arg;
+        
+        if ( !argv[i] ) {
+            arg = &PL_sv_undef;
+        } else {
+            arg = sv_2mortal( newSVpv(argv[i], 0));
+        }
+        
+        XPUSHs(arg);
+    }
+    PUTBACK;
+
+    call_method( "step", G_SCALAR|G_EVAL|G_DISCARD );
+    
+    /* Check for an error */
+    if (SvTRUE(ERRSV) ) {
+        *aggr_err = newSVpvf( "error during aggregator's step(): %s",
+                              SvPV_nolen(ERRSV) );
+    } 
+
+ cleanup:
+    FREETMPS;
+    LEAVE;
+}
+
+static void
+sqlite_db_aggr_finalize_dispatcher( sqlite_func *context )
+{
+    dSP;
+    SV *aggr;
+    SV **aggr_err;
+    int count = 0;
+
+    aggr_err = sqlite_aggregate_context(context, sizeof(SV *));
+    aggr = sqlite_user_data(context);
+
+    if ( !aggr_err ) 
+    {
+        /* There was no rows */
+        SV *err = sqlite_db_aggr_init_dispatcher( context, aggr );
+        if ( err )
+        {
+            /* This can be uncommented, once reporting errors in
+               aggregator function is working. SQLite <= 2.8.2 do
+               not check the isError value after calls to xFinalize.
+
+               This bug is SQLite ticket #330
+            */
+            /* sqlite_db_set_result( context, err, 1 ); */
+            warn( "DBD::SQLite: error in aggregator cannot be reported to SQLite: %s",
+                  SvPV_nolen( err ) );
+            return;
+        }
+    } else if ( *aggr_err ) {
+        warn( "DBD::SQLite: error in aggregator cannot be reported to SQLite: %s",
+              SvPV_nolen( *aggr_err ) );
+        /* sqlite_db_set_result( context, *aggr_err, 1 ); */
+        SvREFCNT_dec(*aggr_err);
+        return;
+    }
+
+    ENTER;
+    SAVETMPS;
+    
+    PUSHMARK(SP);
+    XPUSHs( sv_2mortal( newSVsv(aggr) ) );
+    PUTBACK;
+    
+    count = call_method( "finalize", G_SCALAR|G_EVAL );
+    SPAGAIN;
+    
+    if ( SvTRUE(ERRSV) ) {
+        SV *err = sv_2mortal( newSVpvf( "error during aggregator's finalize(): %s",
+                                        SvPV_nolen(ERRSV) ));
+        warn( "DBD::SQLite: error in aggregator cannot be reported to SQLite: %s",
+              SvPV_nolen( err ) );
+        /* sqlite_db_set_result( context, err, 1 ); */
+        POPs;
+    } else if ( count != 1 ) {
+        int i;
+        SV *err = sv_2mortal( newSVpvf( "finalize() should return 1 value, got %d",
+                                        count ));
+        warn( "DBD::SQLite: error in aggregator cannot be reported to SQLite: %s",
+              SvPV_nolen( err ) );
+        
+        /* sqlite_db_set_result( context, err, 1 ); */
+        /* Clear the stack */
+        for ( i=0; i<count; i++ ) {
+            POPs;
+        }
+    } else {
+        sqlite_db_set_result( context, POPs, 0 );
+    }
+     
+    PUTBACK;
+
+    FREETMPS;
+    LEAVE;
+}
+
+void
+sqlite_db_create_aggregate( SV *dbh, const char *name, int argc, SV *aggr )
+{
+    D_imp_dbh(dbh);
+    int rv;
+    
+    /* Copy the aggregate reference */
+    SV *aggr_copy = newSVsv(aggr);
+    av_push( imp_dbh->aggregates, aggr_copy );
+
+    rv = sqlite_create_aggregate( imp_dbh->db, name, argc, 
+                                  sqlite_db_aggr_step_dispatcher, 
+                                  sqlite_db_aggr_finalize_dispatcher, 
+                                  aggr_copy );
+    
+    if ( rv != SQLITE_OK )
+    {
+        croak( "sqlite_create_aggregate failed with error %s", 
+               sqlite_error_string(rv) );
+    }
 }
 
 /* end */

@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle INSERT statements in SQLite.
 **
-** $Id: insert.c,v 1.16 2003/03/04 07:51:43 matt Exp $
+** $Id: insert.c,v 1.18 2003/07/31 14:37:21 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -85,22 +85,22 @@
 */
 void sqliteInsert(
   Parse *pParse,        /* Parser context */
-  Token *pTableName,    /* Name of table into which we are inserting */
+  SrcList *pTabList,    /* Name of table into which we are inserting */
   ExprList *pList,      /* List of values to be inserted */
   Select *pSelect,      /* A SELECT statement to use as the data source */
   IdList *pColumn,      /* Column names corresponding to IDLIST. */
   int onError           /* How to handle constraint errors */
 ){
   Table *pTab;          /* The table to insert into */
-  char *zTab = 0;       /* Name of the table into which we are inserting */
+  char *zTab;           /* Name of the table into which we are inserting */
+  const char *zDb;      /* Name of the database holding this table */
   int i, j, idx;        /* Loop counters */
   Vdbe *v;              /* Generate code into this virtual machine */
   Index *pIdx;          /* For looping over indices of the table */
   int nColumn;          /* Number of columns in the data */
-  int base;             /* First available cursor */
+  int base;             /* VDBE Cursor number for pTab */
   int iCont, iBreak;    /* Beginning and end of the loop over srcTab */
   sqlite *db;           /* The main database structure */
-  int openOp;           /* Opcode used to open cursors */
   int keyColumn = -1;   /* Column that is the INTEGER PRIMARY KEY */
   int endOfLoop;        /* Label for the end of the insertion loop */
   int useTempTable;     /* Store SELECT results in intermediate table */
@@ -109,24 +109,28 @@ void sqliteInsert(
   int iCleanup;         /* Address of the cleanup code */
   int iInsertBlock;     /* Address of the subroutine used to insert data */
   int iCntMem;          /* Memory cell used for the row counter */
+  int isView;           /* True if attempting to insert into a view */
 
   int row_triggers_exist = 0; /* True if there are FOR EACH ROW triggers */
-  int newIdx = -1;
+  int before_triggers;        /* True if there are BEFORE triggers */
+  int after_triggers;         /* True if there are AFTER triggers */
+  int newIdx = -1;            /* Cursor for the NEW table */
 
   if( pParse->nErr || sqlite_malloc_failed ) goto insert_cleanup;
   db = pParse->db;
 
   /* Locate the table into which we will be inserting new information.
   */
-  zTab = sqliteTableNameFromToken(pTableName);
+  assert( pTabList->nSrc==1 );
+  zTab = pTabList->a[0].zName;
   if( zTab==0 ) goto insert_cleanup;
-  pTab = sqliteFindTable(pParse->db, zTab);
+  pTab = sqliteSrcListLookup(pParse, pTabList);
   if( pTab==0 ){
-    sqliteSetString(&pParse->zErrMsg, "no such table: ", zTab, 0);
-    pParse->nErr++;
     goto insert_cleanup;
   }
-  if( sqliteAuthCheck(pParse, SQLITE_INSERT, pTab->zName, 0) ){
+  assert( pTab->iDb<db->nDb );
+  zDb = db->aDb[pTab->iDb].zName;
+  if( sqliteAuthCheck(pParse, SQLITE_INSERT, pTab->zName, 0, zDb) ){
     goto insert_cleanup;
   }
 
@@ -134,37 +138,28 @@ void sqliteInsert(
   *  (a) the table is not read-only, 
   *  (b) that if it is a view then ON INSERT triggers exist
   */
-  row_triggers_exist = 
-    sqliteTriggersExist(pParse, pTab->pTrigger, TK_INSERT, 
-        TK_BEFORE, TK_ROW, 0) ||
-    sqliteTriggersExist(pParse, pTab->pTrigger, TK_INSERT, TK_AFTER, TK_ROW, 0);
-  if( pTab->readOnly || (pTab->pSelect && !row_triggers_exist) ){
-    sqliteSetString(&pParse->zErrMsg, 
-      pTab->pSelect ? "view " : "table ",
-      zTab,
-      " may not be modified", 0);
-    pParse->nErr++;
+  before_triggers = sqliteTriggersExist(pParse, pTab->pTrigger, TK_INSERT, 
+                                       TK_BEFORE, TK_ROW, 0);
+  after_triggers = sqliteTriggersExist(pParse, pTab->pTrigger, TK_INSERT,
+                                       TK_AFTER, TK_ROW, 0);
+  row_triggers_exist = before_triggers || after_triggers;
+  isView = pTab->pSelect!=0;
+  if( sqliteIsReadOnly(pParse, pTab, before_triggers) ){
     goto insert_cleanup;
   }
-  sqliteFree(zTab);
-  zTab = 0;
-
   if( pTab==0 ) goto insert_cleanup;
 
   /* If pTab is really a view, make sure it has been initialized.
   */
-  if( pTab->pSelect ){
-    if( sqliteViewGetColumnNames(pParse, pTab) ){
-      goto insert_cleanup;
-    }
+  if( isView && sqliteViewGetColumnNames(pParse, pTab) ){
+    goto insert_cleanup;
   }
 
   /* Allocate a VDBE
   */
   v = sqliteGetVdbe(pParse);
   if( v==0 ) goto insert_cleanup;
-  sqliteBeginWriteOperation(pParse, pSelect || row_triggers_exist,
-         !row_triggers_exist && pTab->isTemp);
+  sqliteBeginWriteOperation(pParse, pSelect || row_triggers_exist, pTab->iDb);
 
   /* if there are row triggers, allocate a temp table for new.* references. */
   if( row_triggers_exist ){
@@ -183,7 +178,6 @@ void sqliteInsert(
     /* Data is coming from a SELECT.  Generate code to implement that SELECT
     */
     int rc, iInitCode;
-    int opCode;
     iInitCode = sqliteVdbeAddOp(v, OP_Goto, 0, 0);
     iSelectLoop = sqliteVdbeCurrentAddr(v);
     iInsertBlock = sqliteVdbeMakeLabel(v);
@@ -197,9 +191,23 @@ void sqliteInsert(
     /* Set useTempTable to TRUE if the result of the SELECT statement
     ** should be written into a temporary table.  Set to FALSE if each
     ** row of the SELECT can be written directly into the result table.
+    **
+    ** A temp table must be used if the table being updated is also one
+    ** of the tables being read by the SELECT statement.  Also use a 
+    ** temp table in the case of row triggers.
     */
-    opCode = pTab->isTemp ? OP_OpenTemp : OP_Open;
-    useTempTable = row_triggers_exist || sqliteVdbeFindOp(v,opCode,pTab->tnum);
+    if( row_triggers_exist ){
+      useTempTable = 1;
+    }else{
+      int addr = sqliteVdbeFindOp(v, OP_OpenRead, pTab->tnum);
+      useTempTable = 0;
+      if( addr>0 ){
+        VdbeOp *pOp = sqliteVdbeGetOp(v, addr-2);
+        if( pOp->opcode==OP_Integer && pOp->p1==pTab->iDb ){
+          useTempTable = 1;
+        }
+      }
+    }
 
     if( useTempTable ){
       /* Generate the subroutine that SELECT calls to process each row of
@@ -236,7 +244,7 @@ void sqliteInsert(
     nColumn = pList->nExpr;
     dummy.nSrc = 0;
     for(i=0; i<nColumn; i++){
-      if( sqliteExprResolveIds(pParse, 0, &dummy, 0, pList->a[i].pExpr) ){
+      if( sqliteExprResolveIds(pParse, &dummy, 0, pList->a[i].pExpr) ){
         goto insert_cleanup;
       }
       if( sqliteExprCheck(pParse, pList->a[i].pExpr, 0, 0) ){
@@ -249,24 +257,13 @@ void sqliteInsert(
   ** of columns to be inserted into the table.
   */
   if( pColumn==0 && nColumn!=pTab->nCol ){
-    char zNum1[30];
-    char zNum2[30];
-    sprintf(zNum1,"%d", nColumn);
-    sprintf(zNum2,"%d", pTab->nCol);
-    sqliteSetString(&pParse->zErrMsg, "table ", pTab->zName,
-       " has ", zNum2, " columns but ",
-       zNum1, " values were supplied", 0);
-    pParse->nErr++;
+    sqliteErrorMsg(pParse, 
+       "table %S has %d columns but %d values were supplied",
+       pTabList, 0, pTab->nCol, nColumn);
     goto insert_cleanup;
   }
   if( pColumn!=0 && nColumn!=pColumn->nId ){
-    char zNum1[30];
-    char zNum2[30];
-    sprintf(zNum1,"%d", nColumn);
-    sprintf(zNum2,"%d", pColumn->nId);
-    sqliteSetString(&pParse->zErrMsg, zNum1, " values for ",
-       zNum2, " columns", 0);
-    pParse->nErr++;
+    sqliteErrorMsg(pParse, "%d values for %d columns", nColumn, pColumn->nId);
     goto insert_cleanup;
   }
 
@@ -296,10 +293,14 @@ void sqliteInsert(
         }
       }
       if( j>=pTab->nCol ){
-        sqliteSetString(&pParse->zErrMsg, "table ", pTab->zName,
-           " has no column named ", pColumn->a[i].zName, 0);
-        pParse->nErr++;
-        goto insert_cleanup;
+        if( sqliteIsRowid(pColumn->a[i].zName) ){
+          keyColumn = i;
+        }else{
+          sqliteErrorMsg(pParse, "table %S has no column named %s",
+              pTabList, 0, pColumn->a[i].zName);
+          pParse->nErr++;
+          goto insert_cleanup;
+        }
       }
     }
   }
@@ -315,7 +316,7 @@ void sqliteInsert(
   /* Open the temp table for FOR EACH ROW triggers
   */
   if( row_triggers_exist ){
-    sqliteVdbeAddOp(v, OP_OpenTemp, newIdx, 0);
+    sqliteVdbeAddOp(v, OP_OpenPseudo, newIdx, 0);
   }
     
   /* Initialize the count of rows to be inserted
@@ -329,11 +330,12 @@ void sqliteInsert(
   /* Open tables and indices if there are no row triggers */
   if( !row_triggers_exist ){
     base = pParse->nTab;
-    openOp = pTab->isTemp ? OP_OpenWrAux : OP_OpenWrite;
-    sqliteVdbeAddOp(v, openOp, base, pTab->tnum);
+    sqliteVdbeAddOp(v, OP_Integer, pTab->iDb, 0);
+    sqliteVdbeAddOp(v, OP_OpenWrite, base, pTab->tnum);
     sqliteVdbeChangeP3(v, -1, pTab->zName, P3_STATIC);
     for(idx=1, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, idx++){
-      sqliteVdbeAddOp(v, openOp, idx+base, pIdx->tnum);
+      sqliteVdbeAddOp(v, OP_Integer, pIdx->iDb, 0);
+      sqliteVdbeAddOp(v, OP_OpenWrite, idx+base, pIdx->tnum);
       sqliteVdbeChangeP3(v, -1, pIdx->zName, P3_STATIC);
     }
     pParse->nTab += idx;
@@ -353,11 +355,33 @@ void sqliteInsert(
     sqliteVdbeResolveLabel(v, iInsertBlock);
   }
 
+  /* Run the BEFORE and INSTEAD OF triggers, if there are any
+  */
   endOfLoop = sqliteVdbeMakeLabel(v);
-  if( row_triggers_exist ){
+  if( before_triggers ){
 
-    /* build the new.* reference row */
-    sqliteVdbeAddOp(v, OP_Integer, 13, 0);
+    /* build the NEW.* reference row.  Note that if there is an INTEGER
+    ** PRIMARY KEY into which a NULL is being inserted, that NULL will be
+    ** translated into a unique ID for the row.  But on a BEFORE trigger,
+    ** we do not know what the unique ID will be (because the insert has
+    ** not happened yet) so we substitute a rowid of -1
+    */
+    if( keyColumn<0 ){
+      sqliteVdbeAddOp(v, OP_Integer, -1, 0);
+    }else if( useTempTable ){
+      sqliteVdbeAddOp(v, OP_Column, srcTab, keyColumn);
+    }else if( pSelect ){
+      sqliteVdbeAddOp(v, OP_Dup, nColumn - keyColumn - 1, 1);
+    }else{
+      sqliteExprCode(pParse, pList->a[keyColumn].pExpr);
+      sqliteVdbeAddOp(v, OP_NotNull, -1, sqliteVdbeCurrentAddr(v)+3);
+      sqliteVdbeAddOp(v, OP_Pop, 1, 0);
+      sqliteVdbeAddOp(v, OP_Integer, -1, 0);
+      sqliteVdbeAddOp(v, OP_MustBeInt, 0, 0);
+    }
+
+    /* Create the new column data
+    */
     for(i=0; i<pTab->nCol; i++){
       if( pColumn==0 ){
         j = i;
@@ -379,26 +403,28 @@ void sqliteInsert(
     }
     sqliteVdbeAddOp(v, OP_MakeRecord, pTab->nCol, 0);
     sqliteVdbeAddOp(v, OP_PutIntKey, newIdx, 0);
-    sqliteVdbeAddOp(v, OP_Rewind, newIdx, 0);
 
-    /* Fire BEFORE triggers */
-    if( sqliteCodeRowTrigger(pParse, TK_INSERT, 0, TK_BEFORE, pTab, newIdx, -1, 
-        onError, endOfLoop) ){
+    /* Fire BEFORE or INSTEAD OF triggers */
+    if( sqliteCodeRowTrigger(pParse, TK_INSERT, 0, TK_BEFORE, pTab, 
+        newIdx, -1, onError, endOfLoop) ){
       goto insert_cleanup;
     }
+  }
 
-    /* Open the tables and indices for the INSERT */
-    if( !pTab->pSelect ){
-      base = pParse->nTab;
-      openOp = pTab->isTemp ? OP_OpenWrAux : OP_OpenWrite;
-      sqliteVdbeAddOp(v, openOp, base, pTab->tnum);
-      sqliteVdbeChangeP3(v, -1, pTab->zName, P3_STATIC);
-      for(idx=1, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, idx++){
-        sqliteVdbeAddOp(v, openOp, idx+base, pIdx->tnum);
-        sqliteVdbeChangeP3(v, -1, pIdx->zName, P3_STATIC);
-      }
-      pParse->nTab += idx;
+  /* If any triggers exists, the opening of tables and indices is deferred
+  ** until now.
+  */
+  if( row_triggers_exist && !isView ){
+    base = pParse->nTab;
+    sqliteVdbeAddOp(v, OP_Integer, pTab->iDb, 0);
+    sqliteVdbeAddOp(v, OP_OpenWrite, base, pTab->tnum);
+    sqliteVdbeChangeP3(v, -1, pTab->zName, P3_STATIC);
+    for(idx=1, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, idx++){
+      sqliteVdbeAddOp(v, OP_Integer, pIdx->iDb, 0);
+      sqliteVdbeAddOp(v, OP_OpenWrite, idx+base, pIdx->tnum);
+      sqliteVdbeChangeP3(v, -1, pIdx->zName, P3_STATIC);
     }
+    pParse->nTab += idx;
   }
 
   /* Push the record number for the new entry onto the stack.  The
@@ -406,7 +432,7 @@ void sqliteInsert(
   ** except when the table has an INTEGER PRIMARY KEY column, in which
   ** case the record number is the same as that column. 
   */
-  if( !pTab->pSelect ){
+  if( !isView ){
     if( keyColumn>=0 ){
       if( useTempTable ){
         sqliteVdbeAddOp(v, OP_Column, srcTab, keyColumn);
@@ -460,19 +486,21 @@ void sqliteInsert(
     /* Generate code to check constraints and generate index keys and
     ** do the insertion.
     */
-    sqliteGenerateConstraintChecks(pParse, pTab, base, 0,0,0,onError,endOfLoop);
-    sqliteCompleteInsertion(pParse, pTab, base, 0,0,0);
+    sqliteGenerateConstraintChecks(pParse, pTab, base, 0, keyColumn>=0,
+                                   0, onError, endOfLoop);
+    sqliteCompleteInsertion(pParse, pTab, base, 0,0,0,
+                            after_triggers ? newIdx : -1);
+  }
 
-    /* Update the count of rows that are inserted
-    */
-    if( (db->flags & SQLITE_CountRows)!=0 ){
-      sqliteVdbeAddOp(v, OP_MemIncr, iCntMem, 0);
-    }
+  /* Update the count of rows that are inserted
+  */
+  if( (db->flags & SQLITE_CountRows)!=0 ){
+    sqliteVdbeAddOp(v, OP_MemIncr, iCntMem, 0);
   }
 
   if( row_triggers_exist ){
     /* Close all tables opened */
-    if( !pTab->pSelect ){
+    if( !isView ){
       sqliteVdbeAddOp(v, OP_Close, base, 0);
       for(idx=1, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, idx++){
         sqliteVdbeAddOp(v, OP_Close, idx+base, 0);
@@ -520,9 +548,9 @@ void sqliteInsert(
   }
 
 insert_cleanup:
+  sqliteSrcListDelete(pTabList);
   if( pList ) sqliteExprListDelete(pList);
   if( pSelect ) sqliteSelectDelete(pSelect);
-  if ( zTab ) sqliteFree(zTab);
   sqliteIdListDelete(pColumn);
 }
 
@@ -532,7 +560,7 @@ insert_cleanup:
 ** When this routine is called, the stack contains (from bottom to top)
 ** the following values:
 **
-**    1.  The recno of the row to be updated before it is updated.  This
+**    1.  The recno of the row to be updated before the update.  This
 **        value is omitted unless we are doing an UPDATE that involves a
 **        change to the record number.
 **
@@ -637,16 +665,16 @@ void sqliteGenerateConstraintChecks(
   */
   for(i=0; i<nCol; i++){
     if( i==pTab->iPKey ){
-      /* Fix me: Make sure the INTEGER PRIMARY KEY is not NULL. */
       continue;
     }
     onError = pTab->aCol[i].notNull;
     if( onError==OE_None ) continue;
     if( overrideError!=OE_Default ){
       onError = overrideError;
-    }else if( onError==OE_Default ){
+    }else if( pParse->db->onError!=OE_Default ){
       onError = pParse->db->onError;
-      if( onError==OE_Default ) onError = OE_Abort;
+    }else if( onError==OE_Default ){
+      onError = OE_Abort;
     }
     if( onError==OE_Replace && pTab->aCol[i].zDflt==0 ){
       onError = OE_Abort;
@@ -687,47 +715,58 @@ void sqliteGenerateConstraintChecks(
   /* If we have an INTEGER PRIMARY KEY, make sure the primary key
   ** of the new record does not previously exist.  Except, if this
   ** is an UPDATE and the primary key is not changing, that is OK.
-  ** Also, if the conflict resolution policy is REPLACE, then we
-  ** can skip this test.
   */
-  if( (recnoChng || !isUpdate) && pTab->iPKey>=0 ){
+  if( recnoChng ){
     onError = pTab->keyConf;
     if( overrideError!=OE_Default ){
       onError = overrideError;
-    }else if( onError==OE_Default ){
+    }else if( pParse->db->onError!=OE_Default ){
       onError = pParse->db->onError;
-      if( onError==OE_Default ) onError = OE_Abort;
+    }else if( onError==OE_Default ){
+      onError = OE_Abort;
     }
-    if( onError!=OE_Replace ){
-      if( isUpdate ){
-        sqliteVdbeAddOp(v, OP_Dup, nCol+1, 1);
-        sqliteVdbeAddOp(v, OP_Dup, nCol+1, 1);
-        jumpInst1 = sqliteVdbeAddOp(v, OP_Eq, 0, 0);
+    
+    if( isUpdate ){
+      sqliteVdbeAddOp(v, OP_Dup, nCol+1, 1);
+      sqliteVdbeAddOp(v, OP_Dup, nCol+1, 1);
+      jumpInst1 = sqliteVdbeAddOp(v, OP_Eq, 0, 0);
+    }
+    sqliteVdbeAddOp(v, OP_Dup, nCol, 1);
+    jumpInst2 = sqliteVdbeAddOp(v, OP_NotExists, base, 0);
+    switch( onError ){
+      default: {
+        onError = OE_Abort;
+        /* Fall thru into the next case */
       }
-      sqliteVdbeAddOp(v, OP_Dup, nCol, 1);
-      jumpInst2 = sqliteVdbeAddOp(v, OP_NotExists, base, 0);
-      switch( onError ){
-        case OE_Rollback:
-        case OE_Abort:
-        case OE_Fail: {
-          sqliteVdbeAddOp(v, OP_Halt, SQLITE_CONSTRAINT, onError);
-          sqliteVdbeChangeP3(v, -1, "PRIMARY KEY must be unique", P3_STATIC);
-          break;
+      case OE_Rollback:
+      case OE_Abort:
+      case OE_Fail: {
+        sqliteVdbeAddOp(v, OP_Halt, SQLITE_CONSTRAINT, onError);
+        sqliteVdbeChangeP3(v, -1, "PRIMARY KEY must be unique", P3_STATIC);
+        break;
+      }
+      case OE_Replace: {
+        sqliteGenerateRowIndexDelete(pParse->db, v, pTab, base, 0);
+        if( isUpdate ){
+          sqliteVdbeAddOp(v, OP_Dup, nCol+hasTwoRecnos, 1);
+          sqliteVdbeAddOp(v, OP_MoveTo, base, 0);
         }
-        case OE_Ignore: {
-          sqliteVdbeAddOp(v, OP_Pop, nCol+1+hasTwoRecnos, 0);
-          sqliteVdbeAddOp(v, OP_Goto, 0, ignoreDest);
-          break;
-        }
-        default: assert(0);
+        seenReplace = 1;
+        break;
       }
-      contAddr = sqliteVdbeCurrentAddr(v);
-      sqliteVdbeChangeP2(v, jumpInst2, contAddr);
-      if( isUpdate ){
-        sqliteVdbeChangeP2(v, jumpInst1, contAddr);
-        sqliteVdbeAddOp(v, OP_Dup, nCol+1, 1);
-        sqliteVdbeAddOp(v, OP_MoveTo, base, 0);
+      case OE_Ignore: {
+        assert( seenReplace==0 );
+        sqliteVdbeAddOp(v, OP_Pop, nCol+1+hasTwoRecnos, 0);
+        sqliteVdbeAddOp(v, OP_Goto, 0, ignoreDest);
+        break;
       }
+    }
+    contAddr = sqliteVdbeCurrentAddr(v);
+    sqliteVdbeChangeP2(v, jumpInst2, contAddr);
+    if( isUpdate ){
+      sqliteVdbeChangeP2(v, jumpInst1, contAddr);
+      sqliteVdbeAddOp(v, OP_Dup, nCol+1, 1);
+      sqliteVdbeAddOp(v, OP_MoveTo, base, 0);
     }
   }
 
@@ -735,10 +774,12 @@ void sqliteGenerateConstraintChecks(
   ** index and making sure that duplicate entries do not already exist.
   ** Add the new records to the indices as we go.
   */
-  extra = 0;
-  for(extra=(-1), iCur=0, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, iCur++){
-    if( aIdxUsed && aIdxUsed[iCur]==0 ) continue;
-    extra++;    
+  extra = -1;
+  for(iCur=0, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, iCur++){
+    if( aIdxUsed && aIdxUsed[iCur]==0 ) continue;  /* Skip unused indices */
+    extra++;
+
+    /* Create a key for accessing the index entry */
     sqliteVdbeAddOp(v, OP_Dup, nCol+extra, 1);
     for(i=0; i<pIdx->nColumn; i++){
       int idx = pIdx->aiColumn[i];
@@ -750,16 +791,28 @@ void sqliteGenerateConstraintChecks(
     }
     jumpInst1 = sqliteVdbeAddOp(v, OP_MakeIdxKey, pIdx->nColumn, 0);
     if( pParse->db->file_format>=4 ) sqliteAddIdxKeyType(v, pIdx);
+
+    /* Find out what action to take in case there is an indexing conflict */
     onError = pIdx->onError;
-    if( onError==OE_None ) continue;
+    if( onError==OE_None ) continue;  /* pIdx is not a UNIQUE index */
     if( overrideError!=OE_Default ){
       onError = overrideError;
-    }else if( onError==OE_Default ){
+    }else if( pParse->db->onError!=OE_Default ){
       onError = pParse->db->onError;
-      if( onError==OE_Default ) onError = OE_Abort;
+    }else if( onError==OE_Default ){
+      onError = OE_Abort;
     }
+    if( seenReplace ){
+      if( onError==OE_Ignore ) onError = OE_Replace;
+      else if( onError==OE_Fail ) onError = OE_Abort;
+    }
+    
+
+    /* Check to see if the new index entry will be unique */
     sqliteVdbeAddOp(v, OP_Dup, extra+nCol+1+hasTwoRecnos, 1);
     jumpInst2 = sqliteVdbeAddOp(v, OP_IsUnique, base+iCur+1, 0);
+
+    /* Generate code that executes if the new index entry is not unique */
     switch( onError ){
       case OE_Rollback:
       case OE_Abort:
@@ -809,7 +862,8 @@ void sqliteCompleteInsertion(
   int base,           /* Index of a read/write cursor pointing at pTab */
   char *aIdxUsed,     /* Which indices are used.  NULL means all are used */
   int recnoChng,      /* True if the record number will change */
-  int isUpdate        /* True for UPDATE, False for INSERT */
+  int isUpdate,       /* True for UPDATE, False for INSERT */
+  int newIdx          /* Index of NEW table for triggers.  -1 if none */
 ){
   int i;
   Vdbe *v;
@@ -825,6 +879,11 @@ void sqliteCompleteInsertion(
     sqliteVdbeAddOp(v, OP_IdxPut, base+i+1, 0);
   }
   sqliteVdbeAddOp(v, OP_MakeRecord, pTab->nCol, 0);
+  if( newIdx>=0 ){
+    sqliteVdbeAddOp(v, OP_Dup, 1, 0);
+    sqliteVdbeAddOp(v, OP_Dup, 1, 0);
+    sqliteVdbeAddOp(v, OP_PutIntKey, newIdx, 0);
+  }
   sqliteVdbeAddOp(v, OP_PutIntKey, base, pParse->trigStack?0:1);
   if( isUpdate && recnoChng ){
     sqliteVdbeAddOp(v, OP_Pop, 1, 0);

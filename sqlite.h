@@ -12,7 +12,7 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite.h,v 1.16 2003/03/04 07:51:44 matt Exp $
+** @(#) $Id: sqlite.h,v 1.18 2003/07/31 14:37:22 matt Exp $
 */
 #ifndef _SQLITE_H_
 #define _SQLITE_H_
@@ -28,7 +28,7 @@ extern "C" {
 /*
 ** The version of the SQLite library.
 */
-#define SQLITE_VERSION         "2.8.0"
+#define SQLITE_VERSION         "2.8.5"
 
 /*
 ** The version string is also compiled into the library so that a program
@@ -165,6 +165,7 @@ int sqlite_exec(
 #define SQLITE_MISUSE      21   /* Library used incorrectly */
 #define SQLITE_NOLFS       22   /* Uses OS features not supported on host */
 #define SQLITE_AUTH        23   /* Authorization denied */
+#define SQLITE_FORMAT      24   /* Auxiliary database format error */
 #define SQLITE_ROW         100  /* sqlite_step() has another row ready */
 #define SQLITE_DONE        101  /* sqlite_step() has finished executing */
 
@@ -390,6 +391,7 @@ int sqlite_get_table_vprintf(
   va_list ap             /* Arguments to the format string */
 );
 char *sqlite_mprintf(const char*,...);
+char *sqlite_vmprintf(const char*, va_list);
 
 /*
 ** Windows systems should call this routine to free memory that
@@ -512,7 +514,7 @@ int sqlite_aggregate_count(sqlite_func*);
 */
 int sqlite_set_authorizer(
   sqlite*,
-  int (*xAuth)(void*,int,const char*,const char*),
+  int (*xAuth)(void*,int,const char*,const char*,const char*,const char*),
   void *pUserData
 );
 
@@ -521,7 +523,11 @@ int sqlite_set_authorizer(
 ** be one of the values below.  These values signify what kind of operation
 ** is to be authorized.  The 3rd and 4th parameters to the authorization
 ** function will be parameters or NULL depending on which of the following
-** codes is used as the second parameter.
+** codes is used as the second parameter.  The 5th parameter is the name
+** of the database ("main", "temp", etc.) if applicable.  The 6th parameter
+** is the name of the inner-most trigger or view that is responsible for
+** the access attempt or NULL if this access attempt is directly from 
+** input SQL code.
 **
 **                                          Arg-3           Arg-4
 */
@@ -549,6 +555,9 @@ int sqlite_set_authorizer(
 #define SQLITE_SELECT               21   /* NULL            NULL            */
 #define SQLITE_TRANSACTION          22   /* NULL            NULL            */
 #define SQLITE_UPDATE               23   /* Table Name      Column Name     */
+#define SQLITE_ATTACH               24   /* Filename        NULL            */
+#define SQLITE_DETACH               25   /* Database Name   NULL            */
+
 
 /*
 ** The return value of the authorization function should be one of the
@@ -676,14 +685,19 @@ int sqlite_step(
 int sqlite_finalize(sqlite_vm*, char **pzErrMsg);
 
 /*
-** Attempt to open the file named in the argument as the auxiliary database
-** file.  The auxiliary database file is used to store TEMP tables.  But
-** by using this API, it is possible to trick SQLite into opening two
-** separate databases and acting on them as if they were one.
+** This routine deletes the virtual machine, writes any error message to
+** *pzErrMsg and returns an SQLite return code in the same way as the
+** sqlite_finalize() function.
 **
-****** THIS IS AN EXPERIMENTAL API AND IS SUBJECT TO CHANGE. ******
+** Additionally, if ppVm is not NULL, *ppVm is left pointing to a new virtual
+** machine loaded with the compiled version of the original query ready for
+** execution.
+**
+** If sqlite_reset() returns SQLITE_SCHEMA, then *ppVm is set to NULL.
+**
+******* THIS IS AN EXPERIMENTAL API AND IS SUBJECT TO CHANGE ******
 */
-int sqlite_open_aux_file(sqlite *db, const char *zName, char **pzErrMsg);
+int sqlite_reset(sqlite_vm *, char **pzErrMsg, sqlite_vm **ppVm);
 
 #ifdef __cplusplus
 }  /* End of the 'extern "C"' block */

@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#   $Id: 40blobs.t,v 1.3 2002/12/19 18:37:12 matt Exp $
+#   $Id: 40blobs.t,v 1.4 2003/07/31 14:09:16 matt Exp $
 #
 #   This is a test for correct handling of BLOBS; namely $dbh->quote
 #   is expected to work correctly.
@@ -49,14 +49,22 @@ sub ServerError() {
 
 sub ShowBlob($) {
     my ($blob) = @_;
-    for($i = 0;  $i < 8;  $i++) {
-	if (defined($blob)  &&  length($blob) > $i) {
+    print("showblob length: ", length($blob), "\n");
+    if ($ENV{SHOW_BLOBS}) { open(OUT, ">>$ENV{SHOW_BLOBS}") }
+    my $i = 0;
+    while (1) {
+	if (defined($blob)  &&  length($blob) > ($i*32)) {
 	    $b = substr($blob, $i*32);
 	} else {
 	    $b = "";
+            last;
 	}
-	printf("%08lx %s\n", $i*32, unpack("H64", $b));
+        if ($ENV{SHOW_BLOBS}) { printf OUT "%08lx %s\n", $i*32, unpack("H64", $b) }
+        else { printf("%08lx %s\n", $i*32, unpack("H64", $b)) }
+        $i++;
+        last if $i == 8;
     }
+    if ($ENV{SHOW_BLOBS}) { close(OUT) }
 }
 
 
@@ -70,7 +78,8 @@ while (Testing()) {
     Test($state or $dbh = DBI->connect($test_dsn, $test_user, $test_password))
 	or ServerError();
 
-    $dbh->{NoUTF8Flag} = 1;
+
+    $dbh->{sqlite_handle_binary_nulls} = 1;
 
     #
     #   Find a possible new table name
@@ -99,7 +108,7 @@ while (Testing()) {
 	my ($blob, $qblob) = "";
 	if (!$state) {
 	    my $b = "";
-	    for ($j = 1;  $j < 256;  $j++) {
+	    for ($j = 0;  $j < 256;  $j++) {
 		$b .= chr($j);
 	    }
 	    for ($i = 0;  $i < $size;  $i++) {
@@ -120,7 +129,7 @@ while (Testing()) {
 	if (!$state) {
      	  $query = "INSERT INTO $table VALUES (1, ?)";
 	    if ($ENV{'SHOW_BLOBS'}  &&  open(OUT, ">" . $ENV{'SHOW_BLOBS'})) {
-		print OUT $query;
+		print OUT $query, "\n";
 		close(OUT);
 	    }
 	}

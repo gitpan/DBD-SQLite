@@ -1,4 +1,4 @@
-/* $Id: SQLite.xs,v 1.4 2002/02/27 19:25:22 matt Exp $ */
+/* $Id: SQLite.xs,v 1.5 2003/07/31 15:11:46 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -28,6 +28,28 @@ last_insert_rowid(dbh)
     }
     OUTPUT:
         RETVAL
+
+void
+create_function(dbh, name, argc, func)
+    SV *dbh
+    char *name
+    int argc
+    SV *func
+    CODE:
+    {
+        sqlite_db_create_function( dbh, name, argc, func );
+    }
+
+void
+create_aggregate(dbh, name, argc, aggr)
+    SV *dbh
+    char *name
+    int argc
+    SV *aggr
+    CODE:
+    {
+        sqlite_db_create_aggregate( dbh, name, argc, aggr );
+    }
 
 MODULE = DBD::SQLite          PACKAGE = DBD::SQLite::st
 

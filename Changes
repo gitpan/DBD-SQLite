@@ -1,5 +1,12 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.26
+    - Update to sqlite 2.8.5
+    - Automatic binary encoding added (via a flag)
+    - Better getsqlite.pl - now deals with new files
+    - Extension functions and aggregates can be created in
+      perl space now.
+
 0.25
     - Fixed Makefile.PL to no longer try creating a .c file to determine
       the OS ptrsize - use Config.pm directly in the DEFINE
