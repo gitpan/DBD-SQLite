@@ -12,6 +12,7 @@ dbdimp.c
 dbdimp.h
 delete.c
 expr.c
+func.c
 hash.c
 hash.h
 insert.c
@@ -50,6 +51,7 @@ t/ak-dbd.t
 t/dbdadmin.t
 t/lib.pl
 table.c
+test.pl
 tokenize.c
 update.c
 util.c

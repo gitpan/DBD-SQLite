@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle INSERT statements in SQLite.
 **
-** $Id: insert.c,v 1.2 2002/02/27 19:25:22 matt Exp $
+** $Id: insert.c,v 1.3 2002/03/12 15:43:02 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -60,20 +60,10 @@ void sqliteInsert(
   */
   zTab = sqliteTableNameFromToken(pTableName);
   if( zTab==0 ) goto insert_cleanup;
-  pTab = sqliteFindTable(db, zTab);
+  pTab = sqliteTableNameToTable(pParse, zTab);
   sqliteFree(zTab);
-  if( pTab==0 ){
-    sqliteSetNString(&pParse->zErrMsg, "no such table: ", 0, 
-        pTableName->z, pTableName->n, 0);
-    pParse->nErr++;
-    goto insert_cleanup;
-  }
-  if( pTab->readOnly ){
-    sqliteSetString(&pParse->zErrMsg, "table ", pTab->zName,
-        " may not be modified", 0);
-    pParse->nErr++;
-    goto insert_cleanup;
-  }
+  if( pTab==0 ) goto insert_cleanup;
+  assert( pTab->pSelect==0 );  /* This table is not a VIEW */
 
   /* Allocate a VDBE
   */
@@ -95,7 +85,7 @@ void sqliteInsert(
     int rc;
     srcTab = pParse->nTab++;
     sqliteVdbeAddOp(v, OP_OpenTemp, srcTab, 0);
-    rc = sqliteSelect(pParse, pSelect, SRT_Table, srcTab);
+    rc = sqliteSelect(pParse, pSelect, SRT_Table, srcTab, 0,0,0);
     if( rc || pParse->nErr || sqlite_malloc_failed ) goto insert_cleanup;
     assert( pSelect->pEList );
     nColumn = pSelect->pEList->nExpr;
@@ -105,12 +95,9 @@ void sqliteInsert(
     srcTab = -1;
     assert( pList );
     nColumn = pList->nExpr;
-    for(i=0; i<nColumn; i++){
-      sqliteExprResolveInSelect(pParse, pList->a[i].pExpr);
-    }
     dummy.nId = 0;
     for(i=0; i<nColumn; i++){
-      if( sqliteExprResolveIds(pParse, &dummy, 0, pList->a[i].pExpr) ){
+      if( sqliteExprResolveIds(pParse, 0, &dummy, 0, pList->a[i].pExpr) ){
         goto insert_cleanup;
       }
     }
@@ -194,6 +181,7 @@ void sqliteInsert(
     sqliteVdbeAddOp(v, openOp, idx+base, pIdx->tnum);
     sqliteVdbeChangeP3(v, -1, pIdx->zName, P3_STATIC);
   }
+  pParse->nTab += idx;
 
   /* If the data source is a SELECT statement, then we have to create
   ** a loop because there might be multiple rows of data.  If the data
@@ -368,7 +356,7 @@ insert_cleanup:
 ** is used.  Or if pParse->onError==OE_Default then the onError value
 ** for the constraint is used.
 **
-** The calling routine must an open read/write cursor for pTab with
+** The calling routine must open a read/write cursor for pTab with
 ** cursor number "base".  All indices of pTab must also have open
 ** read/write cursors with cursor number base+i for the i-th cursor.
 ** Except, if there is no possibility of a REPLACE action then
@@ -405,6 +393,7 @@ void sqliteGenerateConstraintChecks(
 
   v = sqliteGetVdbe(pParse);
   assert( v!=0 );
+  assert( pTab->pSelect==0 );  /* This table is not a VIEW */
   nCol = pTab->nCol;
 
   /* Test all NOT NULL constraints.
@@ -566,6 +555,7 @@ void sqliteCompleteInsertion(
 
   v = sqliteGetVdbe(pParse);
   assert( v!=0 );
+  assert( pTab->pSelect==0 );  /* This table is not a VIEW */
   for(nIdx=0, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, nIdx++){}
   for(i=nIdx-1; i>=0; i--){
     if( aIdxUsed && aIdxUsed[i]==0 ) continue;

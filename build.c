@@ -17,7 +17,7 @@
 **     DROP TABLE
 **     CREATE INDEX
 **     DROP INDEX
-**     creating expressions and ID lists
+**     creating ID lists
 **     COPY
 **     VACUUM
 **     BEGIN TRANSACTION
@@ -25,7 +25,7 @@
 **     ROLLBACK
 **     PRAGMA
 **
-** $Id: build.c,v 1.2 2002/02/27 19:25:22 matt Exp $
+** $Id: build.c,v 1.3 2002/03/12 15:43:02 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -65,74 +65,11 @@ void sqliteExec(Parse *pParse){
 }
 
 /*
-** Construct a new expression node and return a pointer to it.  Memory
-** for this node is obtained from sqliteMalloc().  The calling function
-** is responsible for making sure the node eventually gets freed.
-*/
-Expr *sqliteExpr(int op, Expr *pLeft, Expr *pRight, Token *pToken){
-  Expr *pNew;
-  pNew = sqliteMalloc( sizeof(Expr) );
-  if( pNew==0 ){
-    sqliteExprDelete(pLeft);
-    sqliteExprDelete(pRight);
-    return 0;
-  }
-  pNew->op = op;
-  pNew->pLeft = pLeft;
-  pNew->pRight = pRight;
-  if( pToken ){
-    pNew->token = *pToken;
-  }else{
-    pNew->token.z = "";
-    pNew->token.n = 0;
-  }
-  if( pLeft && pRight ){
-    sqliteExprSpan(pNew, &pLeft->span, &pRight->span);
-  }else{
-    pNew->span = pNew->token;
-  }
-  return pNew;
-}
-
-/*
-** Set the Expr.token field of the given expression to span all
-** text between the two given tokens.
-*/
-void sqliteExprSpan(Expr *pExpr, Token *pLeft, Token *pRight){
-  if( pExpr ){
-    pExpr->span.z = pLeft->z;
-    pExpr->span.n = pRight->n + Addr(pRight->z) - Addr(pLeft->z);
-  }
-}
-
-/*
-** Construct a new expression node for a function with multiple
-** arguments.
-*/
-Expr *sqliteExprFunction(ExprList *pList, Token *pToken){
-  Expr *pNew;
-  pNew = sqliteMalloc( sizeof(Expr) );
-  if( pNew==0 ){
-    sqliteExprListDelete(pList);
-    return 0;
-  }
-  pNew->op = TK_FUNCTION;
-  pNew->pList = pList;
-  if( pToken ){
-    pNew->token = *pToken;
-  }else{
-    pNew->token.z = "";
-    pNew->token.n = 0;
-  }
-  return pNew;
-}
-
-/*
 ** Locate the in-memory structure that describes 
 ** a particular database table given the name
 ** of that table.  Return NULL if not found.
 */
-Table *sqliteFindTable(sqlite *db, char *zName){
+Table *sqliteFindTable(sqlite *db, const char *zName){
   Table *p = sqliteHashFind(&db->tblHash, zName, strlen(zName)+1);
   return p;
 }
@@ -142,7 +79,7 @@ Table *sqliteFindTable(sqlite *db, char *zName){
 ** a particular index given the name of that index.
 ** Return NULL if not found.
 */
-Index *sqliteFindIndex(sqlite *db, char *zName){
+Index *sqliteFindIndex(sqlite *db, const char *zName){
   Index *p = sqliteHashFind(&db->idxHash, zName, strlen(zName)+1);
   return p;
 }
@@ -235,6 +172,7 @@ void sqliteDeleteTable(sqlite *db, Table *pTable){
   }
   sqliteFree(pTable->zName);
   sqliteFree(pTable->aCol);
+  sqliteSelectDelete(pTable->pSelect);
   sqliteFree(pTable);
 }
 
@@ -473,12 +411,26 @@ void sqliteStartTable(Parse *pParse, Token *pStart, Token *pName, int isTemp){
   pTable->isTemp = isTemp;
   if( pParse->pNewTable ) sqliteDeleteTable(db, pParse->pNewTable);
   pParse->pNewTable = pTable;
+
+  /* Begin generating the code that will insert the table record into
+  ** the SQLITE_MASTER table.  Note in particular that we must go ahead
+  ** and allocate the record number for the table entry now.  Before any
+  ** PRIMARY KEY or UNIQUE keywords are parsed.  Those keywords will cause
+  ** indices to be created and the table record must come before the 
+  ** indices.  Hence, the record number for the table must be allocated
+  ** now.
+  */
   if( !pParse->initFlag && (v = sqliteGetVdbe(pParse))!=0 ){
     sqliteBeginWriteOperation(pParse);
     if( !isTemp ){
-      sqliteVdbeAddOp(v, OP_SetCookie, db->file_format, 1);
+      sqliteVdbeAddOp(v, OP_Integer, db->file_format, 0);
+      sqliteVdbeAddOp(v, OP_SetCookie, 0, 1);
       sqliteVdbeAddOp(v, OP_OpenWrite, 0, 2);
       sqliteVdbeChangeP3(v, -1, MASTER_NAME, P3_STATIC);
+      sqliteVdbeAddOp(v, OP_NewRecno, 0, 0);
+      sqliteVdbeAddOp(v, OP_Dup, 0, 0);
+      sqliteVdbeAddOp(v, OP_String, 0, 0);
+      sqliteVdbeAddOp(v, OP_PutIntKey, 0, 0);
     }
   }
 }
@@ -657,10 +609,11 @@ static void changeCookie(sqlite *db){
 */
 static int identLength(const char *z){
   int n;
-  for(n=2; *z; n++, z++){
-    if( *z=='\'' ){ n++; }
+  int needQuote = 0;
+  for(n=0; *z; n++, z++){
+    if( *z=='\'' ){ n++; needQuote=1; }
   }
-  return n;
+  return n + needQuote*2;
 }
 
 /*
@@ -668,14 +621,19 @@ static int identLength(const char *z){
 ** quote characters as needed.
 */
 static void identPut(char *z, int *pIdx, char *zIdent){
-  int i, j;
+  int i, j, needQuote;
   i = *pIdx;
-  z[i++] = '\'';
+  for(j=0; zIdent[j]; j++){
+    if( !isalnum(zIdent[j]) && zIdent[j]!='_' ) break;
+  }
+  needQuote =  zIdent[j]!=0 || isdigit(zIdent[0])
+                  || sqliteKeywordCode(zIdent, j)!=TK_ID;
+  if( needQuote ) z[i++] = '\'';
   for(j=0; zIdent[j]; j++){
     z[i++] = zIdent[j];
     if( zIdent[j]=='\'' ) z[i++] = '\'';
   }
-  z[i++] = '\'';
+  if( needQuote ) z[i++] = '\'';
   z[i] = 0;
   *pIdx = i;
 }
@@ -769,6 +727,7 @@ void sqliteEndTable(Parse *pParse, Token *pEnd, Select *pSelect){
   */
   if( pSelect ){
     Table *pSelTab = sqliteResultSetOfSelect(pParse, 0, pSelect);
+    if( pSelTab==0 ) return;
     assert( p->aCol==0 );
     p->nCol = pSelTab->nCol;
     p->aCol = pSelTab->aCol;
@@ -788,24 +747,35 @@ void sqliteEndTable(Parse *pParse, Token *pEnd, Select *pSelect){
   }
 
   /* If not initializing, then create a record for the new table
-  ** in the SQLITE_MASTER table of the database.
+  ** in the SQLITE_MASTER table of the database.  The record number
+  ** for the new table entry should already be on the stack.
   **
   ** If this is a TEMPORARY table, then just create the table.  Do not
   ** make an entry in SQLITE_MASTER.
   */
   if( !pParse->initFlag ){
-    int n, addr;
+    int n;
     Vdbe *v;
 
     v = sqliteGetVdbe(pParse);
     if( v==0 ) return;
-    addr = sqliteVdbeAddOp(v, OP_CreateTable, 0, p->isTemp);
-    sqliteVdbeChangeP3(v, addr, (char *)&p->tnum, P3_POINTER);
+    if( p->pSelect==0 ){
+      /* A regular table */
+      sqliteVdbeAddOp(v, OP_CreateTable, 0, p->isTemp);
+      sqliteVdbeChangeP3(v, -1, (char *)&p->tnum, P3_POINTER);
+    }else{
+      /* A view */
+      sqliteVdbeAddOp(v, OP_Integer, 0, 0);
+    }
     p->tnum = 0;
     if( !p->isTemp ){
-      sqliteVdbeAddOp(v, OP_NewRecno, 0, 0);
+      sqliteVdbeAddOp(v, OP_Pull, 1, 0);
       sqliteVdbeAddOp(v, OP_String, 0, 0);
-      sqliteVdbeChangeP3(v, -1, "table", P3_STATIC);
+      if( p->pSelect==0 ){
+        sqliteVdbeChangeP3(v, -1, "table", P3_STATIC);
+      }else{
+        sqliteVdbeChangeP3(v, -1, "view", P3_STATIC);
+      }
       sqliteVdbeAddOp(v, OP_String, 0, 0);
       sqliteVdbeChangeP3(v, -1, p->zName, P3_STATIC);
       sqliteVdbeAddOp(v, OP_String, 0, 0);
@@ -825,17 +795,168 @@ void sqliteEndTable(Parse *pParse, Token *pEnd, Select *pSelect){
       sqliteVdbeAddOp(v, OP_MakeRecord, 5, 0);
       sqliteVdbeAddOp(v, OP_PutIntKey, 0, 0);
       changeCookie(db);
-      sqliteVdbeAddOp(v, OP_SetCookie, db->next_cookie, 0);
+      sqliteVdbeAddOp(v, OP_Integer, db->next_cookie, 0);
+      sqliteVdbeAddOp(v, OP_SetCookie, 0, 0);
       sqliteVdbeAddOp(v, OP_Close, 0, 0);
     }
     if( pSelect ){
       int op = p->isTemp ? OP_OpenWrAux : OP_OpenWrite;
       sqliteVdbeAddOp(v, op, 1, 0);
       pParse->nTab = 2;
-      sqliteSelect(pParse, pSelect, SRT_Table, 1);
+      sqliteSelect(pParse, pSelect, SRT_Table, 1, 0, 0, 0);
     }
     sqliteEndWriteOperation(pParse);
   }
+}
+
+/*
+** The parser calls this routine in order to create a new VIEW
+*/
+void sqliteCreateView(
+  Parse *pParse,     /* The parsing context */
+  Token *pBegin,     /* The CREATE token that begins the statement */
+  Token *pName,      /* The token that holds the name of the view */
+  Select *pSelect    /* A SELECT statement that will become the new view */
+){
+  Token sEnd;
+  Table *p;
+  const char *z;
+  int n, offset;
+
+  sqliteStartTable(pParse, pBegin, pName, 0);
+  p = pParse->pNewTable;
+  if( p==0 ){
+    sqliteSelectDelete(pSelect);
+    return;
+  }
+  p->pSelect = pSelect;
+  if( !pParse->initFlag ){
+    if( sqliteViewGetColumnNames(pParse, p) ){
+      return;
+    }
+  }
+  sEnd = pParse->sLastToken;
+  if( sEnd.z[0]!=0 && sEnd.z[0]!=';' ){
+    sEnd.z += sEnd.n;
+  }
+  sEnd.n = 0;
+  n = ((int)sEnd.z) - (int)pBegin->z;
+  z = pBegin->z;
+  while( n>0 && (z[n-1]==';' || isspace(z[n-1])) ){ n--; }
+  sEnd.z = &z[n-1];
+  sEnd.n = 1;
+  z = p->pSelect->zSelect = sqliteStrNDup(z, n);
+  if( z ){
+    offset = ((int)z) - (int)pBegin->z;
+    sqliteSelectMoveStrings(p->pSelect, offset);
+    sqliteEndTable(pParse, &sEnd, 0);
+  }
+  return;
+}
+
+/*
+** The Table structure pTable is really a VIEW.  Fill in the names of
+** the columns of the view in the pTable structure.  Return the number
+** of errors.  If an error is seen leave an error message in pPare->zErrMsg.
+*/
+int sqliteViewGetColumnNames(Parse *pParse, Table *pTable){
+  ExprList *pEList;
+  Select *pSel;
+  Table *pSelTab;
+  int nErr = 0;
+
+  assert( pTable );
+
+  /* A positive nCol means the columns names for this view are
+  ** already known.
+  */
+  if( pTable->nCol>0 ) return 0;
+
+  /* A negative nCol is a special marker meaning that we are currently
+  ** trying to compute the column names.  If we enter this routine with
+  ** a negative nCol, it means two or more views form a loop, like this:
+  **
+  **     CREATE VIEW one AS SELECT * FROM two;
+  **     CREATE VIEW two AS SELECT * FROM one;
+  */
+  if( pTable->nCol<0 ){
+    sqliteSetString(&pParse->zErrMsg, "view ", pTable->zName,
+         " is circularly defined", 0);
+    pParse->nErr++;
+    return 1;
+  }
+
+  /* If we get this far, it means we need to compute the table names.
+  */
+  assert( pTable->pSelect ); /* If nCol==0, then pTable must be a VIEW */
+  pSel = pTable->pSelect;
+
+  /* Note that the call to sqliteResultSetOfSelect() will expand any
+  ** "*" elements in this list.  But we will need to restore the list
+  ** back to its original configuration afterwards, so we save a copy of
+  ** the original in pEList.
+  */
+  pEList = pSel->pEList;
+  pSel->pEList = sqliteExprListDup(pEList);
+  if( pSel->pEList==0 ){
+    pSel->pEList = pEList;
+    return 1;  /* Malloc failed */
+  }
+  pTable->nCol = -1;
+  pSelTab = sqliteResultSetOfSelect(pParse, 0, pSel);
+  if( pSelTab ){
+    assert( pTable->aCol==0 );
+    pTable->nCol = pSelTab->nCol;
+    pTable->aCol = pSelTab->aCol;
+    pSelTab->nCol = 0;
+    pSelTab->aCol = 0;
+    sqliteDeleteTable(0, pSelTab);
+    pParse->db->flags |= SQLITE_UnresetViews;
+  }else{
+    pTable->nCol = 0;
+    nErr++;
+  }
+  sqliteSelectUnbind(pSel);
+  sqliteExprListDelete(pSel->pEList);
+  pSel->pEList = pEList;
+  return nErr;  
+}
+
+/*
+** Clear the column names from the VIEW pTable.
+**
+** This routine is called whenever any other table or view is modified.
+** The view passed into this routine might depend directly or indirectly
+** on the modified or deleted table so we need to clear the old column
+** names so that they will be recomputed.
+*/
+static void sqliteViewResetColumnNames(Table *pTable){
+  int i;
+  if( pTable==0 || pTable->pSelect==0 ) return;
+  if( pTable->nCol==0 ) return;
+  for(i=0; i<pTable->nCol; i++){
+    sqliteFree(pTable->aCol[i].zName);
+    sqliteFree(pTable->aCol[i].zDflt);
+    sqliteFree(pTable->aCol[i].zType);
+  }
+  sqliteFree(pTable->aCol);
+  pTable->aCol = 0;
+  pTable->nCol = 0;
+}
+
+/*
+** Clear the column names from every VIEW.
+*/
+void sqliteViewResetAll(sqlite *db){
+  HashElem *i;
+  if( (db->flags & SQLITE_UnresetViews)==0 ) return;
+  for(i=sqliteHashFirst(&db->tblHash); i; i=sqliteHashNext(i)){
+    Table *pTab = sqliteHashData(i);
+    if( pTab->pSelect ){
+      sqliteViewResetColumnNames(pTab);
+    }
+  }
+  db->flags &= ~SQLITE_UnresetViews;
 }
 
 /*
@@ -861,7 +982,7 @@ Table *sqliteTableFromToken(Parse *pParse, Token *pTok){
 ** This routine is called to do the work of a DROP TABLE statement.
 ** pName is the name of the table to be dropped.
 */
-void sqliteDropTable(Parse *pParse, Token *pName){
+void sqliteDropTable(Parse *pParse, Token *pName, int isView){
   Table *pTable;
   Vdbe *v;
   int base;
@@ -873,6 +994,18 @@ void sqliteDropTable(Parse *pParse, Token *pName){
   if( pTable->readOnly ){
     sqliteSetString(&pParse->zErrMsg, "table ", pTable->zName, 
        " may not be dropped", 0);
+    pParse->nErr++;
+    return;
+  }
+  if( isView && pTable->pSelect==0 ){
+    sqliteSetString(&pParse->zErrMsg, "use DROP TABLE to delete table ",
+      pTable->zName, 0);
+    pParse->nErr++;
+    return;
+  }
+  if( !isView && pTable->pSelect ){
+    sqliteSetString(&pParse->zErrMsg, "use DROP VIEW to delete view ",
+      pTable->zName, 0);
     pParse->nErr++;
     return;
   }
@@ -892,7 +1025,8 @@ void sqliteDropTable(Parse *pParse, Token *pName){
       { OP_Ne,         0, ADDR(8),  0},
       { OP_Delete,     0, 0,        0},
       { OP_Next,       0, ADDR(4),  0}, /* 8 */
-      { OP_SetCookie,  0, 0,        0}, /* 9 */
+      { OP_Integer,    0, 0,        0}, /* 9 */
+      { OP_SetCookie,  0, 0,        0},
       { OP_Close,      0, 0,        0},
     };
     Index *pIdx;
@@ -903,9 +1037,11 @@ void sqliteDropTable(Parse *pParse, Token *pName){
       changeCookie(db);
       sqliteVdbeChangeP1(v, base+9, db->next_cookie);
     }
-    sqliteVdbeAddOp(v, OP_Destroy, pTable->tnum, pTable->isTemp);
-    for(pIdx=pTable->pIndex; pIdx; pIdx=pIdx->pNext){
-      sqliteVdbeAddOp(v, OP_Destroy, pIdx->tnum, pTable->isTemp);
+    if( !isView ){
+      sqliteVdbeAddOp(v, OP_Destroy, pTable->tnum, pTable->isTemp);
+      for(pIdx=pTable->pIndex; pIdx; pIdx=pIdx->pNext){
+        sqliteVdbeAddOp(v, OP_Destroy, pIdx->tnum, pTable->isTemp);
+      }
     }
     sqliteEndWriteOperation(pParse);
   }
@@ -922,6 +1058,7 @@ void sqliteDropTable(Parse *pParse, Token *pName){
     sqlitePendingDropTable(db, pTable);
     db->flags |= SQLITE_InternChanges;
   }
+  sqliteViewResetAll(db);
 }
 
 /*
@@ -969,6 +1106,11 @@ void sqliteCreateIndex(
   if( pTab->readOnly ){
     sqliteSetString(&pParse->zErrMsg, "table ", pTab->zName, 
       " may not have new indices added", 0);
+    pParse->nErr++;
+    goto exit_create_index;
+  }
+  if( pTab->pSelect ){
+    sqliteSetString(&pParse->zErrMsg, "views may not be indexed", 0);
     pParse->nErr++;
     goto exit_create_index;
   }
@@ -1198,7 +1340,8 @@ void sqliteCreateIndex(
     if( pTable!=0 ){
       if( !isTemp ){
         changeCookie(db);
-        sqliteVdbeAddOp(v, OP_SetCookie, db->next_cookie, 0);
+        sqliteVdbeAddOp(v, OP_Integer, db->next_cookie, 0);
+        sqliteVdbeAddOp(v, OP_SetCookie, 0, 0);
         sqliteVdbeAddOp(v, OP_Close, 0, 0);
       }
       sqliteEndWriteOperation(pParse);
@@ -1248,7 +1391,8 @@ void sqliteDropIndex(Parse *pParse, Token *pName){
       { OP_Next,       0, ADDR(4), 0},
       { OP_Goto,       0, ADDR(10),0},
       { OP_Delete,     0, 0,       0}, /* 9 */
-      { OP_SetCookie,  0, 0,       0}, /* 10 */
+      { OP_Integer,    0, 0,       0}, /* 10 */
+      { OP_SetCookie,  0, 0,       0},
       { OP_Close,      0, 0,       0},
     };
     int base;
@@ -1275,55 +1419,6 @@ void sqliteDropIndex(Parse *pParse, Token *pName){
     sqlitePendingDropIndex(db, pIndex);
     db->flags |= SQLITE_InternChanges;
   }
-}
-
-/*
-** Add a new element to the end of an expression list.  If pList is
-** initially NULL, then create a new expression list.
-*/
-ExprList *sqliteExprListAppend(ExprList *pList, Expr *pExpr, Token *pName){
-  int i;
-  if( pList==0 ){
-    pList = sqliteMalloc( sizeof(ExprList) );
-    if( pList==0 ){
-      sqliteExprDelete(pExpr);
-      return 0;
-    }
-  }
-  if( (pList->nExpr & 7)==0 ){
-    int n = pList->nExpr + 8;
-    struct ExprList_item *a;
-    a = sqliteRealloc(pList->a, n*sizeof(pList->a[0]));
-    if( a==0 ){
-      sqliteExprDelete(pExpr);
-      return pList;
-    }
-    pList->a = a;
-  }
-  if( pExpr || pName ){
-    i = pList->nExpr++;
-    pList->a[i].pExpr = pExpr;
-    pList->a[i].zName = 0;
-    if( pName ){
-      sqliteSetNString(&pList->a[i].zName, pName->z, pName->n, 0);
-      sqliteDequote(pList->a[i].zName);
-    }
-  }
-  return pList;
-}
-
-/*
-** Delete an entire expression list.
-*/
-void sqliteExprListDelete(ExprList *pList){
-  int i;
-  if( pList==0 ) return;
-  for(i=0; i<pList->nExpr; i++){
-    sqliteExprDelete(pList->a[i].pExpr);
-    sqliteFree(pList->a[i].zName);
-  }
-  sqliteFree(pList->a);
-  sqliteFree(pList);
 }
 
 /*
@@ -1373,7 +1468,7 @@ void sqliteIdListAddAlias(IdList *pList, Token *pToken){
 }
 
 /*
-** Delete an entire IdList
+** Delete an entire IdList.
 */
 void sqliteIdListDelete(IdList *pList){
   int i;
@@ -1381,16 +1476,14 @@ void sqliteIdListDelete(IdList *pList){
   for(i=0; i<pList->nId; i++){
     sqliteFree(pList->a[i].zName);
     sqliteFree(pList->a[i].zAlias);
-    if( pList->a[i].pSelect ){
-      sqliteFree(pList->a[i].zName);
-      sqliteSelectDelete(pList->a[i].pSelect);
+    if( pList->a[i].pTab && pList->a[i].pTab->isTransient ){
       sqliteDeleteTable(0, pList->a[i].pTab);
     }
+    sqliteSelectDelete(pList->a[i].pSelect);
   }
   sqliteFree(pList->a);
   sqliteFree(pList);
 }
-
 
 /*
 ** The COPY command is for compatibility with PostgreSQL and specificially
@@ -1420,20 +1513,9 @@ void sqliteCopy(
 
   zTab = sqliteTableNameFromToken(pTableName);
   if( sqlite_malloc_failed || zTab==0 ) goto copy_cleanup;
-  pTab = sqliteFindTable(db, zTab);
+  pTab = sqliteTableNameToTable(pParse, zTab);
   sqliteFree(zTab);
-  if( pTab==0 ){
-    sqliteSetNString(&pParse->zErrMsg, "no such table: ", 0, 
-        pTableName->z, pTableName->n, 0);
-    pParse->nErr++;
-    goto copy_cleanup;
-  }
-  if( pTab->readOnly ){
-    sqliteSetString(&pParse->zErrMsg, "table ", pTab->zName,
-        " may not be modified", 0);
-    pParse->nErr++;
-    goto copy_cleanup;
-  }
+  if( pTab==0 ) goto copy_cleanup;
   v = sqliteGetVdbe(pParse);
   if( v ){
     int openOp;
@@ -1654,9 +1736,178 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
     sqliteDequote(zRight);
   }
  
+  /*
+  **  PRAGMA default_cache_size
+  **  PRAGMA default_cache_size=N
+  **
+  ** The first form reports the current persistent setting for the
+  ** page cache size.  The value returned is the maximum number of
+  ** pages in the page cache.  The second form sets both the current
+  ** page cache size value and the persistent page cache size value
+  ** stored in the database file.
+  **
+  ** The default cache size is stored in meta-value 2 of page 1 of the
+  ** database file.  The cache size is actually the absolute value of
+  ** this memory location.  The sign of meta-value 2 determines the
+  ** synchronous setting.  A negative value means synchronous is off
+  ** and a positive value means synchronous is on.
+  */
+  if( sqliteStrICmp(zLeft,"default_cache_size")==0 ){
+    static VdbeOp getCacheSize[] = {
+      { OP_ReadCookie,  0, 2,        0},
+      { OP_AbsValue,    0, 0,        0},
+      { OP_Dup,         0, 0,        0},
+      { OP_Integer,     0, 0,        0},
+      { OP_Ne,          0, 6,        0},
+      { OP_Integer,     MAX_PAGES,0, 0},
+      { OP_ColumnCount, 1, 0,        0},
+      { OP_ColumnName,  0, 0,        "cache_size"},
+      { OP_Callback,    1, 0,        0},
+    };
+    Vdbe *v = sqliteGetVdbe(pParse);
+    if( v==0 ) return;
+    if( pRight->z==pLeft->z ){
+      sqliteVdbeAddOpList(v, ArraySize(getCacheSize), getCacheSize);
+    }else{
+      int addr;
+      int size = atoi(zRight);
+      if( size<0 ) size = -size;
+      sqliteBeginWriteOperation(pParse);
+      sqliteVdbeAddOp(v, OP_Integer, size, 0);
+      sqliteVdbeAddOp(v, OP_ReadCookie, 0, 2);
+      addr = sqliteVdbeAddOp(v, OP_Integer, 0, 0);
+      sqliteVdbeAddOp(v, OP_Ge, 0, addr+3);
+      sqliteVdbeAddOp(v, OP_Negative, 0, 0);
+      sqliteVdbeAddOp(v, OP_SetCookie, 0, 2);
+      sqliteEndWriteOperation(pParse);
+      db->cache_size = db->cache_size<0 ? -size : size;
+      sqliteBtreeSetCacheSize(db->pBe, db->cache_size);
+    }
+  }else
+
+  /*
+  **  PRAGMA cache_size
+  **  PRAGMA cache_size=N
+  **
+  ** The first form reports the current local setting for the
+  ** page cache size.  The local setting can be different from
+  ** the persistent cache size value that is stored in the database
+  ** file itself.  The value returned is the maximum number of
+  ** pages in the page cache.  The second form sets the local
+  ** page cache size value.  It does not change the persistent
+  ** cache size stored on the disk so the cache size will revert
+  ** to its default value when the database is closed and reopened.
+  ** N should be a positive integer.
+  */
   if( sqliteStrICmp(zLeft,"cache_size")==0 ){
-    int size = atoi(zRight);
-    sqliteBtreeSetCacheSize(db->pBe, size);
+    static VdbeOp getCacheSize[] = {
+      { OP_ColumnCount, 1, 0,        0},
+      { OP_ColumnName,  0, 0,        "cache_size"},
+      { OP_Callback,    1, 0,        0},
+    };
+    Vdbe *v = sqliteGetVdbe(pParse);
+    if( v==0 ) return;
+    if( pRight->z==pLeft->z ){
+      int size = db->cache_size;;
+      if( size<0 ) size = -size;
+      sqliteVdbeAddOp(v, OP_Integer, size, 0);
+      sqliteVdbeAddOpList(v, ArraySize(getCacheSize), getCacheSize);
+    }else{
+      int size = atoi(zRight);
+      if( size<0 ) size = -size;
+      if( db->cache_size<0 ) size = -size;
+      db->cache_size = size;
+      sqliteBtreeSetCacheSize(db->pBe, db->cache_size);
+    }
+  }else
+
+  /*
+  **  PRAGMA default_synchronous
+  **  PRAGMA default_synchronous=BOOLEAN
+  **
+  ** The first form returns the persistent value of the "synchronous" setting
+  ** that is stored in the database.  This is the synchronous setting that
+  ** is used whenever the database is opened unless overridden by a separate
+  ** "synchronous" pragma.  The second form changes the persistent and the
+  ** local synchronous setting to the value given.
+  **
+  ** If synchronous is on, SQLite will do an fsync() system call at strategic
+  ** points to insure that all previously written data has actually been
+  ** written onto the disk surface before continuing.  This mode insures that
+  ** the database will always be in a consistent state event if the operating
+  ** system crashes or power to the computer is interrupted unexpectedly.
+  ** When synchronous is off, SQLite will not wait for changes to actually
+  ** be written to the disk before continuing.  As soon as it hands changes
+  ** to the operating system, it assumes that the changes are permanent and
+  ** it continues going.  The database cannot be corrupted by a program crash
+  ** even with synchronous off, but an operating system crash or power loss
+  ** could potentially corrupt data.  On the other hand, synchronous off is
+  ** faster than synchronous on.
+  */
+  if( sqliteStrICmp(zLeft,"default_synchronous")==0 ){
+    static VdbeOp getSync[] = {
+      { OP_Integer,     0, 0,        0},
+      { OP_ReadCookie,  0, 2,        0},
+      { OP_Integer,     0, 0,        0},
+      { OP_Lt,          0, 5,        0},
+      { OP_AddImm,      1, 0,        0},
+      { OP_ColumnCount, 1, 0,        0},
+      { OP_ColumnName,  0, 0,        "synchronous"},
+      { OP_Callback,    1, 0,        0},
+    };
+    Vdbe *v = sqliteGetVdbe(pParse);
+    if( v==0 ) return;
+    if( pRight->z==pLeft->z ){
+      sqliteVdbeAddOpList(v, ArraySize(getSync), getSync);
+    }else{
+      int addr;
+      int size = db->cache_size;
+      if( size<0 ) size = -size;
+      sqliteBeginWriteOperation(pParse);
+      sqliteVdbeAddOp(v, OP_ReadCookie, 0, 2);
+      sqliteVdbeAddOp(v, OP_Dup, 0, 0);
+      addr = sqliteVdbeAddOp(v, OP_Integer, 0, 0);
+      sqliteVdbeAddOp(v, OP_Ne, 0, addr+3);
+      sqliteVdbeAddOp(v, OP_AddImm, MAX_PAGES, 0);
+      sqliteVdbeAddOp(v, OP_AbsValue, 0, 0);
+      if( !getBoolean(zRight) ){
+        sqliteVdbeAddOp(v, OP_Negative, 0, 0);
+        size = -size;
+      }
+      sqliteVdbeAddOp(v, OP_SetCookie, 0, 2);
+      sqliteEndWriteOperation(pParse);
+      db->cache_size = size;
+      sqliteBtreeSetCacheSize(db->pBe, db->cache_size);
+    }
+  }else
+
+  /*
+  **   PRAGMA synchronous
+  **   PRAGMA synchronous=BOOLEAN
+  **
+  ** Return or set the local value of the synchronous flag.  Changing
+  ** the local value does not make changes to the disk file and the
+  ** default value will be restored the next time the database is
+  ** opened.
+  */
+  if( sqliteStrICmp(zLeft,"synchronous")==0 ){
+    static VdbeOp getSync[] = {
+      { OP_ColumnCount, 1, 0,        0},
+      { OP_ColumnName,  0, 0,        "synchronous"},
+      { OP_Callback,    1, 0,        0},
+    };
+    Vdbe *v = sqliteGetVdbe(pParse);
+    if( v==0 ) return;
+    if( pRight->z==pLeft->z ){
+      sqliteVdbeAddOp(v, OP_Integer, db->cache_size>=0, 0);
+      sqliteVdbeAddOpList(v, ArraySize(getSync), getSync);
+    }else{
+      int size = db->cache_size;
+      if( size<0 ) size = -size;
+      if( !getBoolean(zRight) ) size = -size;
+      db->cache_size = size;
+      sqliteBtreeSetCacheSize(db->pBe, db->cache_size);
+    }
   }else
 
   if( sqliteStrICmp(zLeft, "vdbe_trace")==0 ){
@@ -1715,6 +1966,7 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       };
       int i;
       sqliteVdbeAddOpList(v, ArraySize(tableInfoPreface), tableInfoPreface);
+      sqliteViewGetColumnNames(pParse, pTab);
       for(i=0; i<pTab->nCol; i++){
         sqliteVdbeAddOp(v, OP_Integer, i, 0);
         sqliteVdbeAddOp(v, OP_String, 0, 0);
@@ -1751,6 +2003,7 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
         sqliteVdbeAddOp(v, OP_Integer, i, 0);
         sqliteVdbeAddOp(v, OP_Integer, cnum, 0);
         sqliteVdbeAddOp(v, OP_String, 0, 0);
+        assert( pTab->nCol>cnum );
         sqliteVdbeChangeP3(v, -1, pTab->aCol[cnum].zName, P3_STATIC);
         sqliteVdbeAddOp(v, OP_Callback, 3, 0);
       }
@@ -1799,8 +2052,7 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
   }else
 #endif
 
-#ifndef NDEBUG
-  if( sqliteStrICmp(zLeft, "sanity_check")==0 ){
+  if( sqliteStrICmp(zLeft, "integrity_check")==0 ){
     static VdbeOp checkDb[] = {
       { OP_SetInsert,   0, 0,        "2"},
       { OP_Open,        0, 2,        0},
@@ -1808,16 +2060,15 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       { OP_Column,      0, 3,        0},
       { OP_SetInsert,   0, 0,        0},
       { OP_Next,        0, 3,        0},
-      { OP_SanityCheck, 0, 0,        0},
+      { OP_IntegrityCk, 0, 0,        0},
       { OP_ColumnCount, 1, 0,        0},
-      { OP_ColumnName,  0, 0,        "sanity_check"},
+      { OP_ColumnName,  0, 0,        "integrity_check"},
       { OP_Callback,    1, 0,        0},
     };
     Vdbe *v = sqliteGetVdbe(pParse);
     if( v==0 ) return;
     sqliteVdbeAddOpList(v, ArraySize(checkDb), checkDb);
   }else
-#endif
 
   {}
   sqliteFree(zLeft);

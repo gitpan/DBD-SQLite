@@ -4,6 +4,8 @@ CVS/.*
 \.tar$
 \.tgz$
 \.tar\.gz$
+output/.*
+^.#
 ^mess/
 ^tmp/
 ^blib/

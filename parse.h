@@ -95,4 +95,5 @@
 #define TK_USING                          95
 #define TK_VACUUM                         96
 #define TK_VALUES                         97
-#define TK_WHERE                          98
+#define TK_VIEW                           98
+#define TK_WHERE                          99

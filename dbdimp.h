@@ -1,4 +1,4 @@
-/* $Id: dbdimp.h,v 1.5 2002/02/27 19:25:22 matt Exp $ */
+/* $Id: dbdimp.h,v 1.6 2002/03/13 11:27:46 matt Exp $ */
 
 #ifndef _DBDIMP_H
 #define _DBDIMP_H   1
@@ -19,6 +19,7 @@ struct imp_dbh_st {
     dbih_dbc_t com;
     /* sqlite specific bits */
     struct sqlite *db;
+    bool in_tran;
 };
 
 /* Statement Handle */

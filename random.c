@@ -15,7 +15,7 @@
 ** Random numbers are used by some of the database backends in order
 ** to generate random integer keys for tables or random filenames.
 **
-** $Id: random.c,v 1.2 2002/02/27 19:25:22 matt Exp $
+** $Id: random.c,v 1.3 2002/03/12 15:43:02 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -31,7 +31,7 @@
 ** well be good enough.  But maybe not.  Or maybe lrand48() has some
 ** subtle problems on some systems that could cause problems.  It is hard
 ** to know.  To minimize the risk of problems due to bad lrand48()
-** implementations, SQLite uses is this random number generator based
+** implementations, SQLite uses this random number generator based
 ** on RC4, which we know works very well.
 */
 static int randomByte(){

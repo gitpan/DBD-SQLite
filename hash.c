@@ -12,7 +12,7 @@
 ** This is the implementation of generic hash-tables
 ** used in SQLite.
 **
-** $Id: hash.c,v 1.3 2002/02/27 19:25:22 matt Exp $
+** $Id: hash.c,v 1.5 2002/03/13 11:28:23 matt Exp $
 */
 #include "sqliteInt.h"
 #include <assert.h>
@@ -22,7 +22,7 @@
 **
 ** "new" is a pointer to the hash table that is to be initialized.
 ** keyClass is one of the constants SQLITE_HASH_INT, SQLITE_HASH_POINTER,
-** SQLITE_HASH_BINARY, or SQLITE_HASH_STRING.  The value of keyClass 
+** SQLITE_HASH_BINARY, or SQLITE_HASH_STRING.  The value of keyClass
 ** determines what kind of key the hash table will use.  "copyKey" is
 ** true if the hash table should make its own private copy of keys and
 ** false if it should just use the supplied pointer.  CopyKey only makes
@@ -92,7 +92,7 @@ static int ptrCompare(const void *pKey1, int n1, const void *pKey2, int n2){
 ** Hash and comparison functions when the mode is SQLITE_HASH_STRING
 */
 static int strHash(const void *pKey, int nKey){
-  return sqliteHashNoCase((const char*)pKey, nKey); 
+  return sqliteHashNoCase((const char*)pKey, nKey);
 }
 static int strCompare(const void *pKey1, int n1, const void *pKey2, int n2){
   if( n1!=n2 ) return n2-n1;
@@ -119,7 +119,7 @@ static int binCompare(const void *pKey1, int n1, const void *pKey2, int n2){
 /*
 ** Return a pointer to the appropriate hash function given the key class.
 **
-** The C syntax in this function definition may be unfamilar to some 
+** The C syntax in this function definition may be unfamilar to some
 ** programmers, so we provide the following additional explanation:
 **
 ** The name of the function is "hashFunction".  The function takes a
@@ -286,7 +286,7 @@ void *sqliteHashFind(const Hash *pH, const void *pKey, int nKey){
 ** If the "data" parameter to this function is NULL, then the
 ** element corresponding to "key" is removed from the hash table.
 */
-void *sqliteHashInsert(Hash *pH, void *pKey, int nKey, void *data){
+void *sqliteHashInsert(Hash *pH, const void *pKey, int nKey, void *data){
   int hraw;             /* Raw hash value of the key */
   int h;                /* the hash of the key modulo hash table size */
   HashElem *elem;       /* Used to loop thru the element list */
@@ -320,7 +320,7 @@ void *sqliteHashInsert(Hash *pH, void *pKey, int nKey, void *data){
     }
     memcpy((void*)new_elem->pKey, pKey, nKey);
   }else{
-    new_elem->pKey = pKey;
+    new_elem->pKey = (void*)pKey;
   }
   new_elem->nKey = nKey;
   pH->count++;

@@ -12,23 +12,274 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.2 2002/02/27 19:25:22 matt Exp $
+** $Id: expr.c,v 1.3 2002/03/12 15:43:02 matt Exp $
 */
 #include "sqliteInt.h"
 
+
+/*
+** Construct a new expression node and return a pointer to it.  Memory
+** for this node is obtained from sqliteMalloc().  The calling function
+** is responsible for making sure the node eventually gets freed.
+*/
+Expr *sqliteExpr(int op, Expr *pLeft, Expr *pRight, Token *pToken){
+  Expr *pNew;
+  pNew = sqliteMalloc( sizeof(Expr) );
+  if( pNew==0 ){
+    sqliteExprDelete(pLeft);
+    sqliteExprDelete(pRight);
+    return 0;
+  }
+  pNew->op = op;
+  pNew->pLeft = pLeft;
+  pNew->pRight = pRight;
+  if( pToken ){
+    pNew->token = *pToken;
+  }else{
+    pNew->token.z = 0;
+    pNew->token.n = 0;
+  }
+  if( pLeft && pRight ){
+    sqliteExprSpan(pNew, &pLeft->span, &pRight->span);
+  }else{
+    pNew->span = pNew->token;
+  }
+  return pNew;
+}
+
+/*
+** Set the Expr.token field of the given expression to span all
+** text between the two given tokens.
+*/
+void sqliteExprSpan(Expr *pExpr, Token *pLeft, Token *pRight){
+  if( pExpr ){
+    pExpr->span.z = pLeft->z;
+    pExpr->span.n = pRight->n + Addr(pRight->z) - Addr(pLeft->z);
+  }
+}
+
+/*
+** Construct a new expression node for a function with multiple
+** arguments.
+*/
+Expr *sqliteExprFunction(ExprList *pList, Token *pToken){
+  Expr *pNew;
+  pNew = sqliteMalloc( sizeof(Expr) );
+  if( pNew==0 ){
+    sqliteExprListDelete(pList);
+    return 0;
+  }
+  pNew->op = TK_FUNCTION;
+  pNew->pList = pList;
+  if( pToken ){
+    pNew->token = *pToken;
+  }else{
+    pNew->token.z = 0;
+    pNew->token.n = 0;
+  }
+  return pNew;
+}
 
 /*
 ** Recursively delete an expression tree.
 */
 void sqliteExprDelete(Expr *p){
   if( p==0 ) return;
-  if( p->op!=TK_AS ){
-    if( p->pLeft ) sqliteExprDelete(p->pLeft);
-    if( p->pRight ) sqliteExprDelete(p->pRight);
-  }
+  if( p->pLeft ) sqliteExprDelete(p->pLeft);
+  if( p->pRight ) sqliteExprDelete(p->pRight);
   if( p->pList ) sqliteExprListDelete(p->pList);
   if( p->pSelect ) sqliteSelectDelete(p->pSelect);
   sqliteFree(p);
+}
+
+/*
+** The following group of functions are used to translate the string
+** pointers of tokens in expression from one buffer to another.
+**
+** Normally, the Expr.token.z and Expr.span.z fields point into the
+** original input buffer of an SQL statement.  This is usually OK
+** since the SQL statement is executed and the expression is deleted
+** before the input buffer is freed.  Making the tokens point to the
+** original input buffer saves many calls to malloc() and thus helps
+** the library to run faster. 
+**
+** But sometimes we need an expression to persist past the time when
+** the input buffer is freed.  (Example: The SELECT clause of a
+** CREATE VIEW statement contains expressions that must persist for
+** the life of the view.)  When that happens we have to make a
+** persistent copy of the input buffer and translate the Expr.token.z
+** and Expr.span.z fields to point to the copy rather than the 
+** original input buffer.  The following group of routines handle that
+** translation.
+**
+** The "offset" parameter is the distance from the original input buffer
+** to the persistent copy.  These routines recursively walk the entire
+** expression tree and shift all tokens by "offset" amount.
+**
+** The work of figuring out the appropriate "offset" and making the
+** presistent copy of the input buffer is done by the calling routine.
+*/
+void sqliteExprMoveStrings(Expr *p, int offset){
+  if( p==0 ) return;
+  if( p->token.z ) p->token.z += offset;
+  if( p->span.z ) p->span.z += offset;
+  if( p->pLeft ) sqliteExprMoveStrings(p->pLeft, offset);
+  if( p->pRight ) sqliteExprMoveStrings(p->pRight, offset);
+  if( p->pList ) sqliteExprListMoveStrings(p->pList, offset);
+  if( p->pSelect ) sqliteSelectMoveStrings(p->pSelect, offset);
+}
+void sqliteExprListMoveStrings(ExprList *pList, int offset){
+  int i;
+  if( pList==0 ) return;
+  for(i=0; i<pList->nExpr; i++){
+    sqliteExprMoveStrings(pList->a[i].pExpr, offset);
+  }
+}
+void sqliteSelectMoveStrings(Select *pSelect, int offset){
+  if( pSelect==0 ) return;
+  sqliteExprListMoveStrings(pSelect->pEList, offset);
+  sqliteExprMoveStrings(pSelect->pWhere, offset);
+  sqliteExprListMoveStrings(pSelect->pGroupBy, offset);
+  sqliteExprMoveStrings(pSelect->pHaving, offset);
+  sqliteExprListMoveStrings(pSelect->pOrderBy, offset);
+  sqliteSelectMoveStrings(pSelect->pPrior, offset);
+}
+
+/*
+** The following group of routines make deep copies of expressions,
+** expression lists, ID lists, and select statements.  The copies can
+** be deleted (by being passed to their respective ...Delete() routines)
+** without effecting the originals.
+**
+** Note, however, that the Expr.token.z and Expr.span.z fields point to
+** string space that is allocated separately from the expression tree
+** itself.  These routines do NOT duplicate that string space.
+**
+** The expression list and ID list return by sqliteExprListDup() and 
+** sqliteIdListDup() can not be further expanded by subsequent calls
+** to sqliteExprListAppend() or sqliteIdListAppend().
+**
+** Any tables that the ID list might point to are not duplicated.
+*/
+Expr *sqliteExprDup(Expr *p){
+  Expr *pNew;
+  if( p==0 ) return 0;
+  pNew = sqliteMalloc( sizeof(*p) );
+  if( pNew==0 ) return 0;
+  pNew->op = p->op;
+  pNew->pLeft = sqliteExprDup(p->pLeft);
+  pNew->pRight = sqliteExprDup(p->pRight);
+  pNew->pList = sqliteExprListDup(p->pList);
+  pNew->iTable = p->iTable;
+  pNew->iColumn = p->iColumn;
+  pNew->iAgg = p->iAgg;
+  pNew->token = p->token;
+  pNew->span = p->span;
+  pNew->pSelect = sqliteSelectDup(p->pSelect);
+  return pNew;
+}
+ExprList *sqliteExprListDup(ExprList *p){
+  ExprList *pNew;
+  int i;
+  if( p==0 ) return 0;
+  pNew = sqliteMalloc( sizeof(*pNew) );
+  if( pNew==0 ) return 0;
+  pNew->nExpr = p->nExpr;
+  pNew->a = sqliteMalloc( p->nExpr*sizeof(p->a[0]) );
+  for(i=0; i<p->nExpr; i++){
+    pNew->a[i].pExpr = sqliteExprDup(p->a[i].pExpr);
+    pNew->a[i].zName = sqliteStrDup(p->a[i].zName);
+    pNew->a[i].sortOrder = p->a[i].sortOrder;
+    pNew->a[i].isAgg = p->a[i].isAgg;
+    pNew->a[i].done = 0;
+  }
+  return pNew;
+}
+IdList *sqliteIdListDup(IdList *p){
+  IdList *pNew;
+  int i;
+  if( p==0 ) return 0;
+  pNew = sqliteMalloc( sizeof(*pNew) );
+  if( pNew==0 ) return 0;
+  pNew->nId = p->nId;
+  pNew->a = sqliteMalloc( p->nId*sizeof(p->a[0]) );
+  for(i=0; i<p->nId; i++){
+    pNew->a[i].zName = sqliteStrDup(p->a[i].zName);
+    pNew->a[i].zAlias = sqliteStrDup(p->a[i].zAlias);
+    pNew->a[i].idx = p->a[i].idx;
+    pNew->a[i].pTab = 0;
+    pNew->a[i].pSelect = sqliteSelectDup(p->a[i].pSelect);
+  }
+  return pNew;
+}
+Select *sqliteSelectDup(Select *p){
+  Select *pNew;
+  if( p==0 ) return 0;
+  pNew = sqliteMalloc( sizeof(*p) );
+  if( pNew==0 ) return 0;
+  pNew->isDistinct = p->isDistinct;
+  pNew->pEList = sqliteExprListDup(p->pEList);
+  pNew->pSrc = sqliteIdListDup(p->pSrc);
+  pNew->pWhere = sqliteExprDup(p->pWhere);
+  pNew->pGroupBy = sqliteExprListDup(p->pGroupBy);
+  pNew->pHaving = sqliteExprDup(p->pHaving);
+  pNew->pOrderBy = sqliteExprListDup(p->pOrderBy);
+  pNew->op = p->op;
+  pNew->pPrior = sqliteSelectDup(p->pPrior);
+  pNew->nLimit = p->nLimit;
+  pNew->nOffset = p->nOffset;
+  pNew->zSelect = 0;
+  return pNew;
+}
+
+
+/*
+** Add a new element to the end of an expression list.  If pList is
+** initially NULL, then create a new expression list.
+*/
+ExprList *sqliteExprListAppend(ExprList *pList, Expr *pExpr, Token *pName){
+  int i;
+  if( pList==0 ){
+    pList = sqliteMalloc( sizeof(ExprList) );
+    if( pList==0 ){
+      sqliteExprDelete(pExpr);
+      return 0;
+    }
+  }
+  if( (pList->nExpr & 7)==0 ){
+    int n = pList->nExpr + 8;
+    struct ExprList_item *a;
+    a = sqliteRealloc(pList->a, n*sizeof(pList->a[0]));
+    if( a==0 ){
+      sqliteExprDelete(pExpr);
+      return pList;
+    }
+    pList->a = a;
+  }
+  if( pExpr || pName ){
+    i = pList->nExpr++;
+    pList->a[i].pExpr = pExpr;
+    pList->a[i].zName = 0;
+    if( pName ){
+      sqliteSetNString(&pList->a[i].zName, pName->z, pName->n, 0);
+      sqliteDequote(pList->a[i].zName);
+    }
+  }
+  return pList;
+}
+
+/*
+** Delete an entire expression list.
+*/
+void sqliteExprListDelete(ExprList *pList){
+  int i;
+  if( pList==0 ) return;
+  for(i=0; i<pList->nExpr; i++){
+    sqliteExprDelete(pList->a[i].pExpr);
+    sqliteFree(pList->a[i].zName);
+  }
+  sqliteFree(pList->a);
+  sqliteFree(pList);
 }
 
 /*
@@ -61,40 +312,6 @@ int sqliteExprIsConstant(Expr *p){
 }
 
 /*
-** Walk the expression tree and process operators of the form:
-**
-**       expr IN (SELECT ...)
-**
-** These operators have to be processed before column names are
-** resolved because each such operator increments pParse->nTab
-** to reserve cursor numbers for its own use.  But pParse->nTab
-** needs to be constant once we begin resolving column names.  For
-** that reason, this procedure needs to be called on every expression
-** before sqliteExprResolveIds() is called on any expression.
-**
-** Actually, the processing of IN-SELECT is only started by this
-** routine.  This routine allocates a cursor number to the IN-SELECT
-** and then moves on.  The code generation is done by 
-** sqliteExprResolveIds() which must be called afterwards.
-*/
-void sqliteExprResolveInSelect(Parse *pParse, Expr *pExpr){
-  if( pExpr==0 ) return;
-  if( pExpr->op==TK_IN && pExpr->pSelect!=0 ){
-    pExpr->iTable = pParse->nTab++;
-  }else{
-    if( pExpr->pLeft ) sqliteExprResolveInSelect(pParse, pExpr->pLeft);
-    if( pExpr->pRight ) sqliteExprResolveInSelect(pParse, pExpr->pRight);
-    if( pExpr->pList ){
-      int i;
-      ExprList *pList = pExpr->pList;
-      for(i=0; i<pList->nExpr; i++){
-        sqliteExprResolveInSelect(pParse, pList->a[i].pExpr);
-      }
-    }
-  }
-}
-
-/*
 ** Return TRUE if the given string is a row-id column name.
 */
 static int sqliteIsRowid(const char *z){
@@ -110,7 +327,7 @@ static int sqliteIsRowid(const char *z){
 ** index to the table in the table list and a column offset.  The 
 ** Expr.opcode for such nodes is changed to TK_COLUMN.  The Expr.iTable
 ** value is changed to the index of the referenced table in pTabList
-** plus the pParse->nTab value.  This value will ultimately become the
+** plus the "base" value.  The base value will ultimately become the
 ** VDBE cursor number for a cursor that is pointing into the referenced
 ** table.  The Expr.iColumn value is changed to the index of the column 
 ** of the referenced table.  The Expr.iColumn value for the special
@@ -137,11 +354,13 @@ static int sqliteIsRowid(const char *z){
 */
 int sqliteExprResolveIds(
   Parse *pParse,     /* The parser context */
+  int base,          /* VDBE cursor number for first entry in pTabList */
   IdList *pTabList,  /* List of tables used to resolve column names */
   ExprList *pEList,  /* List of expressions used to resolve "AS" */
   Expr *pExpr        /* The expression to be analyzed. */
 ){
   if( pExpr==0 || pTabList==0 ) return 0;
+  assert( base+pTabList->nId<=pParse->nTab );
   switch( pExpr->op ){
     /* A lone identifier.  Try and match it as follows:
     **
@@ -156,17 +375,20 @@ int sqliteExprResolveIds(
     case TK_ID: {
       int cnt = 0;      /* Number of matches */
       int i;            /* Loop counter */
-      char *z = sqliteStrNDup(pExpr->token.z, pExpr->token.n);
+      char *z;
+      assert( pExpr->token.z );
+      z = sqliteStrNDup(pExpr->token.z, pExpr->token.n);
       sqliteDequote(z);
       if( z==0 ) return 1;
       for(i=0; i<pTabList->nId; i++){
         int j;
         Table *pTab = pTabList->a[i].pTab;
         if( pTab==0 ) continue;
+        assert( pTab->nCol>0 );
         for(j=0; j<pTab->nCol; j++){
           if( sqliteStrICmp(pTab->aCol[j].zName, z)==0 ){
             cnt++;
-            pExpr->iTable = i + pParse->nTab;
+            pExpr->iTable = i + base;
             if( j==pTab->iPKey ){
               /* Substitute the record number for the INTEGER PRIMARY KEY */
               pExpr->iColumn = -1;
@@ -186,13 +408,13 @@ int sqliteExprResolveIds(
             assert( pExpr->pLeft==0 && pExpr->pRight==0 );
             pExpr->op = TK_AS;
             pExpr->iColumn = j;
-            pExpr->pLeft = pEList->a[j].pExpr;
+            pExpr->pLeft = sqliteExprDup(pEList->a[j].pExpr);
           }
         } 
       }
       if( cnt==0 && sqliteIsRowid(z) ){
         pExpr->iColumn = -1;
-        pExpr->iTable = pParse->nTab;
+        pExpr->iTable = base;
         cnt = 1 + (pTabList->nId>1);
         pExpr->op = TK_COLUMN;
       }
@@ -221,8 +443,8 @@ int sqliteExprResolveIds(
 
       pLeft = pExpr->pLeft;
       pRight = pExpr->pRight;
-      assert( pLeft && pLeft->op==TK_ID );
-      assert( pRight && pRight->op==TK_ID );
+      assert( pLeft && pLeft->op==TK_ID && pLeft->token.z );
+      assert( pRight && pRight->op==TK_ID && pRight->token.z );
       zLeft = sqliteStrNDup(pLeft->token.z, pLeft->token.n);
       zRight = sqliteStrNDup(pRight->token.z, pRight->token.n);
       if( zLeft==0 || zRight==0 ){
@@ -238,17 +460,18 @@ int sqliteExprResolveIds(
         char *zTab;
         Table *pTab = pTabList->a[i].pTab;
         if( pTab==0 ) continue;
+        assert( pTab->nCol>0 );
         if( pTabList->a[i].zAlias ){
           zTab = pTabList->a[i].zAlias;
         }else{
           zTab = pTab->zName;
         }
         if( sqliteStrICmp(zTab, zLeft)!=0 ) continue;
-        if( 0==(cntTab++) ) pExpr->iTable = i + pParse->nTab;
+        if( 0==(cntTab++) ) pExpr->iTable = i + base;
         for(j=0; j<pTab->nCol; j++){
           if( sqliteStrICmp(pTab->aCol[j].zName, zRight)==0 ){
             cnt++;
-            pExpr->iTable = i + pParse->nTab;
+            pExpr->iTable = i + base;
             if( j==pTab->iPKey ){
               /* Substitute the record number for the INTEGER PRIMARY KEY */
               pExpr->iColumn = -1;
@@ -288,7 +511,7 @@ int sqliteExprResolveIds(
     case TK_IN: {
       Vdbe *v = sqliteGetVdbe(pParse);
       if( v==0 ) return 1;
-      if( sqliteExprResolveIds(pParse, pTabList, pEList, pExpr->pLeft) ){
+      if( sqliteExprResolveIds(pParse, base, pTabList, pEList, pExpr->pLeft) ){
         return 1;
       }
       if( pExpr->pSelect ){
@@ -298,8 +521,9 @@ int sqliteExprResolveIds(
         ** table.  The cursor number of the temporary table has already
         ** been put in iTable by sqliteExprResolveInSelect().
         */
+        pExpr->iTable = pParse->nTab++;
         sqliteVdbeAddOp(v, OP_OpenTemp, pExpr->iTable, 1);
-        if( sqliteSelect(pParse, pExpr->pSelect, SRT_Set, pExpr->iTable) );
+        sqliteSelect(pParse, pExpr->pSelect, SRT_Set, pExpr->iTable, 0,0,0);
       }else if( pExpr->pList ){
         /* Case 2:     expr IN (exprlist)
         **
@@ -327,6 +551,7 @@ int sqliteExprResolveIds(
             case TK_INTEGER:
             case TK_STRING: {
               int addr = sqliteVdbeAddOp(v, OP_SetInsert, iSet, 0);
+              assert( pE2->token.z );
               sqliteVdbeChangeP3(v, addr, pE2->token.z, pE2->token.n);
               sqliteVdbeDequoteP3(v, addr);
               break;
@@ -348,7 +573,7 @@ int sqliteExprResolveIds(
       ** of the memory cell in iColumn.
       */
       pExpr->iColumn = pParse->nMem++;
-      if( sqliteSelect(pParse, pExpr->pSelect, SRT_Mem, pExpr->iColumn) ){
+      if( sqliteSelect(pParse, pExpr->pSelect, SRT_Mem, pExpr->iColumn,0,0,0) ){
         return 1;
       }
       break;
@@ -357,18 +582,19 @@ int sqliteExprResolveIds(
     /* For all else, just recursively walk the tree */
     default: {
       if( pExpr->pLeft
-      && sqliteExprResolveIds(pParse, pTabList, pEList, pExpr->pLeft) ){
+      && sqliteExprResolveIds(pParse, base, pTabList, pEList, pExpr->pLeft) ){
         return 1;
       }
       if( pExpr->pRight 
-      && sqliteExprResolveIds(pParse, pTabList, pEList, pExpr->pRight) ){
+      && sqliteExprResolveIds(pParse, base, pTabList, pEList, pExpr->pRight) ){
         return 1;
       }
       if( pExpr->pList ){
         int i;
         ExprList *pList = pExpr->pList;
         for(i=0; i<pList->nExpr; i++){
-          if( sqliteExprResolveIds(pParse,pTabList,pEList,pList->a[i].pExpr) ){
+          Expr *pArg = pList->a[i].pExpr;
+          if( sqliteExprResolveIds(pParse, base, pTabList, pEList, pArg) ){
             return 1;
           }
         }
@@ -376,47 +602,6 @@ int sqliteExprResolveIds(
     }
   }
   return 0;
-}
-
-#if 0 /* NOT USED */
-/*
-** Compare a token against a string.  Return TRUE if they match.
-*/
-static int sqliteTokenCmp(Token *pToken, const char *zStr){
-  int n = strlen(zStr);
-  if( n!=pToken->n ) return 0;
-  return sqliteStrNICmp(pToken->z, zStr, n)==0;
-}
-#endif
-
-/*
-** Convert a function name into its integer identifier.  Return the
-** identifier.  Return FN_Unknown if the function name is unknown.
-*/
-int sqliteFuncId(Token *pToken){
-  static const struct {
-     char *zName;
-     int len;
-     int id;
-  } aFunc[] = {
-     { "count",  5, FN_Count  },
-     { "min",    3, FN_Min    },
-     { "max",    3, FN_Max    },
-     { "sum",    3, FN_Sum    },
-     { "avg",    3, FN_Avg    },
-     { "length", 6, FN_Length },
-     { "substr", 6, FN_Substr },
-     { "abs",    3, FN_Abs    },
-     { "round",  5, FN_Round  },
-  };
-  int i;
-  for(i=0; i<ArraySize(aFunc); i++){
-    if( aFunc[i].len==pToken->n 
-     && sqliteStrNICmp(pToken->z, aFunc[i].zName, aFunc[i].len)==0 ){
-       return aFunc[i].id;
-    }
-  }
-  return FN_Unknown;
 }
 
 /*
@@ -433,69 +618,40 @@ int sqliteExprCheck(Parse *pParse, Expr *pExpr, int allowAgg, int *pIsAgg){
   if( pExpr==0 ) return 0;
   switch( pExpr->op ){
     case TK_FUNCTION: {
-      int id = sqliteFuncId(&pExpr->token);
       int n = pExpr->pList ? pExpr->pList->nExpr : 0;
       int no_such_func = 0;
-      int too_many_args = 0;
-      int too_few_args = 0;
+      int wrong_num_args = 0;
       int is_agg = 0;
       int i;
-      pExpr->iColumn = id;
-      switch( id ){
-        case FN_Unknown: { 
+      FuncDef *pDef;
+
+      pDef = sqliteFindFunction(pParse->db,
+         pExpr->token.z, pExpr->token.n, n, 0);
+      if( pDef==0 ){
+        pDef = sqliteFindFunction(pParse->db,
+           pExpr->token.z, pExpr->token.n, -1, 0);
+        if( pDef==0 ){
           no_such_func = 1;
-          break;
+        }else{
+          wrong_num_args = 1;
         }
-        case FN_Count: { 
-          no_such_func = !allowAgg;
-          too_many_args = n>1;
-          is_agg = 1;
-          break;
-        }
-        case FN_Max:
-        case FN_Min: {
-          too_few_args = allowAgg ? n<1 : n<2;
-          is_agg = n==1;
-          break;
-        }
-        case FN_Avg:
-        case FN_Sum: {
-          no_such_func = !allowAgg;
-          too_many_args = n>1;
-          too_few_args = n<1;
-          is_agg = 1;
-          break;
-        }
-        case FN_Abs:
-        case FN_Length: {
-          too_few_args = n<1;
-          too_many_args = n>1;
-          break;
-        }
-        case FN_Round: {
-          too_few_args = n<1;
-          too_many_args = n>2;
-          break;
-        }
-        case FN_Substr: {
-          too_few_args = n<3;
-          too_many_args = n>3;
-          break;
-        }
-        default: break;
+      }else{
+        is_agg = pDef->xFunc==0;
       }
-      if( no_such_func ){
+      if( is_agg && !allowAgg ){
+        sqliteSetNString(&pParse->zErrMsg, "misuse of aggregate function ", -1,
+           pExpr->token.z, pExpr->token.n, "()", 2, 0);
+        pParse->nErr++;
+        nErr++;
+        is_agg = 0;
+      }else if( no_such_func ){
         sqliteSetNString(&pParse->zErrMsg, "no such function: ", -1,
            pExpr->token.z, pExpr->token.n, 0);
         pParse->nErr++;
         nErr++;
-      }else if( too_many_args ){
-        sqliteSetNString(&pParse->zErrMsg, "too many arguments to function ",-1,
-           pExpr->token.z, pExpr->token.n, "()", 2, 0);
-        pParse->nErr++;
-        nErr++;
-      }else if( too_few_args ){
-        sqliteSetNString(&pParse->zErrMsg, "too few arguments to function ",-1,
+      }else if( wrong_num_args ){
+        sqliteSetNString(&pParse->zErrMsg, 
+           "wrong number of arguments to function ",-1,
            pExpr->token.z, pExpr->token.n, "()", 2, 0);
         pParse->nErr++;
         nErr++;
@@ -574,14 +730,20 @@ void sqliteExprCode(Parse *pParse, Expr *pExpr){
       }
       break;
     }
-    case TK_FLOAT:
     case TK_INTEGER: {
+      sqliteVdbeAddOp(v, OP_Integer, atoi(pExpr->token.z), 0);
+      sqliteVdbeChangeP3(v, -1, pExpr->token.z, pExpr->token.n);
+      break;
+    }
+    case TK_FLOAT: {
       sqliteVdbeAddOp(v, OP_String, 0, 0);
+      assert( pExpr->token.z );
       sqliteVdbeChangeP3(v, -1, pExpr->token.z, pExpr->token.n);
       break;
     }
     case TK_STRING: {
       int addr = sqliteVdbeAddOp(v, OP_String, 0, 0);
+      assert( pExpr->token.z );
       sqliteVdbeChangeP3(v, addr, pExpr->token.z, pExpr->token.n);
       sqliteVdbeDequoteP3(v, addr);
       break;
@@ -640,7 +802,11 @@ void sqliteExprCode(Parse *pParse, Expr *pExpr){
         Token *p = &pExpr->pLeft->token;
         char *z = sqliteMalloc( p->n + 2 );
         sprintf(z, "-%.*s", p->n, p->z);
-        sqliteVdbeAddOp(v, OP_String, 0, 0);
+        if( pExpr->pLeft->op==TK_INTEGER ){
+          sqliteVdbeAddOp(v, OP_Integer, atoi(z), 0);
+        }else{
+          sqliteVdbeAddOp(v, OP_String, 0, 0);
+        }
         sqliteVdbeChangeP3(v, -1, z, p->n+1);
         sqliteFree(z);
         break;
@@ -665,62 +831,21 @@ void sqliteExprCode(Parse *pParse, Expr *pExpr){
     }
     case TK_AGG_FUNCTION: {
       sqliteVdbeAddOp(v, OP_AggGet, 0, pExpr->iAgg);
-      if( pExpr->iColumn==FN_Avg ){
-        assert( pParse->iAggCount>=0 && pParse->iAggCount<pParse->nAgg );
-        sqliteVdbeAddOp(v, OP_AggGet, 0, pParse->iAggCount);
-        sqliteVdbeAddOp(v, OP_Divide, 0, 0);
-      }
       break;
     }
     case TK_FUNCTION: {
-      int id = pExpr->iColumn;
-      int op;
       int i;
       ExprList *pList = pExpr->pList;
-      switch( id ){
-        case FN_Min: 
-        case FN_Max: {
-          op = id==FN_Min ? OP_Min : OP_Max;
-          for(i=0; i<pList->nExpr; i++){
-            sqliteExprCode(pParse, pList->a[i].pExpr);
-            if( i>0 ){
-              sqliteVdbeAddOp(v, op, 0, 0);
-            }
-          }
-          break;
-        }
-        case FN_Abs: {
-          sqliteExprCode(pParse, pList->a[0].pExpr);
-          sqliteVdbeAddOp(v, OP_AbsValue, 0, 0);
-          break;
-        }
-        case FN_Round: {
-          if( pList->nExpr==2 ){
-            sqliteExprCode(pParse, pList->a[1].pExpr);
-          }else{
-            sqliteVdbeAddOp(v, OP_Integer, 0, 0);
-          }
-          sqliteExprCode(pParse, pList->a[0].pExpr);
-          sqliteVdbeAddOp(v, OP_Precision, 0, 0);
-          break;
-        }
-        case FN_Length: {
-          sqliteExprCode(pParse, pList->a[0].pExpr);
-          sqliteVdbeAddOp(v, OP_Strlen, 0, 0);
-          break;
-        }
-        case FN_Substr: {
-          for(i=0; i<pList->nExpr; i++){
-            sqliteExprCode(pParse, pList->a[i].pExpr);
-          }
-          sqliteVdbeAddOp(v, OP_Substr, 0, 0);
-          break;
-        }
-        default: {
-          /* Can't happen! */
-          break;
-        }
+      int nExpr = pList ? pList->nExpr : 0;
+      FuncDef *pDef;
+      pDef = sqliteFindFunction(pParse->db,
+                      pExpr->token.z, pExpr->token.n, nExpr, 0);
+      assert( pDef!=0 );
+      for(i=0; i<nExpr; i++){
+        sqliteExprCode(pParse, pList->a[i].pExpr);
       }
+      sqliteVdbeAddOp(v, OP_Function, nExpr, 0);
+      sqliteVdbeChangeP3(v, -1, (char*)pDef, P3_POINTER);
       break;
     }
     case TK_SELECT: {
@@ -1025,21 +1150,6 @@ int sqliteExprAnalyzeAggregates(Parse *pParse, Expr *pExpr){
       break;
     }
     case TK_AGG_FUNCTION: {
-      if( pExpr->iColumn==FN_Count || pExpr->iColumn==FN_Avg ){
-        if( pParse->iAggCount>=0 ){
-          i = pParse->iAggCount;
-        }else{
-          i = appendAggInfo(pParse);
-          if( i<0 ) return 1;
-          pParse->aAgg[i].isAgg = 1;
-          pParse->aAgg[i].pExpr = 0;
-          pParse->iAggCount = i;
-        }
-        if( pExpr->iColumn==FN_Count ){
-          pExpr->iAgg = i;
-          break;
-        }
-      }
       aAgg = pParse->aAgg;
       for(i=0; i<pParse->nAgg; i++){
         if( !aAgg[i].isAgg ) continue;
@@ -1052,6 +1162,9 @@ int sqliteExprAnalyzeAggregates(Parse *pParse, Expr *pExpr){
         if( i<0 ) return 1;
         pParse->aAgg[i].isAgg = 1;
         pParse->aAgg[i].pExpr = pExpr;
+        pParse->aAgg[i].pFunc = sqliteFindFunction(pParse->db,
+             pExpr->token.z, pExpr->token.n,
+             pExpr->pList ? pExpr->pList->nExpr : 0, 0);
       }
       pExpr->iAgg = i;
       break;
@@ -1074,4 +1187,52 @@ int sqliteExprAnalyzeAggregates(Parse *pParse, Expr *pExpr){
     }
   }
   return nErr;
+}
+
+/*
+** Locate a user function given a name and a number of arguments.
+** Return a pointer to the FuncDef structure that defines that
+** function, or return NULL if the function does not exist.
+**
+** If the createFlag argument is true, then a new (blank) FuncDef
+** structure is created and liked into the "db" structure if a
+** no matching function previously existed.  When createFlag is true
+** and the nArg parameter is -1, then only a function that accepts
+** any number of arguments will be returned.
+**
+** If createFlag is false and nArg is -1, then the first valid
+** function found is returned.  A function is valid if either xFunc
+** or xStep is non-zero.
+*/
+FuncDef *sqliteFindFunction(
+  sqlite *db,        /* An open database */
+  const char *zName, /* Name of the function.  Not null-terminated */
+  int nName,         /* Number of characters in the name */
+  int nArg,          /* Number of arguments.  -1 means any number */
+  int createFlag     /* Create new entry if true and does not otherwise exist */
+){
+  FuncDef *pFirst, *p, *pMaybe;
+  pFirst = p = (FuncDef*)sqliteHashFind(&db->aFunc, zName, nName);
+  if( p && !createFlag && nArg<0 ){
+    while( p && p->xFunc==0 && p->xStep==0 ){ p = p->pNext; }
+    return p;
+  }
+  pMaybe = 0;
+  while( p && p->nArg!=nArg ){
+    if( p->nArg<0 && !createFlag && (p->xFunc || p->xStep) ) pMaybe = p;
+    p = p->pNext;
+  }
+  if( p && !createFlag && p->xFunc==0 && p->xStep==0 ){
+    return 0;
+  }
+  if( p==0 && pMaybe ){
+    assert( createFlag==0 );
+    return pMaybe;
+  }
+  if( p==0 && createFlag && (p = sqliteMalloc(sizeof(*p)))!=0 ){
+    p->nArg = nArg;
+    p->pNext = pFirst;
+    sqliteHashInsert(&db->aFunc, zName, nName, (void*)p);
+  }
+  return p;
 }

@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.2 2002/02/27 19:25:22 matt Exp $
+** $Id: main.c,v 1.3 2002/03/12 15:43:02 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -42,6 +42,13 @@ static int sqliteOpenCb(void *pDb, int argc, char **argv, char **azColName){
 
   assert( argc==4 );
   switch( argv[0][0] ){
+    case 'c': {  /* Recommended pager cache size */
+      int size = atoi(argv[3]);
+      if( size==0 ){ size = MAX_PAGES; }
+      db->cache_size = size;
+      sqliteBtreeSetCacheSize(db->pBe, size);
+      break;
+    }
     case 'f': {  /* File format */
       db->file_format = atoi(argv[3]);
       break;
@@ -51,13 +58,14 @@ static int sqliteOpenCb(void *pDb, int argc, char **argv, char **azColName){
       db->next_cookie = db->schema_cookie;
       break;
     }
+    case 'v':
     case 'i':
-    case 't': {  /* CREATE TABLE  and CREATE INDEX statements */
+    case 't': {  /* CREATE TABLE, CREATE INDEX, or CREATE VIEW statements */
       if( argv[3] && argv[3][0] ){
-        /* Call the parser to process a CREATE TABLE or CREATE INDEX statement.
+        /* Call the parser to process a CREATE TABLE, INDEX or VIEW.
         ** But because sParse.initFlag is set to 1, no VDBE code is generated
         ** or executed.  All the parser does is build the internal data
-        ** structures that describe the table or index.
+        ** structures that describe the table, index, or view.
         */
         memset(&sParse, 0, sizeof(sParse));
         sParse.db = db;
@@ -149,10 +157,15 @@ static int sqliteInit(sqlite *db, char **pzErrMsg){
   ** was created to fulfill a PRIMARY KEY or UNIQUE constraint on a table,
   ** then the "sql" column is NULL.
   **
-  ** If the "type" column has the value "meta", then the "sql" column
-  ** contains extra information about the database, such as the
-  ** file format version number.  All meta information must be processed
-  ** before any tables or indices are constructed.
+  ** In format 1, entries in the sqlite_master table are in a random
+  ** order.  Two passes must be made through the table to initialize
+  ** internal data structures.  The first pass reads table definitions
+  ** and the second pass read index definitions.  Having two passes
+  ** insures that indices appear after their tables.
+  **
+  ** In format 2, entries appear in chronological order.  Only a single
+  ** pass needs to be made through the table since everything will be
+  ** in the write order.  VIEWs may only occur in format 2.
   **
   ** The following program invokes its callback on the SQL for each
   ** table then goes back and invokes the callback on the
@@ -161,38 +174,78 @@ static int sqliteInit(sqlite *db, char **pzErrMsg){
   ** database scheme.
   */
   static VdbeOp initProg[] = {
+    /* Send the file format to the callback routine
+    */
     { OP_Open,       0, 2,  0},
     { OP_String,     0, 0,  "file-format"},
     { OP_String,     0, 0,  0},
     { OP_String,     0, 0,  0},
     { OP_ReadCookie, 0, 1,  0},
     { OP_Callback,   4, 0,  0},
+
+    /* Send the recommended pager cache size to the callback routine
+    */
+    { OP_String,     0, 0,  "cache-size"},
+    { OP_String,     0, 0,  0},
+    { OP_String,     0, 0,  0},
+    { OP_ReadCookie, 0, 2,  0},
+    { OP_Callback,   4, 0,  0},
+
+    /* Send the initial schema cookie to the callback
+    */
     { OP_String,     0, 0,  "schema_cookie"},
     { OP_String,     0, 0,  0},
     { OP_String,     0, 0,  0},
     { OP_ReadCookie, 0, 0,  0},
     { OP_Callback,   4, 0,  0},
-    { OP_Rewind,     0, 31, 0},
-    { OP_Column,     0, 0,  0},           /* 12 */
+
+    /* Check the file format.  If the format number is 2 or more,
+    ** then do a single pass through the SQLITE_MASTER table.  For
+    ** a format number of less than 2, jump forward to a different
+    ** algorithm that makes two passes through the SQLITE_MASTER table,
+    ** once for tables and a second time for indices.
+    */
+    { OP_ReadCookie, 0, 1,  0},
+    { OP_Integer,    2, 0,  0},
+    { OP_Lt,         0, 28, 0},
+
+    /* This is the code for doing a single scan through the SQLITE_MASTER
+    ** table.  This code runs for format 2 and greater.
+    */
+    { OP_Rewind,     0, 26, 0},
+    { OP_Column,     0, 0,  0},           /* 20 */
+    { OP_Column,     0, 1,  0},
+    { OP_Column,     0, 3,  0},
+    { OP_Column,     0, 4,  0},
+    { OP_Callback,   4, 0,  0},
+    { OP_Next,       0, 20, 0},
+    { OP_Close,      0, 0,  0},           /* 26 */
+    { OP_Halt,       0, 0,  0},
+
+    /* This is the code for doing two passes through SQLITE_MASTER.  This
+    ** code runs for file format 1.
+    */
+    { OP_Rewind,     0, 48, 0},           /* 28 */
+    { OP_Column,     0, 0,  0},           /* 29 */
     { OP_String,     0, 0,  "table"},
-    { OP_Ne,         0, 20, 0},
+    { OP_Ne,         0, 37, 0},
     { OP_Column,     0, 0,  0},
     { OP_Column,     0, 1,  0},
     { OP_Column,     0, 3,  0},
     { OP_Column,     0, 4,  0},
     { OP_Callback,   4, 0,  0},
-    { OP_Next,       0, 12, 0},           /* 20 */
-    { OP_Rewind,     0, 31, 0},           /* 21 */
-    { OP_Column,     0, 0,  0},           /* 22 */
+    { OP_Next,       0, 29, 0},           /* 37 */
+    { OP_Rewind,     0, 48, 0},           /* 38 */
+    { OP_Column,     0, 0,  0},           /* 39 */
     { OP_String,     0, 0,  "index"},
-    { OP_Ne,         0, 30, 0},
+    { OP_Ne,         0, 47, 0},
     { OP_Column,     0, 0,  0},
     { OP_Column,     0, 1,  0},
     { OP_Column,     0, 3,  0},
     { OP_Column,     0, 4,  0},
     { OP_Callback,   4, 0,  0},
-    { OP_Next,       0, 22, 0},           /* 30 */
-    { OP_Close,      0, 0,  0},           /* 31 */
+    { OP_Next,       0, 39, 0},           /* 47 */
+    { OP_Close,      0, 0,  0},           /* 48 */
     { OP_Halt,       0, 0,  0},
   };
 
@@ -209,9 +262,9 @@ static int sqliteInit(sqlite *db, char **pzErrMsg){
                       db->pBusyArg, db->xBusyCallback);
   sqliteVdbeDelete(vdbe);
   if( rc==SQLITE_OK && db->nTable==0 ){
-    db->file_format = FILE_FORMAT;
+    db->file_format = 2;
   }
-  if( rc==SQLITE_OK && db->file_format>FILE_FORMAT ){
+  if( rc==SQLITE_OK && db->file_format>2 ){
     sqliteSetString(pzErrMsg, "unsupported file format", 0);
     rc = SQLITE_ERROR;
   }
@@ -275,8 +328,10 @@ sqlite *sqlite_open(const char *zFilename, int mode, char **pzErrMsg){
   sqliteHashInit(&db->idxHash, SQLITE_HASH_STRING, 0);
   sqliteHashInit(&db->tblDrop, SQLITE_HASH_POINTER, 0);
   sqliteHashInit(&db->idxDrop, SQLITE_HASH_POINTER, 0);
-  db->nextRowid = sqliteRandomInteger();
+  sqliteHashInit(&db->aFunc, SQLITE_HASH_STRING, 1);
+  sqliteRegisterBuildinFunctions(db);
   db->onError = OE_Default;
+  db->priorNewRowid = 0;
   
   /* Open the backend database driver */
   rc = sqliteBtreeOpen(zFilename, mode, MAX_PAGES, &db->pBe);
@@ -370,11 +425,20 @@ int sqlite_last_insert_rowid(sqlite *db){
 ** Close an existing SQLite database
 */
 void sqlite_close(sqlite *db){
+  HashElem *i;
   sqliteBtreeClose(db->pBe);
   clearHashTable(db, 0);
   if( db->pBeTemp ){
     sqliteBtreeClose(db->pBeTemp);
   }
+  for(i=sqliteHashFirst(&db->aFunc); i; i=sqliteHashNext(i)){
+    FuncDef *pFunc, *pNext;
+    for(pFunc = (FuncDef*)sqliteHashData(i); pFunc; pFunc=pNext){
+      pNext = pFunc->pNext;
+      sqliteFree(pFunc);
+    }
+  }
+  sqliteHashClear(&db->aFunc);
   sqliteFree(db);
 }
 
@@ -575,3 +639,53 @@ void sqlite_freemem(void *p){ free(p); }
 */
 const char *sqlite_libversion(void){ return sqlite_version; }
 const char *sqlite_libencoding(void){ return sqlite_encoding; }
+
+/*
+** Create new user-defined functions.  The sqlite_create_function()
+** routine creates a regular function and sqlite_create_aggregate()
+** creates an aggregate function.
+**
+** Passing a NULL xFunc argument or NULL xStep and xFinalize arguments
+** disables the function.  Calling sqlite_create_function() with the
+** same name and number of arguments as a prior call to
+** sqlite_create_aggregate() disables the prior call to
+** sqlite_create_aggregate(), and vice versa.
+**
+** If nArg is -1 it means that this function will accept any number
+** of arguments, including 0.
+*/
+int sqlite_create_function(
+  sqlite *db,          /* Add the function to this database connection */
+  const char *zName,   /* Name of the function to add */
+  int nArg,            /* Number of arguments */
+  void (*xFunc)(sqlite_func*,int,const char**),  /* The implementation */
+  void *pUserData      /* User data */
+){
+  FuncDef *p;
+  if( db==0 || zName==0 ) return 1;
+  p = sqliteFindFunction(db, zName, strlen(zName), nArg, 1);
+  if( p==0 ) return 1;
+  p->xFunc = xFunc;
+  p->xStep = 0;
+  p->xFinalize = 0;
+  p->pUserData = pUserData;
+  return 0;
+}
+int sqlite_create_aggregate(
+  sqlite *db,          /* Add the function to this database connection */
+  const char *zName,   /* Name of the function to add */
+  int nArg,            /* Number of arguments */
+  void (*xStep)(sqlite_func*,int,const char**), /* The step function */
+  void (*xFinalize)(sqlite_func*),              /* The finalizer */
+  void *pUserData      /* User data */
+){
+  FuncDef *p;
+  if( db==0 || zName==0 ) return 1;
+  p = sqliteFindFunction(db, zName, strlen(zName), nArg, 1);
+  if( p==0 ) return 1;
+  p->xFunc = 0;
+  p->xStep = xStep;
+  p->xFinalize = xFinalize;
+  p->pUserData = pUserData;
+  return 0;
+}

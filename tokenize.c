@@ -15,7 +15,7 @@
 ** individual tokens and sends those tokens one-by-one over to the
 ** parser for analysis.
 **
-** $Id: tokenize.c,v 1.3 2002/02/27 19:25:22 matt Exp $
+** $Id: tokenize.c,v 1.4 2002/03/12 15:43:02 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -101,6 +101,7 @@ static Keyword aKeywordTable[] = {
   { "USING",             0, TK_USING,            0 },
   { "VACUUM",            0, TK_VACUUM,           0 },
   { "VALUES",            0, TK_VALUES,           0 },
+  { "VIEW",              0, TK_VIEW,             0 },
   { "WHERE",             0, TK_WHERE,            0 },
 };
 
@@ -116,7 +117,7 @@ static Keyword *apHashTable[KEY_HASH_SIZE];
 ** keyword.  If it is a keyword, the token code of that keyword is 
 ** returned.  If the input is not a keyword, TK_ID is returned.
 */
-static int sqliteKeywordCode(const char *z, int n){
+int sqliteKeywordCode(const char *z, int n){
   int h;
   Keyword *p;
   if( aKeywordTable[0].len==0 ){
@@ -419,7 +420,7 @@ int sqliteRunParser(Parse *pParse, const char *zSql, char **pzErrMsg){
         break;
     }
   }
-  if( nErr==0 && (db->flags & SQLITE_Interrupt)==0 ){
+  if( zSql[i]==0 ){
     sqliteParser(pEngine, 0, pParse->sLastToken, pParse);
     if( pParse->zErrMsg && pParse->sErrToken.z ){
        sqliteSetNString(pzErrMsg, "near \"", -1, 

@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.3 2002/02/27 19:25:22 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.5 2002/03/13 11:12:53 matt Exp $
 */
 #include "sqlite.h"
 #include "hash.h"
@@ -27,13 +27,8 @@
 ** The maximum number of in-memory pages to use for the main database
 ** table and for temporary tables.
 */
-#define MAX_PAGES   100
-#define TEMP_PAGES   25
-
-/*
-** File format version number
-*/
-#define FILE_FORMAT 1
+#define MAX_PAGES   2000
+#define TEMP_PAGES   500
 
 /*
 ** Integers of known sizes.  These typedefs might change for architectures
@@ -133,21 +128,6 @@ extern int sqlite_iMallocFail;   /* Fail sqliteMalloc() after this many calls */
 #define ArraySize(X)    (sizeof(X)/sizeof(X[0]))
 
 /*
-** Integer identifiers for built-in SQL functions.
-*/
-#define FN_Unknown    0
-#define FN_Count      1
-#define FN_Min        2
-#define FN_Max        3
-#define FN_Sum        4
-#define FN_Avg        5
-#define FN_Fcnt       6
-#define FN_Length     7
-#define FN_Substr     8
-#define FN_Abs        9
-#define FN_Round      10
-
-/*
 ** Forward references to structures
 */
 typedef struct Column Column;
@@ -163,6 +143,7 @@ typedef struct WhereInfo WhereInfo;
 typedef struct WhereLevel WhereLevel;
 typedef struct Select Select;
 typedef struct AggExpr AggExpr;
+typedef struct FuncDef FuncDef;
 
 /*
 ** Each database is an instance of the following structure
@@ -174,6 +155,7 @@ struct sqlite {
   int file_format;              /* What file format version is this database? */
   int schema_cookie;            /* Magic number that changes with the schema */
   int next_cookie;              /* Value of schema_cookie after commit */
+  int cache_size;               /* Number of pages to use in the cache */
   int nTable;                   /* Number of tables in the database */
   void *pBusyArg;               /* 1st Argument to the busy callback */
   int (*xBusyCallback)(void *,const char*,int);  /* The busy callback */
@@ -181,8 +163,9 @@ struct sqlite {
   Hash idxHash;                 /* All (named) indices indexed by name */
   Hash tblDrop;                 /* Uncommitted DROP TABLEs */
   Hash idxDrop;                 /* Uncommitted DROP INDEXs */
+  Hash aFunc;                   /* All functions that can be in SQL exprs */
   int lastRowid;                /* ROWID of most recent insert */
-  int nextRowid;                /* Next generated rowID */
+  int priorNewRowid;            /* Last randomly generated ROWID */
   int onError;                  /* Default conflict algorithm */
 };
 
@@ -201,11 +184,23 @@ struct sqlite {
 #define SQLITE_NullCallback   0x00000080  /* Invoke the callback once if the */
                                           /*   result set is empty */
 #define SQLITE_ResultDetails  0x00000100  /* Details added to result set */
+#define SQLITE_UnresetViews   0x00000200  /* True if one or more views have */
+                                          /*   defined column names */
 
 /*
-** Current file format version
+** Each SQL function is defined by an instance of the following
+** structure.  A pointer to this structure is stored in the sqlite.aFunc
+** hash table.  When multiple functions have the same name, the hash table
+** points to a linked list of these structures.
 */
-#define SQLITE_FileFormat 2
+struct FuncDef {
+  void (*xFunc)(sqlite_func*,int,const char**);   /* Regular function */
+  void (*xStep)(sqlite_func*,int,const char**);  /* Aggregate function step */
+  void (*xFinalize)(sqlite_func*);           /* Aggregate function finializer */
+  int nArg;                                  /* Number of arguments */
+  void *pUserData;                           /* User data parameter */
+  FuncDef *pNext;                            /* Next function with same name */
+};
 
 /*
 ** information about each column of an SQL table is held in an instance
@@ -255,6 +250,7 @@ struct Table {
   int iPKey;       /* If not less then 0, use aCol[iPKey] as the primary key */
   Index *pIndex;   /* List of SQL indexes on this table. */
   int tnum;        /* Root BTree node for this table (see note above) */
+  Select *pSelect; /* NULL for tables.  Points to definition if a view. */
   u8 readOnly;     /* True if this table should not be written by the user */
   u8 isCommit;     /* True if creation of this table has been committed */
   u8 isTemp;       /* True if stored in db->pBeTemp instead of db->pBe */
@@ -441,12 +437,22 @@ struct WhereInfo {
   int iBreak;          /* Jump here to break out of the loop */
   int base;            /* Index of first Open opcode */
   int nLevel;          /* Number of nested loop */
+  int savedNTab;       /* Value of pParse->nTab before WhereBegin() */
+  int peakNTab;        /* Value of pParse->nTab after WhereBegin() */
   WhereLevel a[1];     /* Information about each nest loop in the WHERE */
 };
 
 /*
 ** An instance of the following structure contains all information
 ** needed to generate code for a single SELECT statement.
+**
+** The zSelect field is used when the Select structure must be persistent.
+** Normally, the expression tree points to tokens in the original input
+** string that encodes the select.  But if the Select structure must live
+** longer than its input string (for example when it is used to describe
+** a VIEW) we have to make a copy of the input string so that the nodes
+** of the expression tree will have something to point to.  zSelect is used
+** to hold that copy.
 */
 struct Select {
   int isDistinct;        /* True if the DISTINCT keyword is present */
@@ -459,6 +465,8 @@ struct Select {
   int op;                /* One of: TK_UNION TK_ALL TK_INTERSECT TK_EXCEPT */
   Select *pPrior;        /* Prior select in a compound select statement */
   int nLimit, nOffset;   /* LIMIT and OFFSET values.  -1 means not used */
+  char *zSelect;         /* Complete text of the SELECT command */
+  int base;              /* Index of VDBE cursor for left-most FROM table */
 };
 
 /*
@@ -470,6 +478,7 @@ struct Select {
 #define SRT_Union        5  /* Store result as keys in a table */
 #define SRT_Except       6  /* Remove result from a UNION table */
 #define SRT_Table        7  /* Store result as data with a unique key */
+#define SRT_TempTable    8  /* Store result in a trasient table */
 
 /*
 ** When a SELECT uses aggregate functions (like "count(*)" or "avg(f1)")
@@ -493,6 +502,7 @@ struct Select {
 struct AggExpr {
   int isAgg;        /* if TRUE contains an aggregate function */
   Expr *pExpr;      /* The expression */
+  FuncDef *pFunc;   /* Information about the aggregate function */
 };
 
 /*
@@ -518,12 +528,11 @@ struct Parse {
   int nameClash;       /* A permanent table name clashes with temp table name */
   int newTnum;         /* Table number to use when reparsing CREATE TABLEs */
   int nErr;            /* Number of errors seen */
-  int nTab;            /* Number of previously allocated cursors */
+  int nTab;            /* Number of previously allocated VDBE cursors */
   int nMem;            /* Number of memory cells used so far */
   int nSet;            /* Number of sets used so far */
   int nAgg;            /* Number of aggregate expressions */
   AggExpr *aAgg;       /* An array of aggregate expressions */
-  int iAggCount;       /* Index of the count(*) aggregate in aAgg[] */
   int useAgg;          /* If true, extract field values from the aggregator
                        ** while generating expressions.  Normally false */
   int schemaVerified;  /* True if an OP_VerifySchema has been coded someplace
@@ -555,6 +564,7 @@ void sqliteRealToSortable(double r, char *);
 void sqliteSetString(char **, const char *, ...);
 void sqliteSetNString(char **, ...);
 void sqliteDequote(char*);
+int sqliteKeywordCode(const char*, int);
 int sqliteRunParser(Parse*, const char*, char **);
 void sqliteExec(Parse*);
 Expr *sqliteExpr(int, Expr*, Expr*, Token*);
@@ -574,7 +584,10 @@ void sqliteAddPrimaryKey(Parse*, IdList*, int);
 void sqliteAddColumnType(Parse*,Token*,Token*);
 void sqliteAddDefaultValue(Parse*,Token*,int);
 void sqliteEndTable(Parse*,Token*,Select*);
-void sqliteDropTable(Parse*, Token*);
+void sqliteCreateView(Parse*,Token*,Token*,Select*);
+int sqliteViewGetColumnNames(Parse*,Table*);
+void sqliteViewResetAll(sqlite*);
+void sqliteDropTable(Parse*, Token*, int);
 void sqliteDeleteTable(sqlite*, Table*);
 void sqliteInsert(Parse*, Token*, ExprList*, Select*, IdList*, int);
 IdList *sqliteIdListAppend(IdList*, Token*);
@@ -582,19 +595,22 @@ void sqliteIdListAddAlias(IdList*, Token*);
 void sqliteIdListDelete(IdList*);
 void sqliteCreateIndex(Parse*, Token*, Token*, IdList*, int, Token*, Token*);
 void sqliteDropIndex(Parse*, Token*);
-int sqliteSelect(Parse*, Select*, int, int);
+int sqliteSelect(Parse*, Select*, int, int, Select*, int, int*);
 Select *sqliteSelectNew(ExprList*,IdList*,Expr*,ExprList*,Expr*,ExprList*,
                         int,int,int);
 void sqliteSelectDelete(Select*);
+void sqliteSelectUnbind(Select*);
+Table *sqliteTableNameToTable(Parse*, const char*);
+IdList *sqliteTableTokenToIdList(Parse*, Token*);
 void sqliteDeleteFrom(Parse*, Token*, Expr*);
 void sqliteUpdate(Parse*, Token*, ExprList*, Expr*, int);
-WhereInfo *sqliteWhereBegin(Parse*, IdList*, Expr*, int);
+WhereInfo *sqliteWhereBegin(Parse*, int, IdList*, Expr*, int);
 void sqliteWhereEnd(WhereInfo*);
 void sqliteExprCode(Parse*, Expr*);
 void sqliteExprIfTrue(Parse*, Expr*, int);
 void sqliteExprIfFalse(Parse*, Expr*, int);
-Table *sqliteFindTable(sqlite*,char*);
-Index *sqliteFindIndex(sqlite*,char*);
+Table *sqliteFindTable(sqlite*,const char*);
+Index *sqliteFindIndex(sqlite*,const char*);
 void sqliteUnlinkAndDeleteIndex(sqlite*,Index*);
 void sqliteCopy(Parse*, Token*, Token*, Token*, int);
 void sqliteVacuum(Parse*, Token*);
@@ -604,8 +620,7 @@ char *sqliteTableNameFromToken(Token*);
 int sqliteExprCheck(Parse*, Expr*, int, int*);
 int sqliteExprCompare(Expr*, Expr*);
 int sqliteFuncId(Token*);
-int sqliteExprResolveIds(Parse*, IdList*, ExprList*, Expr*);
-void sqliteExprResolveInSelect(Parse*, Expr*);
+int sqliteExprResolveIds(Parse*, int, IdList*, ExprList*, Expr*);
 int sqliteExprAnalyzeAggregates(Parse*, Expr*);
 Vdbe *sqliteGetVdbe(Parse*);
 int sqliteRandomByte(void);
@@ -622,3 +637,12 @@ void sqliteCompleteInsertion(Parse*, Table*, int, char*, int, int);
 void sqliteBeginWriteOperation(Parse*);
 void sqliteBeginMultiWriteOperation(Parse*);
 void sqliteEndWriteOperation(Parse*);
+void sqliteExprMoveStrings(Expr*, int);
+void sqliteExprListMoveStrings(ExprList*, int);
+void sqliteSelectMoveStrings(Select*, int);
+Expr *sqliteExprDup(Expr*);
+ExprList *sqliteExprListDup(ExprList*);
+IdList *sqliteIdListDup(IdList*);
+Select *sqliteSelectDup(Select*);
+FuncDef *sqliteFindFunction(sqlite*,const char*,int,int,int);
+void sqliteRegisterBuildinFunctions(sqlite*);

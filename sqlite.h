@@ -12,17 +12,16 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite.h,v 1.2 2002/02/27 19:25:22 matt Exp $
+** @(#) $Id: sqlite.h,v 1.3 2002/03/12 15:43:02 matt Exp $
 */
 #ifndef _SQLITE_H_
 #define _SQLITE_H_
 #include <stdarg.h>     /* Needed for the definition of va_list */
 
-
 /*
 ** The version of the SQLite library.
 */
-#define SQLITE_VERSION         "2.3.3"
+#define SQLITE_VERSION         "2.4.0"
 
 /*
 ** Make sure we can call this stuff from C++.
@@ -362,6 +361,96 @@ int sqlite_get_table_vprintf(
   char **errmsg,         /* Error msg written here */
   va_list ap             /* Arguments to the format string */
 );
+
+/*
+** Windows systems should call this routine to free memory that
+** is returned in the in the errmsg parameter of sqlite_open() when
+** SQLite is a DLL.  For some reason, it does not work to call free()
+** directly.
+*/
+void sqlite_freemem(void *p);
+
+/*
+** Windows systems need functions to call to return the sqlite_version
+** and sqlite_encoding strings.
+*/
+const char *sqlite_libversion(void);
+const char *sqlite_libencoding(void);
+
+/*
+** A pointer to the following structure is used to communicate with
+** the implementations of user-defined functions.
+*/
+typedef struct sqlite_func sqlite_func;
+
+/*
+** Use the following routines to create new user-defined functions.  See
+** the documentation for details.
+*/
+int sqlite_create_function(
+  sqlite*,                  /* Database where the new function is registered */
+  const char *zName,        /* Name of the new function */
+  int nArg,                 /* Number of arguments.  -1 means any number */
+  void (*xFunc)(sqlite_func*,int,const char**),  /* C code to implement */
+  void *pUserData           /* Available via the sqlite_user_data() call */
+);
+int sqlite_create_aggregate(
+  sqlite*,                  /* Database where the new function is registered */
+  const char *zName,        /* Name of the function */
+  int nArg,                 /* Number of arguments */
+  void (*xStep)(sqlite_func*,int,const char**), /* Called for each row */
+  void (*xFinalize)(sqlite_func*),       /* Called once to get final result */
+  void *pUserData           /* Available via the sqlite_user_data() call */
+);
+
+/*
+** The user function implementations call one of the following four routines
+** in order to return their results.  The first parameter to each of these
+** routines is a copy of the first argument to xFunc() or xFinialize().
+** The second parameter to these routines is the result to be returned.
+** A NULL can be passed as the second parameter to sqlite_set_result_string()
+** in order to return a NULL result.
+**
+** The 3rd argument to _string and _error is the number of characters to
+** take from the string.  If this argument is negative, then all characters
+** up to and including the first '\000' are used.
+**
+** The sqlite_set_result_string() function allocates a buffer to hold the
+** result and returns a pointer to this buffer.  The calling routine
+** (that is, the implmentation of a user function) can alter the content
+** of this buffer if desired.
+*/
+char *sqlite_set_result_string(sqlite_func*,const char*,int);
+void sqlite_set_result_int(sqlite_func*,int);
+void sqlite_set_result_double(sqlite_func*,double);
+void sqlite_set_result_error(sqlite_func*,const char*,int);
+
+/*
+** The pUserData parameter to the sqlite_create_function() and
+** sqlite_create_aggregate() routines used to register user functions
+** is available to the implementation of the function using this
+** call.
+*/
+void *sqlite_user_data(sqlite_func*);
+
+/*
+** Aggregate functions use the following routine to allocate
+** a structure for storing their state.  The first time this routine
+** is called for a particular aggregate, a new structure of size nBytes
+** is allocated, zeroed, and returned.  On subsequent calls (for the
+** same aggregate instance) the same buffer is returned.  The implementation
+** of the aggregate can use the returned buffer to accumulate data.
+**
+** The buffer allocated is freed automatically be SQLite.
+*/
+void *sqlite_aggregate_context(sqlite_func*, int nBytes);
+
+/*
+** The next routine returns the number of calls to xStep for a particular
+** aggregate function instance.  The current call to xStep counts so this
+** routine always returns at least 1.
+*/
+int sqlite_aggregate_count(sqlite_func*);
 
 #ifdef __cplusplus
 }  /* End of the 'extern "C"' block */

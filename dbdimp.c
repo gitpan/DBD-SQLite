@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.17 2002/02/27 19:25:22 matt Exp $ */
+/* $Id: dbdimp.c,v 1.18 2002/03/13 11:27:46 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -43,6 +43,8 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
         Safefree(errmsg);
         return FALSE;
     }
+
+    imp_dbh->in_tran = FALSE;
 
     sqlite_busy_timeout(imp_dbh->db, SQL_TIMEOUT);
 
@@ -100,22 +102,18 @@ sqlite_db_rollback(SV *dbh, imp_dbh_t *imp_dbh)
         return TRUE;
     }
 
-    if (retval = sqlite_exec(imp_dbh->db, "ROLLBACK TRANSACTION",
-        NULL, NULL, &errmsg)
-        != SQLITE_OK)
-    {
-        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
-        Safefree(errmsg);
-        return retval;
+    if (imp_dbh->in_tran) {
+        if (retval = sqlite_exec(imp_dbh->db, "ROLLBACK TRANSACTION",
+            NULL, NULL, &errmsg)
+            != SQLITE_OK)
+        {
+            sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+            Safefree(errmsg);
+            return retval;
+        }
+        imp_dbh->in_tran = FALSE;
     }
-    if (retval = sqlite_exec(imp_dbh->db, "BEGIN TRANSACTION",
-        NULL, NULL, &errmsg)
-        != SQLITE_OK)
-    {
-        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
-        Safefree(errmsg);
-        return retval;
-    }
+
     return TRUE;
 }
 
@@ -131,21 +129,16 @@ sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
         return TRUE;
     }
 
-    if (retval = sqlite_exec(imp_dbh->db, "COMMIT TRANSACTION",
-        NULL, NULL, &errmsg)
-        != SQLITE_OK)
-    {
-        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
-        Safefree(errmsg);
-        return retval;
-    }
-    if (retval = sqlite_exec(imp_dbh->db, "BEGIN TRANSACTION",
-        NULL, NULL, &errmsg)
-        != SQLITE_OK)
-    {
-        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
-        Safefree(errmsg);
-        return retval;
+    if (imp_dbh->in_tran) {
+        if (retval = sqlite_exec(imp_dbh->db, "COMMIT TRANSACTION",
+            NULL, NULL, &errmsg)
+            != SQLITE_OK)
+        {
+            sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+            Safefree(errmsg);
+            return retval;
+        }
+        imp_dbh->in_tran = FALSE;
     }
     return TRUE;
 }
@@ -235,7 +228,7 @@ sqlite_quote(SV *val)
     SV *ret = sv_2mortal(NEWSV(0, SvCUR(val) + 2));
     if (strchr(cval, '\'')) {
         sv_setpvn(ret, "", 0);
-    
+
         while (*cval) {
             if (*cval == '\'') {
                 sv_catpvn(ret, "''", 2);
@@ -288,6 +281,18 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         sv_catsv(sql, AvARRAY(imp_sth->sql)[pos++]);
     }
     /* warn("Executing: %s\n", SvPV(sql, PL_na)); */
+
+    if ( (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) && (!imp_dbh->in_tran) ) {
+        if (retval = sqlite_exec(imp_dbh->db, "BEGIN TRANSACTION",
+            NULL, NULL, &errmsg)
+            != SQLITE_OK)
+        {
+            sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+            Safefree(errmsg);
+            return retval;
+        }
+        imp_dbh->in_tran = TRUE;
+    }
 
     imp_sth->results = NULL;
     if (retval = sqlite_get_table(imp_dbh->db, SvPV(sql, PL_na), &(imp_sth->results),
@@ -415,7 +420,7 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
     if (strncmp(key, "AutoCommit", 10) == 0) {
         if (SvTRUE(valuesv)) {
             /* commit tran? */
-            if (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
+            if ( (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) && (imp_dbh->in_tran) ) {
                 if (retval = sqlite_exec(imp_dbh->db, "COMMIT TRANSACTION",
                     NULL, NULL, &errmsg)
                     != SQLITE_OK)
@@ -424,19 +429,7 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
                     Safefree(errmsg);
                     return retval;
                 }
-            }
-        }
-        else {
-            /* begin tran? */
-            if (DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
-                if (retval = sqlite_exec(imp_dbh->db, "BEGIN TRANSACTION",
-                    NULL, NULL, &errmsg)
-                    != SQLITE_OK)
-                {
-                    sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
-                    Safefree(errmsg);
-                    return retval;
-                }
+                imp_dbh->in_tran = FALSE;
             }
         }
         DBIc_set(imp_dbh, DBIcf_AutoCommit, SvTRUE(valuesv));

@@ -1,5 +1,11 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.11
+    - Upgraded to SQLite 2.4.0, which adds views, subqueries, new builtin
+      functions, performance, and even sheds some weight
+    - Changed transaction support to only BEGIN TRAN when you execute some
+      SQL, which should improve locking problems.
+
 0.10
     - Fixed missing SQLiteXS.h from 0.09
 

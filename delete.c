@@ -12,9 +12,58 @@
 ** This file contains C code routines that are called by the parser
 ** to handle DELETE FROM statements.
 **
-** $Id: delete.c,v 1.2 2002/02/27 19:25:22 matt Exp $
+** $Id: delete.c,v 1.3 2002/03/12 15:43:02 matt Exp $
 */
 #include "sqliteInt.h"
+
+
+/*
+** Given a table name, find the corresponding table and make sure the
+** table is writeable.  Generate an error and return NULL if not.  If
+** everything checks out, return a pointer to the Table structure.
+*/
+Table *sqliteTableNameToTable(Parse *pParse, const char *zTab){
+  Table *pTab;
+  pTab = sqliteFindTable(pParse->db, zTab);
+  if( pTab==0 ){
+    sqliteSetString(&pParse->zErrMsg, "no such table: ", zTab, 0);
+    pParse->nErr++;
+    return 0;
+  }
+  if( pTab->readOnly || pTab->pSelect ){
+    sqliteSetString(&pParse->zErrMsg, 
+      pTab->pSelect ? "view " : "table ",
+      zTab,
+      " may not be modified", 0);
+    pParse->nErr++;
+    return 0;      
+  }
+  return pTab;
+}
+
+/*
+** Given a table name, check to make sure the table exists, is writable
+** and is not a view.  If everything is OK, construct an IdList holding
+** the table and return a pointer to the IdList.  The calling function
+** is responsible for freeing the IdList when it has finished with it.
+** If there is an error, leave a message on pParse->zErrMsg and return
+** NULL.
+*/
+IdList *sqliteTableTokenToIdList(Parse *pParse, Token *pTableName){
+  Table *pTab;
+  IdList *pTabList;
+
+  pTabList = sqliteIdListAppend(0, pTableName);
+  if( pTabList==0 ) return 0;
+  assert( pTabList->nId==1 );
+  pTab = sqliteTableNameToTable(pParse, pTabList->a[0].zName);
+  if( pTab==0 ){
+    sqliteIdListDelete(pTabList);
+    return 0;
+  }
+  pTabList->a[0].pTab = pTab;
+  return pTabList;
+}
 
 /*
 ** Process a DELETE FROM statement.
@@ -47,30 +96,17 @@ void sqliteDeleteFrom(
   ** will be calling are designed to work with multiple tables and expect
   ** an IdList* parameter instead of just a Table* parameger.
   */
-  pTabList = sqliteIdListAppend(0, pTableName);
+  pTabList = sqliteTableTokenToIdList(pParse, pTableName);
   if( pTabList==0 ) goto delete_from_cleanup;
-  for(i=0; i<pTabList->nId; i++){
-    pTabList->a[i].pTab = sqliteFindTable(db, pTabList->a[i].zName);
-    if( pTabList->a[i].pTab==0 ){
-      sqliteSetString(&pParse->zErrMsg, "no such table: ", 
-         pTabList->a[i].zName, 0);
-      pParse->nErr++;
-      goto delete_from_cleanup;
-    }
-    if( pTabList->a[i].pTab->readOnly ){
-      sqliteSetString(&pParse->zErrMsg, "table ", pTabList->a[i].zName,
-        " may not be modified", 0);
-      pParse->nErr++;
-      goto delete_from_cleanup;
-    }
-  }
+  assert( pTabList->nId==1 );
   pTab = pTabList->a[0].pTab;
+  assert( pTab->pSelect==0 );  /* This table is not a view */
 
   /* Resolve the column names in all the expressions.
   */
+  base = pParse->nTab++;
   if( pWhere ){
-    sqliteExprResolveInSelect(pParse, pWhere);
-    if( sqliteExprResolveIds(pParse, pTabList, 0, pWhere) ){
+    if( sqliteExprResolveIds(pParse, base, pTabList, 0, pWhere) ){
       goto delete_from_cleanup;
     }
     if( sqliteExprCheck(pParse, pWhere, 0, 0) ){
@@ -101,6 +137,7 @@ void sqliteDeleteFrom(
       int endOfLoop = sqliteVdbeMakeLabel(v);
       int addr;
       openOp = pTab->isTemp ? OP_OpenAux : OP_Open;
+      assert( base==0 );
       sqliteVdbeAddOp(v, openOp, 0, pTab->tnum);
       sqliteVdbeAddOp(v, OP_Rewind, 0, sqliteVdbeCurrentAddr(v)+2);
       addr = sqliteVdbeAddOp(v, OP_AddImm, 1, 0);
@@ -120,7 +157,7 @@ void sqliteDeleteFrom(
   else{
     /* Begin the database scan
     */
-    pWInfo = sqliteWhereBegin(pParse, pTabList, pWhere, 1);
+    pWInfo = sqliteWhereBegin(pParse, base, pTabList, pWhere, 1);
     if( pWInfo==0 ) goto delete_from_cleanup;
 
     /* Remember the key of every item to be deleted.
@@ -138,7 +175,6 @@ void sqliteDeleteFrom(
     ** database scan.  We have to delete items after the scan is complete
     ** because deleting an item can change the scan order.
     */
-    base = pParse->nTab;
     sqliteVdbeAddOp(v, OP_ListRewind, 0, 0);
     openOp = pTab->isTemp ? OP_OpenWrAux : OP_OpenWrite;
     sqliteVdbeAddOp(v, openOp, base, pTab->tnum);

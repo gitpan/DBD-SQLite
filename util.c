@@ -14,7 +14,7 @@
 ** This file contains functions for allocating memory, comparing
 ** strings, and stuff like that.
 **
-** $Id: util.c,v 1.2 2002/02/27 19:25:22 matt Exp $
+** $Id: util.c,v 1.3 2002/03/12 15:43:02 matt Exp $
 */
 #include "sqliteInt.h"
 #include <stdarg.h>
@@ -183,12 +183,16 @@ void sqliteStrRealloc(char **pz){
 ** Make a copy of a string in memory obtained from sqliteMalloc()
 */
 char *sqliteStrDup_(const char *z, char *zFile, int line){
-  char *zNew = sqliteMalloc_(strlen(z)+1, zFile, line);
+  char *zNew;
+  if( z==0 ) return 0;
+  zNew = sqliteMalloc_(strlen(z)+1, zFile, line);
   if( zNew ) strcpy(zNew, z);
   return zNew;
 }
 char *sqliteStrNDup_(const char *z, int n, char *zFile, int line){
-  char *zNew = sqliteMalloc_(n+1, zFile, line);
+  char *zNew;
+  if( z==0 ) return 0;
+  zNew = sqliteMalloc_(n+1, zFile, line);
   if( zNew ){
     memcpy(zNew, z, n);
     zNew[n] = 0;
@@ -251,12 +255,16 @@ void *sqliteRealloc(void *p, int n){
 ** Make a copy of a string in memory obtained from sqliteMalloc()
 */
 char *sqliteStrDup(const char *z){
-  char *zNew = sqliteMalloc(strlen(z)+1);
+  char *zNew;
+  if( z==0 ) return 0;
+  zNew = sqliteMalloc(strlen(z)+1);
   if( zNew ) strcpy(zNew, z);
   return zNew;
 }
 char *sqliteStrNDup(const char *z, int n){
-  char *zNew = sqliteMalloc(n+1);
+  char *zNew;
+  if( z==0 ) return 0;
+  zNew = sqliteMalloc(n+1);
   if( zNew ){
     memcpy(zNew, z, n);
     zNew[n] = 0;
@@ -621,7 +629,7 @@ static int sortStrCmp(const char *atext, const char *btext, int useCase){
 **
 ** Am empty string is considered numeric.
 */
-static int isNum(const char *z){
+static int sqliteIsNumber(const char *z){
   if( *z=='-' || *z=='+' ) z++;
   if( !isdigit(*z) ){
     return *z==0;
@@ -655,8 +663,14 @@ static int isNum(const char *z){
 */
 int sqliteCompare(const char *atext, const char *btext){
   int result;
-  int isNumA = isNum(atext);
-  int isNumB = isNum(btext);
+  int isNumA, isNumB;
+  if( atext==0 ){
+    return -(btext!=0);
+  }else if( btext==0 ){
+    return 1;
+  }
+  isNumA = sqliteIsNumber(atext);
+  isNumB = sqliteIsNumber(btext);
   if( isNumA ){
     if( !isNumB ){
       result = -1;
@@ -714,8 +728,8 @@ int sqliteSortCompare(const char *a, const char *b){
   int isNumA, isNumB;
 
   while( res==0 && *a && *b ){
-    isNumA = isNum(&a[1]);
-    isNumB = isNum(&b[1]);
+    isNumA = sqliteIsNumber(&a[1]);
+    isNumB = sqliteIsNumber(&b[1]);
     if( isNumA ){
       double rA, rB;
       if( !isNumB ){

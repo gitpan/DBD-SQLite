@@ -9,7 +9,7 @@
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: btree.c,v 1.3 2002/02/27 19:25:22 matt Exp $
+** $Id: btree.c,v 1.4 2002/03/12 15:43:02 matt Exp $
 **
 ** This file implements a external (disk-based) database using BTrees.
 ** For a detailed discussion of BTrees, refer to
@@ -64,6 +64,7 @@ typedef struct Cell Cell;
 typedef struct CellHdr CellHdr;
 typedef struct FreeBlk FreeBlk;
 typedef struct OverflowPage OverflowPage;
+typedef struct FreelistInfo FreelistInfo;
 
 /*
 ** All structures on a database page are aligned to 4-byte boundries.
@@ -246,6 +247,18 @@ struct FreeBlk {
 struct OverflowPage {
   Pgno iNext;
   char aPayload[OVERFLOW_SIZE];
+};
+
+/*
+** The PageOne.freeList field points to a linked list of overflow pages
+** hold information about free pages.  The aPayload section of each
+** overflow page contains an instance of the following structure.  The
+** aFree[] array holds the page number of nFree unused pages in the disk
+** file.
+*/
+struct FreelistInfo {
+  int nFree;
+  Pgno aFree[(OVERFLOW_SIZE-sizeof(int))/sizeof(Pgno)];
 };
 
 /*
@@ -637,6 +650,18 @@ int sqliteBtreeClose(Btree *pBt){
 
 /*
 ** Change the limit on the number of pages allowed the cache.
+**
+** The maximum number of cache pages is set to the absolute
+** value of mxPage.  If mxPage is negative, the pager will
+** operate asynchronously - it will not stop to do fsync()s
+** to insure data is written to the disk surface before
+** continuing.  Transactions still work if synchronous is off,
+** and the database cannot be corrupted if this program
+** crashes.  But if the operating system crashes or there is
+** an abrupt power failure when synchronous is off, the database
+** could be left in an inconsistent and unrecoverable state.
+** Synchronous is on by default so database corruption is not
+** normally a worry.
 */
 int sqliteBtreeSetCacheSize(Btree *pBt, int mxPage){
   sqlitepager_set_cachesize(pBt->pPager, mxPage);
@@ -749,7 +774,7 @@ int sqliteBtreeBeginTrans(Btree *pBt){
   if( sqlitepager_isreadonly(pBt->pPager) ){
     return SQLITE_READONLY;
   }
-  rc = sqlitepager_write(pBt->page1);
+  rc = sqlitepager_begin(pBt->page1);
   if( rc==SQLITE_OK ){
     rc = newDatabase(pBt);
   }
@@ -1308,7 +1333,7 @@ static int moveToLeftmost(BtCursor *pCur){
 
 /* Move the cursor to the first entry in the table.  Return SQLITE_OK
 ** on success.  Set *pRes to 0 if the cursor actually points to something
-** or set *pRes to 1 if the table is empty and there is no first element.
+** or set *pRes to 1 if the table is empty.
 */
 int sqliteBtreeFirst(BtCursor *pCur, int *pRes){
   int rc;
@@ -1321,6 +1346,30 @@ int sqliteBtreeFirst(BtCursor *pCur, int *pRes){
   }
   *pRes = 0;
   rc = moveToLeftmost(pCur);
+  pCur->bSkipNext = 0;
+  return rc;
+}
+
+/* Move the cursor to the last entry in the table.  Return SQLITE_OK
+** on success.  Set *pRes to 0 if the cursor actually points to something
+** or set *pRes to 1 if the table is empty.
+*/
+int sqliteBtreeLast(BtCursor *pCur, int *pRes){
+  int rc;
+  Pgno pgno;
+  if( pCur->pPage==0 ) return SQLITE_ABORT;
+  rc = moveToRoot(pCur);
+  if( rc ) return rc;
+  if( pCur->pPage->nCell==0 ){
+    *pRes = 1;
+    return SQLITE_OK;
+  }
+  *pRes = 0;
+  while( (pgno = pCur->pPage->u.hdr.rightChild)!=0 ){
+    rc = moveToChild(pCur, pgno);
+    if( rc ) return rc;
+  }
+  pCur->idx = pCur->pPage->nCell-1;
   pCur->bSkipNext = 0;
   return rc;
 }
@@ -1453,9 +1502,11 @@ static int allocatePage(Btree *pBt, MemPage **ppPage, Pgno *pPgno){
   int rc;
   if( pPage1->freeList ){
     OverflowPage *pOvfl;
+    FreelistInfo *pInfo;
+
     rc = sqlitepager_write(pPage1);
     if( rc ) return rc;
-    *pPgno = pPage1->freeList;
+    pPage1->nFree--;
     rc = sqlitepager_get(pBt->pPager, pPage1->freeList, (void**)&pOvfl);
     if( rc ) return rc;
     rc = sqlitepager_write(pOvfl);
@@ -1463,9 +1514,21 @@ static int allocatePage(Btree *pBt, MemPage **ppPage, Pgno *pPgno){
       sqlitepager_unref(pOvfl);
       return rc;
     }
-    pPage1->freeList = pOvfl->iNext;
-    pPage1->nFree--;
-    *ppPage = (MemPage*)pOvfl;
+    pInfo = (FreelistInfo*)pOvfl->aPayload;
+    if( pInfo->nFree==0 ){
+      *pPgno = pPage1->freeList;
+      pPage1->freeList = pOvfl->iNext;
+      *ppPage = (MemPage*)pOvfl;
+    }else{
+      pInfo->nFree--;
+      *pPgno = pInfo->aFree[pInfo->nFree];
+      rc = sqlitepager_get(pBt->pPager, *pPgno, (void**)ppPage);
+      sqlitepager_unref(pOvfl);
+      if( rc==SQLITE_OK ){
+        sqlitepager_dont_rollback(*ppPage);
+        rc = sqlitepager_write(*ppPage);
+      }
+    }
   }else{
     *pPgno = sqlitepager_pagecount(pBt->pPager) + 1;
     rc = sqlitepager_get(pBt->pPager, *pPgno, (void**)ppPage);
@@ -1497,6 +1560,25 @@ static int freePage(Btree *pBt, void *pPage, Pgno pgno){
   if( rc ){
     return rc;
   }
+  pPage1->nFree++;
+  if( pPage1->nFree>0 && pPage1->freeList ){
+    OverflowPage *pFreeIdx;
+    rc = sqlitepager_get(pBt->pPager, pPage1->freeList, (void**)&pFreeIdx);
+    if( rc==SQLITE_OK ){
+      FreelistInfo *pInfo = (FreelistInfo*)pFreeIdx->aPayload;
+      if( pInfo->nFree<(sizeof(pInfo->aFree)/sizeof(pInfo->aFree[0])) ){
+        rc = sqlitepager_write(pFreeIdx);
+        if( rc==SQLITE_OK ){
+          pInfo->aFree[pInfo->nFree] = pgno;
+          pInfo->nFree++;
+          sqlitepager_unref(pFreeIdx);
+          sqlitepager_dont_write(pBt->pPager, pgno);
+          return rc;
+        }
+      }
+      sqlitepager_unref(pFreeIdx);
+    }
+  }
   if( pOvfl==0 ){
     assert( pgno>0 );
     rc = sqlitepager_get(pBt->pPager, pgno, (void**)&pOvfl);
@@ -1510,7 +1592,6 @@ static int freePage(Btree *pBt, void *pPage, Pgno pgno){
   }
   pOvfl->iNext = pPage1->freeList;
   pPage1->freeList = pgno;
-  pPage1->nFree++;
   memset(pOvfl->aPayload, 0, OVERFLOW_SIZE);
   pMemPage = (MemPage*)pPage;
   pMemPage->isInit = 0;
@@ -2081,6 +2162,40 @@ static int balance(Btree *pBt, MemPage *pPage, BtCursor *pCur){
   }
 
   /*
+  ** Put the new pages in accending order.  This helps to
+  ** keep entries in the disk file in order so that a scan
+  ** of the table is a linear scan through the file.  That
+  ** in turn helps the operating system to deliver pages
+  ** from the disk more rapidly.
+  **
+  ** An O(n^2) insertion sort algorithm is used, but since
+  ** n is never more than 3, that should not be a problem.
+  **
+  ** This one optimization makes the database about 25%
+  ** faster for large insertions and deletions.
+  */
+  for(i=0; i<k-1; i++){
+    int minV = pgnoNew[i];
+    int minI = i;
+    for(j=i+1; j<k; j++){
+      if( pgnoNew[j]<minV ){
+        minI = j;
+        minV = pgnoNew[j];
+      }
+    }
+    if( minI>i ){
+      int t;
+      MemPage *pT;
+      t = pgnoNew[i];
+      pT = apNew[i];
+      pgnoNew[i] = pgnoNew[minI];
+      apNew[i] = apNew[minI];
+      pgnoNew[minI] = t;
+      apNew[minI] = pT;
+    }
+  }
+
+  /*
   ** Evenly distribute the data in apCell[] across the new pages.
   ** Insert divider cells into pParent as necessary.
   */
@@ -2458,15 +2573,13 @@ int sqliteBtreeUpdateMeta(Btree *pBt, int *aMeta){
 ** The complete implementation of the BTree subsystem is above this line.
 ** All the code the follows is for testing and troubleshooting the BTree
 ** subsystem.  None of the code that follows is used during normal operation.
-** All of the following code is omitted if the library is compiled with
-** the -DNDEBUG2=1 compiler option.
 ******************************************************************************/
-#ifndef NDEBUG2
 
 /*
 ** Print a disassembly of the given page on standard output.  This routine
 ** is used for debugging and testing only.
 */
+#ifdef SQLITE_TEST
 int sqliteBtreePageDump(Btree *pBt, int pgno, int recursive){
   int rc;
   MemPage *pPage;
@@ -2535,7 +2648,9 @@ int sqliteBtreePageDump(Btree *pBt, int pgno, int recursive){
   sqlitepager_unref(pPage);
   return SQLITE_OK;
 }
+#endif
 
+#ifdef SQLITE_TEST
 /*
 ** Fill aResult[] with information about the entry and page that the
 ** cursor is pointing to.
@@ -2575,7 +2690,9 @@ int sqliteBtreeCursorDump(BtCursor *pCur, int *aResult){
   aResult[7] = pPage->u.hdr.rightChild;
   return SQLITE_OK;
 }
+#endif
 
+#ifdef SQLITE_TEST
 /*
 ** Return the pager associated with a BTree.  This routine is used for
 ** testing and debugging only.
@@ -2583,13 +2700,14 @@ int sqliteBtreeCursorDump(BtCursor *pCur, int *aResult){
 Pager *sqliteBtreePager(Btree *pBt){
   return pBt->pPager;
 }
+#endif
 
 /*
 ** This structure is passed around through all the sanity checking routines
 ** in order to keep track of some global state information.
 */
-typedef struct SanityCheck SanityCheck;
-struct SanityCheck {
+typedef struct IntegrityCk IntegrityCk;
+struct IntegrityCk {
   Btree *pBt;    /* The tree being checked out */
   Pager *pPager; /* The associated pager.  Also accessible by pBt->pPager */
   int nPage;     /* Number of pages in the database */
@@ -2602,7 +2720,7 @@ struct SanityCheck {
 /*
 ** Append a message to the error message string.
 */
-static void checkAppendMsg(SanityCheck *pCheck, char *zMsg1, char *zMsg2){
+static void checkAppendMsg(IntegrityCk *pCheck, char *zMsg1, char *zMsg2){
   if( pCheck->zErrMsg ){
     char *zOld = pCheck->zErrMsg;
     pCheck->zErrMsg = 0;
@@ -2621,7 +2739,7 @@ static void checkAppendMsg(SanityCheck *pCheck, char *zMsg1, char *zMsg2){
 **
 ** Also check that the page number is in bounds.
 */
-static int checkRef(SanityCheck *pCheck, int iPage, char *zContext){
+static int checkRef(IntegrityCk *pCheck, int iPage, char *zContext){
   if( iPage==0 ) return 1;
   if( iPage>pCheck->nPage ){
     char zBuf[100];
@@ -2642,9 +2760,16 @@ static int checkRef(SanityCheck *pCheck, int iPage, char *zContext){
 ** Check the integrity of the freelist or of an overflow page list.
 ** Verify that the number of pages on the list is N.
 */
-static void checkList(SanityCheck *pCheck, int iPage, int N, char *zContext){
+static void checkList(
+  IntegrityCk *pCheck,  /* Integrity checking context */
+  int isFreeList,       /* True for a freelist.  False for overflow page list */
+  int iPage,            /* Page number for first page in the list */
+  int N,                /* Expected number of pages in the list */
+  char *zContext        /* Context for error messages */
+){
+  int i;
   char zMsg[100];
-  while( N-- ){
+  while( N-- > 0 ){
     OverflowPage *pOvfl;
     if( iPage<1 ){
       sprintf(zMsg, "%d pages missing from overflow list", N+1);
@@ -2656,6 +2781,13 @@ static void checkList(SanityCheck *pCheck, int iPage, int N, char *zContext){
       sprintf(zMsg, "failed to get page %d", iPage);
       checkAppendMsg(pCheck, zContext, zMsg);
       break;
+    }
+    if( isFreeList ){
+      FreelistInfo *pInfo = (FreelistInfo*)pOvfl->aPayload;
+      for(i=0; i<pInfo->nFree; i++){
+        checkRef(pCheck, pInfo->aFree[i], zMsg);
+      }
+      N -= pInfo->nFree;
     }
     iPage = (int)pOvfl->iNext;
     sqlitepager_unref(pOvfl);
@@ -2698,7 +2830,7 @@ static int keyCompare(
 **          the root of the tree.
 */
 static int checkTreePage(
-  SanityCheck *pCheck,  /* Context for the sanity check */
+  IntegrityCk *pCheck,  /* Context for the sanity check */
   int iPage,            /* Page number of the page to check */
   MemPage *pParent,     /* Parent page */
   char *zParentContext, /* Parent context */
@@ -2757,7 +2889,7 @@ static int checkTreePage(
     sprintf(zContext, "On page %d cell %d: ", iPage, i);
     if( sz>MX_LOCAL_PAYLOAD ){
       int nPage = (sz - MX_LOCAL_PAYLOAD + OVERFLOW_SIZE - 1)/OVERFLOW_SIZE;
-      checkList(pCheck, pCell->ovfl, nPage, zContext);
+      checkList(pCheck, 0, pCell->ovfl, nPage, zContext);
     }
 
     /* Check that keys are in the right order
@@ -2843,10 +2975,10 @@ static int checkTreePage(
 ** and a pointer to that error message is returned.  The calling function
 ** is responsible for freeing the error message when it is done.
 */
-char *sqliteBtreeSanityCheck(Btree *pBt, int *aRoot, int nRoot){
+char *sqliteBtreeIntegrityCheck(Btree *pBt, int *aRoot, int nRoot){
   int i;
   int nRef;
-  SanityCheck sCheck;
+  IntegrityCk sCheck;
 
   nRef = *sqlitepager_stats(pBt->pPager);
   if( lockBtree(pBt)!=SQLITE_OK ){
@@ -2862,11 +2994,13 @@ char *sqliteBtreeSanityCheck(Btree *pBt, int *aRoot, int nRoot){
 
   /* Check the integrity of the freelist
   */
-  checkList(&sCheck, pBt->page1->freeList, pBt->page1->nFree,"Main freelist: ");
+  checkList(&sCheck, 1, pBt->page1->freeList, pBt->page1->nFree,
+            "Main freelist: ");
 
   /* Check all the tables.
   */
   for(i=0; i<nRoot; i++){
+    if( aRoot[i]==0 ) continue;
     checkTreePage(&sCheck, aRoot[i], 0, "List of tree roots: ", 0,0,0,0);
   }
 
@@ -2897,5 +3031,3 @@ char *sqliteBtreeSanityCheck(Btree *pBt, int *aRoot, int nRoot){
   sqliteFree(sCheck.anRef);
   return sCheck.zErrMsg;
 }
-
-#endif /* !defined(NDEBUG) */
