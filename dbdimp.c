@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.29 2002/12/29 16:24:40 matt Exp $ */
+/* $Id: dbdimp.c,v 1.30 2003/01/27 21:50:53 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -283,7 +283,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         }
         sv_catsv(sql, AvARRAY(imp_sth->sql)[pos++]);
     }
-    /* warn("Executing: %s\n", SvPV(sql, myPL_na)); */
+    /* warn("Executing: %s;\n", SvPV(sql, myPL_na)); */
 
     if ( (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) && (!imp_dbh->in_tran) ) {
         if (retval = sqlite_exec(imp_dbh->db, "BEGIN TRANSACTION",

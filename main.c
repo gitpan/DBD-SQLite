@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.14 2002/12/26 16:08:19 matt Exp $
+** $Id: main.c,v 1.15 2003/01/27 21:50:53 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -39,7 +39,7 @@ typedef struct {
 **     argv[0] = "file-format" or "schema-cookie" or "table" or "index"
 **     argv[1] = table or index name or meta statement type.
 **     argv[2] = root page number for table or index.  NULL for meta.
-**     argv[3] = SQL create statement for the table or index
+**     argv[3] = SQL text for a CREATE TABLE or CREATE INDEX statement.
 **     argv[4] = "1" for temporary files, "0" for main database
 **
 */
@@ -391,7 +391,7 @@ sqlite *sqlite_open(const char *zFilename, int mode, char **pzErrMsg){
   /* If the database is in formats 1 or 2, then upgrade it to
   ** version 3.  This will reconstruct all indices.  If the
   ** upgrade fails for any reason (ex: out of disk space, database
-  ** is read only, interrupt receive, etc.) then refuse to open.
+  ** is read only, interrupt received, etc.) then refuse to open.
   */
   if( rc==SQLITE_OK && db->file_format<3 ){
     char *zErr = 0;
@@ -604,6 +604,9 @@ int sqlite_exec(
 
   if( pzErrMsg ) *pzErrMsg = 0;
   if( sqliteSafetyOn(db) ) goto exec_misuse;
+#ifndef SQLITE_OMIT_TRACE
+  if( db->xTrace ) db->xTrace(db->pTraceArg, zSql);
+#endif
   if( (db->flags & SQLITE_Initialized)==0 ){
     int rc, cnt = 1;
     while( (rc = sqliteInit(db, pzErrMsg))==SQLITE_BUSY
@@ -689,6 +692,7 @@ const char *sqlite_error_string(int rc){
     case SQLITE_MISMATCH:   z = "datatype mismatch";                     break;
     case SQLITE_MISUSE:     z = "library routine called out of sequence";break;
     case SQLITE_NOLFS:      z = "kernel lacks large file support";       break;
+    case SQLITE_AUTH:       z = "authorization denied";                  break;
     default:                z = "unknown error";                         break;
   }
   return z;
@@ -782,7 +786,8 @@ void sqlite_freemem(void *p){ free(p); }
 
 /*
 ** Windows systems need functions to call to return the sqlite_version
-** and sqlite_encoding strings.
+** and sqlite_encoding strings since they are unable to access constants
+** within DLLs.
 */
 const char *sqlite_libversion(void){ return sqlite_version; }
 const char *sqlite_libencoding(void){ return sqlite_encoding; }
@@ -856,6 +861,26 @@ int sqlite_function_type(sqlite *db, const char *zName, int dataType){
   }
   return SQLITE_OK;
 }
+
+/*
+** Register a trace function.  The pArg from the previously registered trace
+** is returned.  
+**
+** A NULL trace function means that no tracing is executes.  A non-NULL
+** trace is a pointer to a function that is invoked at the start of each
+** sqlite_exec().
+*/
+void *sqlite_trace(sqlite *db, void (*xTrace)(void*,const char*), void *pArg){
+#ifndef SQLITE_OMIT_TRACE
+  void *pOld = db->pTraceArg;
+  db->xTrace = xTrace;
+  db->pTraceArg = pArg;
+  return pOld;
+#else
+  return 0;
+#endif
+}
+
 
 /*
 ** Attempt to open the file named in the argument as the auxiliary database

@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle DELETE FROM statements.
 **
-** $Id: delete.c,v 1.14 2002/12/26 16:08:19 matt Exp $
+** $Id: delete.c,v 1.15 2003/01/27 21:50:53 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -125,6 +125,9 @@ void sqliteDeleteFrom(
   assert( pTabList->nSrc==1 );
   pTab = pTabList->a[0].pTab;
   assert( pTab->pSelect==0 );  /* This table is not a view */
+  if( sqliteAuthCheck(pParse, SQLITE_DELETE, pTab->zName, 0) ){
+    goto delete_from_cleanup;
+  }
 
   /* Allocate a cursor used to store the old.* data for a trigger.
   */
@@ -296,7 +299,6 @@ void sqliteDeleteFrom(
   ** Return the number of rows that were deleted.
   */
   if( db->flags & SQLITE_CountRows ){
-    sqliteVdbeAddOp(v, OP_ColumnCount, 1, 0);
     sqliteVdbeAddOp(v, OP_ColumnName, 0, 0);
     sqliteVdbeChangeP3(v, -1, "rows deleted", P3_STATIC);
     sqliteVdbeAddOp(v, OP_Callback, 1, 0);

@@ -5,6 +5,7 @@ Makefile.PL
 README
 SQLite.xs
 SQLiteXS.h
+auth.c
 btree.c
 btree.h
 build.c
@@ -55,7 +56,6 @@ t/ak-dbd.t
 t/dbdadmin.t
 t/lib.pl
 table.c
-test.pl
 tokenize.c
 trigger.c
 update.c

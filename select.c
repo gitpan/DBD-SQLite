@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle SELECT statements in SQLite.
 **
-** $Id: select.c,v 1.14 2002/12/26 16:08:19 matt Exp $
+** $Id: select.c,v 1.15 2003/01/27 21:50:54 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -180,7 +180,7 @@ static void addWhereTerm(
 /*
 ** Set the EP_FromJoin property on all terms of the given expression.
 **
-** The EP_FromJoin property is used at on terms of an expression to tell
+** The EP_FromJoin property is used on terms of an expression to tell
 ** the LEFT OUTER JOIN processing logic that this term is part of the
 ** join restriction specified in the ON or USING clause and not a part
 ** of the more general WHERE clause.  These terms are moved over to the
@@ -675,9 +675,59 @@ static void generateSortTail(
 }
 
 /*
-** Generate code that will tell the VDBE how many columns there
-** are in the result and the name for each column.  This information
-** is used to provide "argc" and "azCol[]" values in the callback.
+** Generate code that will tell the VDBE the datatypes of
+** columns in the result set.
+**
+** This routine only generates code if the "PRAGMA show_datatypes=on"
+** has been executed.  The datatypes are reported out in the azCol
+** parameter to the callback function.  The first N azCol[] entries
+** are the names of the columns, and the second N entries are the
+** datatypes for the columns.
+**
+** The "datatype" for a result that is a column of a type is the
+** datatype definition extracted from the CREATE TABLE statement.
+** The datatype for an expression is either TEXT or NUMERIC.  The
+** datatype for a ROWID field is INTEGER.
+*/
+static void generateColumnTypes(
+  Parse *pParse,      /* Parser context */
+  int base,           /* VDBE cursor corresponding to first entry in pTabList */
+  SrcList *pTabList,  /* List of tables */
+  ExprList *pEList    /* Expressions defining the result set */
+){
+  Vdbe *v = pParse->pVdbe;
+  int i;
+  if( (pParse->db->flags & SQLITE_ReportTypes)==0 ) return;
+  for(i=0; i<pEList->nExpr; i++){
+    Expr *p = pEList->a[i].pExpr;
+    char *zType = 0;
+    if( p==0 ) continue;
+    if( p->op==TK_COLUMN && pTabList ){
+      Table *pTab = pTabList->a[p->iTable - base].pTab;
+      int iCol = p->iColumn;
+      if( iCol<0 ) iCol = pTab->iPKey;
+      assert( iCol==-1 || (iCol>=0 && iCol<pTab->nCol) );
+      if( iCol<0 ){
+        zType = "INTEGER";
+      }else{
+        zType = pTab->aCol[iCol].zType;
+      }
+    }else{
+      if( sqliteExprType(p)==SQLITE_SO_TEXT ){
+        zType = "TEXT";
+      }else{
+        zType = "NUMERIC";
+      }
+    }
+    sqliteVdbeAddOp(v, OP_ColumnName, i + pEList->nExpr, 0);
+    sqliteVdbeChangeP3(v, -1, zType, P3_STATIC);
+  }
+}
+
+/*
+** Generate code that will tell the VDBE the names of columns
+** in the result set.  This information is used to provide the
+** azCol[] vaolues in the callback.
 */
 static void generateColumnNames(
   Parse *pParse,      /* Parser context */
@@ -689,23 +739,18 @@ static void generateColumnNames(
   int i;
   if( pParse->colNamesSet || v==0 || sqlite_malloc_failed ) return;
   pParse->colNamesSet = 1;
-  if( pParse->db->flags & SQLITE_ReportTypes ){
-    sqliteVdbeAddOp(v, OP_ColumnCount, pEList->nExpr*2, 0);
-  }else{
-    sqliteVdbeAddOp(v, OP_ColumnCount, pEList->nExpr, 0);
-  }
   for(i=0; i<pEList->nExpr; i++){
     Expr *p;
     char *zType = 0;
     int showFullNames;
+    p = pEList->a[i].pExpr;
+    if( p==0 ) continue;
     if( pEList->a[i].zName ){
       char *zName = pEList->a[i].zName;
       sqliteVdbeAddOp(v, OP_ColumnName, i, 0);
       sqliteVdbeChangeP3(v, -1, zName, strlen(zName));
       continue;
     }
-    p = pEList->a[i].pExpr;
-    if( p==0 ) continue;
     showFullNames = (pParse->db->flags & SQLITE_FullColNames)!=0;
     if( p->op==TK_COLUMN && pTabList ){
       Table *pTab = pTabList->a[p->iTable - base].pTab;
@@ -748,17 +793,6 @@ static void generateColumnNames(
       sprintf(zName, "column%d", i+1);
       sqliteVdbeAddOp(v, OP_ColumnName, i, 0);
       sqliteVdbeChangeP3(v, -1, zName, strlen(zName));
-    }
-    if( pParse->db->flags & SQLITE_ReportTypes ){
-      if( zType==0 ){
-        if( sqliteExprType(p)==SQLITE_SO_TEXT ){
-          zType = "TEXT";
-        }else{
-          zType = "NUMERIC";
-        }
-      }
-      sqliteVdbeAddOp(v, OP_ColumnName, i + pEList->nExpr, 0);
-      sqliteVdbeChangeP3(v, -1, zType, P3_STATIC);
     }
   }
 }
@@ -1055,6 +1089,13 @@ void sqliteSelectUnbind(Select *p){
 **
 ** Any entry that does not match is flagged as an error.  The number
 ** of errors is returned.
+**
+** This routine does NOT correctly initialize the Expr.dataType  field
+** of the ORDER BY expressions.  The multiSelectSortOrder() routine
+** must be called to do that after the individual select statements
+** have all been analyzed.  This routine is unable to compute Expr.dataType
+** because it must be called before the individual select statements
+** have been analyzed.
 */
 static int matchOrderbyToColumn(
   Parse *pParse,          /* A place to leave error messages */
@@ -1094,6 +1135,7 @@ static int matchOrderbyToColumn(
         nErr++;
         break;
       }
+      if( !mustComplete ) continue;
       iCol--;
     }
     for(j=0; iCol<0 && j<pEList->nExpr; j++){
@@ -1142,14 +1184,85 @@ Vdbe *sqliteGetVdbe(Parse *pParse){
   }
   return v;
 }
-    
+
+/*
+** This routine sets the Expr.dataType field on all elements of
+** the pOrderBy expression list.  The pOrderBy list will have been
+** set up by matchOrderbyToColumn().  Hence each expression has
+** a TK_COLUMN as its root node.  The Expr.iColumn refers to a 
+** column in the result set.   The datatype is set to SQLITE_SO_TEXT
+** if the corresponding column in p and every SELECT to the left of
+** p has a datatype of SQLITE_SO_TEXT.  If the cooressponding column
+** in p or any of the left SELECTs is SQLITE_SO_NUM, then the datatype
+** of the order-by expression is set to SQLITE_SO_NUM.
+**
+** Examples:
+**
+**     CREATE TABLE one(a INTEGER, b TEXT);
+**     CREATE TABLE two(c VARCHAR(5), d FLOAT);
+**
+**     SELECT b, b FROM one UNION SELECT d, c FROM two ORDER BY 1, 2;
+**
+** The primary sort key will use SQLITE_SO_NUM because the "d" in
+** the second SELECT is numeric.  The 1st column of the first SELECT
+** is text but that does not matter because a numeric always overrides
+** a text.
+**
+** The secondary key will use the SQLITE_SO_TEXT sort order because
+** both the (second) "b" in the first SELECT and the "c" in the second
+** SELECT have a datatype of text.
+*/ 
+static void multiSelectSortOrder(Select *p, ExprList *pOrderBy){
+  int i;
+  ExprList *pEList;
+  if( pOrderBy==0 ) return;
+  if( p==0 ){
+    for(i=0; i<pOrderBy->nExpr; i++){
+      pOrderBy->a[i].pExpr->dataType = SQLITE_SO_TEXT;
+    }
+    return;
+  }
+  multiSelectSortOrder(p->pPrior, pOrderBy);
+  pEList = p->pEList;
+  for(i=0; i<pOrderBy->nExpr; i++){
+    Expr *pE = pOrderBy->a[i].pExpr;
+    if( pE->dataType==SQLITE_SO_NUM ) continue;
+    assert( pE->iColumn>=0 );
+    if( pEList->nExpr>pE->iColumn ){
+      pE->dataType = sqliteExprType(pEList->a[pE->iColumn].pExpr);
+    }
+  }
+}
 
 /*
 ** This routine is called to process a query that is really the union
 ** or intersection of two or more separate queries.
 **
-** "p" points to the right-most of the two queries.  The results should
-** be stored in eDest with parameter iParm.
+** "p" points to the right-most of the two queries.  the query on the
+** left is p->pPrior.  The left query could also be a compound query
+** in which case this routine will be called recursively. 
+**
+** The results of the total query are to be written into a destination
+** of type eDest with parameter iParm.
+**
+** Example 1:  Consider a three-way compound SQL statement.
+**
+**     SELECT a FROM t1 UNION SELECT b FROM t2 UNION SELECT c FROM t3
+**
+** This statement is parsed up as follows:
+**
+**     SELECT c FROM t3
+**      |
+**      `----->  SELECT b FROM t2
+**                |
+**                `------>  SELECT c FROM t1
+**
+** The arrows in the diagram above represent the Select.pPrior pointer.
+** So if this routine is called with p equal to the t3 query, then
+** pPrior will be the t2 query.  p->op will be TK_UNION in this case.
+**
+** Notice that because of the way SQLite parses compound SELECTs, the
+** individual selects always group from left to right.
 */
 static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
   int rc;             /* Success code from a subroutine */
@@ -1253,11 +1366,13 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
         assert( p->pEList );
         if( eDest==SRT_Callback ){
           generateColumnNames(pParse, p->base, 0, p->pEList);
+          generateColumnTypes(pParse, p->base, p->pSrc, p->pEList);
         }
         iBreak = sqliteVdbeMakeLabel(v);
         iCont = sqliteVdbeMakeLabel(v);
         sqliteVdbeAddOp(v, OP_Rewind, unionTab, iBreak);
         iStart = sqliteVdbeCurrentAddr(v);
+        multiSelectSortOrder(p, p->pOrderBy);
         rc = selectInnerLoop(pParse, p, p->pEList, unionTab, p->pEList->nExpr,
                              p->pOrderBy, -1, eDest, iParm, 
                              iCont, iBreak);
@@ -1308,12 +1423,14 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
       assert( p->pEList );
       if( eDest==SRT_Callback ){
         generateColumnNames(pParse, p->base, 0, p->pEList);
+        generateColumnTypes(pParse, p->base, p->pSrc, p->pEList);
       }
       iBreak = sqliteVdbeMakeLabel(v);
       iCont = sqliteVdbeMakeLabel(v);
       sqliteVdbeAddOp(v, OP_Rewind, tab1, iBreak);
       iStart = sqliteVdbeAddOp(v, OP_FullKey, tab1, 0);
       sqliteVdbeAddOp(v, OP_NotFound, tab2, iCont);
+      multiSelectSortOrder(p, p->pOrderBy);
       rc = selectInnerLoop(pParse, p, p->pEList, tab1, p->pEList->nExpr,
                              p->pOrderBy, -1, eDest, iParm, 
                              iCont, iBreak);
@@ -1335,6 +1452,12 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
       selectOpName(p->op), " do not have the same number of result columns", 0);
     pParse->nErr++;
     return 1;
+  }
+
+  /* Issue a null callback if that is what the user wants.
+  */
+  if( (pParse->db->flags & SQLITE_NullCallback)!=0 && eDest==SRT_Callback ){
+    sqliteVdbeAddOp(v, OP_NullCallback, p->pEList->nExpr, 0);
   }
   return 0;
 }
@@ -1388,6 +1511,7 @@ static void substExpr(Expr *pExpr, int iTable, ExprList *pEList, int iSub){
     pNew = pEList->a[pExpr->iColumn].pExpr;
     assert( pNew!=0 );
     pExpr->op = pNew->op;
+    pExpr->dataType = pNew->dataType;
     assert( pExpr->pLeft==0 );
     pExpr->pLeft = sqliteExprDup(pNew->pLeft);
     assert( pExpr->pRight==0 );
@@ -1617,7 +1741,7 @@ static int flattenSubquery(
 ** Analyze the SELECT statement passed in as an argument to see if it
 ** is a simple min() or max() query.  If it is and this query can be
 ** satisfied using a single seek to the beginning or end of an index,
-** then generate the code for this SELECT return 1.  If this is not a 
+** then generate the code for this SELECT and return 1.  If this is not a 
 ** simple min() or max() query, then return 0;
 **
 ** A simply min() or max() query looks like this:
@@ -1691,6 +1815,7 @@ static int simpleMinMaxQuery(Parse *pParse, Select *p, int eDest, int iParm){
   if( v==0 ) return 0;
   if( eDest==SRT_Callback ){
     generateColumnNames(pParse, p->base, p->pSrc, p->pEList);
+    generateColumnTypes(pParse, p->base, p->pSrc, p->pEList);
   }
 
   /* Generating code to find the min or the max.  Basically all we have
@@ -1747,6 +1872,10 @@ static int simpleMinMaxQuery(Parse *pParse, Select *p, int eDest, int iParm){
 **
 **     SRT_Table       Store results in temporary table iParm
 **
+** The table above is incomplete.  Additional eDist value have be added
+** since this comment was written.  See the selectInnerLoop() function for
+** a complete listing of the allowed values of eDest and their meanings.
+**
 ** This routine returns the number of errors.  If any errors are
 ** encountered, then an appropriate error message is left in
 ** pParse->zErrMsg.
@@ -1760,12 +1889,26 @@ static int simpleMinMaxQuery(Parse *pParse, Select *p, int eDest, int iParm){
 ** change the parent query from a non-aggregate to an aggregate query.
 ** For that reason, the pParentAgg flag is passed as a pointer, so it
 ** can be changed.
+**
+** Example 1:   The meaning of the pParent parameter.
+**
+**    SELECT * FROM t1 JOIN (SELECT x, count(*) FROM t2) JOIN t3;
+**    \                      \_______ subquery _______/        /
+**     \                                                      /
+**      \____________________ outer query ___________________/
+**
+** This routine is called for the outer query first.   For that call,
+** pParent will be NULL.  During the processing of the outer query, this 
+** routine is called recursively to handle the subquery.  For the recursive
+** call, pParent will point to the outer query.  Because the subquery is
+** the second element in a three-way join, the parentTab parameter will
+** be 1 (the 2nd value of a 0-indexed array.)
 */
 int sqliteSelect(
   Parse *pParse,         /* The parser context */
   Select *p,             /* The SELECT statement being coded. */
-  int eDest,             /* One of: SRT_Callback Mem Set Union Except */
-  int iParm,             /* Save result in this memory location, if >=0 */
+  int eDest,             /* How to dispose of the results */
+  int iParm,             /* A parameter used by the eDest disposal method */
   Select *pParent,       /* Another SELECT for which this is a sub-query */
   int parentTab,         /* Index in pParent->pSrc of this query */
   int *pParentAgg        /* True if pParent uses aggregate functions */
@@ -1786,6 +1929,7 @@ int sqliteSelect(
   int rc = 1;            /* Value to return from this function */
 
   if( sqlite_malloc_failed || pParse->nErr || p==0 ) return 1;
+  if( sqliteAuthCheck(pParse, SQLITE_SELECT, 0, 0) ) return 1;
 
   /* If there is are a sequence of queries, do the earlier ones first.
   */
@@ -1815,9 +1959,9 @@ int sqliteSelect(
   */
   if( pParse->nErr>0 ) goto select_end;
 
-  /* Look up every table in the table list and create an appropriate
-  ** columnlist in pEList if there isn't one already.  (The parser leaves
-  ** a NULL in the p->pEList if the SQL said "SELECT * FROM ...")
+  /* Expand any "*" terms in the result set.  (For example the "*" in
+  ** "SELECT * FROM t1")  The fillInColumnlist() routine also does some
+  ** other housekeeping - see the header comment for details.
   */
   if( fillInColumnList(pParse, p) ){
     goto select_end;
@@ -1944,8 +2088,8 @@ int sqliteSelect(
   v = sqliteGetVdbe(pParse);
   if( v==0 ) goto select_end;
 
-  /* Identify column names if we will be using in the callback.  This
-  ** step is skipped if the output is going to a table or a memory cell.
+  /* Identify column names if we will be using them in a callback.  This
+  ** step is skipped if the output is going to some other destination.
   */
   if( eDest==SRT_Callback ){
     generateColumnNames(pParse, p->base, pTabList, pEList);
@@ -1994,6 +2138,14 @@ int sqliteSelect(
       flattenSubquery(pParse, pParent, parentTab, *pParentAgg, isAgg) ){
     if( isAgg ) *pParentAgg = 1;
     return rc;
+  }
+
+  /* Identify column types if we will be using a callback.  This
+  ** step is skipped if the output is going to a destination other
+  ** than a callback.
+  */
+  if( eDest==SRT_Callback ){
+    generateColumnTypes(pParse, p->base, pTabList, pEList);
   }
 
   /* If the output is destined for a temporary table, open that table.
@@ -2167,7 +2319,6 @@ int sqliteSelect(
   ** successful coding of the SELECT.
   */
 select_end:
-  /* pParse->nTab = base; */
   sqliteAggregateInfoReset(pParse);
   return rc;
 }

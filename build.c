@@ -25,7 +25,7 @@
 **     ROLLBACK
 **     PRAGMA
 **
-** $Id: build.c,v 1.14 2002/12/26 16:08:19 matt Exp $
+** $Id: build.c,v 1.15 2003/01/27 21:50:53 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -315,7 +315,13 @@ void sqliteOpenMasterTable(Vdbe *v, int isTemp){
 ** At the end of the CREATE TABLE statement, the sqliteEndTable() routine
 ** is called to complete the construction of the new table record.
 */
-void sqliteStartTable(Parse *pParse, Token *pStart, Token *pName, int isTemp){
+void sqliteStartTable(
+  Parse *pParse,   /* Parser context */
+  Token *pStart,   /* The "CREATE" token */
+  Token *pName,    /* Name of table or view to create */
+  int isTemp,      /* True if this is a TEMP table */
+  int isView       /* True if this is a VIEW */
+){
   Table *pTable;
   Index *pIdx;
   char *zName;
@@ -325,6 +331,33 @@ void sqliteStartTable(Parse *pParse, Token *pStart, Token *pName, int isTemp){
   pParse->sFirstToken = *pStart;
   zName = sqliteTableNameFromToken(pName);
   if( zName==0 ) return;
+#ifndef SQLITE_OMIT_AUTHORIZATION
+  if( sqliteAuthCheck(pParse, SQLITE_INSERT, SCHEMA_TABLE(isTemp), 0) ){
+    sqliteFree(zName);
+    return;
+  }
+  {
+    int code;
+    if( isView ){
+      if( isTemp ){
+        code = SQLITE_CREATE_TEMP_VIEW;
+      }else{
+        code = SQLITE_CREATE_VIEW;
+      }
+    }else{
+      if( isTemp ){
+        code = SQLITE_CREATE_TEMP_TABLE;
+      }else{
+        code = SQLITE_CREATE_TABLE;
+      }
+    }
+    if( sqliteAuthCheck(pParse, code, zName, 0) ){
+      sqliteFree(zName);
+      return;
+    }
+  }
+#endif
+ 
 
   /* Before trying to create a temporary table, make sure the Btree for
   ** holding temporary tables is open.
@@ -497,40 +530,10 @@ void sqliteAddColumnType(Parse *pParse, Token *pFirst, Token *pLast){
     z[j++] = c;
   }
   z[j] = 0;
-  pCol->sortOrder = SQLITE_SO_NUM;
   if( pParse->db->file_format>=4 ){
-    for(i=0; z[i]; i++){
-      switch( z[i] ){
-        case 'b':
-        case 'B': {
-          if( sqliteStrNICmp(&z[i],"blob",4)==0 ){
-            pCol->sortOrder = SQLITE_SO_TEXT;
-            return;
-          }
-          break;
-        }
-        case 'c':
-        case 'C': {
-          if( sqliteStrNICmp(&z[i],"char",4)==0 ||
-                  sqliteStrNICmp(&z[i],"clob",4)==0 ){
-            pCol->sortOrder = SQLITE_SO_TEXT;
-            return;
-          }
-          break;
-        }
-        case 'x':
-        case 'X': {
-          if( i>=2 && sqliteStrNICmp(&z[i-2],"text",4)==0 ){
-            pCol->sortOrder = SQLITE_SO_TEXT;
-            return;
-          }
-          break;
-        }
-        default: {
-          break;
-        }
-      }
-    }
+    pCol->sortOrder = sqliteCollateType(z, n);
+  }else{
+    pCol->sortOrder = SQLITE_SO_NUM;
   }
 }
 
@@ -610,21 +613,46 @@ void sqliteAddPrimaryKey(Parse *pParse, IdList *pList, int onError){
 }
 
 /*
-** Return the appropriate collating type given the collation type token.
-** Report an error if the type is undefined.
+** Return the appropriate collating type given a type name.
+**
+** The collation type is text (SQLITE_SO_TEXT) if the type
+** name contains the character stream "text" or "blob" or
+** "clob".  Any other type name is collated as numeric
+** (SQLITE_SO_NUM).
 */
-int sqliteCollateType(Parse *pParse, Token *pType){
-  if( pType==0 ) return SQLITE_SO_UNK;
-  if( pType->n==4 && sqliteStrNICmp(pType->z, "text", 4)==0 ){
-    return SQLITE_SO_TEXT;
+int sqliteCollateType(const char *zType, int nType){
+  int i;
+  for(i=0; i<nType-1; i++){
+    switch( zType[i] ){
+      case 'b':
+      case 'B': {
+        if( i<nType-3 && sqliteStrNICmp(&zType[i],"blob",4)==0 ){
+          return SQLITE_SO_TEXT;
+        }
+        break;
+      }
+      case 'c':
+      case 'C': {
+        if( i<nType-3 && (sqliteStrNICmp(&zType[i],"char",4)==0 ||
+                           sqliteStrNICmp(&zType[i],"clob",4)==0)
+        ){
+          return SQLITE_SO_TEXT;
+        }
+        break;
+      }
+      case 'x':
+      case 'X': {
+        if( i>=2 && sqliteStrNICmp(&zType[i-2],"text",4)==0 ){
+          return SQLITE_SO_TEXT;
+        }
+        break;
+      }
+      default: {
+        break;
+      }
+    }
   }
-  if( pType->n==7 && sqliteStrNICmp(pType->z, "numeric", 7)==0 ){
-    return SQLITE_SO_NUM;
-  }
-  sqliteSetNString(&pParse->zErrMsg, "unknown collating type: ", -1,
-    pType->z, pType->n, 0);
-  pParse->nErr++;
-  return SQLITE_SO_UNK;
+  return SQLITE_SO_NUM;
 }
 
 /*
@@ -727,7 +755,7 @@ static char *createTableStmt(Table *p){
     zEnd = "\n)";
   }
   n += 35 + 6*p->nCol;
-  zStmt = sqliteMalloc( n );
+  zStmt = sqliteMallocRaw( n );
   if( zStmt==0 ) return 0;
   strcpy(zStmt, p->isTemp ? "CREATE TEMP TABLE " : "CREATE TABLE ");
   k = strlen(zStmt);
@@ -892,9 +920,9 @@ void sqliteCreateView(
   const char *z;
   Token sEnd;
 
-  sqliteStartTable(pParse, pBegin, pName, isTemp);
+  sqliteStartTable(pParse, pBegin, pName, isTemp, 1);
   p = pParse->pNewTable;
-  if( p==0 ){
+  if( p==0 || pParse->nErr ){
     sqliteSelectDelete(pSelect);
     return;
   }
@@ -1069,6 +1097,33 @@ void sqliteDropTable(Parse *pParse, Token *pName, int isView){
   if( pParse->nErr || sqlite_malloc_failed ) return;
   pTable = sqliteTableFromToken(pParse, pName);
   if( pTable==0 ) return;
+#ifndef SQLITE_OMIT_AUTHORIZATION
+  if( sqliteAuthCheck(pParse, SQLITE_DELETE, SCHEMA_TABLE(pTable->isTemp),0)){
+    return;
+  }
+  {
+    int code;
+    if( isView ){
+      if( pTable->isTemp ){
+        code = SQLITE_DROP_TEMP_VIEW;
+      }else{
+        code = SQLITE_DROP_VIEW;
+      }
+    }else{
+      if( pTable->isTemp ){
+        code = SQLITE_DROP_TEMP_TABLE;
+      }else{
+        code = SQLITE_DROP_TABLE;
+      }
+    }
+    if( sqliteAuthCheck(pParse, code, pTable->zName, 0) ){
+      return;
+    }
+    if( sqliteAuthCheck(pParse, SQLITE_DELETE, pTable->zName, 0) ){
+      return;
+    }
+  }
+#endif
   if( pTable->readOnly ){
     sqliteSetString(&pParse->zErrMsg, "table ", pTable->zName, 
        " may not be dropped", 0);
@@ -1164,7 +1219,7 @@ void sqliteAddIdxKeyType(Vdbe *v, Index *pIdx){
   assert( pIdx!=0 && pIdx->pTable!=0 );
   pTab = pIdx->pTable;
   n = pIdx->nColumn;
-  zType = sqliteMalloc( n+1 );
+  zType = sqliteMallocRaw( n+1 );
   if( zType==0 ) return;
   for(i=0; i<n; i++){
     int iCol = pIdx->aiColumn[i];
@@ -1429,6 +1484,19 @@ void sqliteCreateIndex(
     hideName = sqliteFindIndex(db, zName)!=0;
   }
 
+  /* Check for authorization to create an index.
+  */
+#ifndef SQLITE_OMIT_AUTHORIZATION
+  if( sqliteAuthCheck(pParse, SQLITE_INSERT, SCHEMA_TABLE(pTab->isTemp), 0) ){
+    goto exit_create_index;
+  }
+  i = SQLITE_CREATE_INDEX;
+  if( pTab->isTemp ) i = SQLITE_CREATE_TEMP_INDEX;
+  if( sqliteAuthCheck(pParse, i, zName, pTab->zName) ){
+    goto exit_create_index;
+  }
+#endif
+
   /* If pList==0, it means this routine was called to make a primary
   ** key out of the last column added to the table under construction.
   ** So create a fake list to simulate this.
@@ -1626,6 +1694,19 @@ void sqliteDropIndex(Parse *pParse, Token *pName){
     pParse->nErr++;
     return;
   }
+#ifndef SQLITE_OMIT_AUTHORIZATION
+  {
+    int code = SQLITE_DROP_INDEX;
+    Table *pTab = pIndex->pTable;
+    if( sqliteAuthCheck(pParse, SQLITE_DELETE, SCHEMA_TABLE(pTab->isTemp), 0) ){
+      return;
+    }
+    if( pTab->isTemp ) code = SQLITE_DROP_TEMP_INDEX;
+    if( sqliteAuthCheck(pParse, code, pIndex->zName, pTab->zName) ){
+      return;
+    }
+  }
+#endif
 
   /* Generate code to remove the index and from the master table */
   v = sqliteGetVdbe(pParse);
@@ -1815,13 +1896,21 @@ void sqliteCopy(
   Vdbe *v;
   int addr, end;
   Index *pIdx;
+  char *zFile = 0;
   sqlite *db = pParse->db;
+
 
   zTab = sqliteTableNameFromToken(pTableName);
   if( sqlite_malloc_failed || zTab==0 ) goto copy_cleanup;
   pTab = sqliteTableNameToTable(pParse, zTab);
   sqliteFree(zTab);
   if( pTab==0 ) goto copy_cleanup;
+  zFile = sqliteStrNDup(pFilename->z, pFilename->n);
+  sqliteDequote(zFile);
+  if( sqliteAuthCheck(pParse, SQLITE_INSERT, pTab->zName, zFile)
+      || sqliteAuthCheck(pParse, SQLITE_COPY, pTab->zName, zFile) ){
+    goto copy_cleanup;
+  }
   v = sqliteGetVdbe(pParse);
   if( v ){
     int openOp;
@@ -1872,7 +1961,6 @@ void sqliteCopy(
     sqliteVdbeAddOp(v, OP_Noop, 0, 0);
     sqliteEndWriteOperation(pParse);
     if( db->flags & SQLITE_CountRows ){
-      sqliteVdbeAddOp(v, OP_ColumnCount, 1, 0);
       sqliteVdbeAddOp(v, OP_ColumnName, 0, 0);
       sqliteVdbeChangeP3(v, -1, "rows inserted", P3_STATIC);
       sqliteVdbeAddOp(v, OP_Callback, 1, 0);
@@ -1880,6 +1968,7 @@ void sqliteCopy(
   }
   
 copy_cleanup:
+  sqliteFree(zFile);
   return;
 }
 
@@ -1905,6 +1994,7 @@ void sqliteBeginTransaction(Parse *pParse, int onError){
 
   if( pParse==0 || (db=pParse->db)==0 || db->pBe==0 ) return;
   if( pParse->nErr || sqlite_malloc_failed ) return;
+  if( sqliteAuthCheck(pParse, SQLITE_TRANSACTION, "BEGIN", 0) ) return;
   if( db->flags & SQLITE_InTrans ){
     pParse->nErr++;
     sqliteSetString(&pParse->zErrMsg, "cannot start a transaction "
@@ -1924,6 +2014,7 @@ void sqliteCommitTransaction(Parse *pParse){
 
   if( pParse==0 || (db=pParse->db)==0 || db->pBe==0 ) return;
   if( pParse->nErr || sqlite_malloc_failed ) return;
+  if( sqliteAuthCheck(pParse, SQLITE_TRANSACTION, "COMMIT", 0) ) return;
   if( (db->flags & SQLITE_InTrans)==0 ){
     pParse->nErr++;
     sqliteSetString(&pParse->zErrMsg, 
@@ -1944,6 +2035,7 @@ void sqliteRollbackTransaction(Parse *pParse){
 
   if( pParse==0 || (db=pParse->db)==0 || db->pBe==0 ) return;
   if( pParse->nErr || sqlite_malloc_failed ) return;
+  if( sqliteAuthCheck(pParse, SQLITE_TRANSACTION, "ROLLBACK", 0) ) return;
   if( (db->flags & SQLITE_InTrans)==0 ){
     pParse->nErr++;
     sqliteSetString(&pParse->zErrMsg,
@@ -2052,6 +2144,11 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
     zRight = sqliteStrNDup(pRight->z, pRight->n);
     sqliteDequote(zRight);
   }
+  if( sqliteAuthCheck(pParse, SQLITE_PRAGMA, zLeft, zRight) ){
+    sqliteFree(zLeft);
+    sqliteFree(zRight);
+    return;
+  }
  
   /*
   **  PRAGMA default_cache_size
@@ -2077,7 +2174,6 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       { OP_Integer,     0, 0,        0},
       { OP_Ne,          0, 6,        0},
       { OP_Integer,     MAX_PAGES,0, 0},
-      { OP_ColumnCount, 1, 0,        0},
       { OP_ColumnName,  0, 0,        "cache_size"},
       { OP_Callback,    1, 0,        0},
     };
@@ -2118,7 +2214,6 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
   */
   if( sqliteStrICmp(zLeft,"cache_size")==0 ){
     static VdbeOp getCacheSize[] = {
-      { OP_ColumnCount, 1, 0,        0},
       { OP_ColumnName,  0, 0,        "cache_size"},
       { OP_Callback,    1, 0,        0},
     };
@@ -2168,7 +2263,6 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       { OP_Integer,     0, 0,        0},
       { OP_Lt,          0, 5,        0},
       { OP_AddImm,      1, 0,        0},
-      { OP_ColumnCount, 1, 0,        0},
       { OP_ColumnName,  0, 0,        "synchronous"},
       { OP_Callback,    1, 0,        0},
     };
@@ -2209,7 +2303,6 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
   */
   if( sqliteStrICmp(zLeft,"synchronous")==0 ){
     static VdbeOp getSync[] = {
-      { OP_ColumnCount, 1, 0,        0},
       { OP_ColumnName,  0, 0,        "synchronous"},
       { OP_Callback,    1, 0,        0},
     };
@@ -2290,7 +2383,6 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
     if( pTab ) v = sqliteGetVdbe(pParse);
     if( pTab && v ){
       static VdbeOp tableInfoPreface[] = {
-        { OP_ColumnCount, 5, 0,       0},
         { OP_ColumnName,  0, 0,       "cid"},
         { OP_ColumnName,  1, 0,       "name"},
         { OP_ColumnName,  2, 0,       "type"},
@@ -2323,7 +2415,6 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
     if( pIdx ) v = sqliteGetVdbe(pParse);
     if( pIdx && v ){
       static VdbeOp tableInfoPreface[] = {
-        { OP_ColumnCount, 3, 0,       0},
         { OP_ColumnName,  0, 0,       "seqno"},
         { OP_ColumnName,  1, 0,       "cid"},
         { OP_ColumnName,  2, 0,       "name"},
@@ -2355,7 +2446,6 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
     if( pTab && pIdx && v ){
       int i = 0; 
       static VdbeOp indexListPreface[] = {
-        { OP_ColumnCount, 3, 0,       0},
         { OP_ColumnName,  0, 0,       "seq"},
         { OP_ColumnName,  1, 0,       "name"},
         { OP_ColumnName,  2, 0,       "unique"},
@@ -2394,16 +2484,15 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       { OP_SetInsert,   0, 0,        0},
       { OP_Next,        0, 3,        0},
       { OP_IntegrityCk, 0, 0,        0},    /* 6 */
-      { OP_ColumnCount, 1, 0,        0},
       { OP_ColumnName,  0, 0,        "integrity_check"},
       { OP_Callback,    1, 0,        0},
       { OP_SetInsert,   1, 0,        "2"},
       { OP_OpenAux,     1, 2,        0},
-      { OP_Rewind,      1, 16,       0},
-      { OP_Column,      1, 3,        0},    /* 13 */
+      { OP_Rewind,      1, 15,       0},
+      { OP_Column,      1, 3,        0},    /* 12 */
       { OP_SetInsert,   1, 0,        0},
-      { OP_Next,        1, 13,       0},
-      { OP_IntegrityCk, 1, 1,        0},    /* 16 */
+      { OP_Next,        1, 12,       0},
+      { OP_IntegrityCk, 1, 1,        0},    /* 15 */
       { OP_Callback,    1, 0,        0},
     };
     Vdbe *v = sqliteGetVdbe(pParse);

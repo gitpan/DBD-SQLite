@@ -1,5 +1,10 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.24
+    - Fixed major crash bug affecting Mac OS X
+    - Removed test.pl from distribution
+    - Upgraded to sqlite 2.7.6
+
 0.23
     - Fixed unicode tests
 

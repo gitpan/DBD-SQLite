@@ -9,7 +9,7 @@
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: btree.c,v 1.15 2002/12/26 16:08:19 matt Exp $
+** $Id: btree.c,v 1.16 2003/01/27 21:50:53 matt Exp $
 **
 ** This file implements a external (disk-based) database using BTrees.
 ** For a detailed discussion of BTrees, refer to
@@ -319,11 +319,13 @@ struct MemPage {
     char aDisk[SQLITE_PAGE_SIZE];  /* Page data stored on disk */
     PageHdr hdr;                   /* Overlay page header */
   } u;
-  int isInit;                    /* True if auxiliary data is initialized */
+  u8 isInit;                     /* True if auxiliary data is initialized */
+  u8 idxShift;                   /* True if apCell[] indices have changed */
+  u8 isOverfull;                 /* Some apCell[] points outside u.aDisk[] */
   MemPage *pParent;              /* The parent of this page.  NULL for root */
+  int idxParent;                 /* Index in pParent->apCell[] of this node */
   int nFree;                     /* Number of free bytes in u.aDisk[] */
   int nCell;                     /* Number of entries on this page */
-  int isOverfull;                /* Some apCell[] points outside u.aDisk[] */
   Cell *apCell[MX_CELL+2];       /* All data entires in sorted order */
 };
 
@@ -672,6 +674,22 @@ int sqliteBtreeOpen(
 ){
   Btree *pBt;
   int rc;
+
+  /*
+  ** The following asserts make sure that structures used by the btree are
+  ** the right size.  This is to guard against size changes that result
+  ** when compiling on a different architecture.
+  */
+  assert( sizeof(u32)==4 );
+  assert( sizeof(u16)==2 );
+  assert( sizeof(Pgno)==4 );
+  assert( sizeof(PageHdr)==8 );
+  assert( sizeof(CellHdr)==12 );
+  assert( sizeof(FreeBlk)==4 );
+  assert( sizeof(OverflowPage)==SQLITE_PAGE_SIZE );
+  assert( sizeof(FreelistInfo)==OVERFLOW_SIZE );
+  assert( sizeof(ptr)==sizeof(char*) );
+  assert( sizeof(uptr)==sizeof(ptr) );
 
   pBt = sqliteMalloc( sizeof(*pBt) );
   if( pBt==0 ){
@@ -1106,7 +1124,8 @@ int sqliteBtreeKeySize(BtCursor *pCur, int *pSize){
   MemPage *pPage;
 
   pPage = pCur->pPage;
-  if( pPage==0 || pCur->idx >= pPage->nCell ){
+  assert( pPage!=0 );
+  if( pCur->idx >= pPage->nCell ){
     *pSize = 0;
   }else{
     pCell = pPage->apCell[pCur->idx];
@@ -1180,29 +1199,26 @@ static int getPayload(BtCursor *pCur, int offset, int amt, char *zBuf){
 ** Read part of the key associated with cursor pCur.  A maximum
 ** of "amt" bytes will be transfered into zBuf[].  The transfer
 ** begins at "offset".  The number of bytes actually read is
-** returned.  The amount returned will be smaller than the
-** amount requested if there are not enough bytes in the key
-** to satisfy the request.
+** returned. 
+**
+** Change:  It used to be that the amount returned will be smaller
+** than the amount requested if there are not enough bytes in the key
+** to satisfy the request.  But now, it must be the case that there
+** is enough data available to satisfy the request.  If not, an exception
+** is raised.  The change was made in an effort to boost performance
+** by eliminating unneeded tests.
 */
 int sqliteBtreeKey(BtCursor *pCur, int offset, int amt, char *zBuf){
-  Cell *pCell;
   MemPage *pPage;
 
-  if( amt<0 ) return 0;
-  if( offset<0 ) return 0; 
-  if( amt==0 ) return 0;
+  assert( amt>=0 );
+  assert( offset>=0 );
+  assert( pCur->pPage!=0 );
   pPage = pCur->pPage;
-  if( pPage==0 ) return 0;
   if( pCur->idx >= pPage->nCell ){
     return 0;
   }
-  pCell = pPage->apCell[pCur->idx];
-  if( amt+offset > NKEY(pCur->pBt, pCell->h) ){
-    amt = NKEY(pCur->pBt, pCell->h) - offset;
-    if( amt<=0 ){
-      return 0;
-    }
-  }
+  assert( amt+offset <= NKEY(pCur->pBt, pPage->apCell[pCur->idx]->h) );
   getPayload(pCur, offset, amt, zBuf);
   return amt;
 }
@@ -1219,7 +1235,8 @@ int sqliteBtreeDataSize(BtCursor *pCur, int *pSize){
   MemPage *pPage;
 
   pPage = pCur->pPage;
-  if( pPage==0 || pCur->idx >= pPage->nCell ){
+  assert( pPage!=0 );
+  if( pCur->idx >= pPage->nCell ){
     *pSize = 0;
   }else{
     pCell = pPage->apCell[pCur->idx];
@@ -1239,23 +1256,16 @@ int sqliteBtreeDataSize(BtCursor *pCur, int *pSize){
 int sqliteBtreeData(BtCursor *pCur, int offset, int amt, char *zBuf){
   Cell *pCell;
   MemPage *pPage;
-  int nData;
 
-  if( amt<0 ) return 0;
-  if( offset<0 ) return 0;
-  if( amt==0 ) return 0;
+  assert( amt>=0 );
+  assert( offset>=0 );
+  assert( pCur->pPage!=0 );
   pPage = pCur->pPage;
-  if( pPage==0 || pCur->idx >= pPage->nCell ){
+  if( pCur->idx >= pPage->nCell ){
     return 0;
   }
   pCell = pPage->apCell[pCur->idx];
-  nData = NDATA(pCur->pBt, pCell->h);
-  if( amt+offset > nData ){
-    amt = nData - offset;
-    if( amt<=0 ){
-      return 0;
-    }
-  }
+  assert( amt+offset <= NDATA(pCur->pBt, pCell->h) );
   getPayload(pCur, offset + NKEY(pCur->pBt, pCell->h), amt, zBuf);
   return amt;
 }
@@ -1344,17 +1354,25 @@ int sqliteBtreeKeyCompare(
 }
 
 /*
-** Move the cursor down to a new child page.
+** Move the cursor down to a new child page.  The newPgno argument is the
+** page number of the child page in the byte order of the disk image.
 */
 static int moveToChild(BtCursor *pCur, int newPgno){
   int rc;
   MemPage *pNewPage;
   Btree *pBt = pCur->pBt;
 
+  newPgno = SWAB32(pBt, newPgno);
   rc = sqlitepager_get(pBt->pPager, newPgno, (void**)&pNewPage);
   if( rc ) return rc;
   rc = initPage(pBt, pNewPage, newPgno, pCur->pPage);
   if( rc ) return rc;
+  assert( pCur->idx>=pCur->pPage->nCell
+          || pCur->pPage->apCell[pCur->idx]->h.leftChild==SWAB32(pBt,newPgno) );
+  assert( pCur->idx<pCur->pPage->nCell
+          || pCur->pPage->u.hdr.rightChild==SWAB32(pBt,newPgno) );
+  pNewPage->idxParent = pCur->idx;
+  pCur->pPage->idxShift = 0;
   sqlitepager_unref(pCur->pPage);
   pCur->pPage = pNewPage;
   pCur->idx = 0;
@@ -1369,25 +1387,49 @@ static int moveToChild(BtCursor *pCur, int newPgno){
 ** right-most child page then pCur->idx is set to one more than
 ** the largest cell index.
 */
-static int moveToParent(BtCursor *pCur){
+static void moveToParent(BtCursor *pCur){
   Pgno oldPgno;
   MemPage *pParent;
-  int i;
-  pParent = pCur->pPage->pParent;
-  if( pParent==0 ) return SQLITE_INTERNAL;
-  oldPgno = sqlitepager_pagenumber(pCur->pPage);
+  MemPage *pPage;
+  int idxParent;
+  pPage = pCur->pPage;
+  assert( pPage!=0 );
+  pParent = pPage->pParent;
+  assert( pParent!=0 );
+  idxParent = pPage->idxParent;
   sqlitepager_ref(pParent);
-  sqlitepager_unref(pCur->pPage);
+  sqlitepager_unref(pPage);
   pCur->pPage = pParent;
-  pCur->idx = pParent->nCell;
-  oldPgno = SWAB32(pCur->pBt, oldPgno);
-  for(i=0; i<pParent->nCell; i++){
-    if( pParent->apCell[i]->h.leftChild==oldPgno ){
-      pCur->idx = i;
-      break;
+  assert( pParent->idxShift==0 );
+  if( pParent->idxShift==0 ){
+    pCur->idx = idxParent;
+#ifndef NDEBUG  
+    /* Verify that pCur->idx is the correct index to point back to the child
+    ** page we just came from 
+    */
+    oldPgno = SWAB32(pCur->pBt, sqlitepager_pagenumber(pPage));
+    if( pCur->idx<pParent->nCell ){
+      assert( pParent->apCell[idxParent]->h.leftChild==oldPgno );
+    }else{
+      assert( pParent->u.hdr.rightChild==oldPgno );
+    }
+#endif
+  }else{
+    /* The MemPage.idxShift flag indicates that cell indices might have 
+    ** changed since idxParent was set and hence idxParent might be out
+    ** of date.  So recompute the parent cell index by scanning all cells
+    ** and locating the one that points to the child we just came from.
+    */
+    int i;
+    pCur->idx = pParent->nCell;
+    oldPgno = SWAB32(pCur->pBt, sqlitepager_pagenumber(pPage));
+    for(i=0; i<pParent->nCell; i++){
+      if( pParent->apCell[i]->h.leftChild==oldPgno ){
+        pCur->idx = i;
+        break;
+      }
     }
   }
-  return SQLITE_OK;
 }
 
 /*
@@ -1417,7 +1459,7 @@ static int moveToLeftmost(BtCursor *pCur){
   int rc;
 
   while( (pgno = pCur->pPage->apCell[pCur->idx]->h.leftChild)!=0 ){
-    rc = moveToChild(pCur, SWAB32(pCur->pBt, pgno));
+    rc = moveToChild(pCur, pgno);
     if( rc ) return rc;
   }
   return SQLITE_OK;
@@ -1435,7 +1477,8 @@ static int moveToRightmost(BtCursor *pCur){
   int rc;
 
   while( (pgno = pCur->pPage->u.hdr.rightChild)!=0 ){
-    rc = moveToChild(pCur, SWAB32(pCur->pBt, pgno));
+    pCur->idx = pCur->pPage->nCell;
+    rc = moveToChild(pCur, pgno);
     if( rc ) return rc;
   }
   pCur->idx = pCur->pPage->nCell - 1;
@@ -1544,7 +1587,8 @@ int sqliteBtreeMoveto(BtCursor *pCur, const void *pKey, int nKey, int *pRes){
       if( pRes ) *pRes = c;
       return SQLITE_OK;
     }
-    rc = moveToChild(pCur, SWAB32(pCur->pBt, chldPg));
+    pCur->idx = lwr;
+    rc = moveToChild(pCur, chldPg);
     if( rc ) return rc;
   }
   /* NOT REACHED */
@@ -1552,99 +1596,104 @@ int sqliteBtreeMoveto(BtCursor *pCur, const void *pKey, int nKey, int *pRes){
 
 /*
 ** Advance the cursor to the next entry in the database.  If
-** successful and pRes!=NULL then set *pRes=0.  If the cursor
+** successful then set *pRes=0.  If the cursor
 ** was already pointing to the last entry in the database before
-** this routine was called, then set *pRes=1 if pRes!=NULL.
+** this routine was called, then set *pRes=1.
 */
 int sqliteBtreeNext(BtCursor *pCur, int *pRes){
   int rc;
-  if( pCur->pPage==0 ){
-    if( pRes ) *pRes = 1;
+  MemPage *pPage = pCur->pPage;
+  assert( pRes!=0 );
+  if( pPage==0 ){
+    *pRes = 1;
     return SQLITE_ABORT;
   }
-  assert( pCur->pPage->isInit );
+  assert( pPage->isInit );
   assert( pCur->eSkip!=SKIP_INVALID );
-  if( pCur->pPage->nCell==0 ){
-    if( pRes ) *pRes = 1;
+  if( pPage->nCell==0 ){
+    *pRes = 1;
     return SQLITE_OK;
   }
-  assert( pCur->idx<pCur->pPage->nCell );
+  assert( pCur->idx<pPage->nCell );
   if( pCur->eSkip==SKIP_NEXT ){
     pCur->eSkip = SKIP_NONE;
-    if( pRes ) *pRes = 0;
+    *pRes = 0;
     return SQLITE_OK;
   }
   pCur->eSkip = SKIP_NONE;
   pCur->idx++;
-  if( pCur->idx>=pCur->pPage->nCell ){
-    if( pCur->pPage->u.hdr.rightChild ){
-      rc = moveToChild(pCur, SWAB32(pCur->pBt, pCur->pPage->u.hdr.rightChild));
+  if( pCur->idx>=pPage->nCell ){
+    if( pPage->u.hdr.rightChild ){
+      rc = moveToChild(pCur, pPage->u.hdr.rightChild);
       if( rc ) return rc;
       rc = moveToLeftmost(pCur);
-      if( rc ) return rc;
-      if( pRes ) *pRes = 0;
-      return SQLITE_OK;
+      *pRes = 0;
+      return rc;
     }
     do{
-      if( pCur->pPage->pParent==0 ){
-        if( pRes ) *pRes = 1;
+      if( pPage->pParent==0 ){
+        *pRes = 1;
         return SQLITE_OK;
       }
-      rc = moveToParent(pCur);
-      if( rc ) return rc;
-    }while( pCur->idx>=pCur->pPage->nCell );
-    if( pRes ) *pRes = 0;
+      moveToParent(pCur);
+      pPage = pCur->pPage;
+    }while( pCur->idx>=pPage->nCell );
+    *pRes = 0;
+    return SQLITE_OK;
+  }
+  *pRes = 0;
+  if( pPage->u.hdr.rightChild==0 ){
     return SQLITE_OK;
   }
   rc = moveToLeftmost(pCur);
-  if( rc ) return rc;
-  if( pRes ) *pRes = 0;
-  return SQLITE_OK;
+  return rc;
 }
 
 /*
 ** Step the cursor to the back to the previous entry in the database.  If
-** successful and pRes!=NULL then set *pRes=0.  If the cursor
+** successful then set *pRes=0.  If the cursor
 ** was already pointing to the first entry in the database before
-** this routine was called, then set *pRes=1 if pRes!=NULL.
+** this routine was called, then set *pRes=1.
 */
 int sqliteBtreePrevious(BtCursor *pCur, int *pRes){
   int rc;
   Pgno pgno;
-  if( pCur->pPage==0 ){
-    if( pRes ) *pRes = 1;
+  MemPage *pPage;
+  pPage = pCur->pPage;
+  if( pPage==0 ){
+    *pRes = 1;
     return SQLITE_ABORT;
   }
-  assert( pCur->pPage->isInit );
+  assert( pPage->isInit );
   assert( pCur->eSkip!=SKIP_INVALID );
-  if( pCur->pPage->nCell==0 ){
-    if( pRes ) *pRes = 1;
+  if( pPage->nCell==0 ){
+    *pRes = 1;
     return SQLITE_OK;
   }
   if( pCur->eSkip==SKIP_PREV ){
     pCur->eSkip = SKIP_NONE;
-    if( pRes ) *pRes = 0;
+    *pRes = 0;
     return SQLITE_OK;
   }
   pCur->eSkip = SKIP_NONE;
   assert( pCur->idx>=0 );
-  if( (pgno = pCur->pPage->apCell[pCur->idx]->h.leftChild)!=0 ){
-    rc = moveToChild(pCur, SWAB32(pCur->pBt, pgno));
+  if( (pgno = pPage->apCell[pCur->idx]->h.leftChild)!=0 ){
+    rc = moveToChild(pCur, pgno);
     if( rc ) return rc;
     rc = moveToRightmost(pCur);
   }else{
     while( pCur->idx==0 ){
-      if( pCur->pPage->pParent==0 ){
+      if( pPage->pParent==0 ){
         if( pRes ) *pRes = 1;
         return SQLITE_OK;
       }
-      rc = moveToParent(pCur);
-      if( rc ) return rc;
+      moveToParent(pCur);
+      pPage = pCur->pPage;
     }
     pCur->idx--;
     rc = SQLITE_OK;
   }
-  if( pRes ) *pRes = 0;
+  *pRes = 0;
   return rc;
 }
 
@@ -1896,7 +1945,7 @@ static int fillInCell(
 ** given in the second argument so that MemPage.pParent holds the
 ** pointer in the third argument.
 */
-static void reparentPage(Pager *pPager, Pgno pgno, MemPage *pNewParent){
+static void reparentPage(Pager *pPager, Pgno pgno, MemPage *pNewParent,int idx){
   MemPage *pThis;
 
   if( pgno==0 ) return;
@@ -1908,6 +1957,7 @@ static void reparentPage(Pager *pPager, Pgno pgno, MemPage *pNewParent){
       pThis->pParent = pNewParent;
       if( pNewParent ) sqlitepager_ref(pNewParent);
     }
+    pThis->idxParent = idx;
     sqlitepager_unref(pThis);
   }
 }
@@ -1924,9 +1974,10 @@ static void reparentChildPages(Btree *pBt, MemPage *pPage){
   int i;
   Pager *pPager = pBt->pPager;
   for(i=0; i<pPage->nCell; i++){
-    reparentPage(pPager, SWAB32(pBt, pPage->apCell[i]->h.leftChild), pPage);
+    reparentPage(pPager, SWAB32(pBt, pPage->apCell[i]->h.leftChild), pPage, i);
   }
-  reparentPage(pPager, SWAB32(pBt, pPage->u.hdr.rightChild), pPage);
+  reparentPage(pPager, SWAB32(pBt, pPage->u.hdr.rightChild), pPage, i);
+  pPage->idxShift = 0;
 }
 
 /*
@@ -1952,6 +2003,7 @@ static void dropCell(Btree *pBt, MemPage *pPage, int idx, int sz){
     pPage->apCell[j] = pPage->apCell[j+1];
   }
   pPage->nCell--;
+  pPage->idxShift = 1;
 }
 
 /*
@@ -1984,6 +2036,7 @@ static void insertCell(Btree *pBt, MemPage *pPage, int i, Cell *pCell, int sz){
     memcpy(&pPage->u.aDisk[idx], pCell, sz);
     pPage->apCell[i] = (Cell*)&pPage->u.aDisk[idx];
   }
+  pPage->idxShift = 1;
 }
 
 /*
@@ -2034,6 +2087,21 @@ static void copyPage(MemPage *pTo, MemPage *pFrom){
 }
 
 /*
+** The following parameters determine how many adjacent pages get involved
+** in a balancing operation.  NN is the number of neighbors on either side
+** of the page that participate in the balancing operation.  NB is the
+** total number of pages that participate, including the target page and
+** NN neighbors on either side.
+**
+** The minimum value of NN is 1 (of course).  Increasing NN above 1
+** (to 2 or 3) gives a modest improvement in SELECT and DELETE performance
+** in exchange for a larger degradation in INSERT and UPDATE performance.
+** The value of NN appears to give the best results overall.
+*/
+#define NN 1             /* Number of neighbors on either side of pPage */
+#define NB (NN*2+1)      /* Total pages involved in the balance */
+
+/*
 ** This routine redistributes Cells on pPage and up to two siblings
 ** of pPage so that all pages have about the same amount of free space.
 ** Usually one sibling on either side of pPage is used in the balancing,
@@ -2075,12 +2143,6 @@ static void copyPage(MemPage *pTo, MemPage *pFrom){
 */
 static int balance(Btree *pBt, MemPage *pPage, BtCursor *pCur){
   MemPage *pParent;            /* The parent of pPage */
-  MemPage *apOld[3];           /* pPage and up to two siblings */
-  Pgno pgnoOld[3];             /* Page numbers for each page in apOld[] */
-  MemPage *apNew[4];           /* pPage and up to 3 siblings after balancing */
-  Pgno pgnoNew[4];             /* Page numbers for each page in apNew[] */
-  int idxDiv[3];               /* Indices of divider cells in pParent */
-  Cell *apDiv[3];              /* Divider cells in pParent */
   int nCell;                   /* Number of cells in apCell[] */
   int nOld;                    /* Number of pages in apOld[] */
   int nNew;                    /* Number of pages in apNew[] */
@@ -2092,14 +2154,19 @@ static int balance(Btree *pBt, MemPage *pPage, BtCursor *pCur){
   int iCur;                    /* apCell[iCur] is the cell of the cursor */
   MemPage *pOldCurPage;        /* The cursor originally points to this page */
   int subtotal;                /* Subtotal of bytes in cells on one page */
-  int cntNew[4];               /* Index in apCell[] of cell after i-th page */
-  int szNew[4];                /* Combined size of cells place on i-th page */
   MemPage *extraUnref = 0;     /* A page that needs to be unref-ed */
-  Pgno pgno, swabPgno;         /* Page number */
-  Cell *apCell[MX_CELL*3+5];   /* All cells from pages being balanceed */
-  int szCell[MX_CELL*3+5];     /* Local size of all cells */
-  Cell aTemp[2];               /* Temporary holding area for apDiv[] */
-  MemPage aOld[3];             /* Temporary copies of pPage and its siblings */
+  MemPage *apOld[NB];          /* pPage and up to two siblings */
+  Pgno pgnoOld[NB];            /* Page numbers for each page in apOld[] */
+  MemPage *apNew[NB+1];        /* pPage and up to NB siblings after balancing */
+  Pgno pgnoNew[NB+1];          /* Page numbers for each page in apNew[] */
+  int idxDiv[NB];              /* Indices of divider cells in pParent */
+  Cell *apDiv[NB];             /* Divider cells in pParent */
+  Cell aTemp[NB];              /* Temporary holding area for apDiv[] */
+  int cntNew[NB+1];            /* Index in apCell[] of cell after i-th page */
+  int szNew[NB+1];             /* Combined size of cells place on i-th page */
+  MemPage aOld[NB];            /* Temporary copies of pPage and its siblings */
+  Cell *apCell[(MX_CELL+2)*NB]; /* All cells from pages being balanced */
+  int szCell[(MX_CELL+2)*NB];  /* Local size of all cells */
 
   /* 
   ** Return without doing any work if pPage is neither overfull nor
@@ -2170,6 +2237,7 @@ static int balance(Btree *pBt, MemPage *pPage, BtCursor *pCur){
     assert( sqlitepager_iswriteable(pChild) );
     copyPage(pChild, pPage);
     pChild->pParent = pPage;
+    pChild->idxParent = 0;
     sqlitepager_ref(pPage);
     pChild->isOverfull = 1;
     if( pCur && pCur->pPage==pPage ){
@@ -2192,20 +2260,18 @@ static int balance(Btree *pBt, MemPage *pPage, BtCursor *pCur){
   ** to pPage.  The "idx" variable is the index of that cell.  If pPage
   ** is the rightmost child of pParent then set idx to pParent->nCell 
   */
-  idx = -1;
-  pgno = sqlitepager_pagenumber(pPage);
-  swabPgno = SWAB32(pBt, pgno);
-  for(i=0; i<pParent->nCell; i++){
-    if( pParent->apCell[i]->h.leftChild==swabPgno ){
-      idx = i;
-      break;
+  if( pParent->idxShift ){
+    Pgno pgno, swabPgno;
+    pgno = sqlitepager_pagenumber(pPage);
+    swabPgno = SWAB32(pBt, pgno);
+    for(idx=0; idx<pParent->nCell; idx++){
+      if( pParent->apCell[idx]->h.leftChild==swabPgno ){
+        break;
+      }
     }
-  }
-  if( idx<0 && pParent->u.hdr.rightChild==swabPgno ){
-    idx = pParent->nCell;
-  }
-  if( idx<0 ){
-    return SQLITE_CORRUPT;
+    assert( idx<pParent->nCell || pParent->u.hdr.rightChild==swabPgno );
+  }else{
+    idx = pPage->idxParent;
   }
 
   /*
@@ -2217,19 +2283,20 @@ static int balance(Btree *pBt, MemPage *pPage, BtCursor *pCur){
 
   /*
   ** Find sibling pages to pPage and the Cells in pParent that divide
-  ** the siblings.  An attempt is made to find one sibling on either
-  ** side of pPage.  Both siblings are taken from one side, however, if
-  ** pPage is either the first or last child of its parent.  If pParent
-  ** has 3 or fewer children then all children of pParent are taken.
+  ** the siblings.  An attempt is made to find NN siblings on either
+  ** side of pPage.  More siblings are taken from one side, however, if
+  ** pPage there are fewer than NN siblings on the other side.  If pParent
+  ** has NB or fewer children then all children of pParent are taken.
   */
-  if( idx==pParent->nCell ){
-    nxDiv = idx - 2;
-  }else{
-    nxDiv = idx - 1;
+  nxDiv = idx - NN;
+  if( nxDiv + NB > pParent->nCell ){
+    nxDiv = pParent->nCell - NB + 1;
   }
-  if( nxDiv<0 ) nxDiv = 0;
+  if( nxDiv<0 ){
+    nxDiv = 0;
+  }
   nDiv = 0;
-  for(i=0, k=nxDiv; i<3; i++, k++){
+  for(i=0, k=nxDiv; i<NB; i++, k++){
     if( k<pParent->nCell ){
       idxDiv[i] = k;
       apDiv[i] = pParent->apCell[k];
@@ -2244,6 +2311,7 @@ static int balance(Btree *pBt, MemPage *pPage, BtCursor *pCur){
     if( rc ) goto balance_cleanup;
     rc = initPage(pBt, apOld[i], pgnoOld[i], pParent);
     if( rc ) goto balance_cleanup;
+    apOld[i]->idxParent = k;
     nOld++;
   }
 
@@ -2373,10 +2441,11 @@ static int balance(Btree *pBt, MemPage *pPage, BtCursor *pCur){
   ** from the disk more rapidly.
   **
   ** An O(n^2) insertion sort algorithm is used, but since
-  ** n is never more than 3, that should not be a problem.
+  ** n is never more than NB (a small constant), that should
+  ** not be a problem.
   **
-  ** This one optimization makes the database about 25%
-  ** faster for large insertions and deletions.
+  ** When NB==3, this one optimization makes the database
+  ** about 25% faster for large insertions and deletions.
   */
   for(i=0; i<k-1; i++){
     int minV = pgnoNew[i];
@@ -2621,8 +2690,9 @@ int sqliteBtreeDelete(BtCursor *pCur){
     BtCursor leafCur;
     Cell *pNext;
     int szNext;
+    int notUsed;
     getTempCursor(pCur, &leafCur);
-    rc = sqliteBtreeNext(&leafCur, 0);
+    rc = sqliteBtreeNext(&leafCur, &notUsed);
     if( rc!=SQLITE_OK ){
       return SQLITE_CORRUPT;
     }
@@ -3157,7 +3227,7 @@ static int checkTreePage(
     /* Check that keys are in the right order
     */
     cur.idx = i;
-    zKey2 = sqliteMalloc( nKey2+1 );
+    zKey2 = sqliteMallocRaw( nKey2+1 );
     getPayload(&cur, 0, nKey2, zKey2);
     if( zKey1 && keyCompare(zKey1, nKey1, zKey2, nKey2)>=0 ){
       checkAppendMsg(pCheck, zContext, "Key is out of order");
@@ -3253,7 +3323,7 @@ char *sqliteBtreeIntegrityCheck(Btree *pBt, int *aRoot, int nRoot){
     unlockBtreeIfUnused(pBt);
     return 0;
   }
-  sCheck.anRef = sqliteMalloc( (sCheck.nPage+1)*sizeof(sCheck.anRef[0]) );
+  sCheck.anRef = sqliteMallocRaw( (sCheck.nPage+1)*sizeof(sCheck.anRef[0]) );
   sCheck.anRef[1] = 1;
   for(i=2; i<=sCheck.nPage; i++){ sCheck.anRef[i] = 0; }
   sCheck.zErrMsg = 0;

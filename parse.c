@@ -29,7 +29,8 @@ struct LimitVal {
 */
 struct TrigEvent { int a; IdList * b; };
 
-#line 33 "parse.c"
+
+#line 34 "parse.c"
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
 */
@@ -4257,134 +4258,134 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     ** inside the C code.
     */
     case 132:
-#line 651 "parse.y"
+#line 652 "parse.y"
 {sqliteExprListDelete((yypminor->yy256));}
-#line 4262 "parse.c"
+#line 4263 "parse.c"
       break;
     case 151:
-#line 505 "parse.y"
+#line 506 "parse.y"
 {sqliteExprDelete((yypminor->yy202));}
-#line 4267 "parse.c"
+#line 4268 "parse.c"
       break;
     case 152:
-#line 670 "parse.y"
+#line 671 "parse.y"
 {sqliteExprDelete((yypminor->yy202));}
-#line 4272 "parse.c"
+#line 4273 "parse.c"
       break;
     case 153:
-#line 668 "parse.y"
+#line 669 "parse.y"
 {sqliteExprListDelete((yypminor->yy256));}
-#line 4277 "parse.c"
+#line 4278 "parse.c"
       break;
     case 155:
-#line 332 "parse.y"
+#line 333 "parse.y"
 {sqliteSrcListDelete((yypminor->yy395));}
-#line 4282 "parse.c"
+#line 4283 "parse.c"
       break;
     case 156:
-#line 422 "parse.y"
+#line 423 "parse.y"
 {sqliteExprListDelete((yypminor->yy256));}
-#line 4287 "parse.c"
+#line 4288 "parse.c"
       break;
     case 157:
-#line 427 "parse.y"
+#line 428 "parse.y"
 {sqliteExprDelete((yypminor->yy202));}
-#line 4292 "parse.c"
+#line 4293 "parse.c"
       break;
     case 161:
-#line 692 "parse.y"
+#line 693 "parse.y"
 {sqliteIdListDelete((yypminor->yy154));}
-#line 4297 "parse.c"
+#line 4298 "parse.c"
       break;
     case 162:
-#line 694 "parse.y"
+#line 695 "parse.y"
 {sqliteIdListDelete((yypminor->yy154));}
-#line 4302 "parse.c"
+#line 4303 "parse.c"
       break;
     case 165:
-#line 483 "parse.y"
+#line 484 "parse.y"
 {sqliteIdListDelete((yypminor->yy154));}
-#line 4307 "parse.c"
+#line 4308 "parse.c"
       break;
     case 166:
-#line 481 "parse.y"
+#line 482 "parse.y"
 {sqliteIdListDelete((yypminor->yy154));}
-#line 4312 "parse.c"
+#line 4313 "parse.c"
       break;
     case 168:
-#line 475 "parse.y"
+#line 476 "parse.y"
 {sqliteExprListDelete((yypminor->yy256));}
-#line 4317 "parse.c"
+#line 4318 "parse.c"
       break;
     case 178:
-#line 383 "parse.y"
+#line 384 "parse.y"
 {sqliteExprDelete((yypminor->yy202));}
-#line 4322 "parse.c"
+#line 4323 "parse.c"
       break;
     case 180:
-#line 267 "parse.y"
+#line 268 "parse.y"
 {sqliteSelectDelete((yypminor->yy91));}
-#line 4327 "parse.c"
+#line 4328 "parse.c"
       break;
     case 182:
-#line 394 "parse.y"
+#line 395 "parse.y"
 {sqliteExprListDelete((yypminor->yy256));}
-#line 4332 "parse.c"
+#line 4333 "parse.c"
       break;
     case 189:
-#line 303 "parse.y"
+#line 304 "parse.y"
 {sqliteExprListDelete((yypminor->yy256));}
-#line 4337 "parse.c"
+#line 4338 "parse.c"
       break;
     case 190:
-#line 301 "parse.y"
+#line 302 "parse.y"
 {sqliteExprListDelete((yypminor->yy256));}
-#line 4342 "parse.c"
+#line 4343 "parse.c"
       break;
     case 191:
-#line 265 "parse.y"
+#line 266 "parse.y"
 {sqliteSelectDelete((yypminor->yy91));}
-#line 4347 "parse.c"
+#line 4348 "parse.c"
       break;
     case 192:
-#line 328 "parse.y"
+#line 329 "parse.y"
 {sqliteSrcListDelete((yypminor->yy395));}
-#line 4352 "parse.c"
+#line 4353 "parse.c"
       break;
     case 193:
-#line 451 "parse.y"
+#line 452 "parse.y"
 {sqliteExprListDelete((yypminor->yy256));}
-#line 4357 "parse.c"
+#line 4358 "parse.c"
       break;
     case 195:
-#line 398 "parse.y"
+#line 399 "parse.y"
 {sqliteExprDelete((yypminor->yy202));}
-#line 4362 "parse.c"
+#line 4363 "parse.c"
       break;
     case 196:
-#line 396 "parse.y"
+#line 397 "parse.y"
 {sqliteExprListDelete((yypminor->yy256));}
-#line 4367 "parse.c"
+#line 4368 "parse.c"
       break;
     case 198:
-#line 330 "parse.y"
+#line 331 "parse.y"
 {sqliteSrcListDelete((yypminor->yy395));}
-#line 4372 "parse.c"
+#line 4373 "parse.c"
       break;
     case 204:
-#line 753 "parse.y"
+#line 754 "parse.y"
 {sqliteIdListDelete((yypminor->yy146).b);}
-#line 4377 "parse.c"
+#line 4378 "parse.c"
       break;
     case 209:
-#line 388 "parse.y"
+#line 389 "parse.y"
 {sqliteIdListDelete((yypminor->yy154));}
-#line 4382 "parse.c"
+#line 4383 "parse.c"
       break;
     case 211:
-#line 445 "parse.y"
+#line 446 "parse.y"
 {sqliteExprDelete((yypminor->yy202));}
-#line 4387 "parse.c"
+#line 4388 "parse.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -4856,9 +4857,9 @@ static void yy_reduce(
         /* No destructor defined for ecmd */
         break;
       case 3:
-#line 67 "parse.y"
+#line 68 "parse.y"
 {sqliteExec(pParse);}
-#line 4861 "parse.c"
+#line 4862 "parse.c"
         /* No destructor defined for explain */
         /* No destructor defined for cmd */
         /* No destructor defined for SEMI */
@@ -4867,20 +4868,20 @@ static void yy_reduce(
         /* No destructor defined for SEMI */
         break;
       case 5:
-#line 69 "parse.y"
+#line 70 "parse.y"
 { sqliteBeginParse(pParse, 1); }
-#line 4872 "parse.c"
+#line 4873 "parse.c"
         /* No destructor defined for EXPLAIN */
         break;
       case 6:
-#line 70 "parse.y"
+#line 71 "parse.y"
 { sqliteBeginParse(pParse, 0); }
-#line 4878 "parse.c"
+#line 4879 "parse.c"
         break;
       case 7:
-#line 75 "parse.y"
+#line 76 "parse.y"
 {sqliteBeginTransaction(pParse,yymsp[0].minor.yy276);}
-#line 4883 "parse.c"
+#line 4884 "parse.c"
         /* No destructor defined for BEGIN */
         /* No destructor defined for trans_opt */
         break;
@@ -4894,23 +4895,23 @@ static void yy_reduce(
         /* No destructor defined for nm */
         break;
       case 11:
-#line 79 "parse.y"
+#line 80 "parse.y"
 {sqliteCommitTransaction(pParse);}
-#line 4899 "parse.c"
+#line 4900 "parse.c"
         /* No destructor defined for COMMIT */
         /* No destructor defined for trans_opt */
         break;
       case 12:
-#line 80 "parse.y"
+#line 81 "parse.y"
 {sqliteCommitTransaction(pParse);}
-#line 4906 "parse.c"
+#line 4907 "parse.c"
         /* No destructor defined for END */
         /* No destructor defined for trans_opt */
         break;
       case 13:
-#line 81 "parse.y"
+#line 82 "parse.y"
 {sqliteRollbackTransaction(pParse);}
-#line 4913 "parse.c"
+#line 4914 "parse.c"
         /* No destructor defined for ROLLBACK */
         /* No destructor defined for trans_opt */
         break;
@@ -4919,41 +4920,41 @@ static void yy_reduce(
         /* No destructor defined for create_table_args */
         break;
       case 15:
-#line 86 "parse.y"
+#line 87 "parse.y"
 {
-   sqliteStartTable(pParse,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy58,yymsp[-2].minor.yy276);
+   sqliteStartTable(pParse,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy58,yymsp[-2].minor.yy276,0);
 }
-#line 4926 "parse.c"
+#line 4927 "parse.c"
         /* No destructor defined for TABLE */
         break;
       case 16:
-#line 90 "parse.y"
+#line 91 "parse.y"
 {yygotominor.yy276 = pParse->isTemp || !pParse->initFlag;}
-#line 4932 "parse.c"
+#line 4933 "parse.c"
         /* No destructor defined for TEMP */
         break;
       case 17:
-#line 91 "parse.y"
+#line 92 "parse.y"
 {yygotominor.yy276 = pParse->isTemp;}
-#line 4938 "parse.c"
+#line 4939 "parse.c"
         break;
       case 18:
-#line 92 "parse.y"
+#line 93 "parse.y"
 {
   sqliteEndTable(pParse,&yymsp[0].minor.yy0,0);
 }
-#line 4945 "parse.c"
+#line 4946 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for columnlist */
         /* No destructor defined for conslist_opt */
         break;
       case 19:
-#line 95 "parse.y"
+#line 96 "parse.y"
 {
   sqliteEndTable(pParse,0,yymsp[0].minor.yy91);
   sqliteSelectDelete(yymsp[0].minor.yy91);
 }
-#line 4956 "parse.c"
+#line 4957 "parse.c"
         /* No destructor defined for AS */
         break;
       case 20:
@@ -4970,72 +4971,72 @@ static void yy_reduce(
         /* No destructor defined for carglist */
         break;
       case 23:
-#line 107 "parse.y"
+#line 108 "parse.y"
 {sqliteAddColumn(pParse,&yymsp[0].minor.yy58);}
-#line 4975 "parse.c"
+#line 4976 "parse.c"
         break;
       case 24:
-#line 113 "parse.y"
+#line 114 "parse.y"
 {yygotominor.yy58 = yymsp[0].minor.yy0;}
-#line 4980 "parse.c"
+#line 4981 "parse.c"
         break;
       case 25:
-#line 129 "parse.y"
-{yygotominor.yy58 = yymsp[0].minor.yy0;}
-#line 4985 "parse.c"
-        break;
-      case 26:
 #line 130 "parse.y"
 {yygotominor.yy58 = yymsp[0].minor.yy0;}
-#line 4990 "parse.c"
+#line 4986 "parse.c"
+        break;
+      case 26:
+#line 131 "parse.y"
+{yygotominor.yy58 = yymsp[0].minor.yy0;}
+#line 4991 "parse.c"
         break;
       case 27:
-#line 135 "parse.y"
-{yygotominor.yy58 = yymsp[0].minor.yy0;}
-#line 4995 "parse.c"
-        break;
-      case 28:
 #line 136 "parse.y"
 {yygotominor.yy58 = yymsp[0].minor.yy0;}
-#line 5000 "parse.c"
+#line 4996 "parse.c"
         break;
-      case 29:
+      case 28:
 #line 137 "parse.y"
 {yygotominor.yy58 = yymsp[0].minor.yy0;}
-#line 5005 "parse.c"
+#line 5001 "parse.c"
+        break;
+      case 29:
+#line 138 "parse.y"
+{yygotominor.yy58 = yymsp[0].minor.yy0;}
+#line 5006 "parse.c"
         break;
       case 30:
         break;
       case 31:
-#line 140 "parse.y"
+#line 141 "parse.y"
 {sqliteAddColumnType(pParse,&yymsp[0].minor.yy58,&yymsp[0].minor.yy58);}
-#line 5012 "parse.c"
+#line 5013 "parse.c"
         break;
       case 32:
-#line 141 "parse.y"
+#line 142 "parse.y"
 {sqliteAddColumnType(pParse,&yymsp[-3].minor.yy58,&yymsp[0].minor.yy0);}
-#line 5017 "parse.c"
+#line 5018 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for signed */
         break;
       case 33:
-#line 143 "parse.y"
+#line 144 "parse.y"
 {sqliteAddColumnType(pParse,&yymsp[-5].minor.yy58,&yymsp[0].minor.yy0);}
-#line 5024 "parse.c"
+#line 5025 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for signed */
         /* No destructor defined for COMMA */
         /* No destructor defined for signed */
         break;
       case 34:
-#line 145 "parse.y"
+#line 146 "parse.y"
 {yygotominor.yy58 = yymsp[0].minor.yy58;}
-#line 5033 "parse.c"
+#line 5034 "parse.c"
         break;
       case 35:
-#line 146 "parse.y"
+#line 147 "parse.y"
 {yygotominor.yy58 = yymsp[-1].minor.yy58;}
-#line 5038 "parse.c"
+#line 5039 "parse.c"
         /* No destructor defined for ids */
         break;
       case 36:
@@ -5064,54 +5065,54 @@ static void yy_reduce(
         /* No destructor defined for ccons */
         break;
       case 43:
-#line 154 "parse.y"
+#line 155 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5069 "parse.c"
+#line 5070 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 44:
-#line 155 "parse.y"
+#line 156 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5075 "parse.c"
+#line 5076 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 45:
-#line 156 "parse.y"
+#line 157 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5081 "parse.c"
+#line 5082 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 46:
-#line 157 "parse.y"
+#line 158 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5087 "parse.c"
+#line 5088 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for PLUS */
         break;
       case 47:
-#line 158 "parse.y"
+#line 159 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,1);}
-#line 5094 "parse.c"
+#line 5095 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for MINUS */
         break;
       case 48:
-#line 159 "parse.y"
+#line 160 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5101 "parse.c"
+#line 5102 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 49:
-#line 160 "parse.y"
+#line 161 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5107 "parse.c"
+#line 5108 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for PLUS */
         break;
       case 50:
-#line 161 "parse.y"
+#line 162 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,1);}
-#line 5114 "parse.c"
+#line 5115 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for MINUS */
         break;
@@ -5124,24 +5125,24 @@ static void yy_reduce(
         /* No destructor defined for onconf */
         break;
       case 53:
-#line 168 "parse.y"
+#line 169 "parse.y"
 {sqliteAddNotNull(pParse, yymsp[0].minor.yy276);}
-#line 5129 "parse.c"
+#line 5130 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for NULL */
         break;
       case 54:
-#line 169 "parse.y"
+#line 170 "parse.y"
 {sqliteAddPrimaryKey(pParse,0,yymsp[0].minor.yy276);}
-#line 5136 "parse.c"
+#line 5137 "parse.c"
         /* No destructor defined for PRIMARY */
         /* No destructor defined for KEY */
         /* No destructor defined for sortorder */
         break;
       case 55:
-#line 170 "parse.y"
+#line 171 "parse.y"
 {sqliteCreateIndex(pParse,0,0,0,yymsp[0].minor.yy276,0,0);}
-#line 5144 "parse.c"
+#line 5145 "parse.c"
         /* No destructor defined for UNIQUE */
         break;
       case 56:
@@ -5152,117 +5153,117 @@ static void yy_reduce(
         /* No destructor defined for onconf */
         break;
       case 57:
-#line 173 "parse.y"
+#line 174 "parse.y"
 {sqliteCreateForeignKey(pParse,0,&yymsp[-2].minor.yy58,yymsp[-1].minor.yy154,yymsp[0].minor.yy276);}
-#line 5157 "parse.c"
+#line 5158 "parse.c"
         /* No destructor defined for REFERENCES */
         break;
       case 58:
-#line 174 "parse.y"
+#line 175 "parse.y"
 {sqliteDeferForeignKey(pParse,yymsp[0].minor.yy276);}
-#line 5163 "parse.c"
+#line 5164 "parse.c"
         break;
       case 59:
-#line 175 "parse.y"
+#line 176 "parse.y"
 {
-   sqliteAddCollateType(pParse, sqliteCollateType(pParse, &yymsp[0].minor.yy58));
+   sqliteAddCollateType(pParse, sqliteCollateType(yymsp[0].minor.yy58.z, yymsp[0].minor.yy58.n));
 }
-#line 5170 "parse.c"
+#line 5171 "parse.c"
         /* No destructor defined for COLLATE */
         break;
       case 60:
-#line 185 "parse.y"
+#line 186 "parse.y"
 { yygotominor.yy276 = OE_Restrict * 0x010101; }
-#line 5176 "parse.c"
+#line 5177 "parse.c"
         break;
       case 61:
-#line 186 "parse.y"
+#line 187 "parse.y"
 { yygotominor.yy276 = (yymsp[-1].minor.yy276 & yymsp[0].minor.yy99.mask) | yymsp[0].minor.yy99.value; }
-#line 5181 "parse.c"
+#line 5182 "parse.c"
         break;
       case 62:
-#line 188 "parse.y"
+#line 189 "parse.y"
 { yygotominor.yy99.value = 0;     yygotominor.yy99.mask = 0x000000; }
-#line 5186 "parse.c"
+#line 5187 "parse.c"
         /* No destructor defined for MATCH */
         /* No destructor defined for nm */
         break;
       case 63:
-#line 189 "parse.y"
+#line 190 "parse.y"
 { yygotominor.yy99.value = yymsp[0].minor.yy276;     yygotominor.yy99.mask = 0x0000ff; }
-#line 5193 "parse.c"
+#line 5194 "parse.c"
         /* No destructor defined for ON */
         /* No destructor defined for DELETE */
         break;
       case 64:
-#line 190 "parse.y"
+#line 191 "parse.y"
 { yygotominor.yy99.value = yymsp[0].minor.yy276<<8;  yygotominor.yy99.mask = 0x00ff00; }
-#line 5200 "parse.c"
+#line 5201 "parse.c"
         /* No destructor defined for ON */
         /* No destructor defined for UPDATE */
         break;
       case 65:
-#line 191 "parse.y"
+#line 192 "parse.y"
 { yygotominor.yy99.value = yymsp[0].minor.yy276<<16; yygotominor.yy99.mask = 0xff0000; }
-#line 5207 "parse.c"
+#line 5208 "parse.c"
         /* No destructor defined for ON */
         /* No destructor defined for INSERT */
         break;
       case 66:
-#line 193 "parse.y"
+#line 194 "parse.y"
 { yygotominor.yy276 = OE_SetNull; }
-#line 5214 "parse.c"
+#line 5215 "parse.c"
         /* No destructor defined for SET */
         /* No destructor defined for NULL */
         break;
       case 67:
-#line 194 "parse.y"
+#line 195 "parse.y"
 { yygotominor.yy276 = OE_SetDflt; }
-#line 5221 "parse.c"
+#line 5222 "parse.c"
         /* No destructor defined for SET */
         /* No destructor defined for DEFAULT */
         break;
       case 68:
-#line 195 "parse.y"
+#line 196 "parse.y"
 { yygotominor.yy276 = OE_Cascade; }
-#line 5228 "parse.c"
+#line 5229 "parse.c"
         /* No destructor defined for CASCADE */
         break;
       case 69:
-#line 196 "parse.y"
+#line 197 "parse.y"
 { yygotominor.yy276 = OE_Restrict; }
-#line 5234 "parse.c"
+#line 5235 "parse.c"
         /* No destructor defined for RESTRICT */
         break;
       case 70:
-#line 198 "parse.y"
+#line 199 "parse.y"
 {yygotominor.yy276 = yymsp[0].minor.yy276;}
-#line 5240 "parse.c"
+#line 5241 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for DEFERRABLE */
         break;
       case 71:
-#line 199 "parse.y"
+#line 200 "parse.y"
 {yygotominor.yy276 = yymsp[0].minor.yy276;}
-#line 5247 "parse.c"
+#line 5248 "parse.c"
         /* No destructor defined for DEFERRABLE */
         break;
       case 72:
-#line 201 "parse.y"
+#line 202 "parse.y"
 {yygotominor.yy276 = 0;}
-#line 5253 "parse.c"
+#line 5254 "parse.c"
         break;
       case 73:
-#line 202 "parse.y"
+#line 203 "parse.y"
 {yygotominor.yy276 = 1;}
-#line 5258 "parse.c"
+#line 5259 "parse.c"
         /* No destructor defined for INITIALLY */
         /* No destructor defined for DEFERRED */
         break;
       case 74:
-#line 203 "parse.y"
+#line 204 "parse.y"
 {yygotominor.yy276 = 0;}
-#line 5265 "parse.c"
+#line 5266 "parse.c"
         /* No destructor defined for INITIALLY */
         /* No destructor defined for IMMEDIATE */
         break;
@@ -5289,18 +5290,18 @@ static void yy_reduce(
         /* No destructor defined for nm */
         break;
       case 81:
-#line 215 "parse.y"
+#line 216 "parse.y"
 {sqliteAddPrimaryKey(pParse,yymsp[-2].minor.yy154,yymsp[0].minor.yy276);}
-#line 5294 "parse.c"
+#line 5295 "parse.c"
         /* No destructor defined for PRIMARY */
         /* No destructor defined for KEY */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
       case 82:
-#line 217 "parse.y"
+#line 218 "parse.y"
 {sqliteCreateIndex(pParse,0,0,yymsp[-2].minor.yy154,yymsp[0].minor.yy276,0,0);}
-#line 5303 "parse.c"
+#line 5304 "parse.c"
         /* No destructor defined for UNIQUE */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
@@ -5311,12 +5312,12 @@ static void yy_reduce(
         /* No destructor defined for onconf */
         break;
       case 84:
-#line 220 "parse.y"
+#line 221 "parse.y"
 {
     sqliteCreateForeignKey(pParse, yymsp[-6].minor.yy154, &yymsp[-3].minor.yy58, yymsp[-2].minor.yy154, yymsp[-1].minor.yy276);
     sqliteDeferForeignKey(pParse, yymsp[0].minor.yy276);
 }
-#line 5319 "parse.c"
+#line 5320 "parse.c"
         /* No destructor defined for FOREIGN */
         /* No destructor defined for KEY */
         /* No destructor defined for LP */
@@ -5324,108 +5325,108 @@ static void yy_reduce(
         /* No destructor defined for REFERENCES */
         break;
       case 85:
-#line 225 "parse.y"
+#line 226 "parse.y"
 {yygotominor.yy276 = 0;}
-#line 5329 "parse.c"
+#line 5330 "parse.c"
         break;
       case 86:
-#line 226 "parse.y"
+#line 227 "parse.y"
 {yygotominor.yy276 = yymsp[0].minor.yy276;}
-#line 5334 "parse.c"
+#line 5335 "parse.c"
         break;
       case 87:
-#line 234 "parse.y"
+#line 235 "parse.y"
 { yygotominor.yy276 = OE_Default; }
-#line 5339 "parse.c"
+#line 5340 "parse.c"
         break;
       case 88:
-#line 235 "parse.y"
+#line 236 "parse.y"
 { yygotominor.yy276 = yymsp[0].minor.yy276; }
-#line 5344 "parse.c"
+#line 5345 "parse.c"
         /* No destructor defined for ON */
         /* No destructor defined for CONFLICT */
         break;
       case 89:
-#line 236 "parse.y"
+#line 237 "parse.y"
 { yygotominor.yy276 = OE_Default; }
-#line 5351 "parse.c"
+#line 5352 "parse.c"
         break;
       case 90:
-#line 237 "parse.y"
+#line 238 "parse.y"
 { yygotominor.yy276 = yymsp[0].minor.yy276; }
-#line 5356 "parse.c"
+#line 5357 "parse.c"
         /* No destructor defined for OR */
         break;
       case 91:
-#line 238 "parse.y"
+#line 239 "parse.y"
 { yygotominor.yy276 = OE_Rollback; }
-#line 5362 "parse.c"
+#line 5363 "parse.c"
         /* No destructor defined for ROLLBACK */
         break;
       case 92:
-#line 239 "parse.y"
+#line 240 "parse.y"
 { yygotominor.yy276 = OE_Abort; }
-#line 5368 "parse.c"
+#line 5369 "parse.c"
         /* No destructor defined for ABORT */
         break;
       case 93:
-#line 240 "parse.y"
+#line 241 "parse.y"
 { yygotominor.yy276 = OE_Fail; }
-#line 5374 "parse.c"
+#line 5375 "parse.c"
         /* No destructor defined for FAIL */
         break;
       case 94:
-#line 241 "parse.y"
+#line 242 "parse.y"
 { yygotominor.yy276 = OE_Ignore; }
-#line 5380 "parse.c"
+#line 5381 "parse.c"
         /* No destructor defined for IGNORE */
         break;
       case 95:
-#line 242 "parse.y"
+#line 243 "parse.y"
 { yygotominor.yy276 = OE_Replace; }
-#line 5386 "parse.c"
+#line 5387 "parse.c"
         /* No destructor defined for REPLACE */
         break;
       case 96:
-#line 246 "parse.y"
+#line 247 "parse.y"
 {sqliteDropTable(pParse,&yymsp[0].minor.yy58,0);}
-#line 5392 "parse.c"
+#line 5393 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for TABLE */
         break;
       case 97:
-#line 250 "parse.y"
+#line 251 "parse.y"
 {
   sqliteCreateView(pParse, &yymsp[-5].minor.yy0, &yymsp[-2].minor.yy58, yymsp[0].minor.yy91, yymsp[-4].minor.yy276);
 }
-#line 5401 "parse.c"
+#line 5402 "parse.c"
         /* No destructor defined for VIEW */
         /* No destructor defined for AS */
         break;
       case 98:
-#line 253 "parse.y"
+#line 254 "parse.y"
 {
   sqliteDropTable(pParse, &yymsp[0].minor.yy58, 1);
 }
-#line 5410 "parse.c"
+#line 5411 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for VIEW */
         break;
       case 99:
-#line 259 "parse.y"
+#line 260 "parse.y"
 {
   sqliteSelect(pParse, yymsp[0].minor.yy91, SRT_Callback, 0, 0, 0, 0);
   sqliteSelectDelete(yymsp[0].minor.yy91);
 }
-#line 5420 "parse.c"
+#line 5421 "parse.c"
         break;
       case 100:
-#line 269 "parse.y"
+#line 270 "parse.y"
 {yygotominor.yy91 = yymsp[0].minor.yy91;}
-#line 5425 "parse.c"
+#line 5426 "parse.c"
         break;
       case 101:
-#line 270 "parse.y"
+#line 271 "parse.y"
 {
   if( yymsp[0].minor.yy91 ){
     yymsp[0].minor.yy91->op = yymsp[-1].minor.yy276;
@@ -5433,137 +5434,137 @@ static void yy_reduce(
   }
   yygotominor.yy91 = yymsp[0].minor.yy91;
 }
-#line 5436 "parse.c"
+#line 5437 "parse.c"
         break;
       case 102:
-#line 278 "parse.y"
+#line 279 "parse.y"
 {yygotominor.yy276 = TK_UNION;}
-#line 5441 "parse.c"
+#line 5442 "parse.c"
         /* No destructor defined for UNION */
         break;
       case 103:
-#line 279 "parse.y"
+#line 280 "parse.y"
 {yygotominor.yy276 = TK_ALL;}
-#line 5447 "parse.c"
+#line 5448 "parse.c"
         /* No destructor defined for UNION */
         /* No destructor defined for ALL */
         break;
       case 104:
-#line 280 "parse.y"
+#line 281 "parse.y"
 {yygotominor.yy276 = TK_INTERSECT;}
-#line 5454 "parse.c"
+#line 5455 "parse.c"
         /* No destructor defined for INTERSECT */
         break;
       case 105:
-#line 281 "parse.y"
+#line 282 "parse.y"
 {yygotominor.yy276 = TK_EXCEPT;}
-#line 5460 "parse.c"
+#line 5461 "parse.c"
         /* No destructor defined for EXCEPT */
         break;
       case 106:
-#line 283 "parse.y"
+#line 284 "parse.y"
 {
   yygotominor.yy91 = sqliteSelectNew(yymsp[-6].minor.yy256,yymsp[-5].minor.yy395,yymsp[-4].minor.yy202,yymsp[-3].minor.yy256,yymsp[-2].minor.yy202,yymsp[-1].minor.yy256,yymsp[-7].minor.yy276,yymsp[0].minor.yy406.limit,yymsp[0].minor.yy406.offset);
 }
-#line 5468 "parse.c"
+#line 5469 "parse.c"
         /* No destructor defined for SELECT */
         break;
       case 107:
-#line 291 "parse.y"
+#line 292 "parse.y"
 {yygotominor.yy276 = 1;}
-#line 5474 "parse.c"
+#line 5475 "parse.c"
         /* No destructor defined for DISTINCT */
         break;
       case 108:
-#line 292 "parse.y"
+#line 293 "parse.y"
 {yygotominor.yy276 = 0;}
-#line 5480 "parse.c"
+#line 5481 "parse.c"
         /* No destructor defined for ALL */
         break;
       case 109:
-#line 293 "parse.y"
+#line 294 "parse.y"
 {yygotominor.yy276 = 0;}
-#line 5486 "parse.c"
+#line 5487 "parse.c"
         break;
       case 110:
-#line 304 "parse.y"
+#line 305 "parse.y"
 {yygotominor.yy256 = yymsp[-1].minor.yy256;}
-#line 5491 "parse.c"
+#line 5492 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 111:
-#line 305 "parse.y"
+#line 306 "parse.y"
 {yygotominor.yy256 = 0;}
-#line 5497 "parse.c"
+#line 5498 "parse.c"
         break;
       case 112:
-#line 306 "parse.y"
+#line 307 "parse.y"
 {
    yygotominor.yy256 = sqliteExprListAppend(yymsp[-2].minor.yy256,yymsp[-1].minor.yy202,yymsp[0].minor.yy58.n?&yymsp[0].minor.yy58:0);
 }
-#line 5504 "parse.c"
+#line 5505 "parse.c"
         break;
       case 113:
-#line 309 "parse.y"
+#line 310 "parse.y"
 {
   yygotominor.yy256 = sqliteExprListAppend(yymsp[-1].minor.yy256, sqliteExpr(TK_ALL, 0, 0, 0), 0);
 }
-#line 5511 "parse.c"
+#line 5512 "parse.c"
         /* No destructor defined for STAR */
         break;
       case 114:
-#line 312 "parse.y"
+#line 313 "parse.y"
 {
   Expr *pRight = sqliteExpr(TK_ALL, 0, 0, 0);
   Expr *pLeft = sqliteExpr(TK_ID, 0, 0, &yymsp[-2].minor.yy58);
   yygotominor.yy256 = sqliteExprListAppend(yymsp[-3].minor.yy256, sqliteExpr(TK_DOT, pLeft, pRight, 0), 0);
 }
-#line 5521 "parse.c"
+#line 5522 "parse.c"
         /* No destructor defined for DOT */
         /* No destructor defined for STAR */
         break;
       case 115:
-#line 322 "parse.y"
+#line 323 "parse.y"
 { yygotominor.yy58 = yymsp[0].minor.yy58; }
-#line 5528 "parse.c"
+#line 5529 "parse.c"
         /* No destructor defined for AS */
         break;
       case 116:
-#line 323 "parse.y"
+#line 324 "parse.y"
 { yygotominor.yy58 = yymsp[0].minor.yy58; }
-#line 5534 "parse.c"
+#line 5535 "parse.c"
         break;
       case 117:
-#line 324 "parse.y"
+#line 325 "parse.y"
 { yygotominor.yy58.n = 0; }
-#line 5539 "parse.c"
+#line 5540 "parse.c"
         break;
       case 118:
-#line 336 "parse.y"
+#line 337 "parse.y"
 {yygotominor.yy395 = sqliteMalloc(sizeof(*yygotominor.yy395));}
-#line 5544 "parse.c"
+#line 5545 "parse.c"
         break;
       case 119:
-#line 337 "parse.y"
+#line 338 "parse.y"
 {yygotominor.yy395 = yymsp[0].minor.yy395;}
-#line 5549 "parse.c"
+#line 5550 "parse.c"
         /* No destructor defined for FROM */
         break;
       case 120:
-#line 342 "parse.y"
+#line 343 "parse.y"
 {
    yygotominor.yy395 = yymsp[-1].minor.yy395;
    if( yygotominor.yy395 && yygotominor.yy395->nSrc>0 ) yygotominor.yy395->a[yygotominor.yy395->nSrc-1].jointype = yymsp[0].minor.yy276;
 }
-#line 5558 "parse.c"
+#line 5559 "parse.c"
         break;
       case 121:
-#line 346 "parse.y"
+#line 347 "parse.y"
 {yygotominor.yy395 = 0;}
-#line 5563 "parse.c"
+#line 5564 "parse.c"
         break;
       case 122:
-#line 347 "parse.y"
+#line 348 "parse.y"
 {
   yygotominor.yy395 = sqliteSrcListAppend(yymsp[-4].minor.yy395,&yymsp[-3].minor.yy58);
   if( yymsp[-2].minor.yy58.n ) sqliteSrcListAddAlias(yygotominor.yy395,&yymsp[-2].minor.yy58);
@@ -5576,10 +5577,10 @@ static void yy_reduce(
     else { sqliteIdListDelete(yymsp[0].minor.yy154); }
   }
 }
-#line 5579 "parse.c"
+#line 5580 "parse.c"
         break;
       case 123:
-#line 359 "parse.y"
+#line 360 "parse.y"
 {
   yygotominor.yy395 = sqliteSrcListAppend(yymsp[-6].minor.yy395,0);
   yygotominor.yy395->a[yygotominor.yy395->nSrc-1].pSelect = yymsp[-4].minor.yy91;
@@ -5593,164 +5594,164 @@ static void yy_reduce(
     else { sqliteIdListDelete(yymsp[0].minor.yy154); }
   }
 }
-#line 5596 "parse.c"
+#line 5597 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
       case 124:
-#line 375 "parse.y"
+#line 376 "parse.y"
 { yygotominor.yy276 = JT_INNER; }
-#line 5603 "parse.c"
+#line 5604 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 125:
-#line 376 "parse.y"
+#line 377 "parse.y"
 { yygotominor.yy276 = JT_INNER; }
-#line 5609 "parse.c"
+#line 5610 "parse.c"
         /* No destructor defined for JOIN */
         break;
       case 126:
-#line 377 "parse.y"
+#line 378 "parse.y"
 { yygotominor.yy276 = sqliteJoinType(pParse,&yymsp[-1].minor.yy0,0,0); }
-#line 5615 "parse.c"
+#line 5616 "parse.c"
         /* No destructor defined for JOIN */
         break;
       case 127:
-#line 378 "parse.y"
+#line 379 "parse.y"
 { yygotominor.yy276 = sqliteJoinType(pParse,&yymsp[-2].minor.yy0,&yymsp[-1].minor.yy58,0); }
-#line 5621 "parse.c"
+#line 5622 "parse.c"
         /* No destructor defined for JOIN */
         break;
       case 128:
-#line 380 "parse.y"
+#line 381 "parse.y"
 { yygotominor.yy276 = sqliteJoinType(pParse,&yymsp[-3].minor.yy0,&yymsp[-2].minor.yy58,&yymsp[-1].minor.yy58); }
-#line 5627 "parse.c"
+#line 5628 "parse.c"
         /* No destructor defined for JOIN */
         break;
       case 129:
-#line 384 "parse.y"
+#line 385 "parse.y"
 {yygotominor.yy202 = yymsp[0].minor.yy202;}
-#line 5633 "parse.c"
+#line 5634 "parse.c"
         /* No destructor defined for ON */
         break;
       case 130:
-#line 385 "parse.y"
+#line 386 "parse.y"
 {yygotominor.yy202 = 0;}
-#line 5639 "parse.c"
+#line 5640 "parse.c"
         break;
       case 131:
-#line 389 "parse.y"
+#line 390 "parse.y"
 {yygotominor.yy154 = yymsp[-1].minor.yy154;}
-#line 5644 "parse.c"
+#line 5645 "parse.c"
         /* No destructor defined for USING */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
       case 132:
-#line 390 "parse.y"
+#line 391 "parse.y"
 {yygotominor.yy154 = 0;}
-#line 5652 "parse.c"
+#line 5653 "parse.c"
         break;
       case 133:
-#line 400 "parse.y"
+#line 401 "parse.y"
 {yygotominor.yy256 = 0;}
-#line 5657 "parse.c"
+#line 5658 "parse.c"
         break;
       case 134:
-#line 401 "parse.y"
+#line 402 "parse.y"
 {yygotominor.yy256 = yymsp[0].minor.yy256;}
-#line 5662 "parse.c"
+#line 5663 "parse.c"
         /* No destructor defined for ORDER */
         /* No destructor defined for BY */
         break;
       case 135:
-#line 402 "parse.y"
+#line 403 "parse.y"
 {
   yygotominor.yy256 = sqliteExprListAppend(yymsp[-4].minor.yy256,yymsp[-2].minor.yy202,0);
   if( yygotominor.yy256 ) yygotominor.yy256->a[yygotominor.yy256->nExpr-1].sortOrder = yymsp[-1].minor.yy276+yymsp[0].minor.yy276;
 }
-#line 5672 "parse.c"
+#line 5673 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 136:
-#line 406 "parse.y"
+#line 407 "parse.y"
 {
   yygotominor.yy256 = sqliteExprListAppend(0,yymsp[-2].minor.yy202,0);
   if( yygotominor.yy256 ) yygotominor.yy256->a[0].sortOrder = yymsp[-1].minor.yy276+yymsp[0].minor.yy276;
 }
-#line 5681 "parse.c"
+#line 5682 "parse.c"
         break;
       case 137:
-#line 410 "parse.y"
+#line 411 "parse.y"
 {yygotominor.yy202 = yymsp[0].minor.yy202;}
-#line 5686 "parse.c"
+#line 5687 "parse.c"
         break;
       case 138:
-#line 415 "parse.y"
+#line 416 "parse.y"
 {yygotominor.yy276 = SQLITE_SO_ASC;}
-#line 5691 "parse.c"
+#line 5692 "parse.c"
         /* No destructor defined for ASC */
         break;
       case 139:
-#line 416 "parse.y"
+#line 417 "parse.y"
 {yygotominor.yy276 = SQLITE_SO_DESC;}
-#line 5697 "parse.c"
+#line 5698 "parse.c"
         /* No destructor defined for DESC */
         break;
       case 140:
-#line 417 "parse.y"
+#line 418 "parse.y"
 {yygotominor.yy276 = SQLITE_SO_ASC;}
-#line 5703 "parse.c"
+#line 5704 "parse.c"
         break;
       case 141:
-#line 418 "parse.y"
+#line 419 "parse.y"
 {yygotominor.yy276 = SQLITE_SO_UNK;}
-#line 5708 "parse.c"
+#line 5709 "parse.c"
         break;
       case 142:
-#line 419 "parse.y"
-{yygotominor.yy276 = sqliteCollateType(pParse, &yymsp[0].minor.yy58);}
-#line 5713 "parse.c"
+#line 420 "parse.y"
+{yygotominor.yy276 = sqliteCollateType(yymsp[0].minor.yy58.z, yymsp[0].minor.yy58.n);}
+#line 5714 "parse.c"
         /* No destructor defined for COLLATE */
         break;
       case 143:
-#line 423 "parse.y"
+#line 424 "parse.y"
 {yygotominor.yy256 = 0;}
-#line 5719 "parse.c"
+#line 5720 "parse.c"
         break;
       case 144:
-#line 424 "parse.y"
+#line 425 "parse.y"
 {yygotominor.yy256 = yymsp[0].minor.yy256;}
-#line 5724 "parse.c"
+#line 5725 "parse.c"
         /* No destructor defined for GROUP */
         /* No destructor defined for BY */
         break;
       case 145:
-#line 428 "parse.y"
+#line 429 "parse.y"
 {yygotominor.yy202 = 0;}
-#line 5731 "parse.c"
+#line 5732 "parse.c"
         break;
       case 146:
-#line 429 "parse.y"
+#line 430 "parse.y"
 {yygotominor.yy202 = yymsp[0].minor.yy202;}
-#line 5736 "parse.c"
+#line 5737 "parse.c"
         /* No destructor defined for HAVING */
         break;
       case 147:
-#line 432 "parse.y"
+#line 433 "parse.y"
 {yygotominor.yy406.limit = -1; yygotominor.yy406.offset = 0;}
-#line 5742 "parse.c"
+#line 5743 "parse.c"
         break;
       case 148:
-#line 433 "parse.y"
+#line 434 "parse.y"
 {yygotominor.yy406.limit = atoi(yymsp[0].minor.yy0.z); yygotominor.yy406.offset = 0;}
-#line 5747 "parse.c"
+#line 5748 "parse.c"
         /* No destructor defined for LIMIT */
         break;
       case 149:
-#line 435 "parse.y"
+#line 436 "parse.y"
 {yygotominor.yy406.limit = atoi(yymsp[-2].minor.yy0.z); yygotominor.yy406.offset = atoi(yymsp[0].minor.yy0.z);}
-#line 5753 "parse.c"
+#line 5754 "parse.c"
         /* No destructor defined for LIMIT */
         /* No destructor defined for limit_sep */
         break;
@@ -5761,248 +5762,248 @@ static void yy_reduce(
         /* No destructor defined for COMMA */
         break;
       case 152:
-#line 442 "parse.y"
+#line 443 "parse.y"
 {sqliteDeleteFrom(pParse, &yymsp[-1].minor.yy58, yymsp[0].minor.yy202);}
-#line 5766 "parse.c"
+#line 5767 "parse.c"
         /* No destructor defined for DELETE */
         /* No destructor defined for FROM */
         break;
       case 153:
-#line 447 "parse.y"
+#line 448 "parse.y"
 {yygotominor.yy202 = 0;}
-#line 5773 "parse.c"
+#line 5774 "parse.c"
         break;
       case 154:
-#line 448 "parse.y"
+#line 449 "parse.y"
 {yygotominor.yy202 = yymsp[0].minor.yy202;}
-#line 5778 "parse.c"
+#line 5779 "parse.c"
         /* No destructor defined for WHERE */
         break;
       case 155:
-#line 456 "parse.y"
+#line 457 "parse.y"
 {sqliteUpdate(pParse,&yymsp[-3].minor.yy58,yymsp[-1].minor.yy256,yymsp[0].minor.yy202,yymsp[-4].minor.yy276);}
-#line 5784 "parse.c"
+#line 5785 "parse.c"
         /* No destructor defined for UPDATE */
         /* No destructor defined for SET */
         break;
       case 156:
-#line 459 "parse.y"
+#line 460 "parse.y"
 {yygotominor.yy256 = sqliteExprListAppend(yymsp[-4].minor.yy256,yymsp[0].minor.yy202,&yymsp[-2].minor.yy58);}
-#line 5791 "parse.c"
+#line 5792 "parse.c"
         /* No destructor defined for COMMA */
         /* No destructor defined for EQ */
         break;
       case 157:
-#line 460 "parse.y"
+#line 461 "parse.y"
 {yygotominor.yy256 = sqliteExprListAppend(0,yymsp[0].minor.yy202,&yymsp[-2].minor.yy58);}
-#line 5798 "parse.c"
+#line 5799 "parse.c"
         /* No destructor defined for EQ */
         break;
       case 158:
-#line 465 "parse.y"
+#line 466 "parse.y"
 {sqliteInsert(pParse, &yymsp[-5].minor.yy58, yymsp[-1].minor.yy256, 0, yymsp[-4].minor.yy154, yymsp[-7].minor.yy276);}
-#line 5804 "parse.c"
+#line 5805 "parse.c"
         /* No destructor defined for INTO */
         /* No destructor defined for VALUES */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
       case 159:
-#line 467 "parse.y"
+#line 468 "parse.y"
 {sqliteInsert(pParse, &yymsp[-2].minor.yy58, 0, yymsp[0].minor.yy91, yymsp[-1].minor.yy154, yymsp[-4].minor.yy276);}
-#line 5813 "parse.c"
+#line 5814 "parse.c"
         /* No destructor defined for INTO */
         break;
       case 160:
-#line 470 "parse.y"
+#line 471 "parse.y"
 {yygotominor.yy276 = yymsp[0].minor.yy276;}
-#line 5819 "parse.c"
+#line 5820 "parse.c"
         /* No destructor defined for INSERT */
         break;
       case 161:
-#line 471 "parse.y"
+#line 472 "parse.y"
 {yygotominor.yy276 = OE_Replace;}
-#line 5825 "parse.c"
+#line 5826 "parse.c"
         /* No destructor defined for REPLACE */
         break;
       case 162:
-#line 477 "parse.y"
+#line 478 "parse.y"
 {yygotominor.yy256 = sqliteExprListAppend(yymsp[-2].minor.yy256,yymsp[0].minor.yy202,0);}
-#line 5831 "parse.c"
+#line 5832 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 163:
-#line 478 "parse.y"
+#line 479 "parse.y"
 {yygotominor.yy256 = sqliteExprListAppend(0,yymsp[0].minor.yy202,0);}
-#line 5837 "parse.c"
+#line 5838 "parse.c"
         break;
       case 164:
-#line 485 "parse.y"
+#line 486 "parse.y"
 {yygotominor.yy154 = 0;}
-#line 5842 "parse.c"
+#line 5843 "parse.c"
         break;
       case 165:
-#line 486 "parse.y"
+#line 487 "parse.y"
 {yygotominor.yy154 = yymsp[-1].minor.yy154;}
-#line 5847 "parse.c"
+#line 5848 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
       case 166:
-#line 487 "parse.y"
+#line 488 "parse.y"
 {yygotominor.yy154 = sqliteIdListAppend(yymsp[-2].minor.yy154,&yymsp[0].minor.yy58);}
-#line 5854 "parse.c"
+#line 5855 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 167:
-#line 488 "parse.y"
+#line 489 "parse.y"
 {yygotominor.yy154 = sqliteIdListAppend(0,&yymsp[0].minor.yy58);}
-#line 5860 "parse.c"
+#line 5861 "parse.c"
         break;
       case 168:
-#line 507 "parse.y"
+#line 508 "parse.y"
 {yygotominor.yy202 = yymsp[-1].minor.yy202; sqliteExprSpan(yygotominor.yy202,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0); }
-#line 5865 "parse.c"
+#line 5866 "parse.c"
         break;
       case 169:
-#line 508 "parse.y"
+#line 509 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_NULL, 0, 0, &yymsp[0].minor.yy0);}
-#line 5870 "parse.c"
+#line 5871 "parse.c"
         break;
       case 170:
-#line 509 "parse.y"
-{yygotominor.yy202 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy0);}
-#line 5875 "parse.c"
-        break;
-      case 171:
 #line 510 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy0);}
-#line 5880 "parse.c"
+#line 5876 "parse.c"
+        break;
+      case 171:
+#line 511 "parse.y"
+{yygotominor.yy202 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy0);}
+#line 5881 "parse.c"
         break;
       case 172:
-#line 511 "parse.y"
+#line 512 "parse.y"
 {
   Expr *temp1 = sqliteExpr(TK_ID, 0, 0, &yymsp[-2].minor.yy58);
   Expr *temp2 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy58);
   yygotominor.yy202 = sqliteExpr(TK_DOT, temp1, temp2, 0);
 }
-#line 5889 "parse.c"
+#line 5890 "parse.c"
         /* No destructor defined for DOT */
         break;
       case 173:
-#line 517 "parse.y"
+#line 518 "parse.y"
 {yygotominor.yy202 = yymsp[-1].minor.yy202; ExprSetProperty(yygotominor.yy202,EP_Oracle8Join);}
-#line 5895 "parse.c"
+#line 5896 "parse.c"
         /* No destructor defined for ORACLE_OUTER_JOIN */
         break;
       case 174:
-#line 518 "parse.y"
+#line 519 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_INTEGER, 0, 0, &yymsp[0].minor.yy0);}
-#line 5901 "parse.c"
+#line 5902 "parse.c"
         break;
       case 175:
-#line 519 "parse.y"
+#line 520 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_FLOAT, 0, 0, &yymsp[0].minor.yy0);}
-#line 5906 "parse.c"
+#line 5907 "parse.c"
         break;
       case 176:
-#line 520 "parse.y"
+#line 521 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_STRING, 0, 0, &yymsp[0].minor.yy0);}
-#line 5911 "parse.c"
+#line 5912 "parse.c"
         break;
       case 177:
-#line 521 "parse.y"
+#line 522 "parse.y"
 {
   yygotominor.yy202 = sqliteExprFunction(yymsp[-1].minor.yy256, &yymsp[-3].minor.yy0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
 }
-#line 5919 "parse.c"
+#line 5920 "parse.c"
         /* No destructor defined for LP */
         break;
       case 178:
-#line 525 "parse.y"
+#line 526 "parse.y"
 {
   yygotominor.yy202 = sqliteExprFunction(0, &yymsp[-3].minor.yy0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
 }
-#line 5928 "parse.c"
+#line 5929 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for STAR */
         break;
       case 179:
-#line 529 "parse.y"
+#line 530 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_AND, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 5935 "parse.c"
+#line 5936 "parse.c"
         /* No destructor defined for AND */
         break;
       case 180:
-#line 530 "parse.y"
+#line 531 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_OR, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 5941 "parse.c"
+#line 5942 "parse.c"
         /* No destructor defined for OR */
         break;
       case 181:
-#line 531 "parse.y"
+#line 532 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_LT, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 5947 "parse.c"
+#line 5948 "parse.c"
         /* No destructor defined for LT */
         break;
       case 182:
-#line 532 "parse.y"
+#line 533 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_GT, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 5953 "parse.c"
+#line 5954 "parse.c"
         /* No destructor defined for GT */
         break;
       case 183:
-#line 533 "parse.y"
+#line 534 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_LE, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 5959 "parse.c"
+#line 5960 "parse.c"
         /* No destructor defined for LE */
         break;
       case 184:
-#line 534 "parse.y"
+#line 535 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_GE, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 5965 "parse.c"
+#line 5966 "parse.c"
         /* No destructor defined for GE */
         break;
       case 185:
-#line 535 "parse.y"
+#line 536 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_NE, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 5971 "parse.c"
+#line 5972 "parse.c"
         /* No destructor defined for NE */
         break;
       case 186:
-#line 536 "parse.y"
+#line 537 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_EQ, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 5977 "parse.c"
+#line 5978 "parse.c"
         /* No destructor defined for EQ */
         break;
       case 187:
-#line 537 "parse.y"
+#line 538 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_BITAND, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 5983 "parse.c"
+#line 5984 "parse.c"
         /* No destructor defined for BITAND */
         break;
       case 188:
-#line 538 "parse.y"
+#line 539 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_BITOR, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 5989 "parse.c"
+#line 5990 "parse.c"
         /* No destructor defined for BITOR */
         break;
       case 189:
-#line 539 "parse.y"
+#line 540 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_LSHIFT, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 5995 "parse.c"
+#line 5996 "parse.c"
         /* No destructor defined for LSHIFT */
         break;
       case 190:
-#line 540 "parse.y"
+#line 541 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_RSHIFT, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 6001 "parse.c"
+#line 6002 "parse.c"
         /* No destructor defined for RSHIFT */
         break;
       case 191:
-#line 541 "parse.y"
+#line 542 "parse.y"
 {
   ExprList *pList = sqliteExprListAppend(0, yymsp[0].minor.yy202, 0);
   pList = sqliteExprListAppend(pList, yymsp[-2].minor.yy202, 0);
@@ -6010,10 +6011,10 @@ static void yy_reduce(
   if( yygotominor.yy202 ) yygotominor.yy202->op = yymsp[-1].minor.yy276;
   sqliteExprSpan(yygotominor.yy202, &yymsp[-2].minor.yy202->span, &yymsp[0].minor.yy202->span);
 }
-#line 6013 "parse.c"
+#line 6014 "parse.c"
         break;
       case 192:
-#line 548 "parse.y"
+#line 549 "parse.y"
 {
   ExprList *pList = sqliteExprListAppend(0, yymsp[0].minor.yy202, 0);
   pList = sqliteExprListAppend(pList, yymsp[-3].minor.yy202, 0);
@@ -6022,144 +6023,144 @@ static void yy_reduce(
   yygotominor.yy202 = sqliteExpr(TK_NOT, yygotominor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-3].minor.yy202->span,&yymsp[0].minor.yy202->span);
 }
-#line 6025 "parse.c"
+#line 6026 "parse.c"
         /* No destructor defined for NOT */
         break;
       case 193:
-#line 557 "parse.y"
+#line 558 "parse.y"
 {yygotominor.yy276 = TK_LIKE;}
-#line 6031 "parse.c"
+#line 6032 "parse.c"
         /* No destructor defined for LIKE */
         break;
       case 194:
-#line 558 "parse.y"
+#line 559 "parse.y"
 {yygotominor.yy276 = TK_GLOB;}
-#line 6037 "parse.c"
+#line 6038 "parse.c"
         /* No destructor defined for GLOB */
         break;
       case 195:
-#line 559 "parse.y"
+#line 560 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_PLUS, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 6043 "parse.c"
+#line 6044 "parse.c"
         /* No destructor defined for PLUS */
         break;
       case 196:
-#line 560 "parse.y"
+#line 561 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_MINUS, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 6049 "parse.c"
+#line 6050 "parse.c"
         /* No destructor defined for MINUS */
         break;
       case 197:
-#line 561 "parse.y"
+#line 562 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_STAR, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 6055 "parse.c"
+#line 6056 "parse.c"
         /* No destructor defined for STAR */
         break;
       case 198:
-#line 562 "parse.y"
+#line 563 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_SLASH, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 6061 "parse.c"
+#line 6062 "parse.c"
         /* No destructor defined for SLASH */
         break;
       case 199:
-#line 563 "parse.y"
+#line 564 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_REM, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 6067 "parse.c"
+#line 6068 "parse.c"
         /* No destructor defined for REM */
         break;
       case 200:
-#line 564 "parse.y"
+#line 565 "parse.y"
 {yygotominor.yy202 = sqliteExpr(TK_CONCAT, yymsp[-2].minor.yy202, yymsp[0].minor.yy202, 0);}
-#line 6073 "parse.c"
+#line 6074 "parse.c"
         /* No destructor defined for CONCAT */
         break;
       case 201:
-#line 565 "parse.y"
+#line 566 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_ISNULL, yymsp[-1].minor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-1].minor.yy202->span,&yymsp[0].minor.yy0);
 }
-#line 6082 "parse.c"
+#line 6083 "parse.c"
         break;
       case 202:
-#line 569 "parse.y"
+#line 570 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_ISNULL, yymsp[-2].minor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-2].minor.yy202->span,&yymsp[0].minor.yy0);
 }
-#line 6090 "parse.c"
+#line 6091 "parse.c"
         /* No destructor defined for IS */
         break;
       case 203:
-#line 573 "parse.y"
+#line 574 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_NOTNULL, yymsp[-1].minor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-1].minor.yy202->span,&yymsp[0].minor.yy0);
 }
-#line 6099 "parse.c"
+#line 6100 "parse.c"
         break;
       case 204:
-#line 577 "parse.y"
+#line 578 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_NOTNULL, yymsp[-2].minor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-2].minor.yy202->span,&yymsp[0].minor.yy0);
 }
-#line 6107 "parse.c"
+#line 6108 "parse.c"
         /* No destructor defined for NOT */
         break;
       case 205:
-#line 581 "parse.y"
+#line 582 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_NOTNULL, yymsp[-3].minor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-3].minor.yy202->span,&yymsp[0].minor.yy0);
 }
-#line 6116 "parse.c"
+#line 6117 "parse.c"
         /* No destructor defined for IS */
         /* No destructor defined for NOT */
         break;
       case 206:
-#line 585 "parse.y"
+#line 586 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_NOT, yymsp[0].minor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy202->span);
 }
-#line 6126 "parse.c"
+#line 6127 "parse.c"
         break;
       case 207:
-#line 589 "parse.y"
+#line 590 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_BITNOT, yymsp[0].minor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy202->span);
 }
-#line 6134 "parse.c"
+#line 6135 "parse.c"
         break;
       case 208:
-#line 593 "parse.y"
+#line 594 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_UMINUS, yymsp[0].minor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy202->span);
 }
-#line 6142 "parse.c"
+#line 6143 "parse.c"
         break;
       case 209:
-#line 597 "parse.y"
+#line 598 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_UPLUS, yymsp[0].minor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy202->span);
 }
-#line 6150 "parse.c"
+#line 6151 "parse.c"
         break;
       case 210:
-#line 601 "parse.y"
+#line 602 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_SELECT, 0, 0, 0);
   if( yygotominor.yy202 ) yygotominor.yy202->pSelect = yymsp[-1].minor.yy91;
   sqliteExprSpan(yygotominor.yy202,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0);
 }
-#line 6159 "parse.c"
+#line 6160 "parse.c"
         break;
       case 211:
-#line 606 "parse.y"
+#line 607 "parse.y"
 {
   ExprList *pList = sqliteExprListAppend(0, yymsp[-2].minor.yy202, 0);
   pList = sqliteExprListAppend(pList, yymsp[0].minor.yy202, 0);
@@ -6167,12 +6168,12 @@ static void yy_reduce(
   if( yygotominor.yy202 ) yygotominor.yy202->pList = pList;
   sqliteExprSpan(yygotominor.yy202,&yymsp[-4].minor.yy202->span,&yymsp[0].minor.yy202->span);
 }
-#line 6170 "parse.c"
+#line 6171 "parse.c"
         /* No destructor defined for BETWEEN */
         /* No destructor defined for AND */
         break;
       case 212:
-#line 613 "parse.y"
+#line 614 "parse.y"
 {
   ExprList *pList = sqliteExprListAppend(0, yymsp[-2].minor.yy202, 0);
   pList = sqliteExprListAppend(pList, yymsp[0].minor.yy202, 0);
@@ -6181,279 +6182,279 @@ static void yy_reduce(
   yygotominor.yy202 = sqliteExpr(TK_NOT, yygotominor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-5].minor.yy202->span,&yymsp[0].minor.yy202->span);
 }
-#line 6184 "parse.c"
+#line 6185 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for BETWEEN */
         /* No destructor defined for AND */
         break;
       case 213:
-#line 621 "parse.y"
+#line 622 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_IN, yymsp[-4].minor.yy202, 0, 0);
   if( yygotominor.yy202 ) yygotominor.yy202->pList = yymsp[-1].minor.yy256;
   sqliteExprSpan(yygotominor.yy202,&yymsp[-4].minor.yy202->span,&yymsp[0].minor.yy0);
 }
-#line 6196 "parse.c"
+#line 6197 "parse.c"
         /* No destructor defined for IN */
         /* No destructor defined for LP */
         break;
       case 214:
-#line 626 "parse.y"
+#line 627 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_IN, yymsp[-4].minor.yy202, 0, 0);
   if( yygotominor.yy202 ) yygotominor.yy202->pSelect = yymsp[-1].minor.yy91;
   sqliteExprSpan(yygotominor.yy202,&yymsp[-4].minor.yy202->span,&yymsp[0].minor.yy0);
 }
-#line 6207 "parse.c"
+#line 6208 "parse.c"
         /* No destructor defined for IN */
         /* No destructor defined for LP */
         break;
       case 215:
-#line 631 "parse.y"
+#line 632 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_IN, yymsp[-5].minor.yy202, 0, 0);
   if( yygotominor.yy202 ) yygotominor.yy202->pList = yymsp[-1].minor.yy256;
   yygotominor.yy202 = sqliteExpr(TK_NOT, yygotominor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-5].minor.yy202->span,&yymsp[0].minor.yy0);
 }
-#line 6219 "parse.c"
+#line 6220 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for IN */
         /* No destructor defined for LP */
         break;
       case 216:
-#line 637 "parse.y"
+#line 638 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_IN, yymsp[-5].minor.yy202, 0, 0);
   if( yygotominor.yy202 ) yygotominor.yy202->pSelect = yymsp[-1].minor.yy91;
   yygotominor.yy202 = sqliteExpr(TK_NOT, yygotominor.yy202, 0, 0);
   sqliteExprSpan(yygotominor.yy202,&yymsp[-5].minor.yy202->span,&yymsp[0].minor.yy0);
 }
-#line 6232 "parse.c"
+#line 6233 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for IN */
         /* No destructor defined for LP */
         break;
       case 217:
-#line 645 "parse.y"
+#line 646 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_CASE, yymsp[-3].minor.yy202, yymsp[-1].minor.yy202, 0);
   if( yygotominor.yy202 ) yygotominor.yy202->pList = yymsp[-2].minor.yy256;
   sqliteExprSpan(yygotominor.yy202, &yymsp[-4].minor.yy0, &yymsp[0].minor.yy0);
 }
-#line 6244 "parse.c"
+#line 6245 "parse.c"
         break;
       case 218:
-#line 652 "parse.y"
+#line 653 "parse.y"
 {
   yygotominor.yy256 = sqliteExprListAppend(yymsp[-4].minor.yy256, yymsp[-2].minor.yy202, 0);
   yygotominor.yy256 = sqliteExprListAppend(yygotominor.yy256, yymsp[0].minor.yy202, 0);
 }
-#line 6252 "parse.c"
+#line 6253 "parse.c"
         /* No destructor defined for WHEN */
         /* No destructor defined for THEN */
         break;
       case 219:
-#line 656 "parse.y"
+#line 657 "parse.y"
 {
   yygotominor.yy256 = sqliteExprListAppend(0, yymsp[-2].minor.yy202, 0);
   yygotominor.yy256 = sqliteExprListAppend(yygotominor.yy256, yymsp[0].minor.yy202, 0);
 }
-#line 6262 "parse.c"
+#line 6263 "parse.c"
         /* No destructor defined for WHEN */
         /* No destructor defined for THEN */
         break;
       case 220:
-#line 661 "parse.y"
+#line 662 "parse.y"
 {yygotominor.yy202 = yymsp[0].minor.yy202;}
-#line 6269 "parse.c"
+#line 6270 "parse.c"
         /* No destructor defined for ELSE */
         break;
       case 221:
-#line 662 "parse.y"
+#line 663 "parse.y"
 {yygotominor.yy202 = 0;}
-#line 6275 "parse.c"
+#line 6276 "parse.c"
         break;
       case 222:
-#line 664 "parse.y"
+#line 665 "parse.y"
 {yygotominor.yy202 = yymsp[0].minor.yy202;}
-#line 6280 "parse.c"
+#line 6281 "parse.c"
         break;
       case 223:
-#line 665 "parse.y"
+#line 666 "parse.y"
 {yygotominor.yy202 = 0;}
-#line 6285 "parse.c"
+#line 6286 "parse.c"
         break;
       case 224:
-#line 673 "parse.y"
+#line 674 "parse.y"
 {yygotominor.yy256 = sqliteExprListAppend(yymsp[-2].minor.yy256,yymsp[0].minor.yy202,0);}
-#line 6290 "parse.c"
+#line 6291 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 225:
-#line 674 "parse.y"
+#line 675 "parse.y"
 {yygotominor.yy256 = sqliteExprListAppend(0,yymsp[0].minor.yy202,0);}
-#line 6296 "parse.c"
+#line 6297 "parse.c"
         break;
       case 226:
-#line 675 "parse.y"
+#line 676 "parse.y"
 {yygotominor.yy202 = yymsp[0].minor.yy202;}
-#line 6301 "parse.c"
+#line 6302 "parse.c"
         break;
       case 227:
-#line 676 "parse.y"
+#line 677 "parse.y"
 {yygotominor.yy202 = 0;}
-#line 6306 "parse.c"
+#line 6307 "parse.c"
         break;
       case 228:
-#line 681 "parse.y"
+#line 682 "parse.y"
 {
   if( yymsp[-8].minor.yy276!=OE_None ) yymsp[-8].minor.yy276 = yymsp[0].minor.yy276;
   if( yymsp[-8].minor.yy276==OE_Default) yymsp[-8].minor.yy276 = OE_Abort;
   sqliteCreateIndex(pParse, &yymsp[-6].minor.yy58, &yymsp[-4].minor.yy58, yymsp[-2].minor.yy154, yymsp[-8].minor.yy276, &yymsp[-9].minor.yy0, &yymsp[-1].minor.yy0);
 }
-#line 6315 "parse.c"
+#line 6316 "parse.c"
         /* No destructor defined for INDEX */
         /* No destructor defined for ON */
         /* No destructor defined for LP */
         break;
       case 229:
-#line 688 "parse.y"
+#line 689 "parse.y"
 { yygotominor.yy276 = OE_Abort; }
-#line 6323 "parse.c"
+#line 6324 "parse.c"
         /* No destructor defined for UNIQUE */
         break;
       case 230:
-#line 689 "parse.y"
+#line 690 "parse.y"
 { yygotominor.yy276 = OE_None; }
-#line 6329 "parse.c"
+#line 6330 "parse.c"
         break;
       case 231:
-#line 697 "parse.y"
+#line 698 "parse.y"
 {yygotominor.yy154 = 0;}
-#line 6334 "parse.c"
+#line 6335 "parse.c"
         break;
       case 232:
-#line 698 "parse.y"
+#line 699 "parse.y"
 {yygotominor.yy154 = yymsp[-1].minor.yy154;}
-#line 6339 "parse.c"
+#line 6340 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
       case 233:
-#line 699 "parse.y"
+#line 700 "parse.y"
 {yygotominor.yy154 = sqliteIdListAppend(yymsp[-2].minor.yy154,&yymsp[0].minor.yy58);}
-#line 6346 "parse.c"
+#line 6347 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 234:
-#line 700 "parse.y"
+#line 701 "parse.y"
 {yygotominor.yy154 = sqliteIdListAppend(0,&yymsp[0].minor.yy58);}
-#line 6352 "parse.c"
+#line 6353 "parse.c"
         break;
       case 235:
-#line 701 "parse.y"
+#line 702 "parse.y"
 {yygotominor.yy58 = yymsp[0].minor.yy58;}
-#line 6357 "parse.c"
+#line 6358 "parse.c"
         break;
       case 236:
-#line 706 "parse.y"
+#line 707 "parse.y"
 {sqliteDropIndex(pParse, &yymsp[0].minor.yy58);}
-#line 6362 "parse.c"
+#line 6363 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for INDEX */
         break;
       case 237:
-#line 712 "parse.y"
+#line 713 "parse.y"
 {sqliteCopy(pParse,&yymsp[-5].minor.yy58,&yymsp[-3].minor.yy58,&yymsp[0].minor.yy0,yymsp[-6].minor.yy276);}
-#line 6369 "parse.c"
+#line 6370 "parse.c"
         /* No destructor defined for COPY */
         /* No destructor defined for FROM */
         /* No destructor defined for USING */
         /* No destructor defined for DELIMITERS */
         break;
       case 238:
-#line 714 "parse.y"
+#line 715 "parse.y"
 {sqliteCopy(pParse,&yymsp[-2].minor.yy58,&yymsp[0].minor.yy58,0,yymsp[-3].minor.yy276);}
-#line 6378 "parse.c"
+#line 6379 "parse.c"
         /* No destructor defined for COPY */
         /* No destructor defined for FROM */
         break;
       case 239:
-#line 718 "parse.y"
+#line 719 "parse.y"
 {sqliteVacuum(pParse,0);}
-#line 6385 "parse.c"
+#line 6386 "parse.c"
         /* No destructor defined for VACUUM */
         break;
       case 240:
-#line 719 "parse.y"
+#line 720 "parse.y"
 {sqliteVacuum(pParse,&yymsp[0].minor.yy58);}
-#line 6391 "parse.c"
+#line 6392 "parse.c"
         /* No destructor defined for VACUUM */
         break;
       case 241:
-#line 723 "parse.y"
+#line 724 "parse.y"
 {sqlitePragma(pParse,&yymsp[-2].minor.yy58,&yymsp[0].minor.yy58,0);}
-#line 6397 "parse.c"
+#line 6398 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
       case 242:
-#line 724 "parse.y"
+#line 725 "parse.y"
 {sqlitePragma(pParse,&yymsp[-2].minor.yy58,&yymsp[0].minor.yy0,0);}
-#line 6404 "parse.c"
+#line 6405 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
       case 243:
-#line 725 "parse.y"
+#line 726 "parse.y"
 {sqlitePragma(pParse,&yymsp[-2].minor.yy58,&yymsp[0].minor.yy58,0);}
-#line 6411 "parse.c"
+#line 6412 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
       case 244:
-#line 726 "parse.y"
+#line 727 "parse.y"
 {sqlitePragma(pParse,&yymsp[-2].minor.yy58,&yymsp[0].minor.yy58,1);}
-#line 6418 "parse.c"
+#line 6419 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
       case 245:
-#line 727 "parse.y"
+#line 728 "parse.y"
 {sqlitePragma(pParse,&yymsp[-3].minor.yy58,&yymsp[-1].minor.yy58,0);}
-#line 6425 "parse.c"
+#line 6426 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
       case 246:
-#line 728 "parse.y"
+#line 729 "parse.y"
 {sqlitePragma(pParse,&yymsp[0].minor.yy58,&yymsp[0].minor.yy58,0);}
-#line 6433 "parse.c"
+#line 6434 "parse.c"
         /* No destructor defined for PRAGMA */
         break;
       case 247:
-#line 729 "parse.y"
+#line 730 "parse.y"
 {yygotominor.yy58 = yymsp[0].minor.yy58;}
-#line 6439 "parse.c"
+#line 6440 "parse.c"
         /* No destructor defined for plus_opt */
         break;
       case 248:
-#line 730 "parse.y"
+#line 731 "parse.y"
 {yygotominor.yy58 = yymsp[0].minor.yy58;}
-#line 6445 "parse.c"
+#line 6446 "parse.c"
         /* No destructor defined for MINUS */
         break;
       case 249:
-#line 731 "parse.y"
-{yygotominor.yy58 = yymsp[0].minor.yy0;}
-#line 6451 "parse.c"
-        break;
-      case 250:
 #line 732 "parse.y"
 {yygotominor.yy58 = yymsp[0].minor.yy0;}
-#line 6456 "parse.c"
+#line 6452 "parse.c"
+        break;
+      case 250:
+#line 733 "parse.y"
+{yygotominor.yy58 = yymsp[0].minor.yy0;}
+#line 6457 "parse.c"
         break;
       case 251:
         /* No destructor defined for PLUS */
@@ -6461,122 +6462,122 @@ static void yy_reduce(
       case 252:
         break;
       case 253:
-#line 739 "parse.y"
+#line 740 "parse.y"
 {
   Token all;
   all.z = yymsp[-11].minor.yy0.z;
   all.n = (yymsp[0].minor.yy0.z - yymsp[-11].minor.yy0.z) + yymsp[0].minor.yy0.n;
   sqliteCreateTrigger(pParse, &yymsp[-9].minor.yy58, yymsp[-8].minor.yy276, yymsp[-7].minor.yy146.a, yymsp[-7].minor.yy146.b, &yymsp[-5].minor.yy58, yymsp[-4].minor.yy276, yymsp[-3].minor.yy412, yymsp[-1].minor.yy111, &all);
 }
-#line 6471 "parse.c"
+#line 6472 "parse.c"
         /* No destructor defined for TRIGGER */
         /* No destructor defined for ON */
         /* No destructor defined for BEGIN */
         break;
       case 254:
-#line 747 "parse.y"
+#line 748 "parse.y"
 { yygotominor.yy276 = TK_BEFORE; }
-#line 6479 "parse.c"
+#line 6480 "parse.c"
         /* No destructor defined for BEFORE */
         break;
       case 255:
-#line 748 "parse.y"
+#line 749 "parse.y"
 { yygotominor.yy276 = TK_AFTER;  }
-#line 6485 "parse.c"
+#line 6486 "parse.c"
         /* No destructor defined for AFTER */
         break;
       case 256:
-#line 749 "parse.y"
+#line 750 "parse.y"
 { yygotominor.yy276 = TK_INSTEAD;}
-#line 6491 "parse.c"
+#line 6492 "parse.c"
         /* No destructor defined for INSTEAD */
         /* No destructor defined for OF */
         break;
       case 257:
-#line 750 "parse.y"
+#line 751 "parse.y"
 { yygotominor.yy276 = TK_BEFORE; }
-#line 6498 "parse.c"
+#line 6499 "parse.c"
         break;
       case 258:
-#line 754 "parse.y"
+#line 755 "parse.y"
 { yygotominor.yy146.a = TK_DELETE; yygotominor.yy146.b = 0; }
-#line 6503 "parse.c"
+#line 6504 "parse.c"
         /* No destructor defined for DELETE */
         break;
       case 259:
-#line 755 "parse.y"
+#line 756 "parse.y"
 { yygotominor.yy146.a = TK_INSERT; yygotominor.yy146.b = 0; }
-#line 6509 "parse.c"
+#line 6510 "parse.c"
         /* No destructor defined for INSERT */
         break;
       case 260:
-#line 756 "parse.y"
+#line 757 "parse.y"
 { yygotominor.yy146.a = TK_UPDATE; yygotominor.yy146.b = 0;}
-#line 6515 "parse.c"
+#line 6516 "parse.c"
         /* No destructor defined for UPDATE */
         break;
       case 261:
-#line 757 "parse.y"
+#line 758 "parse.y"
 {yygotominor.yy146.a = TK_UPDATE; yygotominor.yy146.b = yymsp[0].minor.yy154; }
-#line 6521 "parse.c"
+#line 6522 "parse.c"
         /* No destructor defined for UPDATE */
         /* No destructor defined for OF */
         break;
       case 262:
-#line 760 "parse.y"
-{ yygotominor.yy276 = TK_ROW; }
-#line 6528 "parse.c"
-        break;
-      case 263:
 #line 761 "parse.y"
 { yygotominor.yy276 = TK_ROW; }
-#line 6533 "parse.c"
+#line 6529 "parse.c"
+        break;
+      case 263:
+#line 762 "parse.y"
+{ yygotominor.yy276 = TK_ROW; }
+#line 6534 "parse.c"
         /* No destructor defined for FOR */
         /* No destructor defined for EACH */
         /* No destructor defined for ROW */
         break;
       case 264:
-#line 762 "parse.y"
+#line 763 "parse.y"
 { yygotominor.yy276 = TK_STATEMENT; }
-#line 6541 "parse.c"
+#line 6542 "parse.c"
         /* No destructor defined for FOR */
         /* No destructor defined for EACH */
         /* No destructor defined for STATEMENT */
         break;
       case 265:
-#line 765 "parse.y"
+#line 766 "parse.y"
 { yygotominor.yy412 = 0; }
-#line 6549 "parse.c"
+#line 6550 "parse.c"
         break;
       case 266:
-#line 766 "parse.y"
+#line 767 "parse.y"
 { yygotominor.yy412 = yymsp[0].minor.yy202; }
-#line 6554 "parse.c"
+#line 6555 "parse.c"
         /* No destructor defined for WHEN */
         break;
       case 267:
-#line 769 "parse.y"
+#line 770 "parse.y"
 {
   yymsp[-2].minor.yy111->pNext = yymsp[0].minor.yy111 ; yygotominor.yy111 = yymsp[-2].minor.yy111; }
-#line 6561 "parse.c"
+#line 6562 "parse.c"
         /* No destructor defined for SEMI */
         break;
       case 268:
-#line 771 "parse.y"
+#line 772 "parse.y"
 { yygotominor.yy111 = 0; }
-#line 6567 "parse.c"
+#line 6568 "parse.c"
         break;
       case 269:
-#line 776 "parse.y"
+#line 777 "parse.y"
 { yygotominor.yy111 = sqliteTriggerUpdateStep(&yymsp[-3].minor.yy58, yymsp[-1].minor.yy256, yymsp[0].minor.yy202, yymsp[-4].minor.yy276); }
-#line 6572 "parse.c"
+#line 6573 "parse.c"
         /* No destructor defined for UPDATE */
         /* No destructor defined for SET */
         break;
       case 270:
-#line 781 "parse.y"
+#line 782 "parse.y"
 {yygotominor.yy111 = sqliteTriggerInsertStep(&yymsp[-5].minor.yy58, yymsp[-4].minor.yy154, yymsp[-1].minor.yy256, 0, yymsp[-7].minor.yy276);}
-#line 6579 "parse.c"
+#line 6580 "parse.c"
         /* No destructor defined for INSERT */
         /* No destructor defined for INTO */
         /* No destructor defined for VALUES */
@@ -6584,77 +6585,77 @@ static void yy_reduce(
         /* No destructor defined for RP */
         break;
       case 271:
-#line 784 "parse.y"
+#line 785 "parse.y"
 {yygotominor.yy111 = sqliteTriggerInsertStep(&yymsp[-2].minor.yy58, yymsp[-1].minor.yy154, 0, yymsp[0].minor.yy91, yymsp[-4].minor.yy276);}
-#line 6589 "parse.c"
+#line 6590 "parse.c"
         /* No destructor defined for INSERT */
         /* No destructor defined for INTO */
         break;
       case 272:
-#line 788 "parse.y"
+#line 789 "parse.y"
 {yygotominor.yy111 = sqliteTriggerDeleteStep(&yymsp[-1].minor.yy58, yymsp[0].minor.yy202);}
-#line 6596 "parse.c"
+#line 6597 "parse.c"
         /* No destructor defined for DELETE */
         /* No destructor defined for FROM */
         break;
       case 273:
-#line 791 "parse.y"
+#line 792 "parse.y"
 {yygotominor.yy111 = sqliteTriggerSelectStep(yymsp[0].minor.yy91); }
-#line 6603 "parse.c"
+#line 6604 "parse.c"
         break;
       case 274:
-#line 794 "parse.y"
+#line 795 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_RAISE, 0, 0, 0); 
   yygotominor.yy202->iColumn = OE_Ignore;
   sqliteExprSpan(yygotominor.yy202, &yymsp[-3].minor.yy0, &yymsp[0].minor.yy0);
 }
-#line 6612 "parse.c"
+#line 6613 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for IGNORE */
         break;
       case 275:
-#line 799 "parse.y"
+#line 800 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy58); 
   yygotominor.yy202->iColumn = OE_Rollback;
   sqliteExprSpan(yygotominor.yy202, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);
 }
-#line 6623 "parse.c"
+#line 6624 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for ROLLBACK */
         /* No destructor defined for COMMA */
         break;
       case 276:
-#line 804 "parse.y"
+#line 805 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy58); 
   yygotominor.yy202->iColumn = OE_Abort;
   sqliteExprSpan(yygotominor.yy202, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);
 }
-#line 6635 "parse.c"
+#line 6636 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for ABORT */
         /* No destructor defined for COMMA */
         break;
       case 277:
-#line 809 "parse.y"
+#line 810 "parse.y"
 {
   yygotominor.yy202 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy58); 
   yygotominor.yy202->iColumn = OE_Fail;
   sqliteExprSpan(yygotominor.yy202, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);
 }
-#line 6647 "parse.c"
+#line 6648 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for FAIL */
         /* No destructor defined for COMMA */
         break;
       case 278:
-#line 816 "parse.y"
+#line 817 "parse.y"
 {
     sqliteDropTrigger(pParse,&yymsp[0].minor.yy58,0);
 }
-#line 6657 "parse.c"
+#line 6658 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for TRIGGER */
         break;
@@ -6704,7 +6705,7 @@ static void yy_syntax_error(
   sqliteSetString(&pParse->zErrMsg,"syntax error",0);
   pParse->sErrToken = TOKEN;
 
-#line 6707 "parse.c"
+#line 6708 "parse.c"
   sqliteParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 

@@ -12,7 +12,7 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite.h,v 1.14 2002/12/26 16:08:19 matt Exp $
+** @(#) $Id: sqlite.h,v 1.15 2003/01/27 21:50:54 matt Exp $
 */
 #ifndef _SQLITE_H_
 #define _SQLITE_H_
@@ -21,7 +21,7 @@
 /*
 ** The version of the SQLite library.
 */
-#define SQLITE_VERSION         "2.7.4"
+#define SQLITE_VERSION         "2.7.6"
 
 /*
 ** Make sure we can call this stuff from C++.
@@ -163,6 +163,7 @@ int sqlite_exec(
 #define SQLITE_MISMATCH    20   /* Data type mismatch */
 #define SQLITE_MISUSE      21   /* Library used incorrectly */
 #define SQLITE_NOLFS       22   /* Uses OS features not supported on host */
+#define SQLITE_AUTH        23   /* Authorization denied */
 
 /*
 ** Each entry in an SQLite table has a unique integer key.  (The key is
@@ -497,6 +498,68 @@ void *sqlite_aggregate_context(sqlite_func*, int nBytes);
 ** routine always returns at least 1.
 */
 int sqlite_aggregate_count(sqlite_func*);
+
+/*
+** This routine registers a callback with the SQLite library.  The
+** callback is invoked for every attempt to access a column of a table
+** in the database.  The callback returns SQLITE_OK if access is allowed,
+** SQLITE_DENY if the entire SQL statement should be aborted with an error
+** and SQLITE_IGNORE if the column should be treated as a NULL value.
+*/
+int sqlite_set_authorizer(
+  sqlite*,
+  int (*xAuth)(void*,int,const char*,const char*),
+  void *pUserData
+);
+
+/*
+** The second parameter to the access authorization function above will
+** be one of the values below.  These values signify what kind of operation
+** is to be authorized.  The 3rd and 4th parameters to the authorization
+** function will be parameters or NULL depending on which of the following
+** codes is used as the second parameter.
+**
+**                                          Arg-3           Arg-4
+*/
+#define SQLITE_COPY                  0   /* Table Name      File Name       */
+#define SQLITE_CREATE_INDEX          1   /* Index Name      Table Name      */
+#define SQLITE_CREATE_TABLE          2   /* Table Name      NULL            */
+#define SQLITE_CREATE_TEMP_INDEX     3   /* Index Name      Table Name      */
+#define SQLITE_CREATE_TEMP_TABLE     4   /* Table Name      NULL            */
+#define SQLITE_CREATE_TEMP_TRIGGER   5   /* Trigger Name    Table Name      */
+#define SQLITE_CREATE_TEMP_VIEW      6   /* View Name       NULL            */
+#define SQLITE_CREATE_TRIGGER        7   /* Trigger Name    Table Name      */
+#define SQLITE_CREATE_VIEW           8   /* View Name       NULL            */
+#define SQLITE_DELETE                9   /* Table Name      NULL            */
+#define SQLITE_DROP_INDEX           10   /* Index Name      Table Name      */
+#define SQLITE_DROP_TABLE           11   /* Table Name      NULL            */
+#define SQLITE_DROP_TEMP_INDEX      12   /* Index Name      Table Name      */
+#define SQLITE_DROP_TEMP_TABLE      13   /* Table Name      NULL            */
+#define SQLITE_DROP_TEMP_TRIGGER    14   /* Trigger Name    Table Name      */
+#define SQLITE_DROP_TEMP_VIEW       15   /* View Name       NULL            */
+#define SQLITE_DROP_TRIGGER         16   /* Trigger Name    Table Name      */
+#define SQLITE_DROP_VIEW            17   /* View Name       NULL            */
+#define SQLITE_INSERT               18   /* Table Name      NULL            */
+#define SQLITE_PRAGMA               19   /* Pragma Name     1st arg or NULL */
+#define SQLITE_READ                 20   /* Table Name      Column Name     */
+#define SQLITE_SELECT               21   /* NULL            NULL            */
+#define SQLITE_TRANSACTION          22   /* NULL            NULL            */
+#define SQLITE_UPDATE               23   /* Table Name      Column Name     */
+
+/*
+** The return value of the authorization function should be one of the
+** following constants:
+*/
+/* #define SQLITE_OK  0   // Allow access (This is actually defined above) */
+#define SQLITE_DENY   1   /* Abort the SQL statement with an error */
+#define SQLITE_IGNORE 2   /* Don't allow access, but don't generate an error */
+
+/*
+** Register a function that is called at every invocation of sqlite_exec().
+** This function can be used (for example) to generate a log file of all
+** SQL executed against a database.
+*/
+void *sqlite_trace(sqlite*, void(*xTrace)(void*,const char*), void*);
 
 /*
 ** Attempt to open the file named in the argument as the auxiliary database

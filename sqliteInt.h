@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.16 2002/12/26 16:08:19 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.17 2003/01/27 21:50:54 matt Exp $
 */
 #include "config.h"
 #include "sqlite.h"
@@ -119,7 +119,8 @@ typedef unsigned INTPTR_TYPE uptr; /* Big enough to hold a pointer */
 ** by an AWK script to determine if there are any leaks.
 */
 #ifdef MEMORY_DEBUG
-# define sqliteMalloc(X)    sqliteMalloc_(X,__FILE__,__LINE__)
+# define sqliteMalloc(X)    sqliteMalloc_(X,1,__FILE__,__LINE__)
+# define sqliteMallocRaw(X) sqliteMalloc_(X,0,__FILE__,__LINE__)
 # define sqliteFree(X)      sqliteFree_(X,__FILE__,__LINE__)
 # define sqliteRealloc(X,Y) sqliteRealloc_(X,Y,__FILE__,__LINE__)
 # define sqliteStrDup(X)    sqliteStrDup_(X,__FILE__,__LINE__)
@@ -152,6 +153,11 @@ extern int sqlite_iMallocFail;   /* Fail sqliteMalloc() after this many calls */
 */
 #define MASTER_NAME       "sqlite_master"
 #define TEMP_MASTER_NAME  "sqlite_temp_master"
+
+/*
+** The name of the schema table.
+*/
+#define SCHEMA_TABLE(x)  (x?TEMP_MASTER_NAME:MASTER_NAME)
 
 /*
 ** A convenience macro that returns the number of elements in
@@ -219,6 +225,14 @@ struct sqlite {
   int magic;                    /* Magic number for detect library misuse */
   int nChange;                  /* Number of rows changed */
   int recursionDepth;           /* Number of nested calls to sqlite_exec() */
+#ifndef SQLITE_OMIT_TRACE
+  void (*xTrace)(void*,const char*);     /* Trace function */
+  void *pTraceArg;                       /* Argument to the trace function */
+#endif
+#ifndef SQLITE_OMIT_AUTHORIZATION
+  int (*xAuth)(void*,int,const char*,const char*); /* Access Auth function */
+  void *pAuthArg;               /* 1st argument to the access auth function */
+#endif
 };
 
 /*
@@ -725,7 +739,7 @@ struct Parse {
   Token sLastToken;    /* The last token parsed */
   Table *pNewTable;    /* A table being constructed by CREATE TABLE */
   Vdbe *pVdbe;         /* An engine for executing database bytecode */
-  u8 colNamesSet;      /* TRUE after OP_ColumnCount has been issued to pVdbe */
+  u8 colNamesSet;      /* TRUE after OP_ColumnName has been issued to pVdbe */
   u8 explain;          /* True if the EXPLAIN flag is found on the query */
   u8 initFlag;         /* True if reparsing CREATE TABLEs */
   u8 nameClash;        /* A permanent table name clashes with temp table name */
@@ -893,17 +907,20 @@ int sqliteCompare(const char *, const char *);
 int sqliteSortCompare(const char *, const char *);
 void sqliteRealToSortable(double r, char *);
 #ifdef MEMORY_DEBUG
-  void *sqliteMalloc_(int,char*,int);
+  void *sqliteMalloc_(int,int,char*,int);
   void sqliteFree_(void*,char*,int);
   void *sqliteRealloc_(void*,int,char*,int);
   char *sqliteStrDup_(const char*,char*,int);
   char *sqliteStrNDup_(const char*, int,char*,int);
+  void sqliteCheckMemory(void*,int);
 #else
   void *sqliteMalloc(int);
+  void *sqliteMallocRaw(int);
   void sqliteFree(void*);
   void *sqliteRealloc(void*,int);
   char *sqliteStrDup(const char*);
   char *sqliteStrNDup(const char*, int);
+# define sqliteCheckMemory(a,b)
 #endif
 void sqliteSetString(char **, const char *, ...);
 void sqliteSetNString(char **, ...);
@@ -925,13 +942,13 @@ void sqliteRollbackInternalChanges(sqlite*);
 void sqliteCommitInternalChanges(sqlite*);
 Table *sqliteResultSetOfSelect(Parse*,char*,Select*);
 void sqliteOpenMasterTable(Vdbe *v, int);
-void sqliteStartTable(Parse*,Token*,Token*,int);
+void sqliteStartTable(Parse*,Token*,Token*,int,int);
 void sqliteAddColumn(Parse*,Token*);
 void sqliteAddNotNull(Parse*, int);
 void sqliteAddPrimaryKey(Parse*, IdList*, int);
 void sqliteAddColumnType(Parse*,Token*,Token*);
 void sqliteAddDefaultValue(Parse*,Token*,int);
-int sqliteCollateType(Parse*, Token*);
+int sqliteCollateType(const char*, int);
 void sqliteAddCollateType(Parse*, int);
 void sqliteEndTable(Parse*,Token*,Select*);
 void sqliteCreateView(Parse*,Token*,Token*,Select*,int);
@@ -1020,3 +1037,10 @@ void sqliteDeleteTrigger(Trigger*);
 int sqliteJoinType(Parse*, Token*, Token*, Token*);
 void sqliteCreateForeignKey(Parse*, IdList*, Token*, IdList*, int);
 void sqliteDeferForeignKey(Parse*, int);
+#ifndef SQLITE_OMIT_AUTHORIZATION
+  void sqliteAuthRead(Parse*,Expr*,SrcList*,int);
+  int sqliteAuthCheck(Parse*,int, const char*, const char*);
+#else
+# define sqliteAuthRead(a,b,c,d)
+# define sqliteAuthCheck(a,b,c,d)    SQLITE_OK
+#endif

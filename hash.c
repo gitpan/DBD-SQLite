@@ -12,7 +12,7 @@
 ** This is the implementation of generic hash-tables
 ** used in SQLite.
 **
-** $Id: hash.c,v 1.16 2002/12/26 16:08:19 matt Exp $
+** $Id: hash.c,v 1.17 2003/01/27 21:50:53 matt Exp $
 */
 #include "sqliteInt.h"
 #include <assert.h>
@@ -313,7 +313,7 @@ void *sqliteHashInsert(Hash *pH, const void *pKey, int nKey, void *data){
   new_elem = (HashElem*)sqliteMalloc( sizeof(HashElem) );
   if( new_elem==0 ) return data;
   if( pH->copyKey && pKey!=0 ){
-    new_elem->pKey = sqliteMalloc( nKey );
+    new_elem->pKey = sqliteMallocRaw( nKey );
     if( new_elem->pKey==0 ){
       sqliteFree(new_elem);
       return data;

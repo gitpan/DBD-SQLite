@@ -40,6 +40,7 @@ parse.h
 sqlite.h
 opcodes.h
 opcodes.c
+src/auth.c
 src/btree.h
 src/btree.c
 src/build.c
