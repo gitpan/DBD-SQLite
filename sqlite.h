@@ -12,24 +12,17 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite.h,v 1.1.1.1 2002/02/18 17:39:06 matt Exp $
+** @(#) $Id: sqlite.h,v 1.2 2002/02/27 19:25:22 matt Exp $
 */
 #ifndef _SQLITE_H_
 #define _SQLITE_H_
 #include <stdarg.h>     /* Needed for the definition of va_list */
 
-/************************************************************************
-    DBI Specific Stuff - Added by Matt Sergeant
- ************************************************************************/
-#define NEED_DBIXS_VERSION 93
-#include <DBIXS.h>
-#include "dbdimp.h"
-#include <dbd_xsh.h>
 
 /*
 ** The version of the SQLite library.
 */
-#define SQLITE_VERSION         "2.3.2"
+#define SQLITE_VERSION         "2.3.3"
 
 /*
 ** Make sure we can call this stuff from C++.

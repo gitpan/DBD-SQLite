@@ -1,6 +1,6 @@
-/* $Id: dbdimp.c,v 1.16 2002/02/25 11:42:43 matt Exp $ */
+/* $Id: dbdimp.c,v 1.17 2002/02/27 19:25:22 matt Exp $ */
 
-#include "sqlite.h"
+#include "SQLiteXS.h"
 
 DBISTATE_DECLARE;
 

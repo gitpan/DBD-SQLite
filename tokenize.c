@@ -15,7 +15,7 @@
 ** individual tokens and sends those tokens one-by-one over to the
 ** parser for analysis.
 **
-** $Id: tokenize.c,v 1.2 2002/02/20 13:34:53 matt Exp $
+** $Id: tokenize.c,v 1.3 2002/02/27 19:25:22 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -333,6 +333,11 @@ static int sqliteGetToken(const unsigned char *z, int *tokenType){
       }
       return i;
     }
+    case '[': {
+      for(i=1; z[i] && z[i-1]!=']'; i++){}
+      *tokenType = TK_ID;
+      return i;
+    }
     default: {
       if( !isIdChar[*z] ){
         break;
@@ -345,9 +350,6 @@ static int sqliteGetToken(const unsigned char *z, int *tokenType){
   *tokenType = TK_ILLEGAL;
   return 1;
 }
-
-#undef malloc
-#undef free
 
 /*
 ** Run the parser on the given SQL string.  The parser structure is
@@ -369,7 +371,6 @@ int sqliteRunParser(Parse *pParse, const char *zSql, char **pzErrMsg){
   db->flags &= ~SQLITE_Interrupt;
   pParse->rc = SQLITE_OK;
   i = 0;
-  sqliteParseInfoReset(pParse);
   pEngine = sqliteParserAlloc((void*(*)(int))malloc);
   if( pEngine==0 ){
     sqliteSetString(pzErrMsg, "out of memory", 0);
@@ -449,7 +450,6 @@ int sqliteRunParser(Parse *pParse, const char *zSql, char **pzErrMsg){
     sqliteDeleteTable(pParse->db, pParse->pNewTable);
     pParse->pNewTable = 0;
   }
-  sqliteParseInfoReset(pParse);
   if( nErr>0 && pParse->rc==SQLITE_OK ){
     pParse->rc = SQLITE_ERROR;
   }

@@ -12,7 +12,7 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.1.1.1 2002/02/18 17:38:57 matt Exp $
+** $Id: expr.c,v 1.2 2002/02/27 19:25:22 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -157,6 +157,7 @@ int sqliteExprResolveIds(
       int cnt = 0;      /* Number of matches */
       int i;            /* Loop counter */
       char *z = sqliteStrNDup(pExpr->token.z, pExpr->token.n);
+      sqliteDequote(z);
       if( z==0 ) return 1;
       for(i=0; i<pTabList->nId; i++){
         int j;

@@ -1,6 +1,9 @@
-/* $Id: dbdimp.h,v 1.4 2002/02/19 17:04:53 matt Exp $ */
+/* $Id: dbdimp.h,v 1.5 2002/02/27 19:25:22 matt Exp $ */
 
-#include "sqlite.h"
+#ifndef _DBDIMP_H
+#define _DBDIMP_H   1
+
+#include "SQLiteXS.h"
 
 /* 30 second timeout by default */
 #define SQL_TIMEOUT 30000
@@ -83,3 +86,5 @@ newUTF8SVpvn(char *s, STRLEN len) {
 #define SvUTF8_on(a) (a)
 
 #endif
+
+#endif /* _DBDIMP_H */

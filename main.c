@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.1.1.1 2002/02/18 17:38:58 matt Exp $
+** $Id: main.c,v 1.2 2002/02/27 19:25:22 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -393,6 +393,13 @@ int sqlite_complete(const char *zSql){
       case '\t':
       case '\n':
       case '\f': {
+        break;
+      }
+      case '[': {
+        isComplete = 0;
+        zSql++;
+        while( *zSql && *zSql!=']' ){ zSql++; }
+        if( *zSql==0 ) return 0;
         break;
       }
       case '\'': {

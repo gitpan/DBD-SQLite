@@ -30,7 +30,7 @@
 ** But other routines are also provided to help in building up
 ** a program instruction by instruction.
 **
-** $Id: vdbe.c,v 1.2 2002/02/18 21:41:56 matt Exp $
+** $Id: vdbe.c,v 1.3 2002/02/27 19:25:22 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -654,7 +654,7 @@ static void PopStack(Vdbe *p, int N){
 ** once.  This macro only works from within the sqliteVdbeExec()
 ** function.
 */
-#define SQPOPSTACK \
+#define POPSTACK \
  if( aStack[p->tos].flags & STK_Dyn ) sqliteFree(zStack[p->tos]); \
  p->tos--;
 
@@ -1552,7 +1552,7 @@ case OP_Remainder: {
         break;
       }
     }
-    SQPOPSTACK;
+    POPSTACK;
     Release(p, nos);
     aStack[nos].i = b;
     aStack[nos].flags = STK_Int;
@@ -1579,7 +1579,7 @@ case OP_Remainder: {
         break;
       }
     }
-    SQPOPSTACK;
+    POPSTACK;
     Release(p, nos);
     aStack[nos].r = b;
     aStack[nos].flags = STK_Real;
@@ -1618,7 +1618,7 @@ case OP_Precision: {
   v = aStack[tos].r;
   zNew = sqlite_mprintf("%.*f", nDigit, v);
   if( zNew==0 ) goto no_mem;
-  SQPOPSTACK;
+  POPSTACK;
   Release(p, nos);
   aStack[nos].n = len = strlen(zNew) + 1;
   if( len<=NBFS ){
@@ -1734,7 +1734,7 @@ case OP_ShiftRight: {
     case OP_ShiftRight:  a >>= b;    break;
     default:   /* CANT HAPPEN */     break;
   }
-  SQPOPSTACK;
+  POPSTACK;
   Release(p, nos);
   aStack[nos].i = a;
   aStack[nos].flags = STK_Int;
@@ -1859,8 +1859,8 @@ case OP_Ge: {
     case OP_Gt:    c = c>0;      break;
     default:       c = c>=0;     break;
   }
-  SQPOPSTACK;
-  SQPOPSTACK;
+  POPSTACK;
+  POPSTACK;
   if( c ) pc = pOp->p2-1;
   break;
 }
@@ -1888,8 +1888,8 @@ case OP_Like: {
   if( Stringify(p, tos) || Stringify(p, nos) ) goto no_mem;
   c = sqliteLikeCompare((unsigned char*)zStack[tos], 
                         (unsigned char*)zStack[nos]);
-  SQPOPSTACK;
-  SQPOPSTACK;
+  POPSTACK;
+  POPSTACK;
   if( pOp->p1 ) c = !c;
   if( c ) pc = pOp->p2-1;
   break;
@@ -1921,8 +1921,8 @@ case OP_Glob: {
   if( Stringify(p, tos) || Stringify(p, nos) ) goto no_mem;
   c = sqliteGlobCompare((unsigned char*)zStack[tos],
                         (unsigned char*)zStack[nos]);
-  SQPOPSTACK;
-  SQPOPSTACK;
+  POPSTACK;
+  POPSTACK;
   if( pOp->p1 ) c = !c;
   if( c ) pc = pOp->p2-1;
   break;
@@ -1953,7 +1953,7 @@ case OP_Or: {
   }else{
     c = aStack[tos].i || aStack[nos].i;
   }
-  SQPOPSTACK;
+  POPSTACK;
   Release(p, nos);     
   aStack[nos].i = c;
   aStack[nos].flags = STK_Int;
@@ -2048,7 +2048,7 @@ case OP_If: {
   VERIFY( if( p->tos<0 ) goto not_enough_stack; )
   Integerify(p, p->tos);
   c = aStack[p->tos].i;
-  SQPOPSTACK;
+  POPSTACK;
   if( c ) pc = pOp->p2-1;
   break;
 }
@@ -2063,7 +2063,7 @@ case OP_IsNull: {
   int c;
   VERIFY( if( p->tos<0 ) goto not_enough_stack; )
   c = (aStack[p->tos].flags & STK_Null)!=0;
-  SQPOPSTACK;
+  POPSTACK;
   if( c ) pc = pOp->p2-1;
   break;
 }
@@ -2078,7 +2078,7 @@ case OP_NotNull: {
   int c;
   VERIFY( if( p->tos<0 ) goto not_enough_stack; )
   c = (aStack[p->tos].flags & STK_Null)==0;
-  SQPOPSTACK;
+  POPSTACK;
   if( c ) pc = pOp->p2-1;
   break;
 }
@@ -2569,7 +2569,7 @@ case OP_Open: {
     if( tos<0 ) goto not_enough_stack;
     Integerify(p, tos);
     p2 = p->aStack[tos].i;
-    SQPOPSTACK;
+    POPSTACK;
     if( p2<2 ){
       sqliteSetString(pzErrMsg, "root page number less than 2", 0);
       rc = SQLITE_INTERNAL;
@@ -2715,7 +2715,7 @@ case OP_MoveTo: {
       }
     }
   }
-  SQPOPSTACK;
+  POPSTACK;
   break;
 }
 
@@ -2772,7 +2772,7 @@ case OP_Found: {
     if( !alreadyExists ) pc = pOp->p2 - 1;
   }
   if( pOp->opcode!=OP_Distinct ){
-    SQPOPSTACK;
+    POPSTACK;
   }
   break;
 }
@@ -2809,7 +2809,7 @@ case OP_IsUnique: {
   VERIFY( if( nos<0 ) goto not_enough_stack; )
   Integerify(p, tos);
   R = aStack[tos].i;   
-  SQPOPSTACK;
+  POPSTACK;
   if( VERIFY( i>=0 && i<p->nCursor && ) (pCrsr = p->aCsr[i].pCursor)!=0 ){
     int res, rc;
     int v;         /* The record number on the P1 entry that matches K */
@@ -2894,7 +2894,7 @@ case OP_NotExists: {
        pc = pOp->p2 - 1;
     }
   }
-  SQPOPSTACK;
+  POPSTACK;
   break;
 }
 
@@ -3017,8 +3017,8 @@ case OP_PutStrKey: {
     rc = sqliteBtreeInsert(p->aCsr[i].pCursor, zKey, nKey,
                         zStack[tos], aStack[tos].n);
   }
-  SQPOPSTACK;
-  SQPOPSTACK;
+  POPSTACK;
+  POPSTACK;
   break;
 }
 
@@ -3309,7 +3309,7 @@ case OP_IdxPut: {
     }
     rc = sqliteBtreeInsert(pCrsr, zKey, nKey, "", 0);
   }
-  SQPOPSTACK;
+  POPSTACK;
   break;
 }
 
@@ -3330,7 +3330,7 @@ case OP_IdxDelete: {
       rc = sqliteBtreeDelete(pCrsr);
     }
   }
-  SQPOPSTACK;
+  POPSTACK;
   break;
 }
 
@@ -3399,7 +3399,7 @@ case OP_IdxGE: {
       pc = pOp->p2 - 1 ;
     }
   }
-  SQPOPSTACK;
+  POPSTACK;
   break;
 }
 
@@ -3567,7 +3567,7 @@ case OP_ListWrite: {
   }
   Integerify(p, p->tos);
   pKeylist->aKey[pKeylist->nUsed++] = aStack[p->tos].i;
-  SQPOPSTACK;
+  POPSTACK;
   break;
 }
 
@@ -3838,7 +3838,7 @@ case OP_SortCallback: {
     }
     p->nCallback++;
   }
-  SQPOPSTACK;
+  POPSTACK;
   if( sqlite_malloc_failed ) goto no_mem;
   break;
 }
@@ -4061,7 +4061,7 @@ case OP_MemStore: {
   if( pOp->p2 ){
     zStack[tos] = 0;
     aStack[tos].flags = 0;
-    SQPOPSTACK;
+    POPSTACK;
   }
   break;
 }
@@ -4131,7 +4131,7 @@ case OP_AggFocus: {
     AggInsert(&p->agg, zKey, nKey);
     if( sqlite_malloc_failed ) goto no_mem;
   }
-  SQPOPSTACK;
+  POPSTACK;
   break; 
 }
 
@@ -4196,7 +4196,7 @@ case OP_AggSet: {
     }
     if( zOld ) sqliteFree(zOld);
   }
-  SQPOPSTACK;
+  POPSTACK;
   break;
 }
 
@@ -4272,7 +4272,7 @@ case OP_SetInsert: {
     if( tos<0 ) goto not_enough_stack;
     if( Stringify(p, tos) ) goto no_mem;
     sqliteHashInsert(&p->aSet[i].hash, zStack[tos], aStack[tos].n, p);
-    SQPOPSTACK;
+    POPSTACK;
   }
   if( sqlite_malloc_failed ) goto no_mem;
   break;
@@ -4293,7 +4293,7 @@ case OP_SetFound: {
        sqliteHashFind(&p->aSet[i].hash, zStack[tos], aStack[tos].n)){
     pc = pOp->p2 - 1;
   }
-  SQPOPSTACK;
+  POPSTACK;
   break;
 }
 
@@ -4312,7 +4312,7 @@ case OP_SetNotFound: {
        sqliteHashFind(&p->aSet[i].hash, zStack[tos], aStack[tos].n)==0 ){
     pc = pOp->p2 - 1;
   }
-  SQPOPSTACK;
+  POPSTACK;
   break;
 }
 
@@ -4334,7 +4334,7 @@ case OP_Strlen: {
 #else
   len = aStack[tos].n-1;
 #endif
-  SQPOPSTACK;
+  POPSTACK;
   p->tos++;
   aStack[tos].i = len;
   aStack[tos].flags = STK_Int;
@@ -4370,7 +4370,7 @@ case OP_Substr: {
     VERIFY( if( p->tos<0 ) goto not_enough_stack; )
     Integerify(p, p->tos);
     cnt = aStack[p->tos].i;
-    SQPOPSTACK;
+    POPSTACK;
   }else{
     cnt = pOp->p2;
   }
@@ -4378,7 +4378,7 @@ case OP_Substr: {
     VERIFY( if( p->tos<0 ) goto not_enough_stack; )
     Integerify(p, p->tos);
     start = aStack[p->tos].i;
-    SQPOPSTACK;
+    POPSTACK;
   }else{
     start = pOp->p1;
   }
@@ -4436,7 +4436,7 @@ case OP_Substr: {
   if( z==0 ) goto no_mem;
   strncpy(z, &zStack[p->tos][start], cnt);
   z[cnt] = 0;
-  SQPOPSTACK;
+  POPSTACK;
   p->tos++;
   zStack[p->tos] = z;
   aStack[p->tos].n = cnt + 1;

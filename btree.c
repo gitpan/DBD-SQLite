@@ -9,7 +9,7 @@
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: btree.c,v 1.2 2002/02/18 21:41:56 matt Exp $
+** $Id: btree.c,v 1.3 2002/02/27 19:25:22 matt Exp $
 **
 ** This file implements a external (disk-based) database using BTrees.
 ** For a detailed discussion of BTrees, refer to
@@ -52,7 +52,7 @@
 #include "sqliteInt.h"
 #include "pager.h"
 #include "btree.h"
-/* #include <assert.h> */
+#include <assert.h>
 
 /*
 ** Forward declarations of structures used only in this file.

@@ -1,6 +1,6 @@
-/* $Id: SQLite.xs,v 1.3 2002/02/22 14:19:41 matt Exp $ */
+/* $Id: SQLite.xs,v 1.4 2002/02/27 19:25:22 matt Exp $ */
 
-#include "sqlite.h"
+#include "SQLiteXS.h"
 
 DBISTATE_DECLARE;
 

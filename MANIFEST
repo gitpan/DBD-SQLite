@@ -49,7 +49,6 @@ t/ak-dbd.t
 t/dbdadmin.t
 t/lib.pl
 table.c
-threadtest.c
 tokenize.c
 update.c
 util.c
