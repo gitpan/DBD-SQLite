@@ -103,7 +103,7 @@ typedef union {
 #define sqliteParserARG_PDECL ,Parse *pParse
 #define sqliteParserARG_FETCH Parse *pParse = yypParser->pParse
 #define sqliteParserARG_STORE yypParser->pParse = pParse
-#define YYNSTATE 521
+#define YYNSTATE 519
 #define YYNRULE 272
 #define YYERRORSYMBOL 148
 #define YYERRSYMDT yy421
@@ -138,56 +138,18 @@ struct yyActionEntry {
 typedef struct yyActionEntry yyActionEntry;
 static const yyActionEntry yyActionTable[] = {
 /* State 0 */
-  {  27,   0, 489}, /*  1:                   COPY shift  489 */
-  {  28,   0, 370}, /*  2:                 CREATE shift  370 */
-  { 177,   1,  66}, /*  3:              oneselect shift  66 */
-  { 103,   2,  70}, /*  4:                 SELECT shift  70 */
-  { 104,   0, 518}, /*  5:                   SEMI shift  518 */
-  {   9,   0,   6}, /*  6:                  BEGIN shift  6 */
-  {  37,   0, 457}, /*  7:                   DROP shift  457 */
-  {  32,   0, 467}, /*  8:                 DELETE shift  467 */
-  {  64,   0, 486}, /*  9:                 INSERT shift  486 */
-  { 134,   6, 516}, /* 10:                    cmd shift  516 */
-  { 135,   0,   1}, /* 11:                cmdlist shift  1 */
-  {  40,   0,  24}, /* 12:                    END shift  24 */
-  { 162,   7, 794}, /* 13:                  input accept */
-  {  92,   0, 499}, /* 14:                 PRAGMA shift  499 */
-  { 189,   9, 466}, /* 15:                 select shift  466 */
-  { 165,  12, 477}, /* 16:             insert_cmd shift  477 */
-  { 122,  19, 497}, /* 17:                 VACUUM shift  497 */
-  { 142,  14,  28}, /* 18:           create_table shift  28 */
-  {  97,   0, 488}, /* 19:                REPLACE shift  488 */
-  {  44,   0, 519}, /* 20:                EXPLAIN shift  519 */
-  { 120,   0, 471}, /* 21:                 UPDATE shift  471 */
-  {  99,   0,  26}, /* 22:               ROLLBACK shift  26 */
-  { 147,  17, 520}, /* 23:                   ecmd shift  520 */
-  {  23,   0,  22}, /* 24:                 COMMIT shift  22 */
-  { 149,  22,   3}, /* 25:                explain shift  3 */
-/* State 1 */
-  { 120,   7, 471}, /*  1:                 UPDATE shift  471 */
-  {  97,   0, 488}, /*  2:                REPLACE shift  488 */
-  { 122,   0, 497}, /*  3:                 VACUUM shift  497 */
-  { 147,  11,   2}, /*  4:                   ecmd shift  2 */
-  {  28,   0, 370}, /*  5:                 CREATE shift  370 */
+  { 162,   0, 792}, /*  1:                  input accept */
+  {  44,   0, 517}, /*  2:                EXPLAIN shift  517 */
+  { 104,   2, 516}, /*  3:                   SEMI shift  516 */
+  { 147,   5, 518}, /*  4:                   ecmd shift  518 */
+  { 135,   0,   1}, /*  5:                cmdlist shift  1 */
   { 149,   0,   3}, /*  6:                explain shift  3 */
-  {   0,   0, 521}, /*  7:                      $ reduce 0 */
-  { 103,   0,  70}, /*  8:                 SELECT shift  70 */
-  { 104,  12, 518}, /*  9:                   SEMI shift  518 */
-  { 177,  13,  66}, /* 10:              oneselect shift  66 */
-  {  99,  16,  26}, /* 11:               ROLLBACK shift  26 */
-  {  32,   0, 467}, /* 12:                 DELETE shift  467 */
-  {   9,   0,   6}, /* 13:                  BEGIN shift  6 */
-  {  37,   0, 457}, /* 14:                   DROP shift  457 */
-  { 134,   0, 516}, /* 15:                    cmd shift  516 */
-  {  27,   0, 489}, /* 16:                   COPY shift  489 */
-  {  64,  18, 486}, /* 17:                 INSERT shift  486 */
-  {  40,   0,  24}, /* 18:                    END shift  24 */
-  {  44,   0, 519}, /* 19:                EXPLAIN shift  519 */
-  { 165,   0, 477}, /* 20:             insert_cmd shift  477 */
-  {  92,  19, 499}, /* 21:                 PRAGMA shift  499 */
-  { 189,  20, 466}, /* 22:                 select shift  466 */
-  { 142,   0,  28}, /* 23:           create_table shift  28 */
-  {  23,   0,  22}, /* 24:                 COMMIT shift  22 */
+/* State 1 */
+  {   0,   0, 519}, /*  1:                      $ reduce 0 */
+  { 104,   4, 516}, /*  2:                   SEMI shift  516 */
+  { 147,   0,   2}, /*  3:                   ecmd shift  2 */
+  {  44,   0, 517}, /*  4:                EXPLAIN shift  517 */
+  { 149,   2,   3}, /*  5:                explain shift  3 */
 /* State 3 */
   {  40,   0,  24}, /*  1:                    END shift  24 */
   { 134,   0,   4}, /*  2:                    cmd shift  4 */
@@ -215,10 +177,10 @@ static const yyActionEntry yyActionTable[] = {
   { 199,   0,   7}, /*  2:              trans_opt shift  7 */
 /* State 7 */
   {  87,   0,   9}, /*  1:                     ON shift  9 */
-  { 104,   0, 606}, /*  2:                   SEMI reduce 85 */
+  { 104,   0, 604}, /*  2:                   SEMI reduce 85 */
   { 176,   2,   8}, /*  3:                 onconf shift  8 */
 /* State 8 */
-  { 104,   0, 528}, /*  1:                   SEMI reduce 7 */
+  { 104,   0, 526}, /*  1:                   SEMI reduce 7 */
 /* State 9 */
   {  25,   0,  10}, /*  1:               CONFLICT shift  10 */
 /* State 10 */
@@ -236,27 +198,27 @@ static const yyActionEntry yyActionTable[] = {
 /* State 22 */
   { 114,   0,  17}, /*  1:            TRANSACTION shift  17 */
   { 199,   0,  23}, /*  2:              trans_opt shift  23 */
-  { 104,   0, 529}, /*  3:                   SEMI reduce 8 */
+  { 104,   0, 527}, /*  3:                   SEMI reduce 8 */
 /* State 23 */
-  { 104,   0, 532}, /*  1:                   SEMI reduce 11 */
+  { 104,   0, 530}, /*  1:                   SEMI reduce 11 */
 /* State 24 */
   { 114,   0,  17}, /*  1:            TRANSACTION shift  17 */
   { 199,   0,  25}, /*  2:              trans_opt shift  25 */
-  { 104,   0, 529}, /*  3:                   SEMI reduce 8 */
+  { 104,   0, 527}, /*  3:                   SEMI reduce 8 */
 /* State 25 */
-  { 104,   0, 533}, /*  1:                   SEMI reduce 12 */
+  { 104,   0, 531}, /*  1:                   SEMI reduce 12 */
 /* State 26 */
   { 114,   0,  17}, /*  1:            TRANSACTION shift  17 */
   { 199,   0,  27}, /*  2:              trans_opt shift  27 */
-  { 104,   0, 529}, /*  3:                   SEMI reduce 8 */
+  { 104,   0, 527}, /*  3:                   SEMI reduce 8 */
 /* State 27 */
-  { 104,   0, 534}, /*  1:                   SEMI reduce 13 */
+  { 104,   0, 532}, /*  1:                   SEMI reduce 13 */
 /* State 28 */
   {   6,   0, 368}, /*  1:                     AS shift  368 */
   {  76,   0,  30}, /*  2:                     LP shift  30 */
   { 143,   0,  29}, /*  3:      create_table_args shift  29 */
 /* State 29 */
-  { 104,   0, 535}, /*  1:                   SEMI reduce 14 */
+  { 104,   0, 533}, /*  1:                   SEMI reduce 14 */
 /* State 30 */
   { 137,   0, 367}, /*  1:                 column shift  367 */
   {  57,   0,  19}, /*  2:                     ID shift  19 */
@@ -268,11 +230,11 @@ static const yyActionEntry yyActionTable[] = {
 /* State 31 */
   { 141,   2,  32}, /*  1:           conslist_opt shift  32 */
   {  21,   0,  34}, /*  2:                  COMMA shift  34 */
-  { 101,   0, 594}, /*  3:                     RP reduce 73 */
+  { 101,   0, 592}, /*  3:                     RP reduce 73 */
 /* State 32 */
   { 101,   0,  33}, /*  1:                     RP shift  33 */
 /* State 33 */
-  { 104,   0, 539}, /*  1:                   SEMI reduce 18 */
+  { 104,   0, 537}, /*  1:                   SEMI reduce 18 */
 /* State 34 */
   {  26,   0, 340}, /*  1:             CONSTRAINT shift  340 */
   { 157,   0,  20}, /*  2:                     id shift  20 */
@@ -390,9 +352,9 @@ static const yyActionEntry yyActionTable[] = {
   {  16,   0, 171}, /* 17:                   CASE shift  171 */
   {  12,   0, 165}, /* 18:                 BITNOT shift  165 */
 /* State 63 */
-  {  36,   0, 546}, /*  1:                    DOT reduce 25 */
+  {  36,   0, 544}, /*  1:                    DOT reduce 25 */
 /* State 64 */
-  {  36,   0, 547}, /*  1:                    DOT reduce 26 */
+  {  36,   0, 545}, /*  1:                    DOT reduce 26 */
 /* State 65 */
   {  76,   0,  65}, /*  1:                     LP shift  65 */
   {  91,   0, 169}, /*  2:                   PLUS shift  169 */
@@ -456,9 +418,9 @@ static const yyActionEntry yyActionTable[] = {
 /* State 81 */
   {  66,   0,  82}, /*  1:                INTEGER shift  82 */
 /* State 83 */
-  {  66,   0, 668}, /*  1:                INTEGER reduce 147 */
+  {  66,   0, 666}, /*  1:                INTEGER reduce 147 */
 /* State 84 */
-  {  66,   0, 669}, /*  1:                INTEGER reduce 148 */
+  {  66,   0, 667}, /*  1:                INTEGER reduce 148 */
 /* State 85 */
   {  14,   0,  86}, /*  1:                     BY shift  86 */
 /* State 86 */
@@ -1202,13 +1164,13 @@ static const yyActionEntry yyActionTable[] = {
   {  43,   0, 160}, /*  5:                 EXCEPT shift  160 */
 /* State 157 */
   {   4,   0, 158}, /*  1:                    ALL shift  158 */
-  { 103,   0, 621}, /*  2:                 SELECT reduce 100 */
+  { 103,   0, 619}, /*  2:                 SELECT reduce 100 */
 /* State 158 */
-  { 103,   0, 622}, /*  1:                 SELECT reduce 101 */
+  { 103,   0, 620}, /*  1:                 SELECT reduce 101 */
 /* State 159 */
-  { 103,   0, 623}, /*  1:                 SELECT reduce 102 */
+  { 103,   0, 621}, /*  1:                 SELECT reduce 102 */
 /* State 160 */
-  { 103,   0, 624}, /*  1:                 SELECT reduce 103 */
+  { 103,   0, 622}, /*  1:                 SELECT reduce 103 */
 /* State 162 */
   { 108,   4, 136}, /*  1:                   STAR shift  136 */
   {  82,   5, 127}, /*  2:                    NOT shift  127 */
@@ -1340,7 +1302,7 @@ static const yyActionEntry yyActionTable[] = {
   {  46,   8, 101}, /*  4:                  FLOAT shift  101 */
   { 157,   0,  63}, /*  5:                     id shift  63 */
   { 158,   0,  97}, /*  6:                    ids shift  97 */
-  { 125,   1, 739}, /*  7:                   WHEN reduce 218 */
+  { 125,   1, 737}, /*  7:                   WHEN reduce 218 */
   {  12,   0, 165}, /*  8:                 BITNOT shift  165 */
   { 110,   3,  64}, /*  9:                 STRING shift  64 */
   {  94,   0, 181}, /* 10:                  RAISE shift  181 */
@@ -1365,7 +1327,7 @@ static const yyActionEntry yyActionTable[] = {
   {  10,   0, 150}, /* 11:                BETWEEN shift  150 */
   {  11,   0, 117}, /* 12:                 BITAND shift  117 */
   {  96,   0, 140}, /* 13:                    REM shift  140 */
-  { 125,   3, 738}, /* 14:                   WHEN reduce 217 */
+  { 125,   3, 736}, /* 14:                   WHEN reduce 217 */
   {  70,   7, 144}, /* 15:                 ISNULL shift  144 */
   {  80,  17, 134}, /* 16:                  MINUS shift  134 */
   {  52,  20, 111}, /* 17:                     GE shift  111 */
@@ -1384,7 +1346,7 @@ static const yyActionEntry yyActionTable[] = {
   { 125,   0, 199}, /*  1:                   WHEN shift  199 */
   { 131,   1, 174}, /*  2:          case_exprlist shift  174 */
 /* State 174 */
-  {  40,   0, 737}, /*  1:                    END reduce 216 */
+  {  40,   0, 735}, /*  1:                    END reduce 216 */
   { 125,   0, 177}, /*  2:                   WHEN shift  177 */
   { 130,   0, 175}, /*  3:              case_else shift  175 */
   {  39,   0, 197}, /*  4:                   ELSE shift  197 */
@@ -1534,7 +1496,7 @@ static const yyActionEntry yyActionTable[] = {
 /* State 198 */
   {   5,   0,  95}, /*  1:                    AND shift  95 */
   { 169,   0, 125}, /*  2:                 likeop shift  125 */
-  {  40,   0, 736}, /*  3:                    END reduce 215 */
+  {  40,   0, 734}, /*  3:                    END reduce 215 */
   {  13,   0, 119}, /*  4:                  BITOR shift  119 */
   {  88,   0, 103}, /*  5:                     OR shift  103 */
   {  61,   1, 154}, /*  6:                     IN shift  154 */
@@ -2235,7 +2197,7 @@ static const yyActionEntry yyActionTable[] = {
   {  48,   0, 356}, /*  1:                FOREIGN shift  356 */
   {  17,   0, 353}, /*  2:                  CHECK shift  353 */
   {  26,   0, 340}, /*  3:             CONSTRAINT shift  340 */
-  { 101,   5, 595}, /*  4:                     RP reduce 74 */
+  { 101,   5, 593}, /*  4:                     RP reduce 74 */
   {  93,   7, 342}, /*  5:                PRIMARY shift  342 */
   { 197,   4, 365}, /*  6:                  tcons shift  365 */
   {  21,   0, 338}, /*  7:                  COMMA shift  338 */
@@ -2363,14 +2325,14 @@ static const yyActionEntry yyActionTable[] = {
   {  43,   0, 160}, /*  2:                 EXCEPT shift  160 */
   {  67,   0, 159}, /*  3:              INTERSECT shift  159 */
   { 173,   1,  68}, /*  4:         multiselect_op shift  68 */
-  { 104,   0, 540}, /*  5:                   SEMI reduce 19 */
+  { 104,   0, 538}, /*  5:                   SEMI reduce 19 */
 /* State 370 */
   { 112,   0, 374}, /*  1:                   TEMP shift  374 */
   { 198,   3, 371}, /*  2:                   temp shift  371 */
-  {  62,   0, 746}, /*  3:                  INDEX reduce 225 */
+  {  62,   0, 744}, /*  3:                  INDEX reduce 225 */
   { 115,   0, 389}, /*  4:                TRIGGER shift  389 */
   { 124,   0, 375}, /*  5:                   VIEW shift  375 */
-  { 111,   0, 538}, /*  6:                  TABLE reduce 17 */
+  { 111,   0, 536}, /*  6:                  TABLE reduce 17 */
   { 206,   2, 379}, /*  7:             uniqueflag shift  379 */
   { 119,   6, 388}, /*  8:                 UNIQUE shift  388 */
 /* State 371 */
@@ -2381,7 +2343,7 @@ static const yyActionEntry yyActionTable[] = {
   { 158,   4, 373}, /*  3:                    ids shift  373 */
   { 110,   0,  21}, /*  4:                 STRING shift  21 */
 /* State 374 */
-  { 111,   0, 537}, /*  1:                  TABLE reduce 16 */
+  { 111,   0, 535}, /*  1:                  TABLE reduce 16 */
 /* State 375 */
   {  57,   0,  19}, /*  1:                     ID shift  19 */
   { 157,   1,  20}, /*  2:                     id shift  20 */
@@ -2398,7 +2360,7 @@ static const yyActionEntry yyActionTable[] = {
   {  43,   0, 160}, /*  2:                 EXCEPT shift  160 */
   {  67,   0, 159}, /*  3:              INTERSECT shift  159 */
   { 173,   1,  68}, /*  4:         multiselect_op shift  68 */
-  { 104,   0, 616}, /*  5:                   SEMI reduce 95 */
+  { 104,   0, 614}, /*  5:                   SEMI reduce 95 */
 /* State 379 */
   {  62,   0, 380}, /*  1:                  INDEX shift  380 */
 /* State 380 */
@@ -2427,12 +2389,12 @@ static const yyActionEntry yyActionTable[] = {
   { 101,   1, 386}, /*  2:                     RP shift  386 */
 /* State 386 */
   {  87,   0,   9}, /*  1:                     ON shift  9 */
-  { 104,   0, 606}, /*  2:                   SEMI reduce 85 */
+  { 104,   0, 604}, /*  2:                   SEMI reduce 85 */
   { 176,   2, 387}, /*  3:                 onconf shift  387 */
 /* State 387 */
-  { 104,   0, 744}, /*  1:                   SEMI reduce 223 */
+  { 104,   0, 742}, /*  1:                   SEMI reduce 223 */
 /* State 388 */
-  {  62,   0, 745}, /*  1:                  INDEX reduce 224 */
+  {  62,   0, 743}, /*  1:                  INDEX reduce 224 */
 /* State 389 */
   {  57,   0,  19}, /*  1:                     ID shift  19 */
   { 157,   1,  20}, /*  2:                     id shift  20 */
@@ -2459,7 +2421,7 @@ static const yyActionEntry yyActionTable[] = {
   {  47,   0, 444}, /*  1:                    FOR shift  444 */
   { 153,   1, 395}, /*  2:         foreach_clause shift  395 */
 /* State 395 */
-  {   9,   0, 779}, /*  1:                  BEGIN reduce 258 */
+  {   9,   0, 777}, /*  1:                  BEGIN reduce 258 */
   { 208,   0, 396}, /*  2:            when_clause shift  396 */
   { 125,   0, 442}, /*  3:                   WHEN shift  442 */
 /* State 396 */
@@ -2473,17 +2435,17 @@ static const yyActionEntry yyActionTable[] = {
   {  32,   0, 438}, /*  6:                 DELETE shift  438 */
   { 177,   0,  66}, /*  7:              oneselect shift  66 */
   { 120,   0, 404}, /*  8:                 UPDATE shift  404 */
-  {  40,   0, 782}, /*  9:                    END reduce 261 */
+  {  40,   0, 780}, /*  9:                    END reduce 261 */
 /* State 398 */
   { 118,   2, 157}, /*  1:                  UNION shift  157 */
   {  43,   0, 160}, /*  2:                 EXCEPT shift  160 */
   {  67,   0, 159}, /*  3:              INTERSECT shift  159 */
   { 173,   1,  68}, /*  4:         multiselect_op shift  68 */
-  { 104,   0, 787}, /*  5:                   SEMI reduce 266 */
+  { 104,   0, 785}, /*  5:                   SEMI reduce 266 */
 /* State 399 */
   {  40,   0, 400}, /*  1:                    END shift  400 */
 /* State 400 */
-  { 104,   0, 767}, /*  1:                   SEMI reduce 246 */
+  { 104,   0, 765}, /*  1:                   SEMI reduce 246 */
 /* State 401 */
   { 104,   0, 402}, /*  1:                   SEMI shift  402 */
 /* State 402 */
@@ -2495,9 +2457,9 @@ static const yyActionEntry yyActionTable[] = {
   {  32,   0, 438}, /*  6:                 DELETE shift  438 */
   { 177,   0,  66}, /*  7:              oneselect shift  66 */
   { 120,   0, 404}, /*  8:                 UPDATE shift  404 */
-  {  40,   0, 782}, /*  9:                    END reduce 261 */
+  {  40,   0, 780}, /*  9:                    END reduce 261 */
 /* State 403 */
-  {  40,   0, 781}, /*  1:                    END reduce 260 */
+  {  40,   0, 779}, /*  1:                    END reduce 260 */
 /* State 404 */
   { 178,   2, 407}, /*  1:                 orconf shift  407 */
   {  88,   0, 405}, /*  2:                     OR shift  405 */
@@ -2522,7 +2484,7 @@ static const yyActionEntry yyActionTable[] = {
   { 158,   0, 416}, /*  4:                    ids shift  416 */
   {  57,   0,  19}, /*  5:                     ID shift  19 */
 /* State 410 */
-  { 104,   0, 671}, /*  1:                   SEMI reduce 150 */
+  { 104,   0, 669}, /*  1:                   SEMI reduce 150 */
   { 209,   4, 415}, /*  2:              where_opt shift  415 */
   { 126,   0, 226}, /*  3:                  WHERE shift  226 */
   {  21,   0, 411}, /*  4:                  COMMA shift  411 */
@@ -2578,7 +2540,7 @@ static const yyActionEntry yyActionTable[] = {
   { 106,  19, 138}, /* 26:                  SLASH shift  138 */
   {  80,  23, 134}, /* 27:                  MINUS shift  134 */
 /* State 415 */
-  { 104,   0, 783}, /*  1:                   SEMI reduce 262 */
+  { 104,   0, 781}, /*  1:                   SEMI reduce 262 */
 /* State 416 */
   {  42,   0, 417}, /*  1:                     EQ shift  417 */
 /* State 417 */
@@ -2628,7 +2590,7 @@ static const yyActionEntry yyActionTable[] = {
 /* State 419 */
   {  88,   0, 405}, /*  1:                     OR shift  405 */
   { 178,   1, 420}, /*  2:                 orconf shift  420 */
-  {  68,   0, 608}, /*  3:                   INTO reduce 87 */
+  {  68,   0, 606}, /*  3:                   INTO reduce 87 */
 /* State 420 */
   {  68,   0, 421}, /*  1:                   INTO shift  421 */
 /* State 421 */
@@ -2663,7 +2625,7 @@ static const yyActionEntry yyActionTable[] = {
   {  43,   0, 160}, /*  2:                 EXCEPT shift  160 */
   {  67,   0, 159}, /*  3:              INTERSECT shift  159 */
   { 173,   1,  68}, /*  4:         multiselect_op shift  68 */
-  { 104,   0, 785}, /*  5:                   SEMI reduce 264 */
+  { 104,   0, 783}, /*  5:                   SEMI reduce 264 */
 /* State 431 */
   {  76,   0, 432}, /*  1:                     LP shift  432 */
 /* State 432 */
@@ -2731,7 +2693,7 @@ static const yyActionEntry yyActionTable[] = {
   { 106,  19, 138}, /* 26:                  SLASH shift  138 */
   {  80,  23, 134}, /* 27:                  MINUS shift  134 */
 /* State 436 */
-  { 104,   0, 784}, /*  1:                   SEMI reduce 263 */
+  { 104,   0, 782}, /*  1:                   SEMI reduce 263 */
 /* State 437 */
   { 108,   4, 136}, /*  1:                   STAR shift  136 */
   {  82,   5, 127}, /*  2:                    NOT shift  127 */
@@ -2769,10 +2731,10 @@ static const yyActionEntry yyActionTable[] = {
   { 110,   0,  21}, /*  4:                 STRING shift  21 */
 /* State 440 */
   { 126,   0, 226}, /*  1:                  WHERE shift  226 */
-  { 104,   0, 671}, /*  2:                   SEMI reduce 150 */
+  { 104,   0, 669}, /*  2:                   SEMI reduce 150 */
   { 209,   2, 441}, /*  3:              where_opt shift  441 */
 /* State 441 */
-  { 104,   0, 786}, /*  1:                   SEMI reduce 265 */
+  { 104,   0, 784}, /*  1:                   SEMI reduce 265 */
 /* State 442 */
   { 150,   0, 443}, /*  1:                   expr shift  443 */
   {  91,   3, 169}, /*  2:                   PLUS shift  169 */
@@ -2799,7 +2761,7 @@ static const yyActionEntry yyActionTable[] = {
   {  74,   0, 130}, /*  7:                   LIKE shift  130 */
   {  91,   0, 132}, /*  8:                   PLUS shift  132 */
   {  78,   0, 105}, /*  9:                     LT shift  105 */
-  {   9,   0, 780}, /* 10:                  BEGIN reduce 259 */
+  {   9,   0, 778}, /* 10:                  BEGIN reduce 259 */
   {  10,   0, 150}, /* 11:                BETWEEN shift  150 */
   {  11,   0, 117}, /* 12:                 BITAND shift  117 */
   {  96,   0, 140}, /* 13:                    REM shift  140 */
@@ -2824,12 +2786,12 @@ static const yyActionEntry yyActionTable[] = {
   { 100,   0, 446}, /*  1:                    ROW shift  446 */
   { 109,   0, 447}, /*  2:              STATEMENT shift  447 */
 /* State 448 */
-  {  87,   0, 772}, /*  1:                     ON reduce 251 */
+  {  87,   0, 770}, /*  1:                     ON reduce 251 */
 /* State 449 */
-  {  87,   0, 773}, /*  1:                     ON reduce 252 */
+  {  87,   0, 771}, /*  1:                     ON reduce 252 */
 /* State 450 */
   {  85,   0, 451}, /*  1:                     OF shift  451 */
-  {  87,   1, 774}, /*  2:                     ON reduce 253 */
+  {  87,   1, 772}, /*  2:                     ON reduce 253 */
 /* State 451 */
   { 110,   0,  21}, /*  1:                 STRING shift  21 */
   {  57,   0,  19}, /*  2:                     ID shift  19 */
@@ -2838,7 +2800,7 @@ static const yyActionEntry yyActionTable[] = {
   { 158,   0, 428}, /*  5:                    ids shift  428 */
 /* State 452 */
   {  21,   0, 426}, /*  1:                  COMMA shift  426 */
-  {  87,   1, 775}, /*  2:                     ON reduce 254 */
+  {  87,   1, 773}, /*  2:                     ON reduce 254 */
 /* State 455 */
   {  85,   0, 456}, /*  1:                     OF shift  456 */
 /* State 457 */
@@ -2852,34 +2814,34 @@ static const yyActionEntry yyActionTable[] = {
   { 158,   4, 459}, /*  3:                    ids shift  459 */
   { 110,   0,  21}, /*  4:                 STRING shift  21 */
 /* State 459 */
-  { 104,   0, 615}, /*  1:                   SEMI reduce 94 */
+  { 104,   0, 613}, /*  1:                   SEMI reduce 94 */
 /* State 460 */
   {  57,   0,  19}, /*  1:                     ID shift  19 */
   { 157,   1,  20}, /*  2:                     id shift  20 */
   { 158,   4, 461}, /*  3:                    ids shift  461 */
   { 110,   0,  21}, /*  4:                 STRING shift  21 */
 /* State 461 */
-  { 104,   0, 617}, /*  1:                   SEMI reduce 96 */
+  { 104,   0, 615}, /*  1:                   SEMI reduce 96 */
 /* State 462 */
   {  57,   0,  19}, /*  1:                     ID shift  19 */
   { 157,   1,  20}, /*  2:                     id shift  20 */
   { 158,   4, 463}, /*  3:                    ids shift  463 */
   { 110,   0,  21}, /*  4:                 STRING shift  21 */
 /* State 463 */
-  { 104,   0, 750}, /*  1:                   SEMI reduce 229 */
+  { 104,   0, 748}, /*  1:                   SEMI reduce 229 */
 /* State 464 */
   {  57,   0,  19}, /*  1:                     ID shift  19 */
   { 157,   1,  20}, /*  2:                     id shift  20 */
   { 158,   4, 465}, /*  3:                    ids shift  465 */
   { 110,   0,  21}, /*  4:                 STRING shift  21 */
 /* State 465 */
-  { 104,   0, 792}, /*  1:                   SEMI reduce 271 */
+  { 104,   0, 790}, /*  1:                   SEMI reduce 271 */
 /* State 466 */
   { 118,   2, 157}, /*  1:                  UNION shift  157 */
   {  43,   0, 160}, /*  2:                 EXCEPT shift  160 */
   {  67,   0, 159}, /*  3:              INTERSECT shift  159 */
   { 173,   1,  68}, /*  4:         multiselect_op shift  68 */
-  { 104,   0, 618}, /*  5:                   SEMI reduce 97 */
+  { 104,   0, 616}, /*  5:                   SEMI reduce 97 */
 /* State 467 */
   {  49,   0, 468}, /*  1:                   FROM shift  468 */
 /* State 468 */
@@ -2889,10 +2851,10 @@ static const yyActionEntry yyActionTable[] = {
   { 110,   0,  21}, /*  4:                 STRING shift  21 */
 /* State 469 */
   { 126,   0, 226}, /*  1:                  WHERE shift  226 */
-  { 104,   0, 671}, /*  2:                   SEMI reduce 150 */
+  { 104,   0, 669}, /*  2:                   SEMI reduce 150 */
   { 209,   2, 470}, /*  3:              where_opt shift  470 */
 /* State 470 */
-  { 104,   0, 670}, /*  1:                   SEMI reduce 149 */
+  { 104,   0, 668}, /*  1:                   SEMI reduce 149 */
 /* State 471 */
   { 178,   2, 472}, /*  1:                 orconf shift  472 */
   {  88,   0, 405}, /*  2:                     OR shift  405 */
@@ -2910,12 +2872,12 @@ static const yyActionEntry yyActionTable[] = {
   { 158,   0, 416}, /*  4:                    ids shift  416 */
   {  57,   0,  19}, /*  5:                     ID shift  19 */
 /* State 475 */
-  { 104,   0, 671}, /*  1:                   SEMI reduce 150 */
+  { 104,   0, 669}, /*  1:                   SEMI reduce 150 */
   { 209,   4, 476}, /*  2:              where_opt shift  476 */
   { 126,   0, 226}, /*  3:                  WHERE shift  226 */
   {  21,   0, 411}, /*  4:                  COMMA shift  411 */
 /* State 476 */
-  { 104,   0, 673}, /*  1:                   SEMI reduce 152 */
+  { 104,   0, 671}, /*  1:                   SEMI reduce 152 */
 /* State 477 */
   {  68,   0, 478}, /*  1:                   INTO shift  478 */
 /* State 478 */
@@ -2936,7 +2898,7 @@ static const yyActionEntry yyActionTable[] = {
   {  43,   0, 160}, /*  2:                 EXCEPT shift  160 */
   {  67,   0, 159}, /*  3:              INTERSECT shift  159 */
   { 173,   1,  68}, /*  4:         multiselect_op shift  68 */
-  { 104,   0, 677}, /*  5:                   SEMI reduce 156 */
+  { 104,   0, 675}, /*  5:                   SEMI reduce 156 */
 /* State 482 */
   {  76,   0, 483}, /*  1:                     LP shift  483 */
 /* State 483 */
@@ -2960,15 +2922,15 @@ static const yyActionEntry yyActionTable[] = {
   {  21,   0, 434}, /*  1:                  COMMA shift  434 */
   { 101,   1, 485}, /*  2:                     RP shift  485 */
 /* State 485 */
-  { 104,   0, 676}, /*  1:                   SEMI reduce 155 */
+  { 104,   0, 674}, /*  1:                   SEMI reduce 155 */
 /* State 486 */
   {  88,   0, 405}, /*  1:                     OR shift  405 */
   { 178,   1, 487}, /*  2:                 orconf shift  487 */
-  {  68,   0, 608}, /*  3:                   INTO reduce 87 */
+  {  68,   0, 606}, /*  3:                   INTO reduce 87 */
 /* State 487 */
-  {  68,   0, 678}, /*  1:                   INTO reduce 157 */
+  {  68,   0, 676}, /*  1:                   INTO reduce 157 */
 /* State 488 */
-  {  68,   0, 679}, /*  1:                   INTO reduce 158 */
+  {  68,   0, 677}, /*  1:                   INTO reduce 158 */
 /* State 489 */
   { 178,   2, 490}, /*  1:                 orconf shift  490 */
   {  88,   0, 405}, /*  2:                     OR shift  405 */
@@ -2985,22 +2947,22 @@ static const yyActionEntry yyActionTable[] = {
   { 158,   4, 493}, /*  3:                    ids shift  493 */
   { 110,   0,  21}, /*  4:                 STRING shift  21 */
 /* State 493 */
-  { 104,   0, 752}, /*  1:                   SEMI reduce 231 */
+  { 104,   0, 750}, /*  1:                   SEMI reduce 231 */
   { 121,   0, 494}, /*  2:                  USING shift  494 */
 /* State 494 */
   {  33,   0, 495}, /*  1:             DELIMITERS shift  495 */
 /* State 495 */
   { 110,   0, 496}, /*  1:                 STRING shift  496 */
 /* State 496 */
-  { 104,   0, 751}, /*  1:                   SEMI reduce 230 */
+  { 104,   0, 749}, /*  1:                   SEMI reduce 230 */
 /* State 497 */
   { 110,   0,  21}, /*  1:                 STRING shift  21 */
   {  57,   0,  19}, /*  2:                     ID shift  19 */
   { 157,   2,  20}, /*  3:                     id shift  20 */
   { 158,   0, 498}, /*  4:                    ids shift  498 */
-  { 104,   0, 753}, /*  5:                   SEMI reduce 232 */
+  { 104,   0, 751}, /*  5:                   SEMI reduce 232 */
 /* State 498 */
-  { 104,   0, 754}, /*  1:                   SEMI reduce 233 */
+  { 104,   0, 752}, /*  1:                   SEMI reduce 233 */
 /* State 499 */
   {  57,   0,  19}, /*  1:                     ID shift  19 */
   { 157,   1,  20}, /*  2:                     id shift  20 */
@@ -3009,7 +2971,7 @@ static const yyActionEntry yyActionTable[] = {
 /* State 500 */
   {  42,   0, 501}, /*  1:                     EQ shift  501 */
   {  76,   0, 513}, /*  2:                     LP shift  513 */
-  { 104,   0, 760}, /*  3:                   SEMI reduce 239 */
+  { 104,   0, 758}, /*  3:                   SEMI reduce 239 */
 /* State 501 */
   { 180,   4, 504}, /*  1:               plus_num shift  504 */
   { 181,   5, 506}, /*  2:               plus_opt shift  506 */
@@ -3022,29 +2984,29 @@ static const yyActionEntry yyActionTable[] = {
   { 158,   0, 502}, /*  9:                    ids shift  502 */
   {  57,   0,  19}, /* 10:                     ID shift  19 */
 /* State 502 */
-  { 104,   0, 755}, /*  1:                   SEMI reduce 234 */
+  { 104,   0, 753}, /*  1:                   SEMI reduce 234 */
 /* State 503 */
-  { 104,   0, 756}, /*  1:                   SEMI reduce 235 */
+  { 104,   0, 754}, /*  1:                   SEMI reduce 235 */
 /* State 504 */
-  { 104,   0, 757}, /*  1:                   SEMI reduce 236 */
+  { 104,   0, 755}, /*  1:                   SEMI reduce 236 */
 /* State 505 */
-  { 104,   0, 758}, /*  1:                   SEMI reduce 237 */
+  { 104,   0, 756}, /*  1:                   SEMI reduce 237 */
 /* State 506 */
   { 174,   3, 507}, /*  1:                 number shift  507 */
   {  46,   0, 509}, /*  2:                  FLOAT shift  509 */
   {  66,   0, 508}, /*  3:                INTEGER shift  508 */
 /* State 507 */
-  { 104,   0, 761}, /*  1:                   SEMI reduce 240 */
+  { 104,   0, 759}, /*  1:                   SEMI reduce 240 */
 /* State 508 */
-  { 104,   0, 763}, /*  1:                   SEMI reduce 242 */
+  { 104,   0, 761}, /*  1:                   SEMI reduce 242 */
 /* State 509 */
-  { 104,   0, 764}, /*  1:                   SEMI reduce 243 */
+  { 104,   0, 762}, /*  1:                   SEMI reduce 243 */
 /* State 510 */
   { 174,   3, 511}, /*  1:                 number shift  511 */
   {  46,   0, 509}, /*  2:                  FLOAT shift  509 */
   {  66,   0, 508}, /*  3:                INTEGER shift  508 */
 /* State 511 */
-  { 104,   0, 762}, /*  1:                   SEMI reduce 241 */
+  { 104,   0, 760}, /*  1:                   SEMI reduce 241 */
 /* State 513 */
   {  57,   0,  19}, /*  1:                     ID shift  19 */
   { 157,   1,  20}, /*  2:                     id shift  20 */
@@ -3053,9 +3015,7 @@ static const yyActionEntry yyActionTable[] = {
 /* State 514 */
   { 101,   0, 515}, /*  1:                     RP shift  515 */
 /* State 515 */
-  { 104,   0, 759}, /*  1:                   SEMI reduce 238 */
-/* State 516 */
-  { 104,   0, 517}, /*  1:                   SEMI shift  517 */
+  { 104,   0, 757}, /*  1:                   SEMI reduce 238 */
 };
 
 /* The state table contains information needed to look up the correct
@@ -3076,527 +3036,525 @@ struct yyStateEntry {
 };
 typedef struct yyStateEntry yyStateEntry;
 static const yyStateEntry yyStateTable[] = {
-  { &yyActionTable[0],  25, 793 },
-  { &yyActionTable[25],  24, 793 },
-  { &yyActionTable[49],   0, 523 },
-  { &yyActionTable[49],  19, 793 },
-  { &yyActionTable[68],   1, 793 },
-  { &yyActionTable[69],   0, 524 },
-  { &yyActionTable[69],   2, 529 },
-  { &yyActionTable[71],   3, 793 },
-  { &yyActionTable[74],   1, 793 },
-  { &yyActionTable[75],   1, 793 },
-  { &yyActionTable[76],   6, 793 },
-  { &yyActionTable[82],   0, 607 },
-  { &yyActionTable[82],   0, 610 },
-  { &yyActionTable[82],   0, 611 },
-  { &yyActionTable[82],   0, 612 },
-  { &yyActionTable[82],   0, 613 },
-  { &yyActionTable[82],   0, 614 },
-  { &yyActionTable[82],   4, 530 },
-  { &yyActionTable[86],   0, 531 },
-  { &yyActionTable[86],   0, 545 },
-  { &yyActionTable[86],   0, 546 },
-  { &yyActionTable[86],   0, 547 },
-  { &yyActionTable[86],   3, 793 },
-  { &yyActionTable[89],   1, 793 },
-  { &yyActionTable[90],   3, 793 },
-  { &yyActionTable[93],   1, 793 },
-  { &yyActionTable[94],   3, 793 },
-  { &yyActionTable[97],   1, 793 },
-  { &yyActionTable[98],   3, 793 },
-  { &yyActionTable[101],   1, 793 },
-  { &yyActionTable[102],   7, 793 },
-  { &yyActionTable[109],   3, 793 },
-  { &yyActionTable[112],   1, 793 },
-  { &yyActionTable[113],   1, 793 },
-  { &yyActionTable[114],  13, 793 },
-  { &yyActionTable[127],   0, 541 },
-  { &yyActionTable[127],   6, 548 },
-  { &yyActionTable[133],   1, 558 },
-  { &yyActionTable[134],  13, 543 },
-  { &yyActionTable[147],   0, 557 },
-  { &yyActionTable[147],   4, 793 },
-  { &yyActionTable[151],  10, 793 },
-  { &yyActionTable[161],   0, 559 },
-  { &yyActionTable[161],   2, 793 },
-  { &yyActionTable[163],   2, 606 },
-  { &yyActionTable[165],   0, 570 },
-  { &yyActionTable[165],   2, 591 },
-  { &yyActionTable[167],   0, 589 },
-  { &yyActionTable[167],   2, 793 },
-  { &yyActionTable[169],   0, 592 },
-  { &yyActionTable[169],   0, 593 },
-  { &yyActionTable[169],   1, 793 },
-  { &yyActionTable[170],   3, 658 },
-  { &yyActionTable[173],   2, 606 },
-  { &yyActionTable[175],   0, 571 },
-  { &yyActionTable[175],   0, 656 },
-  { &yyActionTable[175],   0, 657 },
-  { &yyActionTable[175],   2, 606 },
-  { &yyActionTable[177],   0, 572 },
-  { &yyActionTable[177],   1, 793 },
-  { &yyActionTable[178],  15, 793 },
-  { &yyActionTable[193],   1, 545 },
-  { &yyActionTable[194],  18, 743 },
-  { &yyActionTable[212],   1, 688 },
-  { &yyActionTable[213],   1, 692 },
-  { &yyActionTable[214],  18, 793 },
-  { &yyActionTable[232],   0, 619 },
-  { &yyActionTable[232],   5, 793 },
-  { &yyActionTable[237],   2, 793 },
-  { &yyActionTable[239],   0, 620 },
-  { &yyActionTable[239],   3, 628 },
-  { &yyActionTable[242],   2, 630 },
-  { &yyActionTable[244],   3, 636 },
-  { &yyActionTable[247],   2, 671 },
-  { &yyActionTable[249],   2, 661 },
-  { &yyActionTable[251],   2, 663 },
-  { &yyActionTable[253],   2, 651 },
-  { &yyActionTable[255],   2, 665 },
-  { &yyActionTable[257],   0, 625 },
-  { &yyActionTable[257],   1, 793 },
-  { &yyActionTable[258],   3, 666 },
-  { &yyActionTable[261],   1, 793 },
-  { &yyActionTable[262],   0, 667 },
-  { &yyActionTable[262],   1, 793 },
-  { &yyActionTable[263],   1, 793 },
-  { &yyActionTable[264],   1, 793 },
-  { &yyActionTable[265],  17, 793 },
-  { &yyActionTable[282],   1, 652 },
-  { &yyActionTable[283],  16, 793 },
-  { &yyActionTable[299],   2, 659 },
-  { &yyActionTable[301],   3, 658 },
-  { &yyActionTable[304],   0, 653 },
-  { &yyActionTable[304],   2, 793 },
-  { &yyActionTable[306],   0, 660 },
-  { &yyActionTable[306],  27, 655 },
-  { &yyActionTable[333],  15, 793 },
-  { &yyActionTable[348],   0, 687 },
-  { &yyActionTable[348],   1, 793 },
-  { &yyActionTable[349],   4, 793 },
-  { &yyActionTable[353],   0, 689 },
-  { &yyActionTable[353],   0, 690 },
-  { &yyActionTable[353],   0, 691 },
-  { &yyActionTable[353],  25, 695 },
-  { &yyActionTable[378],  15, 793 },
-  { &yyActionTable[393],  26, 696 },
-  { &yyActionTable[419],  15, 793 },
-  { &yyActionTable[434],  11, 697 },
-  { &yyActionTable[445],  15, 793 },
-  { &yyActionTable[460],  11, 698 },
-  { &yyActionTable[471],  15, 793 },
-  { &yyActionTable[486],  11, 699 },
-  { &yyActionTable[497],  15, 793 },
-  { &yyActionTable[512],  11, 700 },
-  { &yyActionTable[523],  15, 793 },
-  { &yyActionTable[538],  15, 701 },
-  { &yyActionTable[553],  15, 793 },
-  { &yyActionTable[568],  15, 702 },
-  { &yyActionTable[583],  15, 793 },
-  { &yyActionTable[598],   7, 703 },
-  { &yyActionTable[605],  15, 793 },
-  { &yyActionTable[620],   7, 704 },
-  { &yyActionTable[627],  15, 793 },
-  { &yyActionTable[642],   7, 705 },
-  { &yyActionTable[649],  15, 793 },
-  { &yyActionTable[664],   7, 706 },
-  { &yyActionTable[671],  15, 793 },
-  { &yyActionTable[686],  15, 707 },
-  { &yyActionTable[701],   6, 793 },
-  { &yyActionTable[707],  15, 793 },
-  { &yyActionTable[722],  15, 708 },
-  { &yyActionTable[737],   0, 709 },
-  { &yyActionTable[737],   0, 710 },
-  { &yyActionTable[737],  15, 793 },
-  { &yyActionTable[752],   5, 711 },
-  { &yyActionTable[757],  15, 793 },
-  { &yyActionTable[772],   5, 712 },
-  { &yyActionTable[777],  15, 793 },
-  { &yyActionTable[792],   2, 713 },
-  { &yyActionTable[794],  15, 793 },
-  { &yyActionTable[809],   2, 714 },
-  { &yyActionTable[811],  15, 793 },
-  { &yyActionTable[826],   2, 715 },
-  { &yyActionTable[828],  15, 793 },
-  { &yyActionTable[843],   1, 716 },
-  { &yyActionTable[844],   0, 717 },
-  { &yyActionTable[844],   2, 793 },
-  { &yyActionTable[846],   0, 718 },
-  { &yyActionTable[846],   1, 793 },
-  { &yyActionTable[847],   0, 721 },
-  { &yyActionTable[847],   0, 719 },
-  { &yyActionTable[847],  15, 793 },
-  { &yyActionTable[862],  27, 793 },
-  { &yyActionTable[889],  15, 793 },
-  { &yyActionTable[904],  15, 727 },
-  { &yyActionTable[919],   1, 793 },
-  { &yyActionTable[920],  20, 743 },
-  { &yyActionTable[940],   5, 793 },
-  { &yyActionTable[945],   2, 793 },
-  { &yyActionTable[947],   1, 793 },
-  { &yyActionTable[948],   1, 793 },
-  { &yyActionTable[949],   1, 793 },
-  { &yyActionTable[950],   0, 730 },
-  { &yyActionTable[950],  27, 742 },
-  { &yyActionTable[977],  15, 793 },
-  { &yyActionTable[992],  25, 722 },
-  { &yyActionTable[1017],  15, 793 },
-  { &yyActionTable[1032],   1, 723 },
-  { &yyActionTable[1033],  15, 793 },
-  { &yyActionTable[1048],   1, 724 },
-  { &yyActionTable[1049],  15, 793 },
-  { &yyActionTable[1064],   1, 725 },
-  { &yyActionTable[1065],  17, 793 },
-  { &yyActionTable[1082],  28, 793 },
-  { &yyActionTable[1110],   2, 793 },
-  { &yyActionTable[1112],   4, 793 },
-  { &yyActionTable[1116],   1, 793 },
-  { &yyActionTable[1117],   0, 733 },
-  { &yyActionTable[1117],  15, 793 },
-  { &yyActionTable[1132],  28, 793 },
-  { &yyActionTable[1160],  15, 793 },
-  { &yyActionTable[1175],  27, 734 },
-  { &yyActionTable[1202],   1, 793 },
-  { &yyActionTable[1203],   4, 793 },
-  { &yyActionTable[1207],   1, 793 },
-  { &yyActionTable[1208],   0, 788 },
-  { &yyActionTable[1208],   1, 793 },
-  { &yyActionTable[1209],   4, 793 },
-  { &yyActionTable[1213],   1, 793 },
-  { &yyActionTable[1214],   0, 789 },
-  { &yyActionTable[1214],   1, 793 },
-  { &yyActionTable[1215],   4, 793 },
-  { &yyActionTable[1219],   1, 793 },
-  { &yyActionTable[1220],   0, 790 },
-  { &yyActionTable[1220],   1, 793 },
-  { &yyActionTable[1221],   4, 793 },
-  { &yyActionTable[1225],   1, 793 },
-  { &yyActionTable[1226],   0, 791 },
-  { &yyActionTable[1226],  15, 793 },
-  { &yyActionTable[1241],  28, 793 },
-  { &yyActionTable[1269],  15, 793 },
-  { &yyActionTable[1284],  28, 793 },
-  { &yyActionTable[1312],  15, 793 },
-  { &yyActionTable[1327],  27, 735 },
-  { &yyActionTable[1354],   2, 793 },
-  { &yyActionTable[1356],   0, 729 },
-  { &yyActionTable[1356],  16, 743 },
-  { &yyActionTable[1372],   0, 740 },
-  { &yyActionTable[1372],   0, 741 },
-  { &yyActionTable[1372],   0, 720 },
-  { &yyActionTable[1372],  15, 793 },
-  { &yyActionTable[1387],  27, 793 },
-  { &yyActionTable[1414],  15, 793 },
-  { &yyActionTable[1429],  25, 728 },
-  { &yyActionTable[1454],   1, 793 },
-  { &yyActionTable[1455],  20, 743 },
-  { &yyActionTable[1475],   5, 793 },
-  { &yyActionTable[1480],   0, 732 },
-  { &yyActionTable[1480],   2, 793 },
-  { &yyActionTable[1482],   0, 731 },
-  { &yyActionTable[1482],   3, 658 },
-  { &yyActionTable[1485],   0, 654 },
-  { &yyActionTable[1485],  15, 793 },
-  { &yyActionTable[1500],  27, 664 },
-  { &yyActionTable[1527],   1, 793 },
-  { &yyActionTable[1528],  17, 743 },
-  { &yyActionTable[1545],   1, 662 },
-  { &yyActionTable[1546],  15, 793 },
-  { &yyActionTable[1561],  27, 672 },
-  { &yyActionTable[1588],   0, 629 },
-  { &yyActionTable[1588],   2, 639 },
-  { &yyActionTable[1590],   4, 637 },
-  { &yyActionTable[1594],   0, 638 },
-  { &yyActionTable[1594],   0, 642 },
-  { &yyActionTable[1594],   0, 643 },
-  { &yyActionTable[1594],   2, 793 },
-  { &yyActionTable[1596],   0, 644 },
-  { &yyActionTable[1596],   2, 793 },
-  { &yyActionTable[1598],   0, 645 },
-  { &yyActionTable[1598],   1, 793 },
-  { &yyActionTable[1599],   0, 646 },
-  { &yyActionTable[1599],   5, 793 },
-  { &yyActionTable[1604],   2, 635 },
-  { &yyActionTable[1606],   4, 793 },
-  { &yyActionTable[1610],   0, 634 },
-  { &yyActionTable[1610],   2, 648 },
-  { &yyActionTable[1612],   2, 650 },
-  { &yyActionTable[1614],   0, 640 },
-  { &yyActionTable[1614],   1, 793 },
-  { &yyActionTable[1615],   6, 793 },
-  { &yyActionTable[1621],   2, 793 },
-  { &yyActionTable[1623],   0, 649 },
-  { &yyActionTable[1623],   5, 793 },
-  { &yyActionTable[1628],   0, 747 },
-  { &yyActionTable[1628],   0, 749 },
-  { &yyActionTable[1628],   0, 748 },
-  { &yyActionTable[1628],  15, 793 },
-  { &yyActionTable[1643],  27, 647 },
-  { &yyActionTable[1670],   3, 793 },
-  { &yyActionTable[1673],   5, 793 },
-  { &yyActionTable[1678],   2, 635 },
-  { &yyActionTable[1680],   2, 648 },
-  { &yyActionTable[1682],   2, 650 },
-  { &yyActionTable[1684],   0, 641 },
-  { &yyActionTable[1684],  16, 793 },
-  { &yyActionTable[1700],  29, 635 },
-  { &yyActionTable[1729],   0, 631 },
-  { &yyActionTable[1729],   0, 632 },
-  { &yyActionTable[1729],   1, 793 },
-  { &yyActionTable[1730],   5, 793 },
-  { &yyActionTable[1735],   0, 633 },
-  { &yyActionTable[1735],   0, 626 },
-  { &yyActionTable[1735],   0, 627 },
-  { &yyActionTable[1735],   0, 726 },
-  { &yyActionTable[1735],  28, 793 },
-  { &yyActionTable[1763],   0, 686 },
-  { &yyActionTable[1763],   2, 793 },
-  { &yyActionTable[1765],   0, 693 },
-  { &yyActionTable[1765],   1, 793 },
-  { &yyActionTable[1766],   0, 694 },
-  { &yyActionTable[1766],  28, 793 },
-  { &yyActionTable[1794],   2, 606 },
-  { &yyActionTable[1796],   0, 573 },
-  { &yyActionTable[1796],   0, 574 },
-  { &yyActionTable[1796],   0, 575 },
-  { &yyActionTable[1796],   2, 793 },
-  { &yyActionTable[1798],   0, 576 },
-  { &yyActionTable[1798],   4, 793 },
-  { &yyActionTable[1802],   2, 579 },
-  { &yyActionTable[1804],   6, 793 },
-  { &yyActionTable[1810],   2, 793 },
-  { &yyActionTable[1812],   1, 579 },
-  { &yyActionTable[1813],   3, 577 },
-  { &yyActionTable[1816],   0, 580 },
-  { &yyActionTable[1816],   2, 793 },
-  { &yyActionTable[1818],   0, 581 },
-  { &yyActionTable[1818],   0, 582 },
-  { &yyActionTable[1818],   2, 793 },
-  { &yyActionTable[1820],   4, 793 },
-  { &yyActionTable[1824],   0, 583 },
-  { &yyActionTable[1824],   2, 793 },
-  { &yyActionTable[1826],   0, 585 },
-  { &yyActionTable[1826],   0, 586 },
-  { &yyActionTable[1826],   0, 587 },
-  { &yyActionTable[1826],   0, 588 },
-  { &yyActionTable[1826],   4, 793 },
-  { &yyActionTable[1830],   0, 584 },
-  { &yyActionTable[1830],   3, 578 },
-  { &yyActionTable[1833],   2, 591 },
-  { &yyActionTable[1835],   0, 590 },
-  { &yyActionTable[1835],   0, 560 },
-  { &yyActionTable[1835],   7, 793 },
-  { &yyActionTable[1842],   0, 561 },
-  { &yyActionTable[1842],   0, 562 },
-  { &yyActionTable[1842],   0, 563 },
-  { &yyActionTable[1842],   2, 793 },
-  { &yyActionTable[1844],   0, 564 },
-  { &yyActionTable[1844],   0, 567 },
-  { &yyActionTable[1844],   2, 793 },
-  { &yyActionTable[1846],   0, 565 },
-  { &yyActionTable[1846],   0, 568 },
-  { &yyActionTable[1846],   0, 566 },
-  { &yyActionTable[1846],   0, 569 },
-  { &yyActionTable[1846],   5, 549 },
-  { &yyActionTable[1851],   4, 793 },
-  { &yyActionTable[1855],   2, 793 },
-  { &yyActionTable[1857],   0, 550 },
-  { &yyActionTable[1857],   4, 793 },
-  { &yyActionTable[1861],   1, 793 },
-  { &yyActionTable[1862],   0, 551 },
-  { &yyActionTable[1862],   0, 554 },
-  { &yyActionTable[1862],   1, 793 },
-  { &yyActionTable[1863],   0, 555 },
-  { &yyActionTable[1863],   1, 793 },
-  { &yyActionTable[1864],   0, 556 },
-  { &yyActionTable[1864],   0, 553 },
-  { &yyActionTable[1864],   0, 552 },
-  { &yyActionTable[1864],   0, 544 },
-  { &yyActionTable[1864],   8, 793 },
-  { &yyActionTable[1872],   6, 793 },
-  { &yyActionTable[1878],   0, 596 },
-  { &yyActionTable[1878],   4, 793 },
-  { &yyActionTable[1882],   0, 599 },
-  { &yyActionTable[1882],   1, 793 },
-  { &yyActionTable[1883],   1, 793 },
-  { &yyActionTable[1884],   6, 793 },
-  { &yyActionTable[1890],   2, 793 },
-  { &yyActionTable[1892],   2, 606 },
-  { &yyActionTable[1894],   0, 600 },
-  { &yyActionTable[1894],   1, 793 },
-  { &yyActionTable[1895],   6, 793 },
-  { &yyActionTable[1901],   2, 793 },
-  { &yyActionTable[1903],   2, 606 },
-  { &yyActionTable[1905],   0, 601 },
-  { &yyActionTable[1905],  15, 793 },
-  { &yyActionTable[1920],  29, 606 },
-  { &yyActionTable[1949],   0, 602 },
-  { &yyActionTable[1949],   1, 793 },
-  { &yyActionTable[1950],   1, 793 },
-  { &yyActionTable[1951],   6, 793 },
-  { &yyActionTable[1957],   2, 793 },
-  { &yyActionTable[1959],   2, 793 },
-  { &yyActionTable[1961],   4, 604 },
-  { &yyActionTable[1965],   1, 793 },
-  { &yyActionTable[1966],   0, 603 },
-  { &yyActionTable[1966],   0, 605 },
-  { &yyActionTable[1966],   0, 597 },
-  { &yyActionTable[1966],   0, 598 },
-  { &yyActionTable[1966],   0, 542 },
-  { &yyActionTable[1966],   3, 793 },
-  { &yyActionTable[1969],   5, 793 },
-  { &yyActionTable[1974],   8, 793 },
-  { &yyActionTable[1982],   1, 793 },
-  { &yyActionTable[1983],   4, 793 },
-  { &yyActionTable[1987],   0, 536 },
-  { &yyActionTable[1987],   1, 793 },
-  { &yyActionTable[1988],   4, 793 },
-  { &yyActionTable[1992],   1, 793 },
-  { &yyActionTable[1993],   3, 793 },
-  { &yyActionTable[1996],   5, 793 },
-  { &yyActionTable[2001],   1, 793 },
-  { &yyActionTable[2002],   4, 793 },
-  { &yyActionTable[2006],   1, 793 },
-  { &yyActionTable[2007],   4, 793 },
-  { &yyActionTable[2011],   1, 793 },
-  { &yyActionTable[2012],   6, 793 },
-  { &yyActionTable[2018],   2, 793 },
-  { &yyActionTable[2020],   3, 793 },
-  { &yyActionTable[2023],   1, 793 },
-  { &yyActionTable[2024],   1, 793 },
-  { &yyActionTable[2025],   4, 793 },
-  { &yyActionTable[2029],   4, 771 },
-  { &yyActionTable[2033],   4, 793 },
-  { &yyActionTable[2037],   1, 793 },
-  { &yyActionTable[2038],   4, 793 },
-  { &yyActionTable[2042],   2, 776 },
-  { &yyActionTable[2044],   3, 793 },
-  { &yyActionTable[2047],   1, 793 },
-  { &yyActionTable[2048],   9, 793 },
-  { &yyActionTable[2057],   5, 793 },
-  { &yyActionTable[2062],   1, 793 },
-  { &yyActionTable[2063],   1, 793 },
-  { &yyActionTable[2064],   1, 793 },
-  { &yyActionTable[2065],   9, 793 },
-  { &yyActionTable[2074],   1, 793 },
-  { &yyActionTable[2075],   2, 608 },
-  { &yyActionTable[2077],   6, 793 },
-  { &yyActionTable[2083],   0, 609 },
-  { &yyActionTable[2083],   4, 793 },
-  { &yyActionTable[2087],   1, 793 },
-  { &yyActionTable[2088],   5, 793 },
-  { &yyActionTable[2093],   4, 793 },
-  { &yyActionTable[2097],   4, 793 },
-  { &yyActionTable[2101],   1, 793 },
-  { &yyActionTable[2102],  15, 793 },
-  { &yyActionTable[2117],  27, 674 },
-  { &yyActionTable[2144],   1, 793 },
-  { &yyActionTable[2145],   1, 793 },
-  { &yyActionTable[2146],  15, 793 },
-  { &yyActionTable[2161],  27, 675 },
-  { &yyActionTable[2188],   3, 793 },
-  { &yyActionTable[2191],   1, 793 },
-  { &yyActionTable[2192],   4, 793 },
-  { &yyActionTable[2196],   2, 682 },
-  { &yyActionTable[2198],   5, 793 },
-  { &yyActionTable[2203],   2, 793 },
-  { &yyActionTable[2205],   0, 683 },
-  { &yyActionTable[2205],   4, 793 },
-  { &yyActionTable[2209],   0, 684 },
-  { &yyActionTable[2209],   0, 685 },
-  { &yyActionTable[2209],   4, 793 },
-  { &yyActionTable[2213],   5, 793 },
-  { &yyActionTable[2218],   1, 793 },
-  { &yyActionTable[2219],  16, 793 },
-  { &yyActionTable[2235],   2, 793 },
-  { &yyActionTable[2237],  15, 793 },
-  { &yyActionTable[2252],  27, 680 },
-  { &yyActionTable[2279],   1, 793 },
-  { &yyActionTable[2280],  27, 681 },
-  { &yyActionTable[2307],   1, 793 },
-  { &yyActionTable[2308],   4, 793 },
-  { &yyActionTable[2312],   3, 793 },
-  { &yyActionTable[2315],   1, 793 },
-  { &yyActionTable[2316],  15, 793 },
-  { &yyActionTable[2331],  28, 793 },
-  { &yyActionTable[2359],   1, 793 },
-  { &yyActionTable[2360],   2, 793 },
-  { &yyActionTable[2362],   0, 777 },
-  { &yyActionTable[2362],   0, 778 },
-  { &yyActionTable[2362],   1, 793 },
-  { &yyActionTable[2363],   1, 793 },
-  { &yyActionTable[2364],   2, 793 },
-  { &yyActionTable[2366],   5, 793 },
-  { &yyActionTable[2371],   2, 793 },
-  { &yyActionTable[2373],   0, 768 },
-  { &yyActionTable[2373],   0, 769 },
-  { &yyActionTable[2373],   1, 793 },
-  { &yyActionTable[2374],   0, 770 },
-  { &yyActionTable[2374],   4, 793 },
-  { &yyActionTable[2378],   4, 793 },
-  { &yyActionTable[2382],   1, 793 },
-  { &yyActionTable[2383],   4, 793 },
-  { &yyActionTable[2387],   1, 793 },
-  { &yyActionTable[2388],   4, 793 },
-  { &yyActionTable[2392],   1, 793 },
-  { &yyActionTable[2393],   4, 793 },
-  { &yyActionTable[2397],   1, 793 },
-  { &yyActionTable[2398],   5, 793 },
-  { &yyActionTable[2403],   1, 793 },
-  { &yyActionTable[2404],   4, 793 },
-  { &yyActionTable[2408],   3, 793 },
-  { &yyActionTable[2411],   1, 793 },
-  { &yyActionTable[2412],   2, 608 },
-  { &yyActionTable[2414],   4, 793 },
-  { &yyActionTable[2418],   1, 793 },
-  { &yyActionTable[2419],   5, 793 },
-  { &yyActionTable[2424],   4, 793 },
-  { &yyActionTable[2428],   1, 793 },
-  { &yyActionTable[2429],   1, 793 },
-  { &yyActionTable[2430],   4, 793 },
-  { &yyActionTable[2434],   2, 682 },
-  { &yyActionTable[2436],   4, 793 },
-  { &yyActionTable[2440],   5, 793 },
-  { &yyActionTable[2445],   1, 793 },
-  { &yyActionTable[2446],  16, 793 },
-  { &yyActionTable[2462],   2, 793 },
-  { &yyActionTable[2464],   1, 793 },
-  { &yyActionTable[2465],   3, 793 },
-  { &yyActionTable[2468],   1, 793 },
-  { &yyActionTable[2469],   1, 793 },
-  { &yyActionTable[2470],   2, 608 },
-  { &yyActionTable[2472],   4, 793 },
-  { &yyActionTable[2476],   1, 793 },
-  { &yyActionTable[2477],   4, 793 },
-  { &yyActionTable[2481],   2, 793 },
-  { &yyActionTable[2483],   1, 793 },
-  { &yyActionTable[2484],   1, 793 },
-  { &yyActionTable[2485],   1, 793 },
-  { &yyActionTable[2486],   5, 793 },
-  { &yyActionTable[2491],   1, 793 },
-  { &yyActionTable[2492],   4, 793 },
-  { &yyActionTable[2496],   3, 793 },
-  { &yyActionTable[2499],  10, 766 },
-  { &yyActionTable[2509],   1, 793 },
-  { &yyActionTable[2510],   1, 793 },
-  { &yyActionTable[2511],   1, 793 },
-  { &yyActionTable[2512],   1, 793 },
-  { &yyActionTable[2513],   3, 793 },
-  { &yyActionTable[2516],   1, 793 },
-  { &yyActionTable[2517],   1, 793 },
-  { &yyActionTable[2518],   1, 793 },
-  { &yyActionTable[2519],   3, 793 },
-  { &yyActionTable[2522],   1, 793 },
-  { &yyActionTable[2523],   0, 765 },
-  { &yyActionTable[2523],   4, 793 },
-  { &yyActionTable[2527],   1, 793 },
-  { &yyActionTable[2528],   1, 793 },
-  { &yyActionTable[2529],   1, 793 },
-  { &yyActionTable[2530],   0, 525 },
-  { &yyActionTable[2530],   0, 526 },
-  { &yyActionTable[2530],   0, 527 },
-  { &yyActionTable[2530],   0, 522 },
+  { &yyActionTable[0],   6, 525 },
+  { &yyActionTable[6],   5, 525 },
+  { &yyActionTable[11],   0, 521 },
+  { &yyActionTable[11],  19, 791 },
+  { &yyActionTable[30],   1, 791 },
+  { &yyActionTable[31],   0, 522 },
+  { &yyActionTable[31],   2, 527 },
+  { &yyActionTable[33],   3, 791 },
+  { &yyActionTable[36],   1, 791 },
+  { &yyActionTable[37],   1, 791 },
+  { &yyActionTable[38],   6, 791 },
+  { &yyActionTable[44],   0, 605 },
+  { &yyActionTable[44],   0, 608 },
+  { &yyActionTable[44],   0, 609 },
+  { &yyActionTable[44],   0, 610 },
+  { &yyActionTable[44],   0, 611 },
+  { &yyActionTable[44],   0, 612 },
+  { &yyActionTable[44],   4, 528 },
+  { &yyActionTable[48],   0, 529 },
+  { &yyActionTable[48],   0, 543 },
+  { &yyActionTable[48],   0, 544 },
+  { &yyActionTable[48],   0, 545 },
+  { &yyActionTable[48],   3, 791 },
+  { &yyActionTable[51],   1, 791 },
+  { &yyActionTable[52],   3, 791 },
+  { &yyActionTable[55],   1, 791 },
+  { &yyActionTable[56],   3, 791 },
+  { &yyActionTable[59],   1, 791 },
+  { &yyActionTable[60],   3, 791 },
+  { &yyActionTable[63],   1, 791 },
+  { &yyActionTable[64],   7, 791 },
+  { &yyActionTable[71],   3, 791 },
+  { &yyActionTable[74],   1, 791 },
+  { &yyActionTable[75],   1, 791 },
+  { &yyActionTable[76],  13, 791 },
+  { &yyActionTable[89],   0, 539 },
+  { &yyActionTable[89],   6, 546 },
+  { &yyActionTable[95],   1, 556 },
+  { &yyActionTable[96],  13, 541 },
+  { &yyActionTable[109],   0, 555 },
+  { &yyActionTable[109],   4, 791 },
+  { &yyActionTable[113],  10, 791 },
+  { &yyActionTable[123],   0, 557 },
+  { &yyActionTable[123],   2, 791 },
+  { &yyActionTable[125],   2, 604 },
+  { &yyActionTable[127],   0, 568 },
+  { &yyActionTable[127],   2, 589 },
+  { &yyActionTable[129],   0, 587 },
+  { &yyActionTable[129],   2, 791 },
+  { &yyActionTable[131],   0, 590 },
+  { &yyActionTable[131],   0, 591 },
+  { &yyActionTable[131],   1, 791 },
+  { &yyActionTable[132],   3, 656 },
+  { &yyActionTable[135],   2, 604 },
+  { &yyActionTable[137],   0, 569 },
+  { &yyActionTable[137],   0, 654 },
+  { &yyActionTable[137],   0, 655 },
+  { &yyActionTable[137],   2, 604 },
+  { &yyActionTable[139],   0, 570 },
+  { &yyActionTable[139],   1, 791 },
+  { &yyActionTable[140],  15, 791 },
+  { &yyActionTable[155],   1, 543 },
+  { &yyActionTable[156],  18, 741 },
+  { &yyActionTable[174],   1, 686 },
+  { &yyActionTable[175],   1, 690 },
+  { &yyActionTable[176],  18, 791 },
+  { &yyActionTable[194],   0, 617 },
+  { &yyActionTable[194],   5, 791 },
+  { &yyActionTable[199],   2, 791 },
+  { &yyActionTable[201],   0, 618 },
+  { &yyActionTable[201],   3, 626 },
+  { &yyActionTable[204],   2, 628 },
+  { &yyActionTable[206],   3, 634 },
+  { &yyActionTable[209],   2, 669 },
+  { &yyActionTable[211],   2, 659 },
+  { &yyActionTable[213],   2, 661 },
+  { &yyActionTable[215],   2, 649 },
+  { &yyActionTable[217],   2, 663 },
+  { &yyActionTable[219],   0, 623 },
+  { &yyActionTable[219],   1, 791 },
+  { &yyActionTable[220],   3, 664 },
+  { &yyActionTable[223],   1, 791 },
+  { &yyActionTable[224],   0, 665 },
+  { &yyActionTable[224],   1, 791 },
+  { &yyActionTable[225],   1, 791 },
+  { &yyActionTable[226],   1, 791 },
+  { &yyActionTable[227],  17, 791 },
+  { &yyActionTable[244],   1, 650 },
+  { &yyActionTable[245],  16, 791 },
+  { &yyActionTable[261],   2, 657 },
+  { &yyActionTable[263],   3, 656 },
+  { &yyActionTable[266],   0, 651 },
+  { &yyActionTable[266],   2, 791 },
+  { &yyActionTable[268],   0, 658 },
+  { &yyActionTable[268],  27, 653 },
+  { &yyActionTable[295],  15, 791 },
+  { &yyActionTable[310],   0, 685 },
+  { &yyActionTable[310],   1, 791 },
+  { &yyActionTable[311],   4, 791 },
+  { &yyActionTable[315],   0, 687 },
+  { &yyActionTable[315],   0, 688 },
+  { &yyActionTable[315],   0, 689 },
+  { &yyActionTable[315],  25, 693 },
+  { &yyActionTable[340],  15, 791 },
+  { &yyActionTable[355],  26, 694 },
+  { &yyActionTable[381],  15, 791 },
+  { &yyActionTable[396],  11, 695 },
+  { &yyActionTable[407],  15, 791 },
+  { &yyActionTable[422],  11, 696 },
+  { &yyActionTable[433],  15, 791 },
+  { &yyActionTable[448],  11, 697 },
+  { &yyActionTable[459],  15, 791 },
+  { &yyActionTable[474],  11, 698 },
+  { &yyActionTable[485],  15, 791 },
+  { &yyActionTable[500],  15, 699 },
+  { &yyActionTable[515],  15, 791 },
+  { &yyActionTable[530],  15, 700 },
+  { &yyActionTable[545],  15, 791 },
+  { &yyActionTable[560],   7, 701 },
+  { &yyActionTable[567],  15, 791 },
+  { &yyActionTable[582],   7, 702 },
+  { &yyActionTable[589],  15, 791 },
+  { &yyActionTable[604],   7, 703 },
+  { &yyActionTable[611],  15, 791 },
+  { &yyActionTable[626],   7, 704 },
+  { &yyActionTable[633],  15, 791 },
+  { &yyActionTable[648],  15, 705 },
+  { &yyActionTable[663],   6, 791 },
+  { &yyActionTable[669],  15, 791 },
+  { &yyActionTable[684],  15, 706 },
+  { &yyActionTable[699],   0, 707 },
+  { &yyActionTable[699],   0, 708 },
+  { &yyActionTable[699],  15, 791 },
+  { &yyActionTable[714],   5, 709 },
+  { &yyActionTable[719],  15, 791 },
+  { &yyActionTable[734],   5, 710 },
+  { &yyActionTable[739],  15, 791 },
+  { &yyActionTable[754],   2, 711 },
+  { &yyActionTable[756],  15, 791 },
+  { &yyActionTable[771],   2, 712 },
+  { &yyActionTable[773],  15, 791 },
+  { &yyActionTable[788],   2, 713 },
+  { &yyActionTable[790],  15, 791 },
+  { &yyActionTable[805],   1, 714 },
+  { &yyActionTable[806],   0, 715 },
+  { &yyActionTable[806],   2, 791 },
+  { &yyActionTable[808],   0, 716 },
+  { &yyActionTable[808],   1, 791 },
+  { &yyActionTable[809],   0, 719 },
+  { &yyActionTable[809],   0, 717 },
+  { &yyActionTable[809],  15, 791 },
+  { &yyActionTable[824],  27, 791 },
+  { &yyActionTable[851],  15, 791 },
+  { &yyActionTable[866],  15, 725 },
+  { &yyActionTable[881],   1, 791 },
+  { &yyActionTable[882],  20, 741 },
+  { &yyActionTable[902],   5, 791 },
+  { &yyActionTable[907],   2, 791 },
+  { &yyActionTable[909],   1, 791 },
+  { &yyActionTable[910],   1, 791 },
+  { &yyActionTable[911],   1, 791 },
+  { &yyActionTable[912],   0, 728 },
+  { &yyActionTable[912],  27, 740 },
+  { &yyActionTable[939],  15, 791 },
+  { &yyActionTable[954],  25, 720 },
+  { &yyActionTable[979],  15, 791 },
+  { &yyActionTable[994],   1, 721 },
+  { &yyActionTable[995],  15, 791 },
+  { &yyActionTable[1010],   1, 722 },
+  { &yyActionTable[1011],  15, 791 },
+  { &yyActionTable[1026],   1, 723 },
+  { &yyActionTable[1027],  17, 791 },
+  { &yyActionTable[1044],  28, 791 },
+  { &yyActionTable[1072],   2, 791 },
+  { &yyActionTable[1074],   4, 791 },
+  { &yyActionTable[1078],   1, 791 },
+  { &yyActionTable[1079],   0, 731 },
+  { &yyActionTable[1079],  15, 791 },
+  { &yyActionTable[1094],  28, 791 },
+  { &yyActionTable[1122],  15, 791 },
+  { &yyActionTable[1137],  27, 732 },
+  { &yyActionTable[1164],   1, 791 },
+  { &yyActionTable[1165],   4, 791 },
+  { &yyActionTable[1169],   1, 791 },
+  { &yyActionTable[1170],   0, 786 },
+  { &yyActionTable[1170],   1, 791 },
+  { &yyActionTable[1171],   4, 791 },
+  { &yyActionTable[1175],   1, 791 },
+  { &yyActionTable[1176],   0, 787 },
+  { &yyActionTable[1176],   1, 791 },
+  { &yyActionTable[1177],   4, 791 },
+  { &yyActionTable[1181],   1, 791 },
+  { &yyActionTable[1182],   0, 788 },
+  { &yyActionTable[1182],   1, 791 },
+  { &yyActionTable[1183],   4, 791 },
+  { &yyActionTable[1187],   1, 791 },
+  { &yyActionTable[1188],   0, 789 },
+  { &yyActionTable[1188],  15, 791 },
+  { &yyActionTable[1203],  28, 791 },
+  { &yyActionTable[1231],  15, 791 },
+  { &yyActionTable[1246],  28, 791 },
+  { &yyActionTable[1274],  15, 791 },
+  { &yyActionTable[1289],  27, 733 },
+  { &yyActionTable[1316],   2, 791 },
+  { &yyActionTable[1318],   0, 727 },
+  { &yyActionTable[1318],  16, 741 },
+  { &yyActionTable[1334],   0, 738 },
+  { &yyActionTable[1334],   0, 739 },
+  { &yyActionTable[1334],   0, 718 },
+  { &yyActionTable[1334],  15, 791 },
+  { &yyActionTable[1349],  27, 791 },
+  { &yyActionTable[1376],  15, 791 },
+  { &yyActionTable[1391],  25, 726 },
+  { &yyActionTable[1416],   1, 791 },
+  { &yyActionTable[1417],  20, 741 },
+  { &yyActionTable[1437],   5, 791 },
+  { &yyActionTable[1442],   0, 730 },
+  { &yyActionTable[1442],   2, 791 },
+  { &yyActionTable[1444],   0, 729 },
+  { &yyActionTable[1444],   3, 656 },
+  { &yyActionTable[1447],   0, 652 },
+  { &yyActionTable[1447],  15, 791 },
+  { &yyActionTable[1462],  27, 662 },
+  { &yyActionTable[1489],   1, 791 },
+  { &yyActionTable[1490],  17, 741 },
+  { &yyActionTable[1507],   1, 660 },
+  { &yyActionTable[1508],  15, 791 },
+  { &yyActionTable[1523],  27, 670 },
+  { &yyActionTable[1550],   0, 627 },
+  { &yyActionTable[1550],   2, 637 },
+  { &yyActionTable[1552],   4, 635 },
+  { &yyActionTable[1556],   0, 636 },
+  { &yyActionTable[1556],   0, 640 },
+  { &yyActionTable[1556],   0, 641 },
+  { &yyActionTable[1556],   2, 791 },
+  { &yyActionTable[1558],   0, 642 },
+  { &yyActionTable[1558],   2, 791 },
+  { &yyActionTable[1560],   0, 643 },
+  { &yyActionTable[1560],   1, 791 },
+  { &yyActionTable[1561],   0, 644 },
+  { &yyActionTable[1561],   5, 791 },
+  { &yyActionTable[1566],   2, 633 },
+  { &yyActionTable[1568],   4, 791 },
+  { &yyActionTable[1572],   0, 632 },
+  { &yyActionTable[1572],   2, 646 },
+  { &yyActionTable[1574],   2, 648 },
+  { &yyActionTable[1576],   0, 638 },
+  { &yyActionTable[1576],   1, 791 },
+  { &yyActionTable[1577],   6, 791 },
+  { &yyActionTable[1583],   2, 791 },
+  { &yyActionTable[1585],   0, 647 },
+  { &yyActionTable[1585],   5, 791 },
+  { &yyActionTable[1590],   0, 745 },
+  { &yyActionTable[1590],   0, 747 },
+  { &yyActionTable[1590],   0, 746 },
+  { &yyActionTable[1590],  15, 791 },
+  { &yyActionTable[1605],  27, 645 },
+  { &yyActionTable[1632],   3, 791 },
+  { &yyActionTable[1635],   5, 791 },
+  { &yyActionTable[1640],   2, 633 },
+  { &yyActionTable[1642],   2, 646 },
+  { &yyActionTable[1644],   2, 648 },
+  { &yyActionTable[1646],   0, 639 },
+  { &yyActionTable[1646],  16, 791 },
+  { &yyActionTable[1662],  29, 633 },
+  { &yyActionTable[1691],   0, 629 },
+  { &yyActionTable[1691],   0, 630 },
+  { &yyActionTable[1691],   1, 791 },
+  { &yyActionTable[1692],   5, 791 },
+  { &yyActionTable[1697],   0, 631 },
+  { &yyActionTable[1697],   0, 624 },
+  { &yyActionTable[1697],   0, 625 },
+  { &yyActionTable[1697],   0, 724 },
+  { &yyActionTable[1697],  28, 791 },
+  { &yyActionTable[1725],   0, 684 },
+  { &yyActionTable[1725],   2, 791 },
+  { &yyActionTable[1727],   0, 691 },
+  { &yyActionTable[1727],   1, 791 },
+  { &yyActionTable[1728],   0, 692 },
+  { &yyActionTable[1728],  28, 791 },
+  { &yyActionTable[1756],   2, 604 },
+  { &yyActionTable[1758],   0, 571 },
+  { &yyActionTable[1758],   0, 572 },
+  { &yyActionTable[1758],   0, 573 },
+  { &yyActionTable[1758],   2, 791 },
+  { &yyActionTable[1760],   0, 574 },
+  { &yyActionTable[1760],   4, 791 },
+  { &yyActionTable[1764],   2, 577 },
+  { &yyActionTable[1766],   6, 791 },
+  { &yyActionTable[1772],   2, 791 },
+  { &yyActionTable[1774],   1, 577 },
+  { &yyActionTable[1775],   3, 575 },
+  { &yyActionTable[1778],   0, 578 },
+  { &yyActionTable[1778],   2, 791 },
+  { &yyActionTable[1780],   0, 579 },
+  { &yyActionTable[1780],   0, 580 },
+  { &yyActionTable[1780],   2, 791 },
+  { &yyActionTable[1782],   4, 791 },
+  { &yyActionTable[1786],   0, 581 },
+  { &yyActionTable[1786],   2, 791 },
+  { &yyActionTable[1788],   0, 583 },
+  { &yyActionTable[1788],   0, 584 },
+  { &yyActionTable[1788],   0, 585 },
+  { &yyActionTable[1788],   0, 586 },
+  { &yyActionTable[1788],   4, 791 },
+  { &yyActionTable[1792],   0, 582 },
+  { &yyActionTable[1792],   3, 576 },
+  { &yyActionTable[1795],   2, 589 },
+  { &yyActionTable[1797],   0, 588 },
+  { &yyActionTable[1797],   0, 558 },
+  { &yyActionTable[1797],   7, 791 },
+  { &yyActionTable[1804],   0, 559 },
+  { &yyActionTable[1804],   0, 560 },
+  { &yyActionTable[1804],   0, 561 },
+  { &yyActionTable[1804],   2, 791 },
+  { &yyActionTable[1806],   0, 562 },
+  { &yyActionTable[1806],   0, 565 },
+  { &yyActionTable[1806],   2, 791 },
+  { &yyActionTable[1808],   0, 563 },
+  { &yyActionTable[1808],   0, 566 },
+  { &yyActionTable[1808],   0, 564 },
+  { &yyActionTable[1808],   0, 567 },
+  { &yyActionTable[1808],   5, 547 },
+  { &yyActionTable[1813],   4, 791 },
+  { &yyActionTable[1817],   2, 791 },
+  { &yyActionTable[1819],   0, 548 },
+  { &yyActionTable[1819],   4, 791 },
+  { &yyActionTable[1823],   1, 791 },
+  { &yyActionTable[1824],   0, 549 },
+  { &yyActionTable[1824],   0, 552 },
+  { &yyActionTable[1824],   1, 791 },
+  { &yyActionTable[1825],   0, 553 },
+  { &yyActionTable[1825],   1, 791 },
+  { &yyActionTable[1826],   0, 554 },
+  { &yyActionTable[1826],   0, 551 },
+  { &yyActionTable[1826],   0, 550 },
+  { &yyActionTable[1826],   0, 542 },
+  { &yyActionTable[1826],   8, 791 },
+  { &yyActionTable[1834],   6, 791 },
+  { &yyActionTable[1840],   0, 594 },
+  { &yyActionTable[1840],   4, 791 },
+  { &yyActionTable[1844],   0, 597 },
+  { &yyActionTable[1844],   1, 791 },
+  { &yyActionTable[1845],   1, 791 },
+  { &yyActionTable[1846],   6, 791 },
+  { &yyActionTable[1852],   2, 791 },
+  { &yyActionTable[1854],   2, 604 },
+  { &yyActionTable[1856],   0, 598 },
+  { &yyActionTable[1856],   1, 791 },
+  { &yyActionTable[1857],   6, 791 },
+  { &yyActionTable[1863],   2, 791 },
+  { &yyActionTable[1865],   2, 604 },
+  { &yyActionTable[1867],   0, 599 },
+  { &yyActionTable[1867],  15, 791 },
+  { &yyActionTable[1882],  29, 604 },
+  { &yyActionTable[1911],   0, 600 },
+  { &yyActionTable[1911],   1, 791 },
+  { &yyActionTable[1912],   1, 791 },
+  { &yyActionTable[1913],   6, 791 },
+  { &yyActionTable[1919],   2, 791 },
+  { &yyActionTable[1921],   2, 791 },
+  { &yyActionTable[1923],   4, 602 },
+  { &yyActionTable[1927],   1, 791 },
+  { &yyActionTable[1928],   0, 601 },
+  { &yyActionTable[1928],   0, 603 },
+  { &yyActionTable[1928],   0, 595 },
+  { &yyActionTable[1928],   0, 596 },
+  { &yyActionTable[1928],   0, 540 },
+  { &yyActionTable[1928],   3, 791 },
+  { &yyActionTable[1931],   5, 791 },
+  { &yyActionTable[1936],   8, 791 },
+  { &yyActionTable[1944],   1, 791 },
+  { &yyActionTable[1945],   4, 791 },
+  { &yyActionTable[1949],   0, 534 },
+  { &yyActionTable[1949],   1, 791 },
+  { &yyActionTable[1950],   4, 791 },
+  { &yyActionTable[1954],   1, 791 },
+  { &yyActionTable[1955],   3, 791 },
+  { &yyActionTable[1958],   5, 791 },
+  { &yyActionTable[1963],   1, 791 },
+  { &yyActionTable[1964],   4, 791 },
+  { &yyActionTable[1968],   1, 791 },
+  { &yyActionTable[1969],   4, 791 },
+  { &yyActionTable[1973],   1, 791 },
+  { &yyActionTable[1974],   6, 791 },
+  { &yyActionTable[1980],   2, 791 },
+  { &yyActionTable[1982],   3, 791 },
+  { &yyActionTable[1985],   1, 791 },
+  { &yyActionTable[1986],   1, 791 },
+  { &yyActionTable[1987],   4, 791 },
+  { &yyActionTable[1991],   4, 769 },
+  { &yyActionTable[1995],   4, 791 },
+  { &yyActionTable[1999],   1, 791 },
+  { &yyActionTable[2000],   4, 791 },
+  { &yyActionTable[2004],   2, 774 },
+  { &yyActionTable[2006],   3, 791 },
+  { &yyActionTable[2009],   1, 791 },
+  { &yyActionTable[2010],   9, 791 },
+  { &yyActionTable[2019],   5, 791 },
+  { &yyActionTable[2024],   1, 791 },
+  { &yyActionTable[2025],   1, 791 },
+  { &yyActionTable[2026],   1, 791 },
+  { &yyActionTable[2027],   9, 791 },
+  { &yyActionTable[2036],   1, 791 },
+  { &yyActionTable[2037],   2, 606 },
+  { &yyActionTable[2039],   6, 791 },
+  { &yyActionTable[2045],   0, 607 },
+  { &yyActionTable[2045],   4, 791 },
+  { &yyActionTable[2049],   1, 791 },
+  { &yyActionTable[2050],   5, 791 },
+  { &yyActionTable[2055],   4, 791 },
+  { &yyActionTable[2059],   4, 791 },
+  { &yyActionTable[2063],   1, 791 },
+  { &yyActionTable[2064],  15, 791 },
+  { &yyActionTable[2079],  27, 672 },
+  { &yyActionTable[2106],   1, 791 },
+  { &yyActionTable[2107],   1, 791 },
+  { &yyActionTable[2108],  15, 791 },
+  { &yyActionTable[2123],  27, 673 },
+  { &yyActionTable[2150],   3, 791 },
+  { &yyActionTable[2153],   1, 791 },
+  { &yyActionTable[2154],   4, 791 },
+  { &yyActionTable[2158],   2, 680 },
+  { &yyActionTable[2160],   5, 791 },
+  { &yyActionTable[2165],   2, 791 },
+  { &yyActionTable[2167],   0, 681 },
+  { &yyActionTable[2167],   4, 791 },
+  { &yyActionTable[2171],   0, 682 },
+  { &yyActionTable[2171],   0, 683 },
+  { &yyActionTable[2171],   4, 791 },
+  { &yyActionTable[2175],   5, 791 },
+  { &yyActionTable[2180],   1, 791 },
+  { &yyActionTable[2181],  16, 791 },
+  { &yyActionTable[2197],   2, 791 },
+  { &yyActionTable[2199],  15, 791 },
+  { &yyActionTable[2214],  27, 678 },
+  { &yyActionTable[2241],   1, 791 },
+  { &yyActionTable[2242],  27, 679 },
+  { &yyActionTable[2269],   1, 791 },
+  { &yyActionTable[2270],   4, 791 },
+  { &yyActionTable[2274],   3, 791 },
+  { &yyActionTable[2277],   1, 791 },
+  { &yyActionTable[2278],  15, 791 },
+  { &yyActionTable[2293],  28, 791 },
+  { &yyActionTable[2321],   1, 791 },
+  { &yyActionTable[2322],   2, 791 },
+  { &yyActionTable[2324],   0, 775 },
+  { &yyActionTable[2324],   0, 776 },
+  { &yyActionTable[2324],   1, 791 },
+  { &yyActionTable[2325],   1, 791 },
+  { &yyActionTable[2326],   2, 791 },
+  { &yyActionTable[2328],   5, 791 },
+  { &yyActionTable[2333],   2, 791 },
+  { &yyActionTable[2335],   0, 766 },
+  { &yyActionTable[2335],   0, 767 },
+  { &yyActionTable[2335],   1, 791 },
+  { &yyActionTable[2336],   0, 768 },
+  { &yyActionTable[2336],   4, 791 },
+  { &yyActionTable[2340],   4, 791 },
+  { &yyActionTable[2344],   1, 791 },
+  { &yyActionTable[2345],   4, 791 },
+  { &yyActionTable[2349],   1, 791 },
+  { &yyActionTable[2350],   4, 791 },
+  { &yyActionTable[2354],   1, 791 },
+  { &yyActionTable[2355],   4, 791 },
+  { &yyActionTable[2359],   1, 791 },
+  { &yyActionTable[2360],   5, 791 },
+  { &yyActionTable[2365],   1, 791 },
+  { &yyActionTable[2366],   4, 791 },
+  { &yyActionTable[2370],   3, 791 },
+  { &yyActionTable[2373],   1, 791 },
+  { &yyActionTable[2374],   2, 606 },
+  { &yyActionTable[2376],   4, 791 },
+  { &yyActionTable[2380],   1, 791 },
+  { &yyActionTable[2381],   5, 791 },
+  { &yyActionTable[2386],   4, 791 },
+  { &yyActionTable[2390],   1, 791 },
+  { &yyActionTable[2391],   1, 791 },
+  { &yyActionTable[2392],   4, 791 },
+  { &yyActionTable[2396],   2, 680 },
+  { &yyActionTable[2398],   4, 791 },
+  { &yyActionTable[2402],   5, 791 },
+  { &yyActionTable[2407],   1, 791 },
+  { &yyActionTable[2408],  16, 791 },
+  { &yyActionTable[2424],   2, 791 },
+  { &yyActionTable[2426],   1, 791 },
+  { &yyActionTable[2427],   3, 791 },
+  { &yyActionTable[2430],   1, 791 },
+  { &yyActionTable[2431],   1, 791 },
+  { &yyActionTable[2432],   2, 606 },
+  { &yyActionTable[2434],   4, 791 },
+  { &yyActionTable[2438],   1, 791 },
+  { &yyActionTable[2439],   4, 791 },
+  { &yyActionTable[2443],   2, 791 },
+  { &yyActionTable[2445],   1, 791 },
+  { &yyActionTable[2446],   1, 791 },
+  { &yyActionTable[2447],   1, 791 },
+  { &yyActionTable[2448],   5, 791 },
+  { &yyActionTable[2453],   1, 791 },
+  { &yyActionTable[2454],   4, 791 },
+  { &yyActionTable[2458],   3, 791 },
+  { &yyActionTable[2461],  10, 764 },
+  { &yyActionTable[2471],   1, 791 },
+  { &yyActionTable[2472],   1, 791 },
+  { &yyActionTable[2473],   1, 791 },
+  { &yyActionTable[2474],   1, 791 },
+  { &yyActionTable[2475],   3, 791 },
+  { &yyActionTable[2478],   1, 791 },
+  { &yyActionTable[2479],   1, 791 },
+  { &yyActionTable[2480],   1, 791 },
+  { &yyActionTable[2481],   3, 791 },
+  { &yyActionTable[2484],   1, 791 },
+  { &yyActionTable[2485],   0, 763 },
+  { &yyActionTable[2485],   4, 791 },
+  { &yyActionTable[2489],   1, 791 },
+  { &yyActionTable[2490],   1, 791 },
+  { &yyActionTable[2491],   0, 523 },
+  { &yyActionTable[2491],   0, 524 },
+  { &yyActionTable[2491],   0, 520 },
 };
 
 /* The next table maps tokens into fallback tokens.  If a construct
@@ -3873,9 +3831,9 @@ static const char *yyRuleName[] = {
  /*   1 */ "cmdlist ::= ecmd",
  /*   2 */ "cmdlist ::= cmdlist ecmd",
  /*   3 */ "ecmd ::= explain cmd SEMI",
- /*   4 */ "ecmd ::= cmd SEMI",
- /*   5 */ "ecmd ::= SEMI",
- /*   6 */ "explain ::= EXPLAIN",
+ /*   4 */ "ecmd ::= SEMI",
+ /*   5 */ "explain ::= EXPLAIN",
+ /*   6 */ "explain ::=",
  /*   7 */ "cmd ::= BEGIN trans_opt onconf",
  /*   8 */ "trans_opt ::=",
  /*   9 */ "trans_opt ::= TRANSACTION",
@@ -4201,127 +4159,127 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     case 131:
 #line 627 "parse.y"
 {sqliteExprListDelete((yypminor->yy228));}
-#line 4204 "parse.c"
+#line 4162 "parse.c"
       break;
     case 150:
 #line 487 "parse.y"
 {sqliteExprDelete((yypminor->yy62));}
-#line 4209 "parse.c"
+#line 4167 "parse.c"
       break;
     case 151:
 #line 646 "parse.y"
 {sqliteExprDelete((yypminor->yy62));}
-#line 4214 "parse.c"
+#line 4172 "parse.c"
       break;
     case 152:
 #line 644 "parse.y"
 {sqliteExprListDelete((yypminor->yy228));}
-#line 4219 "parse.c"
+#line 4177 "parse.c"
       break;
     case 154:
 #line 312 "parse.y"
 {sqliteSrcListDelete((yypminor->yy7));}
-#line 4224 "parse.c"
+#line 4182 "parse.c"
       break;
     case 155:
 #line 405 "parse.y"
 {sqliteExprListDelete((yypminor->yy228));}
-#line 4229 "parse.c"
+#line 4187 "parse.c"
       break;
     case 156:
 #line 410 "parse.y"
 {sqliteExprDelete((yypminor->yy62));}
-#line 4234 "parse.c"
+#line 4192 "parse.c"
       break;
     case 160:
 #line 668 "parse.y"
 {sqliteIdListDelete((yypminor->yy250));}
-#line 4239 "parse.c"
+#line 4197 "parse.c"
       break;
     case 163:
 #line 466 "parse.y"
 {sqliteIdListDelete((yypminor->yy250));}
-#line 4244 "parse.c"
+#line 4202 "parse.c"
       break;
     case 164:
 #line 464 "parse.y"
 {sqliteIdListDelete((yypminor->yy250));}
-#line 4249 "parse.c"
+#line 4207 "parse.c"
       break;
     case 166:
 #line 458 "parse.y"
 {sqliteExprListDelete((yypminor->yy228));}
-#line 4254 "parse.c"
+#line 4212 "parse.c"
       break;
     case 175:
 #line 366 "parse.y"
 {sqliteExprDelete((yypminor->yy62));}
-#line 4259 "parse.c"
+#line 4217 "parse.c"
       break;
     case 177:
 #line 248 "parse.y"
 {sqliteSelectDelete((yypminor->yy219));}
-#line 4264 "parse.c"
+#line 4222 "parse.c"
       break;
     case 179:
 #line 377 "parse.y"
 {sqliteExprListDelete((yypminor->yy228));}
-#line 4269 "parse.c"
+#line 4227 "parse.c"
       break;
     case 187:
 #line 284 "parse.y"
 {sqliteExprListDelete((yypminor->yy228));}
-#line 4274 "parse.c"
+#line 4232 "parse.c"
       break;
     case 188:
 #line 282 "parse.y"
 {sqliteExprListDelete((yypminor->yy228));}
-#line 4279 "parse.c"
+#line 4237 "parse.c"
       break;
     case 189:
 #line 246 "parse.y"
 {sqliteSelectDelete((yypminor->yy219));}
-#line 4284 "parse.c"
+#line 4242 "parse.c"
       break;
     case 190:
 #line 308 "parse.y"
 {sqliteSrcListDelete((yypminor->yy7));}
-#line 4289 "parse.c"
+#line 4247 "parse.c"
       break;
     case 191:
 #line 434 "parse.y"
 {sqliteExprListDelete((yypminor->yy228));}
-#line 4294 "parse.c"
+#line 4252 "parse.c"
       break;
     case 193:
 #line 381 "parse.y"
 {sqliteExprDelete((yypminor->yy62));}
-#line 4299 "parse.c"
+#line 4257 "parse.c"
       break;
     case 194:
 #line 379 "parse.y"
 {sqliteExprListDelete((yypminor->yy228));}
-#line 4304 "parse.c"
+#line 4262 "parse.c"
       break;
     case 196:
 #line 310 "parse.y"
 {sqliteSrcListDelete((yypminor->yy7));}
-#line 4309 "parse.c"
+#line 4267 "parse.c"
       break;
     case 202:
 #line 725 "parse.y"
 {sqliteIdListDelete((yypminor->yy90).b);}
-#line 4314 "parse.c"
+#line 4272 "parse.c"
       break;
     case 207:
 #line 371 "parse.y"
 {sqliteIdListDelete((yypminor->yy250));}
-#line 4319 "parse.c"
+#line 4277 "parse.c"
       break;
     case 209:
 #line 428 "parse.y"
 {sqliteExprDelete((yypminor->yy62));}
-#line 4324 "parse.c"
+#line 4282 "parse.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -4471,9 +4429,9 @@ static struct {
   { 135, 1 },
   { 135, 2 },
   { 147, 3 },
-  { 147, 2 },
   { 147, 1 },
   { 149, 1 },
+  { 149, 0 },
   { 134, 3 },
   { 199, 0 },
   { 199, 1 },
@@ -4788,31 +4746,29 @@ static void yy_reduce(
       case 3:
 #line 67 "parse.y"
 {sqliteExec(pParse);}
-#line 4791 "parse.c"
+#line 4749 "parse.c"
         /* No destructor defined for explain */
         /* No destructor defined for cmd */
         /* No destructor defined for SEMI */
         break;
       case 4:
-#line 68 "parse.y"
-{sqliteExec(pParse);}
-#line 4799 "parse.c"
-        /* No destructor defined for cmd */
         /* No destructor defined for SEMI */
         break;
       case 5:
-        /* No destructor defined for SEMI */
+#line 69 "parse.y"
+{ sqliteBeginParse(pParse, 1); }
+#line 4760 "parse.c"
+        /* No destructor defined for EXPLAIN */
         break;
       case 6:
 #line 70 "parse.y"
-{pParse->explain = 1;}
-#line 4809 "parse.c"
-        /* No destructor defined for EXPLAIN */
+{ sqliteBeginParse(pParse, 0); }
+#line 4766 "parse.c"
         break;
       case 7:
 #line 75 "parse.y"
 {sqliteBeginTransaction(pParse,yymsp[0].minor.yy172);}
-#line 4815 "parse.c"
+#line 4771 "parse.c"
         /* No destructor defined for BEGIN */
         /* No destructor defined for trans_opt */
         break;
@@ -4828,21 +4784,21 @@ static void yy_reduce(
       case 11:
 #line 79 "parse.y"
 {sqliteCommitTransaction(pParse);}
-#line 4831 "parse.c"
+#line 4787 "parse.c"
         /* No destructor defined for COMMIT */
         /* No destructor defined for trans_opt */
         break;
       case 12:
 #line 80 "parse.y"
 {sqliteCommitTransaction(pParse);}
-#line 4838 "parse.c"
+#line 4794 "parse.c"
         /* No destructor defined for END */
         /* No destructor defined for trans_opt */
         break;
       case 13:
 #line 81 "parse.y"
 {sqliteRollbackTransaction(pParse);}
-#line 4845 "parse.c"
+#line 4801 "parse.c"
         /* No destructor defined for ROLLBACK */
         /* No destructor defined for trans_opt */
         break;
@@ -4855,26 +4811,26 @@ static void yy_reduce(
 {
    sqliteStartTable(pParse,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy378,yymsp[-2].minor.yy172);
 }
-#line 4858 "parse.c"
+#line 4814 "parse.c"
         /* No destructor defined for TABLE */
         break;
       case 16:
 #line 90 "parse.y"
-{yygotominor.yy172 = 1;}
-#line 4864 "parse.c"
+{yygotominor.yy172 = pParse->isTemp || !pParse->initFlag;}
+#line 4820 "parse.c"
         /* No destructor defined for TEMP */
         break;
       case 17:
 #line 91 "parse.y"
-{yygotominor.yy172 = 0;}
-#line 4870 "parse.c"
+{yygotominor.yy172 = pParse->isTemp;}
+#line 4826 "parse.c"
         break;
       case 18:
 #line 92 "parse.y"
 {
   sqliteEndTable(pParse,&yymsp[0].minor.yy0,0);
 }
-#line 4877 "parse.c"
+#line 4833 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for columnlist */
         /* No destructor defined for conslist_opt */
@@ -4885,7 +4841,7 @@ static void yy_reduce(
   sqliteEndTable(pParse,0,yymsp[0].minor.yy219);
   sqliteSelectDelete(yymsp[0].minor.yy219);
 }
-#line 4888 "parse.c"
+#line 4844 "parse.c"
         /* No destructor defined for AS */
         break;
       case 20:
@@ -4904,41 +4860,41 @@ static void yy_reduce(
       case 23:
 #line 107 "parse.y"
 {sqliteAddColumn(pParse,&yymsp[0].minor.yy378);}
-#line 4907 "parse.c"
+#line 4863 "parse.c"
         break;
       case 24:
 #line 113 "parse.y"
 {yygotominor.yy378 = yymsp[0].minor.yy0;}
-#line 4912 "parse.c"
+#line 4868 "parse.c"
         break;
       case 25:
 #line 129 "parse.y"
 {yygotominor.yy378 = yymsp[0].minor.yy378;}
-#line 4917 "parse.c"
+#line 4873 "parse.c"
         break;
       case 26:
 #line 130 "parse.y"
 {yygotominor.yy378 = yymsp[0].minor.yy0;}
-#line 4922 "parse.c"
+#line 4878 "parse.c"
         break;
       case 27:
         break;
       case 28:
 #line 133 "parse.y"
 {sqliteAddColumnType(pParse,&yymsp[0].minor.yy378,&yymsp[0].minor.yy378);}
-#line 4929 "parse.c"
+#line 4885 "parse.c"
         break;
       case 29:
 #line 134 "parse.y"
 {sqliteAddColumnType(pParse,&yymsp[-3].minor.yy378,&yymsp[0].minor.yy0);}
-#line 4934 "parse.c"
+#line 4890 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for signed */
         break;
       case 30:
 #line 136 "parse.y"
 {sqliteAddColumnType(pParse,&yymsp[-5].minor.yy378,&yymsp[0].minor.yy0);}
-#line 4941 "parse.c"
+#line 4897 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for signed */
         /* No destructor defined for COMMA */
@@ -4947,12 +4903,12 @@ static void yy_reduce(
       case 31:
 #line 138 "parse.y"
 {yygotominor.yy378 = yymsp[0].minor.yy378;}
-#line 4950 "parse.c"
+#line 4906 "parse.c"
         break;
       case 32:
 #line 139 "parse.y"
 {yygotominor.yy378 = yymsp[-1].minor.yy378;}
-#line 4955 "parse.c"
+#line 4911 "parse.c"
         /* No destructor defined for ids */
         break;
       case 33:
@@ -4983,52 +4939,52 @@ static void yy_reduce(
       case 40:
 #line 147 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 4986 "parse.c"
+#line 4942 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 41:
 #line 148 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 4992 "parse.c"
+#line 4948 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 42:
 #line 149 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 4998 "parse.c"
+#line 4954 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 43:
 #line 150 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5004 "parse.c"
+#line 4960 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for PLUS */
         break;
       case 44:
 #line 151 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,1);}
-#line 5011 "parse.c"
+#line 4967 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for MINUS */
         break;
       case 45:
 #line 152 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5018 "parse.c"
+#line 4974 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 46:
 #line 153 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5024 "parse.c"
+#line 4980 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for PLUS */
         break;
       case 47:
 #line 154 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,1);}
-#line 5031 "parse.c"
+#line 4987 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for MINUS */
         break;
@@ -5039,14 +4995,14 @@ static void yy_reduce(
       case 49:
 #line 160 "parse.y"
 {sqliteAddNotNull(pParse, yymsp[0].minor.yy172);}
-#line 5042 "parse.c"
+#line 4998 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for NULL */
         break;
       case 50:
 #line 161 "parse.y"
 {sqliteAddPrimaryKey(pParse,0,yymsp[0].minor.yy172);}
-#line 5049 "parse.c"
+#line 5005 "parse.c"
         /* No destructor defined for PRIMARY */
         /* No destructor defined for KEY */
         /* No destructor defined for sortorder */
@@ -5054,7 +5010,7 @@ static void yy_reduce(
       case 51:
 #line 162 "parse.y"
 {sqliteCreateIndex(pParse,0,0,0,yymsp[0].minor.yy172,0,0);}
-#line 5057 "parse.c"
+#line 5013 "parse.c"
         /* No destructor defined for UNIQUE */
         break;
       case 52:
@@ -5075,7 +5031,7 @@ static void yy_reduce(
 {
    sqliteAddCollateType(pParse, sqliteCollateType(pParse, &yymsp[0].minor.yy378));
 }
-#line 5078 "parse.c"
+#line 5034 "parse.c"
         /* No destructor defined for COLLATE */
         break;
       case 56:
@@ -5173,7 +5129,7 @@ static void yy_reduce(
       case 79:
 #line 201 "parse.y"
 {sqliteAddPrimaryKey(pParse,yymsp[-2].minor.yy250,yymsp[0].minor.yy172);}
-#line 5176 "parse.c"
+#line 5132 "parse.c"
         /* No destructor defined for PRIMARY */
         /* No destructor defined for KEY */
         /* No destructor defined for LP */
@@ -5182,7 +5138,7 @@ static void yy_reduce(
       case 80:
 #line 203 "parse.y"
 {sqliteCreateIndex(pParse,0,0,yymsp[-2].minor.yy250,yymsp[0].minor.yy172,0,0);}
-#line 5185 "parse.c"
+#line 5141 "parse.c"
         /* No destructor defined for UNIQUE */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
@@ -5209,60 +5165,60 @@ static void yy_reduce(
       case 85:
 #line 215 "parse.y"
 { yygotominor.yy172 = OE_Default; }
-#line 5212 "parse.c"
+#line 5168 "parse.c"
         break;
       case 86:
 #line 216 "parse.y"
 { yygotominor.yy172 = yymsp[0].minor.yy172; }
-#line 5217 "parse.c"
+#line 5173 "parse.c"
         /* No destructor defined for ON */
         /* No destructor defined for CONFLICT */
         break;
       case 87:
 #line 217 "parse.y"
 { yygotominor.yy172 = OE_Default; }
-#line 5224 "parse.c"
+#line 5180 "parse.c"
         break;
       case 88:
 #line 218 "parse.y"
 { yygotominor.yy172 = yymsp[0].minor.yy172; }
-#line 5229 "parse.c"
+#line 5185 "parse.c"
         /* No destructor defined for OR */
         break;
       case 89:
 #line 219 "parse.y"
 { yygotominor.yy172 = OE_Rollback; }
-#line 5235 "parse.c"
+#line 5191 "parse.c"
         /* No destructor defined for ROLLBACK */
         break;
       case 90:
 #line 220 "parse.y"
 { yygotominor.yy172 = OE_Abort; }
-#line 5241 "parse.c"
+#line 5197 "parse.c"
         /* No destructor defined for ABORT */
         break;
       case 91:
 #line 221 "parse.y"
 { yygotominor.yy172 = OE_Fail; }
-#line 5247 "parse.c"
+#line 5203 "parse.c"
         /* No destructor defined for FAIL */
         break;
       case 92:
 #line 222 "parse.y"
 { yygotominor.yy172 = OE_Ignore; }
-#line 5253 "parse.c"
+#line 5209 "parse.c"
         /* No destructor defined for IGNORE */
         break;
       case 93:
 #line 223 "parse.y"
 { yygotominor.yy172 = OE_Replace; }
-#line 5259 "parse.c"
+#line 5215 "parse.c"
         /* No destructor defined for REPLACE */
         break;
       case 94:
 #line 227 "parse.y"
 {sqliteDropTable(pParse,&yymsp[0].minor.yy378,0);}
-#line 5265 "parse.c"
+#line 5221 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for TABLE */
         break;
@@ -5271,7 +5227,7 @@ static void yy_reduce(
 {
   sqliteCreateView(pParse, &yymsp[-4].minor.yy0, &yymsp[-2].minor.yy378, yymsp[0].minor.yy219);
 }
-#line 5274 "parse.c"
+#line 5230 "parse.c"
         /* No destructor defined for VIEW */
         /* No destructor defined for AS */
         break;
@@ -5280,7 +5236,7 @@ static void yy_reduce(
 {
   sqliteDropTable(pParse, &yymsp[0].minor.yy378, 1);
 }
-#line 5283 "parse.c"
+#line 5239 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for VIEW */
         break;
@@ -5290,12 +5246,12 @@ static void yy_reduce(
   sqliteSelect(pParse, yymsp[0].minor.yy219, SRT_Callback, 0, 0, 0, 0);
   sqliteSelectDelete(yymsp[0].minor.yy219);
 }
-#line 5293 "parse.c"
+#line 5249 "parse.c"
         break;
       case 98:
 #line 250 "parse.y"
 {yygotominor.yy219 = yymsp[0].minor.yy219;}
-#line 5298 "parse.c"
+#line 5254 "parse.c"
         break;
       case 99:
 #line 251 "parse.y"
@@ -5306,31 +5262,31 @@ static void yy_reduce(
   }
   yygotominor.yy219 = yymsp[0].minor.yy219;
 }
-#line 5309 "parse.c"
+#line 5265 "parse.c"
         break;
       case 100:
 #line 259 "parse.y"
 {yygotominor.yy172 = TK_UNION;}
-#line 5314 "parse.c"
+#line 5270 "parse.c"
         /* No destructor defined for UNION */
         break;
       case 101:
 #line 260 "parse.y"
 {yygotominor.yy172 = TK_ALL;}
-#line 5320 "parse.c"
+#line 5276 "parse.c"
         /* No destructor defined for UNION */
         /* No destructor defined for ALL */
         break;
       case 102:
 #line 261 "parse.y"
 {yygotominor.yy172 = TK_INTERSECT;}
-#line 5327 "parse.c"
+#line 5283 "parse.c"
         /* No destructor defined for INTERSECT */
         break;
       case 103:
 #line 262 "parse.y"
 {yygotominor.yy172 = TK_EXCEPT;}
-#line 5333 "parse.c"
+#line 5289 "parse.c"
         /* No destructor defined for EXCEPT */
         break;
       case 104:
@@ -5338,50 +5294,50 @@ static void yy_reduce(
 {
   yygotominor.yy219 = sqliteSelectNew(yymsp[-6].minor.yy228,yymsp[-5].minor.yy7,yymsp[-4].minor.yy62,yymsp[-3].minor.yy228,yymsp[-2].minor.yy62,yymsp[-1].minor.yy228,yymsp[-7].minor.yy172,yymsp[0].minor.yy6.limit,yymsp[0].minor.yy6.offset);
 }
-#line 5341 "parse.c"
+#line 5297 "parse.c"
         /* No destructor defined for SELECT */
         break;
       case 105:
 #line 272 "parse.y"
 {yygotominor.yy172 = 1;}
-#line 5347 "parse.c"
+#line 5303 "parse.c"
         /* No destructor defined for DISTINCT */
         break;
       case 106:
 #line 273 "parse.y"
 {yygotominor.yy172 = 0;}
-#line 5353 "parse.c"
+#line 5309 "parse.c"
         /* No destructor defined for ALL */
         break;
       case 107:
 #line 274 "parse.y"
 {yygotominor.yy172 = 0;}
-#line 5359 "parse.c"
+#line 5315 "parse.c"
         break;
       case 108:
 #line 285 "parse.y"
 {yygotominor.yy228 = yymsp[-1].minor.yy228;}
-#line 5364 "parse.c"
+#line 5320 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 109:
 #line 286 "parse.y"
 {yygotominor.yy228 = 0;}
-#line 5370 "parse.c"
+#line 5326 "parse.c"
         break;
       case 110:
 #line 287 "parse.y"
 {
    yygotominor.yy228 = sqliteExprListAppend(yymsp[-2].minor.yy228,yymsp[-1].minor.yy62,yymsp[0].minor.yy378.n?&yymsp[0].minor.yy378:0);
 }
-#line 5377 "parse.c"
+#line 5333 "parse.c"
         break;
       case 111:
 #line 290 "parse.y"
 {
   yygotominor.yy228 = sqliteExprListAppend(yymsp[-1].minor.yy228, sqliteExpr(TK_ALL, 0, 0, 0), 0);
 }
-#line 5384 "parse.c"
+#line 5340 "parse.c"
         /* No destructor defined for STAR */
         break;
       case 112:
@@ -5391,30 +5347,30 @@ static void yy_reduce(
   Expr *pLeft = sqliteExpr(TK_ID, 0, 0, &yymsp[-2].minor.yy378);
   yygotominor.yy228 = sqliteExprListAppend(yymsp[-3].minor.yy228, sqliteExpr(TK_DOT, pLeft, pRight, 0), 0);
 }
-#line 5394 "parse.c"
+#line 5350 "parse.c"
         /* No destructor defined for DOT */
         /* No destructor defined for STAR */
         break;
       case 113:
 #line 303 "parse.y"
 { yygotominor.yy378 = yymsp[0].minor.yy378; }
-#line 5401 "parse.c"
+#line 5357 "parse.c"
         /* No destructor defined for AS */
         break;
       case 114:
 #line 304 "parse.y"
 { yygotominor.yy378.n = 0; }
-#line 5407 "parse.c"
+#line 5363 "parse.c"
         break;
       case 115:
 #line 316 "parse.y"
 {yygotominor.yy7 = sqliteMalloc(sizeof(*yygotominor.yy7));}
-#line 5412 "parse.c"
+#line 5368 "parse.c"
         break;
       case 116:
 #line 317 "parse.y"
 {yygotominor.yy7 = yymsp[0].minor.yy7;}
-#line 5417 "parse.c"
+#line 5373 "parse.c"
         /* No destructor defined for FROM */
         break;
       case 117:
@@ -5423,12 +5379,12 @@ static void yy_reduce(
    yygotominor.yy7 = yymsp[-1].minor.yy7;
    if( yygotominor.yy7 && yygotominor.yy7->nSrc>0 ) yygotominor.yy7->a[yygotominor.yy7->nSrc-1].jointype = yymsp[0].minor.yy172;
 }
-#line 5426 "parse.c"
+#line 5382 "parse.c"
         break;
       case 118:
 #line 326 "parse.y"
 {yygotominor.yy7 = 0;}
-#line 5431 "parse.c"
+#line 5387 "parse.c"
         break;
       case 119:
 #line 327 "parse.y"
@@ -5444,7 +5400,7 @@ static void yy_reduce(
     else { sqliteIdListDelete(yymsp[0].minor.yy250); }
   }
 }
-#line 5447 "parse.c"
+#line 5403 "parse.c"
         break;
       case 120:
 #line 339 "parse.y"
@@ -5465,55 +5421,55 @@ static void yy_reduce(
     else { sqliteIdListDelete(yymsp[0].minor.yy250); }
   }
 }
-#line 5468 "parse.c"
+#line 5424 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
       case 121:
 #line 359 "parse.y"
 { yygotominor.yy172 = JT_INNER; }
-#line 5475 "parse.c"
+#line 5431 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 122:
 #line 360 "parse.y"
 { yygotominor.yy172 = JT_INNER; }
-#line 5481 "parse.c"
+#line 5437 "parse.c"
         /* No destructor defined for JOIN */
         break;
       case 123:
 #line 361 "parse.y"
 { yygotominor.yy172 = sqliteJoinType(pParse,&yymsp[-1].minor.yy0,0,0); }
-#line 5487 "parse.c"
+#line 5443 "parse.c"
         /* No destructor defined for JOIN */
         break;
       case 124:
 #line 362 "parse.y"
 { yygotominor.yy172 = sqliteJoinType(pParse,&yymsp[-2].minor.yy0,&yymsp[-1].minor.yy0,0); }
-#line 5493 "parse.c"
+#line 5449 "parse.c"
         /* No destructor defined for JOIN */
         break;
       case 125:
 #line 363 "parse.y"
 { yygotominor.yy172 = sqliteJoinType(pParse,&yymsp[-3].minor.yy0,&yymsp[-2].minor.yy0,&yymsp[-1].minor.yy0); }
-#line 5499 "parse.c"
+#line 5455 "parse.c"
         /* No destructor defined for JOIN */
         break;
       case 126:
 #line 367 "parse.y"
 {yygotominor.yy62 = yymsp[0].minor.yy62;}
-#line 5505 "parse.c"
+#line 5461 "parse.c"
         /* No destructor defined for ON */
         break;
       case 127:
 #line 368 "parse.y"
 {yygotominor.yy62 = 0;}
-#line 5511 "parse.c"
+#line 5467 "parse.c"
         break;
       case 128:
 #line 372 "parse.y"
 {yygotominor.yy250 = yymsp[-1].minor.yy250;}
-#line 5516 "parse.c"
+#line 5472 "parse.c"
         /* No destructor defined for USING */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
@@ -5521,17 +5477,17 @@ static void yy_reduce(
       case 129:
 #line 373 "parse.y"
 {yygotominor.yy250 = 0;}
-#line 5524 "parse.c"
+#line 5480 "parse.c"
         break;
       case 130:
 #line 383 "parse.y"
 {yygotominor.yy228 = 0;}
-#line 5529 "parse.c"
+#line 5485 "parse.c"
         break;
       case 131:
 #line 384 "parse.y"
 {yygotominor.yy228 = yymsp[0].minor.yy228;}
-#line 5534 "parse.c"
+#line 5490 "parse.c"
         /* No destructor defined for ORDER */
         /* No destructor defined for BY */
         break;
@@ -5541,7 +5497,7 @@ static void yy_reduce(
   yygotominor.yy228 = sqliteExprListAppend(yymsp[-4].minor.yy228,yymsp[-2].minor.yy62,0);
   if( yygotominor.yy228 ) yygotominor.yy228->a[yygotominor.yy228->nExpr-1].sortOrder = yymsp[-1].minor.yy172+yymsp[0].minor.yy172;
 }
-#line 5544 "parse.c"
+#line 5500 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 133:
@@ -5550,79 +5506,79 @@ static void yy_reduce(
   yygotominor.yy228 = sqliteExprListAppend(0,yymsp[-1].minor.yy62,0);
   if( yygotominor.yy228 ) yygotominor.yy228->a[0].sortOrder = yymsp[0].minor.yy172;
 }
-#line 5553 "parse.c"
+#line 5509 "parse.c"
         break;
       case 134:
 #line 393 "parse.y"
 {yygotominor.yy62 = yymsp[0].minor.yy62;}
-#line 5558 "parse.c"
+#line 5514 "parse.c"
         break;
       case 135:
 #line 398 "parse.y"
 {yygotominor.yy172 = SQLITE_SO_ASC;}
-#line 5563 "parse.c"
+#line 5519 "parse.c"
         /* No destructor defined for ASC */
         break;
       case 136:
 #line 399 "parse.y"
 {yygotominor.yy172 = SQLITE_SO_DESC;}
-#line 5569 "parse.c"
+#line 5525 "parse.c"
         /* No destructor defined for DESC */
         break;
       case 137:
 #line 400 "parse.y"
 {yygotominor.yy172 = SQLITE_SO_ASC;}
-#line 5575 "parse.c"
+#line 5531 "parse.c"
         break;
       case 138:
 #line 401 "parse.y"
 {yygotominor.yy172 = SQLITE_SO_UNK;}
-#line 5580 "parse.c"
+#line 5536 "parse.c"
         break;
       case 139:
 #line 402 "parse.y"
 {yygotominor.yy172 = sqliteCollateType(pParse, &yymsp[0].minor.yy378);}
-#line 5585 "parse.c"
+#line 5541 "parse.c"
         /* No destructor defined for COLLATE */
         break;
       case 140:
 #line 406 "parse.y"
 {yygotominor.yy228 = 0;}
-#line 5591 "parse.c"
+#line 5547 "parse.c"
         break;
       case 141:
 #line 407 "parse.y"
 {yygotominor.yy228 = yymsp[0].minor.yy228;}
-#line 5596 "parse.c"
+#line 5552 "parse.c"
         /* No destructor defined for GROUP */
         /* No destructor defined for BY */
         break;
       case 142:
 #line 411 "parse.y"
 {yygotominor.yy62 = 0;}
-#line 5603 "parse.c"
+#line 5559 "parse.c"
         break;
       case 143:
 #line 412 "parse.y"
 {yygotominor.yy62 = yymsp[0].minor.yy62;}
-#line 5608 "parse.c"
+#line 5564 "parse.c"
         /* No destructor defined for HAVING */
         break;
       case 144:
 #line 415 "parse.y"
 {yygotominor.yy6.limit = -1; yygotominor.yy6.offset = 0;}
-#line 5614 "parse.c"
+#line 5570 "parse.c"
         break;
       case 145:
 #line 416 "parse.y"
 {yygotominor.yy6.limit = atoi(yymsp[0].minor.yy0.z); yygotominor.yy6.offset = 0;}
-#line 5619 "parse.c"
+#line 5575 "parse.c"
         /* No destructor defined for LIMIT */
         break;
       case 146:
 #line 418 "parse.y"
 {yygotominor.yy6.limit = atoi(yymsp[-2].minor.yy0.z); yygotominor.yy6.offset = atoi(yymsp[0].minor.yy0.z);}
-#line 5625 "parse.c"
+#line 5581 "parse.c"
         /* No destructor defined for LIMIT */
         /* No destructor defined for limit_sep */
         break;
@@ -5635,45 +5591,45 @@ static void yy_reduce(
       case 149:
 #line 425 "parse.y"
 {sqliteDeleteFrom(pParse, &yymsp[-1].minor.yy378, yymsp[0].minor.yy62);}
-#line 5638 "parse.c"
+#line 5594 "parse.c"
         /* No destructor defined for DELETE */
         /* No destructor defined for FROM */
         break;
       case 150:
 #line 430 "parse.y"
 {yygotominor.yy62 = 0;}
-#line 5645 "parse.c"
+#line 5601 "parse.c"
         break;
       case 151:
 #line 431 "parse.y"
 {yygotominor.yy62 = yymsp[0].minor.yy62;}
-#line 5650 "parse.c"
+#line 5606 "parse.c"
         /* No destructor defined for WHERE */
         break;
       case 152:
 #line 439 "parse.y"
 {sqliteUpdate(pParse,&yymsp[-3].minor.yy378,yymsp[-1].minor.yy228,yymsp[0].minor.yy62,yymsp[-4].minor.yy172);}
-#line 5656 "parse.c"
+#line 5612 "parse.c"
         /* No destructor defined for UPDATE */
         /* No destructor defined for SET */
         break;
       case 153:
 #line 442 "parse.y"
 {yygotominor.yy228 = sqliteExprListAppend(yymsp[-4].minor.yy228,yymsp[0].minor.yy62,&yymsp[-2].minor.yy378);}
-#line 5663 "parse.c"
+#line 5619 "parse.c"
         /* No destructor defined for COMMA */
         /* No destructor defined for EQ */
         break;
       case 154:
 #line 443 "parse.y"
 {yygotominor.yy228 = sqliteExprListAppend(0,yymsp[0].minor.yy62,&yymsp[-2].minor.yy378);}
-#line 5670 "parse.c"
+#line 5626 "parse.c"
         /* No destructor defined for EQ */
         break;
       case 155:
 #line 448 "parse.y"
 {sqliteInsert(pParse, &yymsp[-5].minor.yy378, yymsp[-1].minor.yy228, 0, yymsp[-4].minor.yy250, yymsp[-7].minor.yy172);}
-#line 5676 "parse.c"
+#line 5632 "parse.c"
         /* No destructor defined for INTO */
         /* No destructor defined for VALUES */
         /* No destructor defined for LP */
@@ -5682,69 +5638,69 @@ static void yy_reduce(
       case 156:
 #line 450 "parse.y"
 {sqliteInsert(pParse, &yymsp[-2].minor.yy378, 0, yymsp[0].minor.yy219, yymsp[-1].minor.yy250, yymsp[-4].minor.yy172);}
-#line 5685 "parse.c"
+#line 5641 "parse.c"
         /* No destructor defined for INTO */
         break;
       case 157:
 #line 453 "parse.y"
 {yygotominor.yy172 = yymsp[0].minor.yy172;}
-#line 5691 "parse.c"
+#line 5647 "parse.c"
         /* No destructor defined for INSERT */
         break;
       case 158:
 #line 454 "parse.y"
 {yygotominor.yy172 = OE_Replace;}
-#line 5697 "parse.c"
+#line 5653 "parse.c"
         /* No destructor defined for REPLACE */
         break;
       case 159:
 #line 460 "parse.y"
 {yygotominor.yy228 = sqliteExprListAppend(yymsp[-2].minor.yy228,yymsp[0].minor.yy62,0);}
-#line 5703 "parse.c"
+#line 5659 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 160:
 #line 461 "parse.y"
 {yygotominor.yy228 = sqliteExprListAppend(0,yymsp[0].minor.yy62,0);}
-#line 5709 "parse.c"
+#line 5665 "parse.c"
         break;
       case 161:
 #line 468 "parse.y"
 {yygotominor.yy250 = 0;}
-#line 5714 "parse.c"
+#line 5670 "parse.c"
         break;
       case 162:
 #line 469 "parse.y"
 {yygotominor.yy250 = yymsp[-1].minor.yy250;}
-#line 5719 "parse.c"
+#line 5675 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
       case 163:
 #line 470 "parse.y"
 {yygotominor.yy250 = sqliteIdListAppend(yymsp[-2].minor.yy250,&yymsp[0].minor.yy378);}
-#line 5726 "parse.c"
+#line 5682 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 164:
 #line 471 "parse.y"
 {yygotominor.yy250 = sqliteIdListAppend(0,&yymsp[0].minor.yy378);}
-#line 5732 "parse.c"
+#line 5688 "parse.c"
         break;
       case 165:
 #line 489 "parse.y"
 {yygotominor.yy62 = yymsp[-1].minor.yy62; sqliteExprSpan(yygotominor.yy62,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0);}
-#line 5737 "parse.c"
+#line 5693 "parse.c"
         break;
       case 166:
 #line 490 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_NULL, 0, 0, &yymsp[0].minor.yy0);}
-#line 5742 "parse.c"
+#line 5698 "parse.c"
         break;
       case 167:
 #line 491 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy378);}
-#line 5747 "parse.c"
+#line 5703 "parse.c"
         break;
       case 168:
 #line 492 "parse.y"
@@ -5753,23 +5709,23 @@ static void yy_reduce(
   Expr *temp2 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy378);
   yygotominor.yy62 = sqliteExpr(TK_DOT, temp1, temp2, 0);
 }
-#line 5756 "parse.c"
+#line 5712 "parse.c"
         /* No destructor defined for DOT */
         break;
       case 169:
 #line 497 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_INTEGER, 0, 0, &yymsp[0].minor.yy0);}
-#line 5762 "parse.c"
+#line 5718 "parse.c"
         break;
       case 170:
 #line 498 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_FLOAT, 0, 0, &yymsp[0].minor.yy0);}
-#line 5767 "parse.c"
+#line 5723 "parse.c"
         break;
       case 171:
 #line 499 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_STRING, 0, 0, &yymsp[0].minor.yy0);}
-#line 5772 "parse.c"
+#line 5728 "parse.c"
         break;
       case 172:
 #line 500 "parse.y"
@@ -5777,7 +5733,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExprFunction(yymsp[-1].minor.yy228, &yymsp[-3].minor.yy0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
 }
-#line 5780 "parse.c"
+#line 5736 "parse.c"
         /* No destructor defined for LP */
         break;
       case 173:
@@ -5786,80 +5742,80 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExprFunction(0, &yymsp[-3].minor.yy0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
 }
-#line 5789 "parse.c"
+#line 5745 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for STAR */
         break;
       case 174:
 #line 508 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_AND, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5796 "parse.c"
+#line 5752 "parse.c"
         /* No destructor defined for AND */
         break;
       case 175:
 #line 509 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_OR, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5802 "parse.c"
+#line 5758 "parse.c"
         /* No destructor defined for OR */
         break;
       case 176:
 #line 510 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_LT, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5808 "parse.c"
+#line 5764 "parse.c"
         /* No destructor defined for LT */
         break;
       case 177:
 #line 511 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_GT, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5814 "parse.c"
+#line 5770 "parse.c"
         /* No destructor defined for GT */
         break;
       case 178:
 #line 512 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_LE, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5820 "parse.c"
+#line 5776 "parse.c"
         /* No destructor defined for LE */
         break;
       case 179:
 #line 513 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_GE, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5826 "parse.c"
+#line 5782 "parse.c"
         /* No destructor defined for GE */
         break;
       case 180:
 #line 514 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_NE, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5832 "parse.c"
+#line 5788 "parse.c"
         /* No destructor defined for NE */
         break;
       case 181:
 #line 515 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_EQ, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5838 "parse.c"
+#line 5794 "parse.c"
         /* No destructor defined for EQ */
         break;
       case 182:
 #line 516 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_BITAND, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5844 "parse.c"
+#line 5800 "parse.c"
         /* No destructor defined for BITAND */
         break;
       case 183:
 #line 517 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_BITOR, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5850 "parse.c"
+#line 5806 "parse.c"
         /* No destructor defined for BITOR */
         break;
       case 184:
 #line 518 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_LSHIFT, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5856 "parse.c"
+#line 5812 "parse.c"
         /* No destructor defined for LSHIFT */
         break;
       case 185:
 #line 519 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_RSHIFT, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5862 "parse.c"
+#line 5818 "parse.c"
         /* No destructor defined for RSHIFT */
         break;
       case 186:
@@ -5870,7 +5826,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExprFunction(pList, &yymsp[-1].minor.yy378);
   sqliteExprSpan(yygotominor.yy62, &yymsp[-2].minor.yy62->span, &yymsp[0].minor.yy62->span);
 }
-#line 5873 "parse.c"
+#line 5829 "parse.c"
         break;
       case 187:
 #line 526 "parse.y"
@@ -5881,53 +5837,53 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_NOT, yygotominor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-3].minor.yy62->span,&yymsp[0].minor.yy62->span);
 }
-#line 5884 "parse.c"
+#line 5840 "parse.c"
         /* No destructor defined for NOT */
         break;
       case 188:
 #line 533 "parse.y"
 {yygotominor.yy378 = yymsp[0].minor.yy0;}
-#line 5890 "parse.c"
+#line 5846 "parse.c"
         break;
       case 189:
 #line 534 "parse.y"
 {yygotominor.yy378 = yymsp[0].minor.yy0;}
-#line 5895 "parse.c"
+#line 5851 "parse.c"
         break;
       case 190:
 #line 535 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_PLUS, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5900 "parse.c"
+#line 5856 "parse.c"
         /* No destructor defined for PLUS */
         break;
       case 191:
 #line 536 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_MINUS, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5906 "parse.c"
+#line 5862 "parse.c"
         /* No destructor defined for MINUS */
         break;
       case 192:
 #line 537 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_STAR, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5912 "parse.c"
+#line 5868 "parse.c"
         /* No destructor defined for STAR */
         break;
       case 193:
 #line 538 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_SLASH, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5918 "parse.c"
+#line 5874 "parse.c"
         /* No destructor defined for SLASH */
         break;
       case 194:
 #line 539 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_REM, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5924 "parse.c"
+#line 5880 "parse.c"
         /* No destructor defined for REM */
         break;
       case 195:
 #line 540 "parse.y"
 {yygotominor.yy62 = sqliteExpr(TK_CONCAT, yymsp[-2].minor.yy62, yymsp[0].minor.yy62, 0);}
-#line 5930 "parse.c"
+#line 5886 "parse.c"
         /* No destructor defined for CONCAT */
         break;
       case 196:
@@ -5936,7 +5892,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_ISNULL, yymsp[-1].minor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-1].minor.yy62->span,&yymsp[0].minor.yy0);
 }
-#line 5939 "parse.c"
+#line 5895 "parse.c"
         break;
       case 197:
 #line 545 "parse.y"
@@ -5944,7 +5900,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_ISNULL, yymsp[-2].minor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-2].minor.yy62->span,&yymsp[0].minor.yy0);
 }
-#line 5947 "parse.c"
+#line 5903 "parse.c"
         /* No destructor defined for IS */
         break;
       case 198:
@@ -5953,7 +5909,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_NOTNULL, yymsp[-1].minor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-1].minor.yy62->span,&yymsp[0].minor.yy0);
 }
-#line 5956 "parse.c"
+#line 5912 "parse.c"
         break;
       case 199:
 #line 553 "parse.y"
@@ -5961,7 +5917,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_NOTNULL, yymsp[-2].minor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-2].minor.yy62->span,&yymsp[0].minor.yy0);
 }
-#line 5964 "parse.c"
+#line 5920 "parse.c"
         /* No destructor defined for NOT */
         break;
       case 200:
@@ -5970,7 +5926,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_NOTNULL, yymsp[-3].minor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-3].minor.yy62->span,&yymsp[0].minor.yy0);
 }
-#line 5973 "parse.c"
+#line 5929 "parse.c"
         /* No destructor defined for IS */
         /* No destructor defined for NOT */
         break;
@@ -5980,7 +5936,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_NOT, yymsp[0].minor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy62->span);
 }
-#line 5983 "parse.c"
+#line 5939 "parse.c"
         break;
       case 202:
 #line 565 "parse.y"
@@ -5988,7 +5944,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_BITNOT, yymsp[0].minor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy62->span);
 }
-#line 5991 "parse.c"
+#line 5947 "parse.c"
         break;
       case 203:
 #line 569 "parse.y"
@@ -5996,7 +5952,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_UMINUS, yymsp[0].minor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy62->span);
 }
-#line 5999 "parse.c"
+#line 5955 "parse.c"
         break;
       case 204:
 #line 573 "parse.y"
@@ -6004,7 +5960,7 @@ static void yy_reduce(
   yygotominor.yy62 = yymsp[0].minor.yy62;
   sqliteExprSpan(yygotominor.yy62,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy62->span);
 }
-#line 6007 "parse.c"
+#line 5963 "parse.c"
         break;
       case 205:
 #line 577 "parse.y"
@@ -6013,7 +5969,7 @@ static void yy_reduce(
   if( yygotominor.yy62 ) yygotominor.yy62->pSelect = yymsp[-1].minor.yy219;
   sqliteExprSpan(yygotominor.yy62,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0);
 }
-#line 6016 "parse.c"
+#line 5972 "parse.c"
         break;
       case 206:
 #line 582 "parse.y"
@@ -6024,7 +5980,7 @@ static void yy_reduce(
   if( yygotominor.yy62 ) yygotominor.yy62->pList = pList;
   sqliteExprSpan(yygotominor.yy62,&yymsp[-4].minor.yy62->span,&yymsp[0].minor.yy62->span);
 }
-#line 6027 "parse.c"
+#line 5983 "parse.c"
         /* No destructor defined for BETWEEN */
         /* No destructor defined for AND */
         break;
@@ -6038,7 +5994,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_NOT, yygotominor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-5].minor.yy62->span,&yymsp[0].minor.yy62->span);
 }
-#line 6041 "parse.c"
+#line 5997 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for BETWEEN */
         /* No destructor defined for AND */
@@ -6050,7 +6006,7 @@ static void yy_reduce(
   if( yygotominor.yy62 ) yygotominor.yy62->pList = yymsp[-1].minor.yy228;
   sqliteExprSpan(yygotominor.yy62,&yymsp[-4].minor.yy62->span,&yymsp[0].minor.yy0);
 }
-#line 6053 "parse.c"
+#line 6009 "parse.c"
         /* No destructor defined for IN */
         /* No destructor defined for LP */
         break;
@@ -6061,7 +6017,7 @@ static void yy_reduce(
   if( yygotominor.yy62 ) yygotominor.yy62->pSelect = yymsp[-1].minor.yy219;
   sqliteExprSpan(yygotominor.yy62,&yymsp[-4].minor.yy62->span,&yymsp[0].minor.yy0);
 }
-#line 6064 "parse.c"
+#line 6020 "parse.c"
         /* No destructor defined for IN */
         /* No destructor defined for LP */
         break;
@@ -6073,7 +6029,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_NOT, yygotominor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-5].minor.yy62->span,&yymsp[0].minor.yy0);
 }
-#line 6076 "parse.c"
+#line 6032 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for IN */
         /* No destructor defined for LP */
@@ -6086,7 +6042,7 @@ static void yy_reduce(
   yygotominor.yy62 = sqliteExpr(TK_NOT, yygotominor.yy62, 0, 0);
   sqliteExprSpan(yygotominor.yy62,&yymsp[-5].minor.yy62->span,&yymsp[0].minor.yy0);
 }
-#line 6089 "parse.c"
+#line 6045 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for IN */
         /* No destructor defined for LP */
@@ -6098,7 +6054,7 @@ static void yy_reduce(
   if( yygotominor.yy62 ) yygotominor.yy62->pList = yymsp[-2].minor.yy228;
   sqliteExprSpan(yygotominor.yy62, &yymsp[-4].minor.yy0, &yymsp[0].minor.yy0);
 }
-#line 6101 "parse.c"
+#line 6057 "parse.c"
         break;
       case 213:
 #line 628 "parse.y"
@@ -6106,7 +6062,7 @@ static void yy_reduce(
   yygotominor.yy228 = sqliteExprListAppend(yymsp[-4].minor.yy228, yymsp[-2].minor.yy62, 0);
   yygotominor.yy228 = sqliteExprListAppend(yygotominor.yy228, yymsp[0].minor.yy62, 0);
 }
-#line 6109 "parse.c"
+#line 6065 "parse.c"
         /* No destructor defined for WHEN */
         /* No destructor defined for THEN */
         break;
@@ -6116,51 +6072,51 @@ static void yy_reduce(
   yygotominor.yy228 = sqliteExprListAppend(0, yymsp[-2].minor.yy62, 0);
   yygotominor.yy228 = sqliteExprListAppend(yygotominor.yy228, yymsp[0].minor.yy62, 0);
 }
-#line 6119 "parse.c"
+#line 6075 "parse.c"
         /* No destructor defined for WHEN */
         /* No destructor defined for THEN */
         break;
       case 215:
 #line 637 "parse.y"
 {yygotominor.yy62 = yymsp[0].minor.yy62;}
-#line 6126 "parse.c"
+#line 6082 "parse.c"
         /* No destructor defined for ELSE */
         break;
       case 216:
 #line 638 "parse.y"
 {yygotominor.yy62 = 0;}
-#line 6132 "parse.c"
+#line 6088 "parse.c"
         break;
       case 217:
 #line 640 "parse.y"
 {yygotominor.yy62 = yymsp[0].minor.yy62;}
-#line 6137 "parse.c"
+#line 6093 "parse.c"
         break;
       case 218:
 #line 641 "parse.y"
 {yygotominor.yy62 = 0;}
-#line 6142 "parse.c"
+#line 6098 "parse.c"
         break;
       case 219:
 #line 649 "parse.y"
 {yygotominor.yy228 = sqliteExprListAppend(yymsp[-2].minor.yy228,yymsp[0].minor.yy62,0);}
-#line 6147 "parse.c"
+#line 6103 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 220:
 #line 650 "parse.y"
 {yygotominor.yy228 = sqliteExprListAppend(0,yymsp[0].minor.yy62,0);}
-#line 6153 "parse.c"
+#line 6109 "parse.c"
         break;
       case 221:
 #line 651 "parse.y"
 {yygotominor.yy62 = yymsp[0].minor.yy62;}
-#line 6158 "parse.c"
+#line 6114 "parse.c"
         break;
       case 222:
 #line 652 "parse.y"
 {yygotominor.yy62 = 0;}
-#line 6163 "parse.c"
+#line 6119 "parse.c"
         break;
       case 223:
 #line 657 "parse.y"
@@ -6169,7 +6125,7 @@ static void yy_reduce(
   if( yymsp[-8].minor.yy172==OE_Default) yymsp[-8].minor.yy172 = OE_Abort;
   sqliteCreateIndex(pParse, &yymsp[-6].minor.yy378, &yymsp[-4].minor.yy378, yymsp[-2].minor.yy250, yymsp[-8].minor.yy172, &yymsp[-9].minor.yy0, &yymsp[-1].minor.yy0);
 }
-#line 6172 "parse.c"
+#line 6128 "parse.c"
         /* No destructor defined for INDEX */
         /* No destructor defined for ON */
         /* No destructor defined for LP */
@@ -6177,41 +6133,41 @@ static void yy_reduce(
       case 224:
 #line 664 "parse.y"
 { yygotominor.yy172 = OE_Abort; }
-#line 6180 "parse.c"
+#line 6136 "parse.c"
         /* No destructor defined for UNIQUE */
         break;
       case 225:
 #line 665 "parse.y"
 { yygotominor.yy172 = OE_None; }
-#line 6186 "parse.c"
+#line 6142 "parse.c"
         break;
       case 226:
 #line 672 "parse.y"
 {yygotominor.yy250 = sqliteIdListAppend(yymsp[-2].minor.yy250,&yymsp[0].minor.yy378);}
-#line 6191 "parse.c"
+#line 6147 "parse.c"
         /* No destructor defined for COMMA */
         break;
       case 227:
 #line 674 "parse.y"
 {yygotominor.yy250 = sqliteIdListAppend(0,&yymsp[0].minor.yy378);}
-#line 6197 "parse.c"
+#line 6153 "parse.c"
         break;
       case 228:
 #line 675 "parse.y"
 {yygotominor.yy378 = yymsp[0].minor.yy378;}
-#line 6202 "parse.c"
+#line 6158 "parse.c"
         break;
       case 229:
 #line 680 "parse.y"
 {sqliteDropIndex(pParse, &yymsp[0].minor.yy378);}
-#line 6207 "parse.c"
+#line 6163 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for INDEX */
         break;
       case 230:
 #line 686 "parse.y"
 {sqliteCopy(pParse,&yymsp[-5].minor.yy378,&yymsp[-3].minor.yy378,&yymsp[0].minor.yy0,yymsp[-6].minor.yy172);}
-#line 6214 "parse.c"
+#line 6170 "parse.c"
         /* No destructor defined for COPY */
         /* No destructor defined for FROM */
         /* No destructor defined for USING */
@@ -6220,54 +6176,54 @@ static void yy_reduce(
       case 231:
 #line 688 "parse.y"
 {sqliteCopy(pParse,&yymsp[-2].minor.yy378,&yymsp[0].minor.yy378,0,yymsp[-3].minor.yy172);}
-#line 6223 "parse.c"
+#line 6179 "parse.c"
         /* No destructor defined for COPY */
         /* No destructor defined for FROM */
         break;
       case 232:
 #line 692 "parse.y"
 {sqliteVacuum(pParse,0);}
-#line 6230 "parse.c"
+#line 6186 "parse.c"
         /* No destructor defined for VACUUM */
         break;
       case 233:
 #line 693 "parse.y"
 {sqliteVacuum(pParse,&yymsp[0].minor.yy378);}
-#line 6236 "parse.c"
+#line 6192 "parse.c"
         /* No destructor defined for VACUUM */
         break;
       case 234:
 #line 697 "parse.y"
 {sqlitePragma(pParse,&yymsp[-2].minor.yy378,&yymsp[0].minor.yy378,0);}
-#line 6242 "parse.c"
+#line 6198 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
       case 235:
 #line 698 "parse.y"
 {sqlitePragma(pParse,&yymsp[-2].minor.yy378,&yymsp[0].minor.yy0,0);}
-#line 6249 "parse.c"
+#line 6205 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
       case 236:
 #line 699 "parse.y"
 {sqlitePragma(pParse,&yymsp[-2].minor.yy378,&yymsp[0].minor.yy378,0);}
-#line 6256 "parse.c"
+#line 6212 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
       case 237:
 #line 700 "parse.y"
 {sqlitePragma(pParse,&yymsp[-2].minor.yy378,&yymsp[0].minor.yy378,1);}
-#line 6263 "parse.c"
+#line 6219 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
       case 238:
 #line 701 "parse.y"
 {sqlitePragma(pParse,&yymsp[-3].minor.yy378,&yymsp[-1].minor.yy378,0);}
-#line 6270 "parse.c"
+#line 6226 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
@@ -6275,30 +6231,30 @@ static void yy_reduce(
       case 239:
 #line 702 "parse.y"
 {sqlitePragma(pParse,&yymsp[0].minor.yy378,&yymsp[0].minor.yy378,0);}
-#line 6278 "parse.c"
+#line 6234 "parse.c"
         /* No destructor defined for PRAGMA */
         break;
       case 240:
 #line 703 "parse.y"
 {yygotominor.yy378 = yymsp[0].minor.yy378;}
-#line 6284 "parse.c"
+#line 6240 "parse.c"
         /* No destructor defined for plus_opt */
         break;
       case 241:
 #line 704 "parse.y"
 {yygotominor.yy378 = yymsp[0].minor.yy378;}
-#line 6290 "parse.c"
+#line 6246 "parse.c"
         /* No destructor defined for MINUS */
         break;
       case 242:
 #line 705 "parse.y"
 {yygotominor.yy378 = yymsp[0].minor.yy0;}
-#line 6296 "parse.c"
+#line 6252 "parse.c"
         break;
       case 243:
 #line 706 "parse.y"
 {yygotominor.yy378 = yymsp[0].minor.yy0;}
-#line 6301 "parse.c"
+#line 6257 "parse.c"
         break;
       case 244:
         /* No destructor defined for PLUS */
@@ -6311,7 +6267,7 @@ static void yy_reduce(
   sqliteCreateTrigger(pParse, &yymsp[-9].minor.yy378, yymsp[-8].minor.yy172, yymsp[-7].minor.yy90.a, yymsp[-7].minor.yy90.b, &yymsp[-5].minor.yy378, yymsp[-4].minor.yy172, yymsp[-3].minor.yy308, yymsp[-1].minor.yy311, 
       yymsp[-11].minor.yy0.z, (int)(yymsp[0].minor.yy0.z - yymsp[-11].minor.yy0.z) + yymsp[0].minor.yy0.n );
 }
-#line 6314 "parse.c"
+#line 6270 "parse.c"
         /* No destructor defined for TRIGGER */
         /* No destructor defined for ON */
         /* No destructor defined for BEGIN */
@@ -6319,61 +6275,61 @@ static void yy_reduce(
       case 247:
 #line 719 "parse.y"
 { yygotominor.yy172 = TK_BEFORE; }
-#line 6322 "parse.c"
+#line 6278 "parse.c"
         /* No destructor defined for BEFORE */
         break;
       case 248:
 #line 720 "parse.y"
 { yygotominor.yy172 = TK_AFTER;  }
-#line 6328 "parse.c"
+#line 6284 "parse.c"
         /* No destructor defined for AFTER */
         break;
       case 249:
 #line 721 "parse.y"
 { yygotominor.yy172 = TK_INSTEAD;}
-#line 6334 "parse.c"
+#line 6290 "parse.c"
         /* No destructor defined for INSTEAD */
         /* No destructor defined for OF */
         break;
       case 250:
 #line 722 "parse.y"
 { yygotominor.yy172 = TK_BEFORE; }
-#line 6341 "parse.c"
+#line 6297 "parse.c"
         break;
       case 251:
 #line 726 "parse.y"
 { yygotominor.yy90.a = TK_DELETE; yygotominor.yy90.b = 0; }
-#line 6346 "parse.c"
+#line 6302 "parse.c"
         /* No destructor defined for DELETE */
         break;
       case 252:
 #line 727 "parse.y"
 { yygotominor.yy90.a = TK_INSERT; yygotominor.yy90.b = 0; }
-#line 6352 "parse.c"
+#line 6308 "parse.c"
         /* No destructor defined for INSERT */
         break;
       case 253:
 #line 728 "parse.y"
 { yygotominor.yy90.a = TK_UPDATE; yygotominor.yy90.b = 0;}
-#line 6358 "parse.c"
+#line 6314 "parse.c"
         /* No destructor defined for UPDATE */
         break;
       case 254:
 #line 729 "parse.y"
 {yygotominor.yy90.a = TK_UPDATE; yygotominor.yy90.b = yymsp[0].minor.yy250; }
-#line 6364 "parse.c"
+#line 6320 "parse.c"
         /* No destructor defined for UPDATE */
         /* No destructor defined for OF */
         break;
       case 255:
 #line 732 "parse.y"
 { yygotominor.yy172 = TK_ROW; }
-#line 6371 "parse.c"
+#line 6327 "parse.c"
         break;
       case 256:
 #line 733 "parse.y"
 { yygotominor.yy172 = TK_ROW; }
-#line 6376 "parse.c"
+#line 6332 "parse.c"
         /* No destructor defined for FOR */
         /* No destructor defined for EACH */
         /* No destructor defined for ROW */
@@ -6381,7 +6337,7 @@ static void yy_reduce(
       case 257:
 #line 734 "parse.y"
 { yygotominor.yy172 = TK_STATEMENT; }
-#line 6384 "parse.c"
+#line 6340 "parse.c"
         /* No destructor defined for FOR */
         /* No destructor defined for EACH */
         /* No destructor defined for STATEMENT */
@@ -6389,37 +6345,37 @@ static void yy_reduce(
       case 258:
 #line 737 "parse.y"
 { yygotominor.yy308 = 0; }
-#line 6392 "parse.c"
+#line 6348 "parse.c"
         break;
       case 259:
 #line 738 "parse.y"
 { yygotominor.yy308 = yymsp[0].minor.yy62; }
-#line 6397 "parse.c"
+#line 6353 "parse.c"
         /* No destructor defined for WHEN */
         break;
       case 260:
 #line 741 "parse.y"
 {
   yymsp[-2].minor.yy311->pNext = yymsp[0].minor.yy311 ; yygotominor.yy311 = yymsp[-2].minor.yy311; }
-#line 6404 "parse.c"
+#line 6360 "parse.c"
         /* No destructor defined for SEMI */
         break;
       case 261:
 #line 743 "parse.y"
 { yygotominor.yy311 = 0; }
-#line 6410 "parse.c"
+#line 6366 "parse.c"
         break;
       case 262:
 #line 748 "parse.y"
 { yygotominor.yy311 = sqliteTriggerUpdateStep(&yymsp[-3].minor.yy378, yymsp[-1].minor.yy228, yymsp[0].minor.yy62, yymsp[-4].minor.yy172); }
-#line 6415 "parse.c"
+#line 6371 "parse.c"
         /* No destructor defined for UPDATE */
         /* No destructor defined for SET */
         break;
       case 263:
 #line 753 "parse.y"
 {yygotominor.yy311 = sqliteTriggerInsertStep(&yymsp[-5].minor.yy378, yymsp[-4].minor.yy250, yymsp[-1].minor.yy228, 0, yymsp[-7].minor.yy172);}
-#line 6422 "parse.c"
+#line 6378 "parse.c"
         /* No destructor defined for INSERT */
         /* No destructor defined for INTO */
         /* No destructor defined for VALUES */
@@ -6429,27 +6385,27 @@ static void yy_reduce(
       case 264:
 #line 756 "parse.y"
 {yygotominor.yy311 = sqliteTriggerInsertStep(&yymsp[-2].minor.yy378, yymsp[-1].minor.yy250, 0, yymsp[0].minor.yy219, yymsp[-4].minor.yy172);}
-#line 6432 "parse.c"
+#line 6388 "parse.c"
         /* No destructor defined for INSERT */
         /* No destructor defined for INTO */
         break;
       case 265:
 #line 760 "parse.y"
 {yygotominor.yy311 = sqliteTriggerDeleteStep(&yymsp[-1].minor.yy378, yymsp[0].minor.yy62);}
-#line 6439 "parse.c"
+#line 6395 "parse.c"
         /* No destructor defined for DELETE */
         /* No destructor defined for FROM */
         break;
       case 266:
 #line 763 "parse.y"
 {yygotominor.yy311 = sqliteTriggerSelectStep(yymsp[0].minor.yy219); }
-#line 6446 "parse.c"
+#line 6402 "parse.c"
         break;
       case 267:
 #line 766 "parse.y"
 { yygotominor.yy62 = sqliteExpr(TK_RAISE, 0, 0, 0); 
     yygotominor.yy62->iColumn = OE_Ignore; sqliteExprSpan(yygotominor.yy62, &yymsp[-3].minor.yy0, &yymsp[0].minor.yy0);}
-#line 6452 "parse.c"
+#line 6408 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for IGNORE */
         break;
@@ -6457,7 +6413,7 @@ static void yy_reduce(
 #line 769 "parse.y"
 { yygotominor.yy62 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy378); 
     yygotominor.yy62->iColumn = OE_Rollback; sqliteExprSpan(yygotominor.yy62, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);}
-#line 6460 "parse.c"
+#line 6416 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for ROLLBACK */
         /* No destructor defined for COMMA */
@@ -6466,7 +6422,7 @@ static void yy_reduce(
 #line 772 "parse.y"
 { yygotominor.yy62 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy378); 
     yygotominor.yy62->iColumn = OE_Abort; sqliteExprSpan(yygotominor.yy62, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);}
-#line 6469 "parse.c"
+#line 6425 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for ABORT */
         /* No destructor defined for COMMA */
@@ -6475,7 +6431,7 @@ static void yy_reduce(
 #line 775 "parse.y"
 { yygotominor.yy62 = sqliteExpr(TK_RAISE, 0, 0, &yymsp[-1].minor.yy378); 
     yygotominor.yy62->iColumn = OE_Fail; sqliteExprSpan(yygotominor.yy62, &yymsp[-5].minor.yy0, &yymsp[0].minor.yy0);}
-#line 6478 "parse.c"
+#line 6434 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for FAIL */
         /* No destructor defined for COMMA */
@@ -6485,7 +6441,7 @@ static void yy_reduce(
 {
     sqliteDropTrigger(pParse,&yymsp[0].minor.yy378,0);
 }
-#line 6488 "parse.c"
+#line 6444 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for TRIGGER */
         break;
@@ -6535,7 +6491,7 @@ static void yy_syntax_error(
   sqliteSetString(&pParse->zErrMsg,"syntax error",0);
   pParse->sErrToken = TOKEN;
 
-#line 6538 "parse.c"
+#line 6494 "parse.c"
   sqliteParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 

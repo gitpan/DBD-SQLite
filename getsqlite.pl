@@ -57,6 +57,7 @@ src/random.c
 src/select.c
 src/sqliteInt.h
 src/table.c
+src/trigger.c
 src/tokenize.c
 src/update.c
 src/util.c

@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle DELETE FROM statements.
 **
-** $Id: delete.c,v 1.8 2002/06/17 23:46:21 matt Exp $
+** $Id: delete.c,v 1.9 2002/06/26 13:34:47 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -190,7 +190,7 @@ void sqliteDeleteFrom(
   else{
     /* Begin the database scan
     */
-    pWInfo = sqliteWhereBegin(pParse, base, pTabList, pWhere, 1);
+    pWInfo = sqliteWhereBegin(pParse, base, pTabList, pWhere, 1, 0);
     if( pWInfo==0 ) goto delete_from_cleanup;
 
     /* Remember the key of every item to be deleted.

@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.10 2002/06/17 23:46:22 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.11 2002/06/26 13:34:47 matt Exp $
 */
 #include "sqlite.h"
 #include "hash.h"
@@ -145,7 +145,8 @@ extern int sqlite_iMallocFail;   /* Fail sqliteMalloc() after this many calls */
 ** is a special table that holds the names and attributes of all
 ** user tables and indices.
 */
-#define MASTER_NAME   "sqlite_master"
+#define MASTER_NAME       "sqlite_master"
+#define TEMP_MASTER_NAME  "sqlite_temp_master"
 
 /*
 ** A convenience macro that returns the number of elements in
@@ -176,7 +177,18 @@ typedef struct TriggerStep TriggerStep;
 typedef struct TriggerStack TriggerStack;
 
 /*
-** Each database is an instance of the following structure
+** Each database is an instance of the following structure.
+**
+** The sqlite.file_format is initialized by the database file
+** and helps determines how the data in the database file is
+** represented.  This field allows newer versions of the library
+** to read and write older databases.  The various file formats
+** are as follows:
+**
+**     file_format==1    Version 2.1.0.
+**     file_format==2    Version 2.2.0. Add support for INTEGER PRIMARY KEY.
+**     file_format==3    Version 2.6.0. Add support for separate numeric and
+**                       text datatypes.
 */
 struct sqlite {
   Btree *pBe;                   /* The B*Tree backend */
@@ -191,8 +203,7 @@ struct sqlite {
   int (*xBusyCallback)(void *,const char*,int);  /* The busy callback */
   Hash tblHash;                 /* All tables indexed by name */
   Hash idxHash;                 /* All (named) indices indexed by name */
-  Hash tblDrop;                 /* Uncommitted DROP TABLEs */
-  Hash idxDrop;                 /* Uncommitted DROP INDEXs */
+  Hash trigHash;                /* All triggers indexed by name */
   Hash aFunc;                   /* All functions that can be in SQL exprs */
   int lastRowid;                /* ROWID of most recent insert */
   int priorNewRowid;            /* Last randomly generated ROWID */
@@ -200,9 +211,6 @@ struct sqlite {
   int magic;                    /* Magic number for detect library misuse */
   int nChange;                  /* Number of rows changed */
   int recursionDepth;           /* Number of nested calls to sqlite_exec() */
-
-  Hash trigHash;                /* All triggers indexed by name */
-  Hash trigDrop;                /* Uncommited dropped triggers */
 };
 
 /*
@@ -244,6 +252,7 @@ struct FuncDef {
   void (*xStep)(sqlite_func*,int,const char**);  /* Aggregate function step */
   void (*xFinalize)(sqlite_func*);           /* Aggregate function finializer */
   int nArg;                                  /* Number of arguments */
+  int dataType;                              /* Datatype of the result */
   void *pUserData;                           /* User data parameter */
   FuncDef *pNext;                            /* Next function with same name */
 };
@@ -313,12 +322,10 @@ struct Table {
   int tnum;        /* Root BTree node for this table (see note above) */
   Select *pSelect; /* NULL for tables.  Points to definition if a view. */
   u8 readOnly;     /* True if this table should not be written by the user */
-  u8 isCommit;     /* True if creation of this table has been committed */
   u8 isTemp;       /* True if stored in db->pBeTemp instead of db->pBe */
   u8 isTransient;  /* True if automatically deleted when VDBE finishes */
   u8 hasPrimKey;   /* True if there exists a primary key */
   u8 keyConf;      /* What to do in case of uniqueness conflict on iPKey */
-
   Trigger *pTrigger; /* List of SQL triggers on this table */
 };
 
@@ -374,8 +381,6 @@ struct Index {
   Table *pTable;   /* The SQL table being indexed */
   int tnum;        /* Page containing root of this index in database file */
   u8 isUnique;     /* OE_Abort, OE_Ignore, OE_Replace, or OE_None */
-  u8 isCommit;     /* True if creation of this index has been committed */
-  u8 isDropped;    /* True if a DROP INDEX has executed on this index */
   u8 onError;      /* OE_Abort, OE_Ignore, OE_Replace, or OE_None */
   Index *pNext;    /* The next index associated with the same table */
 };
@@ -424,8 +429,9 @@ struct Token {
 ** operand.
 */
 struct Expr {
-  u16 op;                /* Operation performed by this node */
+  u8 op;                 /* Operation performed by this node */
   u8 dataType;           /* Either SQLITE_SO_TEXT or SQLITE_SO_NUM */
+  u8 isJoinExpr;         /* Origina is the ON or USING phrase of a join */
   Expr *pLeft, *pRight;  /* Left and right subnodes */
   ExprList *pList;       /* A list of expressions used as function arguments
                          ** or in "<expr> IN (<expr-list)" */
@@ -558,6 +564,12 @@ struct WhereInfo {
 ** a VIEW) we have to make a copy of the input string so that the nodes
 ** of the expression tree will have something to point to.  zSelect is used
 ** to hold that copy.
+**
+** nLimit is set to -1 if there is no LIMIT clause.  nOffset is set to 0.
+** If there is a LIMIT clause, the parser sets nLimit to the value of the
+** limit and nOffset to the value of the offset (or 0 if there is not
+** offset).  But later on, nLimit and nOffset become the memory locations
+** in the VDBE that record the limit and offset counters.
 */
 struct Select {
   int isDistinct;        /* True if the DISTINCT keyword is present */
@@ -585,6 +597,7 @@ struct Select {
 #define SRT_Table        7  /* Store result as data with a unique key */
 #define SRT_TempTable    8  /* Store result in a trasient table */
 #define SRT_Discard      9  /* Do not save the results anywhere */
+#define SRT_Sorter      10  /* Store results in the sorter */
 
 /*
 ** When a SELECT uses aggregate functions (like "count(*)" or "avg(f1)")
@@ -628,10 +641,15 @@ struct Parse {
   Token sLastToken;    /* The last token parsed */
   Table *pNewTable;    /* A table being constructed by CREATE TABLE */
   Vdbe *pVdbe;         /* An engine for executing database bytecode */
-  int colNamesSet;     /* TRUE after OP_ColumnCount has been issued to pVdbe */
-  int explain;         /* True if the EXPLAIN flag is found on the query */
-  int initFlag;        /* True if reparsing CREATE TABLEs */
-  int nameClash;       /* A permanent table name clashes with temp table name */
+  u8 colNamesSet;      /* TRUE after OP_ColumnCount has been issued to pVdbe */
+  u8 explain;          /* True if the EXPLAIN flag is found on the query */
+  u8 initFlag;         /* True if reparsing CREATE TABLEs */
+  u8 nameClash;        /* A permanent table name clashes with temp table name */
+  u8 useAgg;           /* If true, extract field values from the aggregator
+                       ** while generating expressions.  Normally false */
+  u8 schemaVerified;   /* True if an OP_VerifySchema has been coded someplace
+                       ** other than after an OP_Transaction */
+  u8 isTemp;           /* True if parsing temporary tables */
   int newTnum;         /* Table number to use when reparsing CREATE TABLEs */
   int nErr;            /* Number of errors seen */
   int nTab;            /* Number of previously allocated VDBE cursors */
@@ -639,10 +657,6 @@ struct Parse {
   int nSet;            /* Number of sets used so far */
   int nAgg;            /* Number of aggregate expressions */
   AggExpr *aAgg;       /* An array of aggregate expressions */
-  int useAgg;          /* If true, extract field values from the aggregator
-                       ** while generating expressions.  Normally false */
-  int schemaVerified;  /* True if an OP_VerifySchema has been coded someplace
-                       ** other than after an OP_Transaction */
   TriggerStack *trigStack;
 };
 
@@ -691,7 +705,6 @@ struct Trigger {
   TriggerStep *step_list; /* Link list of trigger program steps             */
   char *strings;          /* pointer to allocation of Token strings */
   Trigger *pNext;         /* Next trigger associated with the table */
-  int isCommit;           /* Set to TRUE once the trigger has been committed */
 };
 
 /*
@@ -827,9 +840,13 @@ void sqliteExprDelete(Expr*);
 ExprList *sqliteExprListAppend(ExprList*,Expr*,Token*);
 void sqliteExprListDelete(ExprList*);
 void sqlitePragma(Parse*,Token*,Token*,int);
-void sqliteCommitInternalChanges(sqlite*);
+void sqliteResetInternalSchema(sqlite*);
+int sqliteInit(sqlite*, char**);
+void sqliteBeginParse(Parse*,int);
 void sqliteRollbackInternalChanges(sqlite*);
+void sqliteCommitInternalChanges(sqlite*);
 Table *sqliteResultSetOfSelect(Parse*,char*,Select*);
+void sqliteOpenMasterTable(Vdbe *v, int);
 void sqliteStartTable(Parse*,Token*,Token*,int);
 void sqliteAddColumn(Parse*,Token*);
 void sqliteAddNotNull(Parse*, int);
@@ -862,7 +879,7 @@ Table *sqliteTableNameToTable(Parse*, const char*);
 SrcList *sqliteTableTokenToSrcList(Parse*, Token*);
 void sqliteDeleteFrom(Parse*, Token*, Expr*);
 void sqliteUpdate(Parse*, Token*, ExprList*, Expr*, int);
-WhereInfo *sqliteWhereBegin(Parse*, int, SrcList*, Expr*, int);
+WhereInfo *sqliteWhereBegin(Parse*, int, SrcList*, Expr*, int, ExprList**);
 void sqliteWhereEnd(WhereInfo*);
 void sqliteExprCode(Parse*, Expr*);
 void sqliteExprIfTrue(Parse*, Expr*, int, int);
@@ -876,6 +893,7 @@ int sqliteGlobCompare(const unsigned char*,const unsigned char*);
 int sqliteLikeCompare(const unsigned char*,const unsigned char*);
 char *sqliteTableNameFromToken(Token*);
 int sqliteExprCheck(Parse*, Expr*, int, int*);
+int sqliteExprType(Expr*);
 int sqliteExprCompare(Expr*, Expr*);
 int sqliteFuncId(Token*);
 int sqliteExprResolveIds(Parse*, int, SrcList*, ExprList*, Expr*);
@@ -908,7 +926,7 @@ void sqliteRegisterBuiltinFunctions(sqlite*);
 int sqliteSafetyOn(sqlite*);
 int sqliteSafetyOff(sqlite*);
 int sqliteSafetyCheck(sqlite*);
-void sqliteChangeCookie(sqlite *);
+void sqliteChangeCookie(sqlite*, Vdbe*);
 void sqliteCreateTrigger(Parse*, Token*, int, int, IdList*, Token*, 
                          int, Expr*, TriggerStep*, char const*,int);
 void sqliteDropTrigger(Parse*, Token*, int);

@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle SELECT statements in SQLite.
 **
-** $Id: select.c,v 1.8 2002/06/17 23:46:22 matt Exp $
+** $Id: select.c,v 1.9 2002/06/26 13:34:47 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -167,11 +167,27 @@ static void addWhereTerm(
   pE1c = sqliteExpr(TK_DOT, pE1b, pE1a, 0);
   pE2c = sqliteExpr(TK_DOT, pE2b, pE2a, 0);
   pE = sqliteExpr(TK_EQ, pE1c, pE2c, 0);
+  pE->isJoinExpr = 1;
   if( *ppExpr ){
     *ppExpr = sqliteExpr(TK_AND, *ppExpr, pE, 0);
   }else{
     *ppExpr = pE;
   }
+}
+
+/*
+** Set the Expr.isJoinExpr flag on all terms of the given expression.
+**
+** The Expr.isJoinExpr flag is used at on terms of an expression to tell
+** the LEFT OUTER JOIN processing logic that this term is part of the
+** join restriction and not a part of the more general WHERE clause.
+*/
+static void setJoinExpr(Expr *p){
+  while( p ){
+    p->isJoinExpr = 1;
+    setJoinExpr(p->pLeft);
+    p = p->pRight;
+  } 
 }
 
 /*
@@ -223,6 +239,7 @@ static int sqliteProcessJoin(Parse *pParse, Select *p){
     ** and AND operator.
     */
     if( pTerm->pOn ){
+      setJoinExpr(pTerm->pOn);
       if( p->pWhere==0 ){
         p->pWhere = pTerm->pOn;
       }else{
@@ -244,14 +261,14 @@ static int sqliteProcessJoin(Parse *pParse, Select *p){
       assert( i<pSrc->nSrc-1 );
       pList = pTerm->pUsing;
       for(j=0; j<pList->nId; j++){
-        if( columnIndex(pTerm->pTab, pList->a[i].zName)<0 ||
-            columnIndex(pOther->pTab, pList->a[i].zName)<0 ){
+        if( columnIndex(pTerm->pTab, pList->a[j].zName)<0 ||
+            columnIndex(pOther->pTab, pList->a[j].zName)<0 ){
           sqliteSetString(&pParse->zErrMsg, "cannot join using column ",
-            pList->a[i].zName, " - column not present in both tables", 0);
+            pList->a[j].zName, " - column not present in both tables", 0);
           pParse->nErr++;
           return 1;
         }
-        addWhereTerm(pList->a[i].zName, pTerm->pTab, pOther->pTab, &p->pWhere);
+        addWhereTerm(pList->a[j].zName, pTerm->pTab, pOther->pTab, &p->pWhere);
       }
     }
   }
@@ -285,6 +302,26 @@ static void sqliteAggregateInfoReset(Parse *pParse){
 }
 
 /*
+** Insert code into "v" that will push the record on the top of the
+** stack into the sorter.
+*/
+static void pushOntoSorter(Parse *pParse, Vdbe *v, ExprList *pOrderBy){
+  char *zSortOrder;
+  int i;
+  zSortOrder = sqliteMalloc( pOrderBy->nExpr + 1 );
+  if( zSortOrder==0 ) return;
+  for(i=0; i<pOrderBy->nExpr; i++){
+    zSortOrder[i] = pOrderBy->a[i].sortOrder ? '-' : '+';
+    sqliteExprCode(pParse, pOrderBy->a[i].pExpr);
+  }
+  zSortOrder[pOrderBy->nExpr] = 0;
+  sqliteVdbeAddOp(v, OP_SortMakeKey, pOrderBy->nExpr, 0);
+  sqliteVdbeChangeP3(v, -1, zSortOrder, strlen(zSortOrder));
+  sqliteFree(zSortOrder);
+  sqliteVdbeAddOp(v, OP_SortPut, 0, 0);
+}
+
+/*
 ** This routine generates the code for the inside of the inner loop
 ** of a SELECT.
 **
@@ -314,10 +351,12 @@ static int selectInnerLoop(
   */
   if( pOrderBy==0 ){
     if( p->nOffset>0 ){
-      sqliteVdbeAddOp(v, OP_LimitCk, 1, iContinue);
+      int addr = sqliteVdbeCurrentAddr(v);
+      sqliteVdbeAddOp(v, OP_MemIncr, p->nOffset, addr+2);
+      sqliteVdbeAddOp(v, OP_Goto, 0, iContinue);
     }
-    if( p->nLimit>0 ){
-      sqliteVdbeAddOp(v, OP_LimitCk, 0, iBreak);
+    if( p->nLimit>=0 ){
+      sqliteVdbeAddOp(v, OP_MemIncr, p->nLimit, iBreak);
     }
   }
 
@@ -350,90 +389,99 @@ static int selectInnerLoop(
     sqliteVdbeAddOp(v, OP_PutStrKey, distinct, 0);
   }
 
-  /* If there is an ORDER BY clause, then store the results
-  ** in a sorter.
-  */
-  if( pOrderBy ){
-    char *zSortOrder;
-    sqliteVdbeAddOp(v, OP_SortMakeRec, nColumn, 0);
-    zSortOrder = sqliteMalloc( pOrderBy->nExpr + 1 );
-    if( zSortOrder==0 ) return 1;
-    for(i=0; i<pOrderBy->nExpr; i++){
-      zSortOrder[i] = pOrderBy->a[i].sortOrder ? '-' : '+';
-      sqliteExprCode(pParse, pOrderBy->a[i].pExpr);
+  switch( eDest ){
+    /* In this mode, write each query result to the key of the temporary
+    ** table iParm.
+    */
+    case SRT_Union: {
+      sqliteVdbeAddOp(v, OP_MakeRecord, nColumn, NULL_ALWAYS_DISTINCT);
+      sqliteVdbeAddOp(v, OP_String, 0, 0);
+      sqliteVdbeAddOp(v, OP_PutStrKey, iParm, 0);
+      break;
     }
-    zSortOrder[pOrderBy->nExpr] = 0;
-    sqliteVdbeAddOp(v, OP_SortMakeKey, pOrderBy->nExpr, 0);
-    sqliteVdbeChangeP3(v, -1, zSortOrder, strlen(zSortOrder));
-    sqliteFree(zSortOrder);
-    sqliteVdbeAddOp(v, OP_SortPut, 0, 0);
-  }else 
 
-  /* In this mode, write each query result to the key of the temporary
-  ** table iParm.
-  */
-  if( eDest==SRT_Union ){
-    sqliteVdbeAddOp(v, OP_MakeRecord, nColumn, NULL_ALWAYS_DISTINCT);
-    sqliteVdbeAddOp(v, OP_String, 0, 0);
-    sqliteVdbeAddOp(v, OP_PutStrKey, iParm, 0);
-  }else 
+    /* Store the result as data using a unique key.
+    */
+    case SRT_Table:
+    case SRT_TempTable: {
+      sqliteVdbeAddOp(v, OP_MakeRecord, nColumn, 0);
+      if( pOrderBy ){
+        pushOntoSorter(pParse, v, pOrderBy);
+      }else{
+        sqliteVdbeAddOp(v, OP_NewRecno, iParm, 0);
+        sqliteVdbeAddOp(v, OP_Pull, 1, 0);
+        sqliteVdbeAddOp(v, OP_PutIntKey, iParm, 0);
+      }
+      break;
+    }
 
-  /* Store the result as data using a unique key.
-  */
-  if( eDest==SRT_Table || eDest==SRT_TempTable ){
-    sqliteVdbeAddOp(v, OP_MakeRecord, nColumn, 0);
-    sqliteVdbeAddOp(v, OP_NewRecno, iParm, 0);
-    sqliteVdbeAddOp(v, OP_Pull, 1, 0);
-    sqliteVdbeAddOp(v, OP_PutIntKey, iParm, 0);
-  }else 
+    /* Construct a record from the query result, but instead of
+    ** saving that record, use it as a key to delete elements from
+    ** the temporary table iParm.
+    */
+    case SRT_Except: {
+      int addr;
+      addr = sqliteVdbeAddOp(v, OP_MakeRecord, nColumn, NULL_ALWAYS_DISTINCT);
+      sqliteVdbeAddOp(v, OP_NotFound, iParm, addr+3);
+      sqliteVdbeAddOp(v, OP_Delete, iParm, 0);
+      break;
+    }
 
-  /* Construct a record from the query result, but instead of
-  ** saving that record, use it as a key to delete elements from
-  ** the temporary table iParm.
-  */
-  if( eDest==SRT_Except ){
-    int addr;
-    addr = sqliteVdbeAddOp(v, OP_MakeRecord, nColumn, NULL_ALWAYS_DISTINCT);
-    sqliteVdbeAddOp(v, OP_NotFound, iParm, addr+3);
-    sqliteVdbeAddOp(v, OP_Delete, iParm, 0);
-  }else 
+    /* If we are creating a set for an "expr IN (SELECT ...)" construct,
+    ** then there should be a single item on the stack.  Write this
+    ** item into the set table with bogus data.
+    */
+    case SRT_Set: {
+      assert( nColumn==1 );
+      sqliteVdbeAddOp(v, OP_IsNull, -1, sqliteVdbeCurrentAddr(v)+3);
+      sqliteVdbeAddOp(v, OP_String, 0, 0);
+      if( pOrderBy ){
+        pushOntoSorter(pParse, v, pOrderBy);
+      }else{
+        sqliteVdbeAddOp(v, OP_PutStrKey, iParm, 0);
+      }
+      break;
+    }
 
-  /* If we are creating a set for an "expr IN (SELECT ...)" construct,
-  ** then there should be a single item on the stack.  Write this
-  ** item into the set table with bogus data.
-  */
-  if( eDest==SRT_Set ){
-    assert( nColumn==1 );
-    sqliteVdbeAddOp(v, OP_IsNull, -1, sqliteVdbeCurrentAddr(v)+3);
-    sqliteVdbeAddOp(v, OP_String, 0, 0);
-    sqliteVdbeAddOp(v, OP_PutStrKey, iParm, 0);
-  }else 
+    /* If this is a scalar select that is part of an expression, then
+    ** store the results in the appropriate memory cell and break out
+    ** of the scan loop.
+    */
+    case SRT_Mem: {
+      assert( nColumn==1 );
+      if( pOrderBy ){
+        pushOntoSorter(pParse, v, pOrderBy);
+      }else{
+        sqliteVdbeAddOp(v, OP_MemStore, iParm, 1);
+        sqliteVdbeAddOp(v, OP_Goto, 0, iBreak);
+      }
+      break;
+    }
 
+    /* Send the data to the callback function.
+    */
+    case SRT_Callback:
+    case SRT_Sorter: {
+      if( pOrderBy ){
+        sqliteVdbeAddOp(v, OP_SortMakeRec, nColumn, 0);
+        pushOntoSorter(pParse, v, pOrderBy);
+      }else{
+        assert( eDest==SRT_Callback );
+        sqliteVdbeAddOp(v, OP_Callback, nColumn, 0);
+      }
+      break;
+    }
 
-  /* If this is a scalar select that is part of an expression, then
-  ** store the results in the appropriate memory cell and break out
-  ** of the scan loop.
-  */
-  if( eDest==SRT_Mem ){
-    assert( nColumn==1 );
-    sqliteVdbeAddOp(v, OP_MemStore, iParm, 1);
-    sqliteVdbeAddOp(v, OP_Goto, 0, iBreak);
-  }else
-
-  /* Discard the results.  This is used for SELECT statements inside
-  ** the body of a TRIGGER.  The purpose of such selects is to call
-  ** user-defined functions that have side effects.  We do not care
-  ** about the actual results of the select.
-  */
-  if( eDest==SRT_Discard ){
-    sqliteVdbeAddOp(v, OP_Pop, nColumn, 0);
-  }else
-
-  /* If none of the above, send the data to the callback function.
-  */
-  {
-    assert( eDest==SRT_Callback );
-    sqliteVdbeAddOp(v, OP_Callback, nColumn, 0);
+    /* Discard the results.  This is used for SELECT statements inside
+    ** the body of a TRIGGER.  The purpose of such selects is to call
+    ** user-defined functions that have side effects.  We do not care
+    ** about the actual results of the select.
+    */
+    default: {
+      assert( eDest==SRT_Discard );
+      sqliteVdbeAddOp(v, OP_Pop, nColumn, 0);
+      break;
+    }
   }
   return 0;
 }
@@ -444,18 +492,56 @@ static int selectInnerLoop(
 ** we need to run the sorter and output the results.  The following
 ** routine generates the code needed to do that.
 */
-static void generateSortTail(Select *p, Vdbe *v, int nColumn){
+static void generateSortTail(
+  Select *p,       /* The SELECT statement */
+  Vdbe *v,         /* Generate code into this VDBE */
+  int nColumn,     /* Number of columns of data */
+  int eDest,       /* Write the sorted results here */
+  int iParm        /* Optional parameter associated with eDest */
+){
   int end = sqliteVdbeMakeLabel(v);
   int addr;
+  if( eDest==SRT_Sorter ) return;
   sqliteVdbeAddOp(v, OP_Sort, 0, 0);
   addr = sqliteVdbeAddOp(v, OP_SortNext, 0, end);
   if( p->nOffset>0 ){
-    sqliteVdbeAddOp(v, OP_LimitCk, 1, addr);
+    sqliteVdbeAddOp(v, OP_MemIncr, p->nOffset, addr+4);
+    sqliteVdbeAddOp(v, OP_Pop, 1, 0);
+    sqliteVdbeAddOp(v, OP_Goto, 0, addr);
   }
-  if( p->nLimit>0 ){
-    sqliteVdbeAddOp(v, OP_LimitCk, 0, end);
+  if( p->nLimit>=0 ){
+    sqliteVdbeAddOp(v, OP_MemIncr, p->nLimit, end);
   }
-  sqliteVdbeAddOp(v, OP_SortCallback, nColumn, 0);
+  switch( eDest ){
+    case SRT_Callback: {
+      sqliteVdbeAddOp(v, OP_SortCallback, nColumn, 0);
+      break;
+    }
+    case SRT_Table:
+    case SRT_TempTable: {
+      sqliteVdbeAddOp(v, OP_NewRecno, iParm, 0);
+      sqliteVdbeAddOp(v, OP_Pull, 1, 0);
+      sqliteVdbeAddOp(v, OP_PutIntKey, iParm, 0);
+      break;
+    }
+    case SRT_Set: {
+      assert( nColumn==1 );
+      sqliteVdbeAddOp(v, OP_IsNull, -1, sqliteVdbeCurrentAddr(v)+3);
+      sqliteVdbeAddOp(v, OP_String, 0, 0);
+      sqliteVdbeAddOp(v, OP_PutStrKey, iParm, 0);
+      break;
+    }
+    case SRT_Mem: {
+      assert( nColumn==1 );
+      sqliteVdbeAddOp(v, OP_MemStore, iParm, 1);
+      sqliteVdbeAddOp(v, OP_Goto, 0, end);
+      break;
+    }
+    default: {
+      /* Do nothing */
+      break;
+    }
+  }
   sqliteVdbeAddOp(v, OP_Goto, 0, addr);
   sqliteVdbeResolveLabel(v, end);
   sqliteVdbeAddOp(v, OP_SortReset, 0, 0);
@@ -898,6 +984,9 @@ Vdbe *sqliteGetVdbe(Parse *pParse){
 /*
 ** This routine is called to process a query that is really the union
 ** or intersection of two or more separate queries.
+**
+** "p" points to the right-most of the two queries.  The results should
+** be stored in eDest with parameter iParm.
 */
 static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
   int rc;             /* Success code from a subroutine */
@@ -929,25 +1018,35 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
     eDest = SRT_Table;
   }
 
-  /* Process the UNION or INTERSECTION
+  /* Generate code for the left and right SELECT statements.
   */
   base = pParse->nTab;
   switch( p->op ){
-    case TK_ALL:
+    case TK_ALL: {
+      if( p->pOrderBy==0 ){
+        rc = sqliteSelect(pParse, pPrior, eDest, iParm, 0, 0, 0);
+        if( rc ) return rc;
+        p->pPrior = 0;
+        rc = sqliteSelect(pParse, p, eDest, iParm, 0, 0, 0);
+        p->pPrior = pPrior;
+        if( rc ) return rc;
+        break;
+      }
+      /* For UNION ALL ... ORDER BY fall through to the next case */
+    }
     case TK_EXCEPT:
     case TK_UNION: {
       int unionTab;    /* Cursor number of the temporary table holding result */
       int op;          /* One of the SRT_ operations to apply to self */
       int priorOp;     /* The SRT_ operation to apply to prior selects */
+      ExprList *pOrderBy;  /* The ORDER BY clause for the right SELECT */
 
       priorOp = p->op==TK_ALL ? SRT_Table : SRT_Union;
-      if( eDest==priorOp ){
+      if( eDest==priorOp && p->pOrderBy==0 ){
         /* We can reuse a temporary table generated by a SELECT to our
-        ** right.  This also means we are not the right-most select and so
-        ** we cannot have an ORDER BY clause
+        ** right.
         */
         unionTab = iParm;
-        assert( p->pOrderBy==0 );
       }else{
         /* We will need to create our own temporary table to hold the
         ** intermediate results.
@@ -978,14 +1077,17 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
          case TK_ALL:     op = SRT_Table;    break;
       }
       p->pPrior = 0;
+      pOrderBy = p->pOrderBy;
+      p->pOrderBy = 0;
       rc = sqliteSelect(pParse, p, op, unionTab, 0, 0, 0);
       p->pPrior = pPrior;
+      p->pOrderBy = pOrderBy;
       if( rc ) return rc;
 
       /* Convert the data in the temporary table into whatever form
       ** it is that we currently need.
       */      
-      if( eDest!=priorOp ){
+      if( eDest!=priorOp || unionTab!=iParm ){
         int iCont, iBreak, iStart;
         assert( p->pEList );
         if( eDest==SRT_Callback ){
@@ -1004,7 +1106,7 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
         sqliteVdbeResolveLabel(v, iBreak);
         sqliteVdbeAddOp(v, OP_Close, unionTab, 0);
         if( p->pOrderBy ){
-          generateSortTail(p, v, p->pEList->nExpr);
+          generateSortTail(p, v, p->pEList->nExpr, eDest, iParm);
         }
       }
       break;
@@ -1061,7 +1163,7 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
       sqliteVdbeAddOp(v, OP_Close, tab2, 0);
       sqliteVdbeAddOp(v, OP_Close, tab1, 0);
       if( p->pOrderBy ){
-        generateSortTail(p, v, p->pEList->nExpr);
+        generateSortTail(p, v, p->pEList->nExpr, eDest, iParm);
       }
       break;
     }
@@ -1238,7 +1340,7 @@ int flattenSubquery(Select *p, int iFrom, int isAgg, int subqueryIsAgg){
   if( (pSub->isDistinct || pSub->nLimit>=0) &&  (pSrc->nSrc>1 || isAgg) ){
      return 0;
   }
-  if( (p->isDistinct || p->nLimit) && subqueryIsAgg ) return 0;
+  if( (p->isDistinct || p->nLimit>=0) && subqueryIsAgg ) return 0;
 
   /* If we reach this point, it means flattening is permitted for the
   ** i-th entry of the FROM clause in the outer query.
@@ -1538,10 +1640,16 @@ int sqliteSelect(
     goto select_end;
   }
 
-  /* ORDER BY is ignored if we are not sending the result to a callback.
+  /* ORDER BY is ignored for some destinations.
   */
-  if( eDest!=SRT_Callback ){
-    pOrderBy = 0;
+  switch( eDest ){
+    case SRT_Union:
+    case SRT_Except:
+    case SRT_Discard:
+      pOrderBy = 0;
+      break;
+    default:
+      break;
   }
 
   /* At this point, we should have allocated all the cursors that we
@@ -1649,10 +1757,21 @@ int sqliteSelect(
   /* Set the limiter
   */
   if( p->nLimit<=0 ){
+    p->nLimit = -1;
     p->nOffset = 0;
   }else{
-    if( p->nOffset<0 ) p->nOffset = 0;
-    sqliteVdbeAddOp(v, OP_Limit, p->nLimit, p->nOffset);
+    int iMem = pParse->nMem++;
+    sqliteVdbeAddOp(v, OP_Integer, -p->nLimit, 0);
+    sqliteVdbeAddOp(v, OP_MemStore, iMem, 1);
+    p->nLimit = iMem;
+    if( p->nOffset<=0 ){
+      p->nOffset = 0;
+    }else{
+      iMem = pParse->nMem++;
+      sqliteVdbeAddOp(v, OP_Integer, -p->nOffset, 0);
+      sqliteVdbeAddOp(v, OP_MemStore, iMem, 1);
+      p->nOffset = iMem;
+    }
   }
 
   /* Generate code for all sub-queries in the FROM clause
@@ -1750,7 +1869,7 @@ int sqliteSelect(
 
   /* Begin the database scan
   */
-  pWInfo = sqliteWhereBegin(pParse, p->base, pTabList, pWhere, 0);
+  pWInfo = sqliteWhereBegin(pParse, p->base, pTabList, pWhere, 0, &pOrderBy);
   if( pWInfo==0 ) goto select_end;
 
   /* Use the standard inner loop if we are not dealing with
@@ -1763,7 +1882,7 @@ int sqliteSelect(
     }
   }
 
-  /* If we are dealing with aggregates, then to the special aggregate
+  /* If we are dealing with aggregates, then do the special aggregate
   ** processing.  
   */
   else{
@@ -1830,7 +1949,7 @@ int sqliteSelect(
   ** and send them to the callback one by one.
   */
   if( pOrderBy ){
-    generateSortTail(p, v, pEList->nExpr);
+    generateSortTail(p, v, pEList->nExpr, eDest, iParm);
   }
 
 

@@ -30,7 +30,7 @@
 ** But other routines are also provided to help in building up
 ** a program instruction by instruction.
 **
-** $Id: vdbe.c,v 1.9 2002/06/17 23:46:22 matt Exp $
+** $Id: vdbe.c,v 1.10 2002/06/26 13:34:47 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -248,8 +248,6 @@ struct Vdbe {
   int nSet;           /* Number of sets allocated */
   Set *aSet;          /* An array of sets */
   int nCallback;      /* Number of callbacks invoked so far */
-  int iLimit;         /* Limit on the number of callbacks remaining */
-  int iOffset;        /* Offset before beginning to do callbacks */
   int keylistStackDepth;  /* The size of the "keylist" stack */
   Keylist **keylistStack; /* The stack used by opcodes ListPush & ListPop */
 };
@@ -1060,27 +1058,28 @@ static char *zOpName[] = { 0,
   "Last",              "Rewind",            "Next",              "Destroy",
   "Clear",             "CreateIndex",       "CreateTable",       "IntegrityCk",
   "IdxPut",            "IdxDelete",         "IdxRecno",          "IdxGT",
-  "IdxGE",             "MemLoad",           "MemStore",          "ListWrite",
-  "ListRewind",        "ListRead",          "ListReset",         "ListPush",
-  "ListPop",           "SortPut",           "SortMakeRec",       "SortMakeKey",
-  "Sort",              "SortNext",          "SortCallback",      "SortReset",
-  "FileOpen",          "FileRead",          "FileColumn",        "AggReset",
-  "AggFocus",          "AggNext",           "AggSet",            "AggGet",
-  "AggFunc",           "AggInit",           "AggPush",           "AggPop",
-  "SetInsert",         "SetFound",          "SetNotFound",       "SetFirst",
-  "SetNext",           "MakeRecord",        "MakeKey",           "MakeIdxKey",
-  "IncrKey",           "Goto",              "If",                "IfNot",
-  "Halt",              "ColumnCount",       "ColumnName",        "Callback",
-  "NullCallback",      "Integer",           "String",            "Pop",
-  "Dup",               "Pull",              "Push",              "MustBeInt",
-  "Add",               "AddImm",            "Subtract",          "Multiply",
-  "Divide",            "Remainder",         "BitAnd",            "BitOr",
-  "BitNot",            "ShiftLeft",         "ShiftRight",        "AbsValue",
-  "Eq",                "Ne",                "Lt",                "Le",
-  "Gt",                "Ge",                "IsNull",            "NotNull",
-  "Negative",          "And",               "Or",                "Not",
-  "Concat",            "Noop",              "Function",          "Limit",
-  "LimitCk",
+  "IdxGE",             "MemLoad",           "MemStore",          "MemIncr",
+  "ListWrite",         "ListRewind",        "ListRead",          "ListReset",
+  "ListPush",          "ListPop",           "SortPut",           "SortMakeRec",
+  "SortMakeKey",       "Sort",              "SortNext",          "SortCallback",
+  "SortReset",         "FileOpen",          "FileRead",          "FileColumn",
+  "AggReset",          "AggFocus",          "AggNext",           "AggSet",
+  "AggGet",            "AggFunc",           "AggInit",           "AggPush",
+  "AggPop",            "SetInsert",         "SetFound",          "SetNotFound",
+  "SetFirst",          "SetNext",           "MakeRecord",        "MakeKey",
+  "MakeIdxKey",        "IncrKey",           "Goto",              "If",
+  "IfNot",             "Halt",              "ColumnCount",       "ColumnName",
+  "Callback",          "NullCallback",      "Integer",           "String",
+  "Pop",               "Dup",               "Pull",              "Push",
+  "MustBeInt",         "Add",               "AddImm",            "Subtract",
+  "Multiply",          "Divide",            "Remainder",         "BitAnd",
+  "BitOr",             "BitNot",            "ShiftLeft",         "ShiftRight",
+  "AbsValue",          "Eq",                "Ne",                "Lt",
+  "Le",                "Gt",                "Ge",                "StrEq",
+  "StrNe",             "StrLt",             "StrLe",             "StrGt",
+  "StrGe",             "IsNull",            "NotNull",           "Negative",
+  "And",               "Or",                "Not",               "Concat",
+  "Noop",              "Function",        
 };
 
 /*
@@ -1299,8 +1298,6 @@ int sqliteVdbeExec(
   zStack = p->zStack;
   aStack = p->aStack;
   p->tos = -1;
-  p->iLimit = 0;
-  p->iOffset = 0;
 
   /* Initialize the aggregrate hash table.
   */
@@ -1992,6 +1989,11 @@ mismatch:
 ** If either operand is NULL (and thus if the result is unknown) then
 ** take the jump if P1 is true.
 **
+** If both values are numeric, they are converted to doubles using atof()
+** and compared for equality that way.  Otherwise the strcmp() library
+** routine is used for the comparison.  For a pure text comparison
+** use OP_StrEq.
+**
 ** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
 ** stack if the jump would have been taken, or a 0 if not.  Push a
 ** NULL if either operand was NULL.
@@ -2003,6 +2005,11 @@ mismatch:
 **
 ** If either operand is NULL (and thus if the result is unknown) then
 ** take the jump if P1 is true.
+**
+** If both values are numeric, they are converted to doubles using atof()
+** and compared in that format.  Otherwise the strcmp() library
+** routine is used for the comparison.  For a pure text comparison
+** use OP_StrNe.
 **
 ** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
 ** stack if the jump would have been taken, or a 0 if not.  Push a
@@ -2018,6 +2025,12 @@ mismatch:
 ** If either operand is NULL (and thus if the result is unknown) then
 ** take the jump if P1 is true.
 **
+** If both values are numeric, they are converted to doubles using atof()
+** and compared in that format.  Numeric values are always less than
+** non-numeric values.  If both operands are non-numeric, the strcmp() library
+** routine is used for the comparison.  For a pure text comparison
+** use OP_StrLt.
+**
 ** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
 ** stack if the jump would have been taken, or a 0 if not.  Push a
 ** NULL if either operand was NULL.
@@ -2030,6 +2043,12 @@ mismatch:
 **
 ** If either operand is NULL (and thus if the result is unknown) then
 ** take the jump if P1 is true.
+**
+** If both values are numeric, they are converted to doubles using atof()
+** and compared in that format.  Numeric values are always less than
+** non-numeric values.  If both operands are non-numeric, the strcmp() library
+** routine is used for the comparison.  For a pure text comparison
+** use OP_StrLe.
 **
 ** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
 ** stack if the jump would have been taken, or a 0 if not.  Push a
@@ -2044,6 +2063,12 @@ mismatch:
 ** If either operand is NULL (and thus if the result is unknown) then
 ** take the jump if P1 is true.
 **
+** If both values are numeric, they are converted to doubles using atof()
+** and compared in that format.  Numeric values are always less than
+** non-numeric values.  If both operands are non-numeric, the strcmp() library
+** routine is used for the comparison.  For a pure text comparison
+** use OP_StrGt.
+**
 ** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
 ** stack if the jump would have been taken, or a 0 if not.  Push a
 ** NULL if either operand was NULL.
@@ -2056,6 +2081,12 @@ mismatch:
 **
 ** If either operand is NULL (and thus if the result is unknown) then
 ** take the jump if P1 is true.
+**
+** If both values are numeric, they are converted to doubles using atof()
+** and compared in that format.  Numeric values are always less than
+** non-numeric values.  If both operands are non-numeric, the strcmp() library
+** routine is used for the comparison.  For a pure text comparison
+** use OP_StrGe.
 **
 ** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
 ** stack if the jump would have been taken, or a 0 if not.  Push a
@@ -2095,6 +2126,145 @@ case OP_Ge: {
   }else{
     if( Stringify(p, tos) || Stringify(p, nos) ) goto no_mem;
     c = sqliteCompare(zStack[nos], zStack[tos]);
+  }
+  switch( pOp->opcode ){
+    case OP_Eq:    c = c==0;     break;
+    case OP_Ne:    c = c!=0;     break;
+    case OP_Lt:    c = c<0;      break;
+    case OP_Le:    c = c<=0;     break;
+    case OP_Gt:    c = c>0;      break;
+    default:       c = c>=0;     break;
+  }
+  POPSTACK;
+  POPSTACK;
+  if( pOp->p2 ){
+    if( c ) pc = pOp->p2-1;
+  }else{
+    p->tos++;
+    aStack[nos].flags = STK_Int;
+    aStack[nos].i = c;
+  }
+  break;
+}
+
+/* Opcode: StrEq P1 P2 *
+**
+** Pop the top two elements from the stack.  If they are equal, then
+** jump to instruction P2.  Otherwise, continue to the next instruction.
+**
+** If either operand is NULL (and thus if the result is unknown) then
+** take the jump if P1 is true.
+**
+** The strcmp() library routine is used for the comparison.  For a
+** numeric comparison, use OP_Eq.
+**
+** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
+** stack if the jump would have been taken, or a 0 if not.  Push a
+** NULL if either operand was NULL.
+*/
+/* Opcode: StrNe P1 P2 *
+**
+** Pop the top two elements from the stack.  If they are not equal, then
+** jump to instruction P2.  Otherwise, continue to the next instruction.
+**
+** If either operand is NULL (and thus if the result is unknown) then
+** take the jump if P1 is true.
+**
+** The strcmp() library routine is used for the comparison.  For a
+** numeric comparison, use OP_Ne.
+**
+** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
+** stack if the jump would have been taken, or a 0 if not.  Push a
+** NULL if either operand was NULL.
+*/
+/* Opcode: StrLt P1 P2 *
+**
+** Pop the top two elements from the stack.  If second element (the
+** next on stack) is less than the first (the top of stack), then
+** jump to instruction P2.  Otherwise, continue to the next instruction.
+** In other words, jump if NOS<TOS.
+**
+** If either operand is NULL (and thus if the result is unknown) then
+** take the jump if P1 is true.
+**
+** The strcmp() library routine is used for the comparison.  For a
+** numeric comparison, use OP_Lt.
+**
+** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
+** stack if the jump would have been taken, or a 0 if not.  Push a
+** NULL if either operand was NULL.
+*/
+/* Opcode: StrLe P1 P2 *
+**
+** Pop the top two elements from the stack.  If second element (the
+** next on stack) is less than or equal to the first (the top of stack),
+** then jump to instruction P2. In other words, jump if NOS<=TOS.
+**
+** If either operand is NULL (and thus if the result is unknown) then
+** take the jump if P1 is true.
+**
+** The strcmp() library routine is used for the comparison.  For a
+** numeric comparison, use OP_Le.
+**
+** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
+** stack if the jump would have been taken, or a 0 if not.  Push a
+** NULL if either operand was NULL.
+*/
+/* Opcode: StrGt P1 P2 *
+**
+** Pop the top two elements from the stack.  If second element (the
+** next on stack) is greater than the first (the top of stack),
+** then jump to instruction P2. In other words, jump if NOS>TOS.
+**
+** If either operand is NULL (and thus if the result is unknown) then
+** take the jump if P1 is true.
+**
+** The strcmp() library routine is used for the comparison.  For a
+** numeric comparison, use OP_Gt.
+**
+** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
+** stack if the jump would have been taken, or a 0 if not.  Push a
+** NULL if either operand was NULL.
+*/
+/* Opcode: StrGe P1 P2 *
+**
+** Pop the top two elements from the stack.  If second element (the next
+** on stack) is greater than or equal to the first (the top of stack),
+** then jump to instruction P2. In other words, jump if NOS>=TOS.
+**
+** If either operand is NULL (and thus if the result is unknown) then
+** take the jump if P1 is true.
+**
+** The strcmp() library routine is used for the comparison.  For a
+** numeric comparison, use OP_Ge.
+**
+** If P2 is zero, do not jump.  Instead, push an integer 1 onto the
+** stack if the jump would have been taken, or a 0 if not.  Push a
+** NULL if either operand was NULL.
+*/
+case OP_StrEq:
+case OP_StrNe:
+case OP_StrLt:
+case OP_StrLe:
+case OP_StrGt:
+case OP_StrGe: {
+  int tos = p->tos;
+  int nos = tos - 1;
+  int c;
+  VERIFY( if( nos<0 ) goto not_enough_stack; )
+  if( (aStack[nos].flags | aStack[tos].flags) & STK_Null ){
+    POPSTACK;
+    POPSTACK;
+    if( pOp->p2 ){
+      if( pOp->p1 ) pc = pOp->p2-1;
+    }else{
+      p->tos++;
+      aStack[nos].flags = STK_Null;
+    }
+    break;
+  }else{
+    if( Stringify(p, tos) || Stringify(p, nos) ) goto no_mem;
+    c = strcmp(zStack[nos], zStack[tos]);
   }
   switch( pOp->opcode ){
     case OP_Eq:    c = c==0;     break;
@@ -2435,7 +2605,7 @@ case OP_MakeRecord: {
   break;
 }
 
-/* Opcode: MakeKey P1 P2 *
+/* Opcode: MakeKey P1 P2 P3
 **
 ** Convert the top P1 entries of the stack into a single entry suitable
 ** for use as the key in an index.  The top P1 records are
@@ -2449,9 +2619,14 @@ case OP_MakeRecord: {
 ** data is popped off the stack first then the new key is pushed
 ** back in its place.
 **
+** P3 is a string that is P1 characters long.  Each character is either
+** an 'n' or a 't' to indicates if the argument should be numeric or
+** text.  The first character corresponds to the lowest element on the
+** stack.
+**
 ** See also: MakeIdxKey, SortMakeKey
 */
-/* Opcode: MakeIdxKey P1 P2 *
+/* Opcode: MakeIdxKey P1 P2 P3
 **
 ** Convert the top P1 entries of the stack into a single entry suitable
 ** for use as the key in an index.  In addition, take one additional integer
@@ -2473,6 +2648,11 @@ case OP_MakeRecord: {
 ** guaranteed to be unique.  This jump can be used to skip a subsequent
 ** uniqueness test.
 **
+** P3 is a string that is P1 characters long.  Each character is either
+** an 'n' or a 't' to indicates if the argument should be numeric or
+** text.  The first character corresponds to the lowest element on the
+** stack.
+**
 ** See also:  MakeKey, SortMakeKey
 */
 case OP_MakeIdxKey:
@@ -2488,13 +2668,15 @@ case OP_MakeKey: {
   nField = pOp->p1;
   VERIFY( if( p->tos+1+addRowid<nField ) goto not_enough_stack; )
   nByte = 0;
-  for(i=p->tos-nField+1; i<=p->tos; i++){
+  for(j=0, i=p->tos-nField+1; i<=p->tos; i++, j++){
     int flags = aStack[i].flags;
     int len;
     char *z;
     if( flags & STK_Null ){
       nByte += 2;
       containsNull = 1;
+    }else if( pOp->p3 && pOp->p3[j]=='t' ){
+      Stringify(p, i);
     }else if( flags & STK_Real ){
       z = aStack[i].z;
       sqliteRealToSortable(aStack[i].r, &z[1]);
@@ -2839,7 +3021,6 @@ case OP_Open: {
     case OP_OpenAux:     wrFlag = 0;  pX = db->pBeTemp;  break;
     case OP_OpenWrAux:   wrFlag = 1;  pX = db->pBeTemp;  break;
   }
-  assert( pX!=0 );
   if( p2<=0 ){
     if( tos<0 ) goto not_enough_stack;
     Integerify(p, tos);
@@ -2865,6 +3046,7 @@ case OP_Open: {
   cleanupCursor(&p->aCsr[i]);
   memset(&p->aCsr[i], 0, sizeof(Cursor));
   p->aCsr[i].nullRow = 1;
+  if( pX==0 ) break;
   do{
     rc = sqliteBtreeCursor(pX, p2, wrFlag, &p->aCsr[i].pCursor);
     switch( rc ){
@@ -3837,14 +4019,17 @@ case OP_CreateTable: {
   break;
 }
 
-/* Opcode: IntegrityCk P1 * *
+/* Opcode: IntegrityCk P1 P2 *
 **
 ** Do an analysis of the currently open database.  Push onto the
 ** stack the text of an error message describing any problems.
 ** If there are no errors, push a "ok" onto the stack.
 **
 ** P1 is the index of a set that contains the root page numbers
-** for all tables and indices in this database.
+** for all tables and indices in the main database file.
+**
+** If P2 is not zero, the check is done on the auxiliary database
+** file, not the main database file.
 **
 ** This opcode is used for testing purposes only.
 */
@@ -3867,12 +4052,12 @@ case OP_IntegrityCk: {
     aRoot[j] = atoi((char*)sqliteHashKey(i));
   }
   aRoot[j] = 0;
-  z = sqliteBtreeIntegrityCheck(pBt, aRoot, nRoot);
+  z = sqliteBtreeIntegrityCheck(pOp->p2 ? db->pBeTemp : pBt, aRoot, nRoot);
   if( z==0 || z[0]==0 ){
+    if( z ) sqliteFree(z);
     zStack[tos] = "ok";
     aStack[tos].n = 3;
     aStack[tos].flags = STK_Str | STK_Static;
-    if( z ) sqliteFree(z);
   }else{
     zStack[tos] = z;
     aStack[tos].n = strlen(z) + 1;
@@ -3881,54 +4066,6 @@ case OP_IntegrityCk: {
   sqliteFree(aRoot);
   break;
 }
-
-/* Opcode:  Limit P1 P2 *
-**
-** Set a limit and offset on callbacks.  P1 is the limit and P2 is
-** the offset.  If the offset counter is positive, no callbacks are
-** invoked but instead the counter is decremented.  Once the offset
-** counter reaches zero, callbacks are invoked and the limit
-** counter is decremented.  When the limit counter reaches zero,
-** the OP_Callback or OP_SortCallback instruction executes a jump
-** that should end the query.
-**
-** This opcode is used to implement the "LIMIT x OFFSET y" clause
-** of a SELECT statement.
-*/
-case OP_Limit: {
-  p->iLimit = pOp->p1;
-  p->iOffset = pOp->p2;
-  break;
-}
-
-/* Opcode: LimitCk P1 P2 *
-**
-** If P1 is 1, then check to see if the offset counter (set by the
-** P2 argument of OP_Limit) is positive.  If the offset counter is
-** positive then decrement the counter and jump immediately to P2.
-** Otherwise fall straight through.
-**
-** If P1 is 0, then check the value of the limit counter (set by the
-** P1 argument of OP_Limit).  If the limit counter is negative or
-** zero then jump immedately to P2.  Otherwise decrement the limit
-** counter and fall through.
-*/
-case OP_LimitCk: {
-  if( pOp->p1 ){
-    if( p->iOffset ){
-      p->iOffset--;
-      pc = pOp->p2 - 1;
-    }
-  }else{
-    if( p->iLimit>0 ){
-      p->iLimit--;
-    }else{
-      pc = pOp->p2 - 1;
-    }
-  }
-  break;
-}
-
 
 /* Opcode: ListWrite * * *
 **
@@ -4485,6 +4622,28 @@ case OP_MemLoad: {
     zStack[tos] = p->aMem[i].z;
     aStack[tos].flags |= STK_Static;
     aStack[tos].flags &= ~STK_Dyn;
+  }
+  break;
+}
+
+/* Opcode: MemIncr P1 P2 *
+**
+** Increment the integer valued memory cell P1 by 1.  If P2 is not zero
+** and the result after the increment is greater than zero, then jump
+** to P2.
+**
+** This instruction throws an error if the memory cell is not initially
+** an integer.
+*/
+case OP_MemIncr: {
+  int i = pOp->p1;
+  Mem *pMem;
+  VERIFY( if( i<0 || i>=p->nMem ) goto bad_instruction; )
+  pMem = &p->aMem[i];
+  VERIFY( if( pMem->s.flags != STK_Int ) goto bad_instruction; )
+  pMem->s.i++;
+  if( pOp->p2>0 && pMem->s.i>0 ){
+     pc = pOp->p2 - 1;
   }
   break;
 }
