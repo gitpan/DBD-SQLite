@@ -1,4 +1,4 @@
-# $Id: SQLite.pm,v 1.26 2003/01/27 21:50:57 matt Exp $
+# $Id: SQLite.pm,v 1.29 2003/03/06 19:47:08 matt Exp $
 
 package DBD::SQLite;
 use strict;
@@ -6,16 +6,12 @@ use strict;
 use DBI;
 
 use vars qw($err $errstr $state $drh $VERSION @ISA);
-$VERSION = '0.24';
+$VERSION = '0.25';
 
 use DynaLoader();
 @ISA = ('DynaLoader');
 
 __PACKAGE__->bootstrap($VERSION);
-
-$err = 0;
-$errstr = "";
-$state = "";
 
 $drh = undef;
 
@@ -28,13 +24,14 @@ sub driver {
     $drh = DBI::_new_drh($class, {
         Name        => 'SQLite',
         Version     => $VERSION,
-        Err         => \$DBD::SQLite::err,
-        Errstr      => \$DBD::SQLite::errstr,
-        State       => \$DBD::SQLite::state,
         Attribution => 'DBD::SQLite by Matt Sergeant',
     });
 
     return $drh;
+}
+
+sub CLONE {
+    undef $drh;
 }
 
 package DBD::SQLite::dr;
@@ -44,8 +41,6 @@ sub connect {
 
     my $dbh = DBI::_new_dbh($drh, {
         Name => $dbname,
-        USER => $user,
-        CURRENT_USER => $user,
         });
 
     my $real_dbname = $dbname;
@@ -80,6 +75,188 @@ sub prepare {
 
     return $sth;
 }
+
+
+sub table_info {
+    my ($dbh, $CatVal, $SchVal, $TblVal, $TypVal) = @_;
+    # SQL/CLI (ISO/IEC JTC 1/SC 32 N 0595), 6.63 Tables
+    # Based on DBD::Oracle's
+    # See also http://www.ch-werner.de/sqliteodbc/html/sqliteodbc_8c.html#a117
+
+    my @Where = ();
+    my $Sql;
+    if ( $CatVal eq '%' && $SchVal eq '' && $TblVal eq '') { # Rule 19a
+            $Sql = <<'SQL';
+SELECT NULL TABLE_CAT
+     , NULL TABLE_SCHEM
+     , NULL TABLE_NAME
+     , NULL TABLE_TYPE
+     , NULL REMARKS
+SQL
+    }
+    elsif ( $SchVal eq '%' && $CatVal eq '' && $TblVal eq '') { # Rule 19b
+            $Sql = <<'SQL';
+SELECT NULL      TABLE_CAT
+     , NULL      TABLE_SCHEM
+     , NULL      TABLE_NAME
+     , NULL      TABLE_TYPE
+     , NULL      REMARKS
+SQL
+    }
+    elsif ( $TypVal eq '%' && $CatVal eq '' && $SchVal eq '' && $TblVal eq '') { # Rule 19c
+            $Sql = <<'SQL';
+SELECT NULL TABLE_CAT
+     , NULL TABLE_SCHEM
+     , NULL TABLE_NAME
+     , t.tt TABLE_TYPE
+     , NULL REMARKS
+FROM (
+     SELECT 'TABLE' tt                  UNION
+     SELECT 'VIEW' tt                   UNION
+     SELECT 'LOCAL TEMPORARY' tt
+) t
+ORDER BY TABLE_TYPE
+SQL
+    }
+    else {
+            $Sql = <<'SQL';
+SELECT *
+FROM
+(
+SELECT NULL         TABLE_CAT
+     , NULL         TABLE_SCHEM
+     , tbl_name     TABLE_NAME
+     ,              TABLE_TYPE
+     , NULL         REMARKS
+     , sql          sqlite_sql
+FROM (
+    SELECT tbl_name, upper(type) TABLE_TYPE, sql
+    FROM sqlite_master
+    WHERE type IN ( 'table','view')
+UNION ALL
+    SELECT tbl_name, 'LOCAL TEMPORARY' TABLE_TYPE, sql
+    FROM sqlite_temp_master
+    WHERE type IN ( 'table','view')
+UNION ALL
+    SELECT 'sqlite_master'      tbl_name, 'SYSTEM TABLE' TABLE_TYPE, NULL sql
+UNION ALL
+    SELECT 'sqlite_temp_master' tbl_name, 'SYSTEM TABLE' TABLE_TYPE, NULL sql
+)
+)
+SQL
+            if ( defined $TblVal ) {
+                    push @Where, "TABLE_NAME  LIKE '$TblVal'";
+            }
+            if ( defined $TypVal ) {
+                    my $table_type_list;
+                    $TypVal =~ s/^\s+//;
+                    $TypVal =~ s/\s+$//;
+                    my @ttype_list = split (/\s*,\s*/, $TypVal);
+                    foreach my $table_type (@ttype_list) {
+                            if ($table_type !~ /^'.*'$/) {
+                                    $table_type = "'" . $table_type . "'";
+                            }
+                            $table_type_list = join(", ", @ttype_list);
+                    }
+                    push @Where, "TABLE_TYPE IN (\U$table_type_list)"
+			if $table_type_list;
+            }
+            $Sql .= ' WHERE ' . join("\n   AND ", @Where ) . "\n" if @Where;
+            $Sql .= " ORDER BY TABLE_TYPE, TABLE_SCHEM, TABLE_NAME\n";
+    }
+    my $sth = $dbh->prepare($Sql) or return undef;
+    $sth->execute or return undef;
+    $sth;
+}
+
+
+sub primary_key_info {
+    my($dbh, $catalog, $schema, $table) = @_;
+
+    my @pk_info;
+
+    my $sth_tables = $dbh->table_info($catalog, $schema, $table, '');
+
+    # this is a hack but much simpler than using pragma index_list etc
+    # also the pragma doesn't list 'INTEGER PRIMARK KEY' autoinc PKs!
+    while ( my $row = $sth_tables->fetchrow_hashref ) {
+        my $sql = $row->{sqlite_sql} or next;
+	next unless $sql =~ /(.*?)\s*PRIMARY\s+KEY\s*(?:\(\s*(.*?)\s*\))?/si;
+	my @pk = split /\s*,\s*/, $2 || '';
+	unless (@pk) {
+	    my $prefix = $1;
+	    $prefix =~ s/.*create\s+table\s+.*?\(//i;
+	    $prefix = (split /\s*,\s*/, $prefix)[-1];
+	    @pk = (split /\s+/, $prefix)[0]; # take first word as name
+	}
+	#warn "GOT PK $row->{TABLE_NAME} (@pk)\n";
+	my $key_seq = 0;
+	for my $pk_field (@pk) {
+	    push @pk_info, {
+		TABLE_SCHEM => $row->{TABLE_SCHEM},
+		TABLE_NAME  => $row->{TABLE_NAME},
+		COLUMN_NAME => $pk_field,
+		KEY_SEQ => ++$key_seq,
+		PK_NAME => 'PRIMARY KEY',
+	    };
+	}
+    }
+
+    my $sponge = DBI->connect("DBI:Sponge:", '','')
+        or return $dbh->DBI::set_err($DBI::err, "DBI::Sponge: $DBI::errstr");
+    my @names = qw(TABLE_CAT TABLE_SCHEM TABLE_NAME COLUMN_NAME KEY_SEQ PK_NAME);
+    my $sth = $sponge->prepare("column_info $table", {
+        rows => [ map { [ @{$_}{@names} ] } @pk_info ],
+        NUM_OF_FIELDS => scalar @names,
+        NAME => \@names,
+    }) or return $dbh->DBI::set_err($sponge->err(), $sponge->errstr());
+    return $sth;
+}
+
+sub type_info_all {
+    my ($dbh) = @_;
+return; # XXX code just copied from DBD::Oracle, not yet thought about
+    my $names = {
+	TYPE_NAME	=> 0,
+	DATA_TYPE	=> 1,
+	COLUMN_SIZE	=> 2,
+	LITERAL_PREFIX	=> 3,
+	LITERAL_SUFFIX	=> 4,
+	CREATE_PARAMS	=> 5,
+	NULLABLE	=> 6,
+	CASE_SENSITIVE	=> 7,
+	SEARCHABLE	=> 8,
+	UNSIGNED_ATTRIBUTE	=> 9,
+	FIXED_PREC_SCALE	=>10,
+	AUTO_UNIQUE_VALUE	=>11,
+	LOCAL_TYPE_NAME	=>12,
+	MINIMUM_SCALE	=>13,
+	MAXIMUM_SCALE	=>14,
+	SQL_DATA_TYPE	=>15,
+	SQL_DATETIME_SUB=>16,
+	NUM_PREC_RADIX	=>17,
+    };
+    my $ti = [
+      $names,
+      [ 'CHAR', 1, 255, '\'', '\'', 'max length', 1, 1, 3,
+	undef, '0', '0', undef, undef, undef, 1, undef, undef
+      ],
+      [ 'NUMBER', 3, 38, undef, undef, 'precision,scale', 1, '0', 3,
+	'0', '0', '0', undef, '0', 38, 3, undef, 10
+      ],
+      [ 'DOUBLE', 8, 15, undef, undef, undef, 1, '0', 3,
+	'0', '0', '0', undef, undef, undef, 8, undef, 10
+      ],
+      [ 'DATE', 9, 19, '\'', '\'', undef, 1, '0', 3,
+	undef, '0', '0', undef, '0', '0', 11, undef, undef
+      ],
+      [ 'VARCHAR', 12, 1024*1024, '\'', '\'', 'max length', 1, 1, 3,
+	undef, '0', '0', undef, undef, undef, 12, undef, undef
+      ]
+    ];
+    return $ti;
+}
+
 
 1;
 __END__
@@ -127,10 +304,31 @@ There's lots more to it, so please refer to the docs on the SQLite web
 page, listed above, for SQL details. Also refer to L<DBI> for details
 on how to use DBI itself.
 
-=head1 API
+=head1 CONFORMANCE WITH DBI SPECIFICATION
 
-The API works exactly as every DBI module does. Please see L<DBI> for more
+The API works like every DBI module does. Please see L<DBI> for more
 details about core features.
+
+Currently many statement attributes are not implemented or are
+limited by the typeless nature of the SQLite database.
+
+=head1 DRIVER PRIVATE ATTRIBUTES
+
+=head2 Database Handle Attributes
+
+=over 4
+
+=item sqlite_version
+
+Returns the version of the SQLite library which DBD::SQLite is using, e.g., "2.8.0".
+
+=item sqlite_encoding
+
+Returns either "UTF-8" or "iso8859" to indicate how the SQLite library was compiled.
+
+=back
+
+=head1 DRIVER PRIVATE METHODS
 
 =head2 $dbh->func('last_insert_rowid')
 
@@ -176,8 +374,8 @@ using linux. Also you might want to set:
 
   PRAGMA default_synchronous = OFF
 
-Which will prevent sqlite from doing fsync's when writing, which will
-slow down non-transactional writes significantly, at the expense of some
+Which will prevent sqlite from doing fsync's when writing (which
+slows down non-transactional writes significantly) at the expense of some
 piece of mind. Also try playing with the cache_size pragma.
 
 =head1 BUGS

@@ -1,5 +1,20 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.25
+    - Fixed Makefile.PL to no longer try creating a .c file to determine
+      the OS ptrsize - use Config.pm directly in the DEFINE
+    - Major updates from Tim Bunce to bring DBD::SQLite in line with
+      the DBI spec and other drivers, including:
+      - Support for table_info_all() and primary_key_info()
+      - $sth->{NAME} updates
+      - execute() returns number of rows updated
+      - $dbh->{sqlite_version} returns the SQLite version in use
+      - $dbh->{sqlite_encoding} returns the SQLite encoding in use
+      - Improved trace debugging
+      - Improved error handling
+      (many MANY thanks to Tim for all these patches!)
+    - Updated to sqlite 2.8.0
+
 0.24
     - Fixed major crash bug affecting Mac OS X
     - Removed test.pl from distribution

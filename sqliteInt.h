@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.17 2003/01/27 21:50:54 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.18 2003/03/04 07:51:44 matt Exp $
 */
 #include "config.h"
 #include "sqlite.h"
@@ -207,7 +207,9 @@ struct sqlite {
   Btree *pBe;                   /* The B*Tree backend */
   Btree *pBeTemp;               /* Backend for session temporary tables */
   int flags;                    /* Miscellanous flags. See below */
-  int file_format;              /* What file format version is this database? */
+  u8 file_format;               /* What file format version is this database? */
+  u8 safety_level;              /* How aggressive at synching data to disk */
+  u8 want_to_close;             /* Close after all VDBEs are deallocated */
   int schema_cookie;            /* Magic number that changes with the schema */
   int next_cookie;              /* Value of schema_cookie after commit */
   int cache_size;               /* Number of pages to use in the cache */
@@ -224,7 +226,7 @@ struct sqlite {
   int onError;                  /* Default conflict algorithm */
   int magic;                    /* Magic number for detect library misuse */
   int nChange;                  /* Number of rows changed */
-  int recursionDepth;           /* Number of nested calls to sqlite_exec() */
+  struct Vdbe *pVdbe;           /* List of active virtual machines */
 #ifndef SQLITE_OMIT_TRACE
   void (*xTrace)(void*,const char*);     /* Trace function */
   void *pTraceArg;                       /* Argument to the trace function */
@@ -417,7 +419,7 @@ struct FKey {
 ** referenced table row is propagated into the row that holds the
 ** foreign key.
 ** 
-** The following there symbolic values are used to record which type
+** The following symbolic values are used to record which type
 ** of action to take.
 */
 #define OE_None     0   /* There is no constraint to check */
@@ -737,6 +739,7 @@ struct Parse {
   Token sErrToken;     /* The token at which the error occurred */
   Token sFirstToken;   /* The first token parsed */
   Token sLastToken;    /* The last token parsed */
+  const char *zTail;   /* All SQL text past the last semicolon parsed */
   Table *pNewTable;    /* A table being constructed by CREATE TABLE */
   Vdbe *pVdbe;         /* An engine for executing database bytecode */
   u8 colNamesSet;      /* TRUE after OP_ColumnName has been issued to pVdbe */
@@ -748,6 +751,7 @@ struct Parse {
   u8 schemaVerified;   /* True if an OP_VerifySchema has been coded someplace
                        ** other than after an OP_Transaction */
   u8 isTemp;           /* True if parsing temporary tables */
+  u8 useCallback;      /* True if callbacks should be used to report results */
   int newTnum;         /* Table number to use when reparsing CREATE TABLEs */
   int nErr;            /* Number of errors seen */
   int nTab;            /* Number of previously allocated VDBE cursors */
@@ -922,6 +926,7 @@ void sqliteRealToSortable(double r, char *);
   char *sqliteStrNDup(const char*, int);
 # define sqliteCheckMemory(a,b)
 #endif
+char *sqliteMPrintf(const char *,...);
 void sqliteSetString(char **, const char *, ...);
 void sqliteSetNString(char **, ...);
 void sqliteDequote(char*);

@@ -13,7 +13,7 @@
 ** subsystem.  See comments in the source code for a detailed description
 ** of what each interface routine does.
 **
-** @(#) $Id: btree.h,v 1.15 2003/01/27 21:50:53 matt Exp $
+** @(#) $Id: btree.h,v 1.16 2003/03/04 07:51:42 matt Exp $
 */
 #ifndef _BTREE_H_
 #define _BTREE_H_
@@ -24,6 +24,7 @@ typedef struct BtCursor BtCursor;
 int sqliteBtreeOpen(const char *zFilename, int mode, int nPg, Btree **ppBtree);
 int sqliteBtreeClose(Btree*);
 int sqliteBtreeSetCacheSize(Btree*, int);
+int sqliteBtreeSetSafetyLevel(Btree*, int);
 
 int sqliteBtreeBeginTrans(Btree*);
 int sqliteBtreeCommit(Btree*);
@@ -54,7 +55,7 @@ int sqliteBtreeDataSize(BtCursor*, int *pSize);
 int sqliteBtreeData(BtCursor*, int offset, int amt, char *zBuf);
 int sqliteBtreeCloseCursor(BtCursor*);
 
-#define SQLITE_N_BTREE_META 4
+#define SQLITE_N_BTREE_META 10
 int sqliteBtreeGetMeta(Btree*, int*);
 int sqliteBtreeUpdateMeta(Btree*, int*);
 

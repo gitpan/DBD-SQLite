@@ -9,7 +9,7 @@
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: btree.c,v 1.16 2003/01/27 21:50:53 matt Exp $
+** $Id: btree.c,v 1.17 2003/03/04 07:51:42 matt Exp $
 **
 ** This file implements a external (disk-based) database using BTrees.
 ** For a detailed discussion of BTrees, refer to
@@ -746,6 +746,19 @@ int sqliteBtreeSetCacheSize(Btree *pBt, int mxPage){
 }
 
 /*
+** Change the way data is synced to disk in order to increase or decrease
+** how well the database resists damage due to OS crashes and power
+** failures.  Level 1 is the same as asynchronous (no syncs() occur and
+** there is a high probability of damage)  Level 2 is the default.  There
+** is a very low but non-zero probability of damage.  Level 3 reduces the
+** probability of damage to near zero but with a write performance reduction.
+*/
+int sqliteBtreeSetSafetyLevel(Btree *pBt, int level){
+  sqlitepager_set_safety_level(pBt->pPager, level);
+  return SQLITE_OK;
+}
+
+/*
 ** Get a reference to page1 of the database file.  This will
 ** also acquire a readlock on that file.
 **
@@ -900,13 +913,13 @@ int sqliteBtreeRollback(Btree *pBt){
   if( pBt->inTrans==0 ) return SQLITE_OK;
   pBt->inTrans = 0;
   pBt->inCkpt = 0;
+  rc = pBt->readOnly ? SQLITE_OK : sqlitepager_rollback(pBt->pPager);
   for(pCur=pBt->pCursor; pCur; pCur=pCur->pNext){
-    if( pCur->pPage ){
+    if( pCur->pPage && pCur->pPage->isInit==0 ){
       sqlitepager_unref(pCur->pPage);
       pCur->pPage = 0;
     }
   }
-  rc = pBt->readOnly ? SQLITE_OK : sqlitepager_rollback(pBt->pPager);
   unlockBtreeIfUnused(pBt);
   return rc;
 }
@@ -959,13 +972,13 @@ int sqliteBtreeRollbackCkpt(Btree *pBt){
   int rc;
   BtCursor *pCur;
   if( pBt->inCkpt==0 || pBt->readOnly ) return SQLITE_OK;
+  rc = sqlitepager_ckpt_rollback(pBt->pPager);
   for(pCur=pBt->pCursor; pCur; pCur=pCur->pNext){
-    if( pCur->pPage ){
+    if( pCur->pPage && pCur->pPage->isInit==0 ){
       sqlitepager_unref(pCur->pPage);
       pCur->pPage = 0;
     }
   }
-  rc = sqlitepager_ckpt_rollback(pBt->pPager);
   pBt->inCkpt = 0;
   return rc;
 }

@@ -25,7 +25,7 @@
 **     ROLLBACK
 **     PRAGMA
 **
-** $Id: build.c,v 1.15 2003/01/27 21:50:53 matt Exp $
+** $Id: build.c,v 1.16 2003/03/04 07:51:42 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -49,6 +49,17 @@ void sqliteBeginParse(Parse *pParse, int explainFlag){
 }
 
 /*
+** This is a fake callback procedure used when sqlite_exec() is
+** invoked with a NULL callback pointer.  If we pass a NULL callback
+** pointer into sqliteVdbeExec() it will return at every OP_Callback,
+** which we do not want it to do.  So we substitute a pointer to this
+** procedure in place of the NULL.
+*/
+static int fakeCallback(void *NotUsed, int n, char **az1, char **az2){
+  return 0;
+}
+
+/*
 ** This routine is called after a single SQL statement has been
 ** parsed and we want to execute the VDBE code to implement 
 ** that statement.  Prior action routines should have already
@@ -61,25 +72,35 @@ void sqliteBeginParse(Parse *pParse, int explainFlag){
 void sqliteExec(Parse *pParse){
   int rc = SQLITE_OK;
   sqlite *db = pParse->db;
+  Vdbe *v = pParse->pVdbe;
+  int (*xCallback)(void*,int,char**,char**);
+
   if( sqlite_malloc_failed ) return;
-  if( pParse->pVdbe && pParse->nErr==0 ){
-    if( pParse->explain ){
-      rc = sqliteVdbeList(pParse->pVdbe, pParse->xCallback, pParse->pArg, 
-                          &pParse->zErrMsg);
-      db->next_cookie = db->schema_cookie;
-    }else{
-      FILE *trace = (db->flags & SQLITE_VdbeTrace)!=0 ? stdout : 0;
-      sqliteVdbeTrace(pParse->pVdbe, trace);
-      rc = sqliteVdbeExec(pParse->pVdbe, pParse->xCallback, pParse->pArg, 
-                          &pParse->zErrMsg, db->pBusyArg,
-                          db->xBusyCallback);
+  xCallback = pParse->xCallback;
+  if( xCallback==0 && pParse->useCallback ) xCallback = fakeCallback;
+  if( v && pParse->nErr==0 ){
+    FILE *trace = (db->flags & SQLITE_VdbeTrace)!=0 ? stdout : 0;
+    sqliteVdbeTrace(v, trace);
+    sqliteVdbeMakeReady(v, xCallback, pParse->pArg, pParse->explain);
+    if( pParse->useCallback ){
+      if( pParse->explain ){
+        rc = sqliteVdbeList(v);
+        db->next_cookie = db->schema_cookie;
+      }else{
+        sqliteVdbeExec(v);
+      }
+      rc = sqliteVdbeFinalize(v, &pParse->zErrMsg);
       if( rc ) pParse->nErr++;
+      pParse->pVdbe = 0;
+      pParse->rc = rc;
+      if( rc ) pParse->nErr++;
+    }else{
+      pParse->rc = pParse->nErr ? SQLITE_ERROR : SQLITE_DONE;
     }
-    sqliteVdbeDelete(pParse->pVdbe);
-    pParse->pVdbe = 0;
     pParse->colNamesSet = 0;
-    pParse->rc = rc;
     pParse->schemaVerified = 0;
+  }else if( pParse->useCallback==0 ){
+    pParse->rc = SQLITE_ERROR;
   }
   pParse->nTab = 0;
   pParse->nMem = 0;
@@ -799,27 +820,6 @@ void sqliteEndTable(Parse *pParse, Token *pEnd, Select *pSelect){
   p = pParse->pNewTable;
   if( p==0 ) return;
 
-  /* Add the table to the in-memory representation of the database.
-  */
-  assert( pParse->nameClash==0 || pParse->initFlag==1 );
-  if( pParse->explain==0 && pParse->nameClash==0 ){
-    Table *pOld;
-    FKey *pFKey;
-    pOld = sqliteHashInsert(&db->tblHash, p->zName, strlen(p->zName)+1, p);
-    if( pOld ){
-      assert( p==pOld );  /* Malloc must have failed inside HashInsert() */
-      return;
-    }
-    for(pFKey=p->pFKey; pFKey; pFKey=pFKey->pNextFrom){
-      int nTo = strlen(pFKey->zTo) + 1;
-      pFKey->pNextTo = sqliteHashFind(&db->aFKey, pFKey->zTo, nTo);
-      sqliteHashInsert(&db->aFKey, pFKey->zTo, nTo, pFKey);
-    }
-    pParse->pNewTable = 0;
-    db->nTable++;
-    db->flags |= SQLITE_InternChanges;
-  }
-
   /* If the table is generated from a SELECT, then construct the
   ** list of columns and the text of the table.
   */
@@ -902,6 +902,27 @@ void sqliteEndTable(Parse *pParse, Token *pEnd, Select *pSelect){
       sqliteSelect(pParse, pSelect, SRT_Table, 1, 0, 0, 0);
     }
     sqliteEndWriteOperation(pParse);
+  }
+
+  /* Add the table to the in-memory representation of the database.
+  */
+  assert( pParse->nameClash==0 || pParse->initFlag==1 );
+  if( pParse->explain==0 && pParse->nameClash==0 && pParse->nErr==0 ){
+    Table *pOld;
+    FKey *pFKey;
+    pOld = sqliteHashInsert(&db->tblHash, p->zName, strlen(p->zName)+1, p);
+    if( pOld ){
+      assert( p==pOld );  /* Malloc must have failed inside HashInsert() */
+      return;
+    }
+    for(pFKey=p->pFKey; pFKey; pFKey=pFKey->pNextFrom){
+      int nTo = strlen(pFKey->zTo) + 1;
+      pFKey->pNextTo = sqliteHashFind(&db->aFKey, pFKey->zTo, nTo);
+      sqliteHashInsert(&db->aFKey, pFKey->zTo, nTo, pFKey);
+    }
+    pParse->pNewTable = 0;
+    db->nTable++;
+    db->flags |= SQLITE_InternChanges;
   }
 }
 
@@ -1646,6 +1667,7 @@ void sqliteCreateIndex(
       sqliteVdbeAddOp(v, OP_MakeIdxKey, pIndex->nColumn, 0);
       if( db->file_format>=4 ) sqliteAddIdxKeyType(v, pIndex);
       sqliteVdbeAddOp(v, OP_IdxPut, 1, pIndex->onError!=OE_None);
+      sqliteVdbeChangeP3(v, -1, "indexed columns are not unique", P3_STATIC);
       sqliteVdbeAddOp(v, OP_Next, 2, lbl1);
       sqliteVdbeResolveLabel(v, lbl2);
       sqliteVdbeAddOp(v, OP_Close, 2, 0);
@@ -2120,6 +2142,39 @@ static int getBoolean(char *z){
 }
 
 /*
+** Interpret the given string as a safety level.  Return 0 for OFF,
+** 1 for ON or NORMAL and 2 for FULL.
+**
+** Note that the values returned are one less that the values that
+** should be passed into sqliteBtreeSetSafetyLevel().  The is done
+** to support legacy SQL code.  The safety level used to be boolean
+** and older scripts may have used numbers 0 for OFF and 1 for ON.
+*/
+static int getSafetyLevel(char *z){
+  static const struct {
+    const char *zWord;
+    int val;
+  } aKey[] = {
+    { "no",    0 },
+    { "off",   0 },
+    { "false", 0 },
+    { "yes",   1 },
+    { "on",    1 },
+    { "true",  1 },
+    { "full",  2 },
+  };
+  int i;
+  if( z[0]==0 ) return 1;
+  if( isdigit(z[0]) || (z[0]=='-' && isdigit(z[1])) ){
+    return atoi(z);
+  }
+  for(i=0; i<sizeof(aKey)/sizeof(aKey[0]); i++){
+    if( sqliteStrICmp(z,aKey[i].zWord)==0 ) return aKey[i].val;
+  }
+  return 1;
+}
+
+/*
 ** Process a pragma statement.  
 **
 ** Pragmas are of this form:
@@ -2235,7 +2290,7 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
 
   /*
   **  PRAGMA default_synchronous
-  **  PRAGMA default_synchronous=BOOLEAN
+  **  PRAGMA default_synchronous=ON|OFF|NORMAL|FULL
   **
   ** The first form returns the persistent value of the "synchronous" setting
   ** that is stored in the database.  This is the synchronous setting that
@@ -2243,33 +2298,35 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
   ** "synchronous" pragma.  The second form changes the persistent and the
   ** local synchronous setting to the value given.
   **
-  ** If synchronous is on, SQLite will do an fsync() system call at strategic
-  ** points to insure that all previously written data has actually been
-  ** written onto the disk surface before continuing.  This mode insures that
-  ** the database will always be in a consistent state event if the operating
-  ** system crashes or power to the computer is interrupted unexpectedly.
-  ** When synchronous is off, SQLite will not wait for changes to actually
-  ** be written to the disk before continuing.  As soon as it hands changes
-  ** to the operating system, it assumes that the changes are permanent and
-  ** it continues going.  The database cannot be corrupted by a program crash
-  ** even with synchronous off, but an operating system crash or power loss
-  ** could potentially corrupt data.  On the other hand, synchronous off is
-  ** faster than synchronous on.
+  ** If synchronous is OFF, SQLite does not attempt any fsync() systems calls
+  ** to make sure data is committed to disk.  Write operations are very fast,
+  ** but a power failure can leave the database in an inconsistent state.
+  ** If synchronous is ON or NORMAL, SQLite will do an fsync() system call to
+  ** make sure data is being written to disk.  The risk of corruption due to
+  ** a power loss in this mode is negligible but non-zero.  If synchronous
+  ** is FULL, extra fsync()s occur to reduce the risk of corruption to near
+  ** zero, but with a write performance penalty.  The default mode is NORMAL.
   */
   if( sqliteStrICmp(zLeft,"default_synchronous")==0 ){
     static VdbeOp getSync[] = {
-      { OP_Integer,     0, 0,        0},
+      { OP_ColumnName,  0, 0,        "synchronous"},
+      { OP_ReadCookie,  0, 3,        0},
+      { OP_Dup,         0, 0,        0},
+      { OP_If,          0, 0,        0},  /* 3 */
       { OP_ReadCookie,  0, 2,        0},
       { OP_Integer,     0, 0,        0},
       { OP_Lt,          0, 5,        0},
       { OP_AddImm,      1, 0,        0},
-      { OP_ColumnName,  0, 0,        "synchronous"},
       { OP_Callback,    1, 0,        0},
+      { OP_Halt,        0, 0,        0},
+      { OP_AddImm,     -1, 0,        0},  /* 10 */
+      { OP_Callback,    1, 0,        0}
     };
     Vdbe *v = sqliteGetVdbe(pParse);
     if( v==0 ) return;
     if( pRight->z==pLeft->z ){
-      sqliteVdbeAddOpList(v, ArraySize(getSync), getSync);
+      int addr = sqliteVdbeAddOpList(v, ArraySize(getSync), getSync);
+      sqliteVdbeChangeP2(v, addr+3, addr+10);
     }else{
       int addr;
       int size = db->cache_size;
@@ -2281,20 +2338,24 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       sqliteVdbeAddOp(v, OP_Ne, 0, addr+3);
       sqliteVdbeAddOp(v, OP_AddImm, MAX_PAGES, 0);
       sqliteVdbeAddOp(v, OP_AbsValue, 0, 0);
-      if( !getBoolean(zRight) ){
+      db->safety_level = getSafetyLevel(zRight)+1;
+      if( db->safety_level==1 ){
         sqliteVdbeAddOp(v, OP_Negative, 0, 0);
         size = -size;
       }
       sqliteVdbeAddOp(v, OP_SetCookie, 0, 2);
+      sqliteVdbeAddOp(v, OP_Integer, db->safety_level, 0);
+      sqliteVdbeAddOp(v, OP_SetCookie, 0, 3);
       sqliteEndWriteOperation(pParse);
       db->cache_size = size;
       sqliteBtreeSetCacheSize(db->pBe, db->cache_size);
+      sqliteBtreeSetSafetyLevel(db->pBe, db->safety_level);
     }
   }else
 
   /*
   **   PRAGMA synchronous
-  **   PRAGMA synchronous=BOOLEAN
+  **   PRAGMA synchronous=OFF|ON|NORMAL|FULL
   **
   ** Return or set the local value of the synchronous flag.  Changing
   ** the local value does not make changes to the disk file and the
@@ -2309,14 +2370,16 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
     Vdbe *v = sqliteGetVdbe(pParse);
     if( v==0 ) return;
     if( pRight->z==pLeft->z ){
-      sqliteVdbeAddOp(v, OP_Integer, db->cache_size>=0, 0);
+      sqliteVdbeAddOp(v, OP_Integer, db->safety_level-1, 0);
       sqliteVdbeAddOpList(v, ArraySize(getSync), getSync);
     }else{
       int size = db->cache_size;
       if( size<0 ) size = -size;
-      if( !getBoolean(zRight) ) size = -size;
+      db->safety_level = getSafetyLevel(zRight)+1;
+      if( db->safety_level==1 ) size = -size;
       db->cache_size = size;
       sqliteBtreeSetCacheSize(db->pBe, db->cache_size);
+      sqliteBtreeSetSafetyLevel(db->pBe, db->safety_level);
     }
   }else
 

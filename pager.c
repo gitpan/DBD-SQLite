@@ -18,7 +18,7 @@
 ** file simultaneously, or one process from reading the database while
 ** another is writing.
 **
-** @(#) $Id: pager.c,v 1.17 2003/01/27 21:50:53 matt Exp $
+** @(#) $Id: pager.c,v 1.18 2003/03/04 07:51:43 matt Exp $
 */
 #include "os.h"         /* Must be first to enable large file support */
 #include "sqliteInt.h"
@@ -135,9 +135,8 @@ struct Pager {
   int origDbSize;             /* dbSize before the current change */
   int ckptSize;               /* Size of database (in pages) at ckpt_begin() */
   off_t ckptJSize;            /* Size of journal at ckpt_begin() */
-#ifndef NDEBUG
-  off_t syncJSize;            /* Size of journal at last fsync() call */
-#endif
+  int nRec;                   /* Number of pages written to the journal */
+  u32 cksumInit;              /* Quasi-random value added to every checksum */
   int ckptNRec;               /* Number of records in the checkpoint journal */
   int nExtra;                 /* Add this many bytes to each in-memory page */
   void (*xDestructor)(void*); /* Call this routine when freeing pages */
@@ -152,6 +151,7 @@ struct Pager {
   u8 ckptInUse;               /* True we are in a checkpoint */
   u8 ckptAutoopen;            /* Open ckpt journal when main journal is opened*/
   u8 noSync;                  /* Do not sync the journal if true */
+  u8 fullSync;                /* Do extra syncs of the journal for robustness */
   u8 state;                   /* SQLITE_UNLOCK, _READLOCK or _WRITELOCK */
   u8 errMask;                 /* One of several kinds of errors */
   u8 tempFile;                /* zFilename is a temporary file */
@@ -159,7 +159,6 @@ struct Pager {
   u8 needSync;                /* True if an fsync() is needed on the journal */
   u8 dirtyFile;               /* True if database file has changed in any way */
   u8 alwaysRollback;          /* Disable dont_rollback() for all pages */
-  u8 journalFormat;           /* Version number of the journal file */
   u8 *aInJournal;             /* One bit for each page in the database file */
   u8 *aInCkpt;                /* One bit for each page in the database */
   PgHdr *pFirst, *pLast;      /* List of free pages */
@@ -181,6 +180,10 @@ struct Pager {
 /*
 ** The journal file contains page records in the following
 ** format.
+**
+** Actually, this structure is the complete page record for pager
+** formats less than 3.  Beginning with format 3, this record is surrounded
+** by two checksums.
 */
 typedef struct PageRecord PageRecord;
 struct PageRecord {
@@ -192,31 +195,68 @@ struct PageRecord {
 ** Journal files begin with the following magic string.  The data
 ** was obtained from /dev/random.  It is used only as a sanity check.
 **
-** There are two journal formats.  The older journal format writes
-** 32-bit integers in the byte-order of the host machine.  The new
-** format writes integers as big-endian.  All new journals use the
+** There are three journal formats (so far). The 1st journal format writes
+** 32-bit integers in the byte-order of the host machine.  New
+** formats writes integers as big-endian.  All new journals use the
 ** new format, but we have to be able to read an older journal in order
-** to roll it back.
+** to rollback journals created by older versions of the library.
+**
+** The 3rd journal format (added for 2.8.0) adds additional sanity
+** checking information to the journal.  If the power fails while the
+** journal is being written, semi-random garbage data might appear in
+** the journal file after power is restored.  If an attempt is then made
+** to roll the journal back, the database could be corrupted.  The additional
+** sanity checking data is an attempt to discover the garbage in the
+** journal and ignore it.
+**
+** The sanity checking information for the 3rd journal format consists
+** of a 32-bit checksum on each page of data.  The checksum covers both
+** the page number and the SQLITE_PAGE_SIZE bytes of data for the page.
+** This cksum is initialized to a 32-bit random value that appears in the
+** journal file right after the header.  The random initializer is important,
+** because garbage data that appears at the end of a journal is likely
+** data that was once in other files that have now been deleted.  If the
+** garbage data came from an obsolete journal file, the checksums might
+** be correct.  But by initializing the checksum to random value which
+** is different for every journal, we minimize that risk.
 */
-static const unsigned char aOldJournalMagic[] = {
+static const unsigned char aJournalMagic1[] = {
   0xd9, 0xd5, 0x05, 0xf9, 0x20, 0xa1, 0x63, 0xd4,
 };
-static const unsigned char aJournalMagic[] = {
+static const unsigned char aJournalMagic2[] = {
   0xd9, 0xd5, 0x05, 0xf9, 0x20, 0xa1, 0x63, 0xd5,
 };
-#define SQLITE_NEW_JOURNAL_FORMAT 1
-#define SQLITE_OLD_JOURNAL_FORMAT 0
+static const unsigned char aJournalMagic3[] = {
+  0xd9, 0xd5, 0x05, 0xf9, 0x20, 0xa1, 0x63, 0xd6,
+};
+#define JOURNAL_FORMAT_1 1
+#define JOURNAL_FORMAT_2 2
+#define JOURNAL_FORMAT_3 3
 
 /*
-** The following integer, if set, causes journals to be written in the
-** old format.  This is used for testing purposes only - to make sure
-** the code is able to rollback an old journal.
+** The following integer determines what format to use when creating
+** new primary journal files.  By default we always use format 3.
+** When testing, we can set this value to older journal formats in order to
+** make sure that newer versions of the library are able to rollback older
+** journal files.
+**
+** Note that checkpoint journals always use format 2 and omit the header.
 */
 #ifdef SQLITE_TEST
-int pager_old_format = 0;
+int journal_format = 3;
 #else
-# define pager_old_format 0
+# define journal_format 3
 #endif
+
+/*
+** The size of the header and of each page in the journal varies according
+** to which journal format is being used.  The following macros figure out
+** the sizes based on format numbers.
+*/
+#define JOURNAL_HDR_SZ(X) \
+   (sizeof(aJournalMagic1) + sizeof(Pgno) + ((X)>=3)*2*sizeof(u32))
+#define JOURNAL_PG_SZ(X) \
+   (SQLITE_PAGE_SIZE + sizeof(Pgno) + ((X)>=3)*sizeof(u32))
 
 /*
 ** Enable reference count tracking here:
@@ -240,11 +280,11 @@ int pager_old_format = 0;
 /*
 ** Read a 32-bit integer from the given file descriptor
 */
-static int read32bits(Pager *pPager, OsFile *fd, u32 *pRes){
+static int read32bits(int format, OsFile *fd, u32 *pRes){
   u32 res;
   int rc;
   rc = sqliteOsRead(fd, &res, sizeof(res));
-  if( rc==SQLITE_OK && pPager->journalFormat==SQLITE_NEW_JOURNAL_FORMAT ){
+  if( rc==SQLITE_OK && format>JOURNAL_FORMAT_1 ){
     unsigned char ac[4];
     memcpy(ac, &res, 4);
     res = (ac[0]<<24) | (ac[1]<<16) | (ac[2]<<8) | ac[3];
@@ -259,7 +299,7 @@ static int read32bits(Pager *pPager, OsFile *fd, u32 *pRes){
 */
 static int write32bits(OsFile *fd, u32 val){
   unsigned char ac[4];
-  if( pager_old_format ){
+  if( journal_format<=1 ){
     return sqliteOsWrite(fd, &val, 4);
   }
   ac[0] = (val>>24) & 0xff;
@@ -273,11 +313,10 @@ static int write32bits(OsFile *fd, u32 val){
 ** Write a 32-bit integer into a page header right before the
 ** page data.  This will overwrite the PgHdr.pDirty pointer.
 */
-static void storePageNumber(PgHdr *p){
-  u32 val = p->pgno;
+static void store32bits(u32 val, PgHdr *p, int offset){
   unsigned char *ac;
-  ac = &((char*)PGHDR_TO_DATA(p))[-4];
-  if( pager_old_format ){
+  ac = &((char*)PGHDR_TO_DATA(p))[offset];
+  if( journal_format<=1 ){
     memcpy(ac, &val, 4);
   }else{
     ac[0] = (val>>24) & 0xff;
@@ -424,34 +463,71 @@ static int pager_unwritelock(Pager *pPager){
 }
 
 /*
+** Compute and return a checksum for the page of data.
+*/
+static u32 pager_cksum(Pager *pPager, Pgno pgno, const char *aData){
+  u32 cksum = pPager->cksumInit + pgno;
+  return cksum;
+}
+
+/*
 ** Read a single page from the journal file opened on file descriptor
 ** jfd.  Playback this one page.
+**
+** There are three different journal formats.  The format parameter determines
+** which format is used by the journal that is played back.
 */
-static int pager_playback_one_page(Pager *pPager, OsFile *jfd){
+static int pager_playback_one_page(Pager *pPager, OsFile *jfd, int format){
   int rc;
   PgHdr *pPg;              /* An existing page in the cache */
   PageRecord pgRec;
+  u32 cksum;
 
-  rc = read32bits(pPager, jfd, &pgRec.pgno);
+  rc = read32bits(format, jfd, &pgRec.pgno);
   if( rc!=SQLITE_OK ) return rc;
   rc = sqliteOsRead(jfd, &pgRec.aData, sizeof(pgRec.aData));
   if( rc!=SQLITE_OK ) return rc;
 
-  /* Sanity checking on the page */
-  if( pgRec.pgno>pPager->dbSize || pgRec.pgno==0 ) return SQLITE_CORRUPT;
+  /* Sanity checking on the page.  This is more important that I originally
+  ** thought.  If a power failure occurs while the journal is being written,
+  ** it could cause invalid data to be written into the journal.  We need to
+  ** detect this invalid data (with high probability) and ignore it.
+  */
+  if( pgRec.pgno==0 ){
+    return SQLITE_DONE;
+  }
+  if( pgRec.pgno>pPager->dbSize ){
+    return SQLITE_OK;
+  }
+  if( format>=JOURNAL_FORMAT_3 ){
+    rc = read32bits(format, jfd, &cksum);
+    if( rc ) return rc;
+    if( pager_cksum(pPager, pgRec.pgno, pgRec.aData)!=cksum ){
+      return SQLITE_DONE;
+    }
+  }
 
   /* Playback the page.  Update the in-memory copy of the page
   ** at the same time, if there is one.
   */
   pPg = pager_lookup(pPager, pgRec.pgno);
-  if( pPg==0 || pPg->needSync==0 ){
-    TRACE2("PLAYBACK %d\n", pgRec.pgno);
-    sqliteOsSeek(&pPager->fd, (pgRec.pgno-1)*(off_t)SQLITE_PAGE_SIZE);
-    rc = sqliteOsWrite(&pPager->fd, pgRec.aData, SQLITE_PAGE_SIZE);
-  }
+  TRACE2("PLAYBACK %d\n", pgRec.pgno);
+  sqliteOsSeek(&pPager->fd, (pgRec.pgno-1)*(off_t)SQLITE_PAGE_SIZE);
+  rc = sqliteOsWrite(&pPager->fd, pgRec.aData, SQLITE_PAGE_SIZE);
   if( pPg ){
-    memcpy(PGHDR_TO_DATA(pPg), pgRec.aData, SQLITE_PAGE_SIZE);
-    memset(PGHDR_TO_EXTRA(pPg), 0, pPager->nExtra);
+    if( pPg->nRef==0 ||
+        memcmp(PGHDR_TO_DATA(pPg), pgRec.aData, SQLITE_PAGE_SIZE)==0
+    ){
+      /* Do not update the data on this page if the page is in use
+      ** and the page has never been modified.  This avoids resetting
+      ** the "extra" data.  That in turn avoids invalidating BTree cursors
+      ** in trees that have never been modified.  The end result is that
+      ** you can have a SELECT going on in one table and ROLLBACK changes
+      ** to a different table and the SELECT is unaffected by the ROLLBACK.
+      */
+      memcpy(PGHDR_TO_DATA(pPg), pgRec.aData, SQLITE_PAGE_SIZE);
+      memset(PGHDR_TO_EXTRA(pPg), 0, pPager->nExtra);
+    }
     pPg->dirty = 0;
     pPg->needSync = 0;
   }
@@ -478,11 +554,13 @@ static int pager_playback_one_page(Pager *pPager, OsFile *jfd){
 ** pPager->errMask and SQLITE_CORRUPT is returned.  If it all
 ** works, then this routine returns SQLITE_OK.
 */
-static int pager_playback(Pager *pPager){
-  off_t nRec;              /* Number of Records */
+static int pager_playback(Pager *pPager, int useJournalSize){
+  off_t szJ;               /* Size of the journal file in bytes */
+  int nRec;                /* Number of Records in the journal */
   int i;                   /* Loop counter */
   Pgno mxPg = 0;           /* Size of the original file in pages */
-  unsigned char aMagic[sizeof(aJournalMagic)];
+  int format;              /* Format of the journal file. */
+  unsigned char aMagic[sizeof(aJournalMagic1)];
   int rc;
 
   /* Figure out how many records are in the journal.  Abort early if
@@ -490,14 +568,13 @@ static int pager_playback(Pager *pPager){
   */
   assert( pPager->journalOpen );
   sqliteOsSeek(&pPager->jfd, 0);
-  rc = sqliteOsFileSize(&pPager->jfd, &nRec);
+  rc = sqliteOsFileSize(&pPager->jfd, &szJ);
   if( rc!=SQLITE_OK ){
     goto end_playback;
   }
-  if( nRec < sizeof(aMagic)+sizeof(Pgno) ){
+  if( szJ < sizeof(aMagic)+sizeof(Pgno) ){
     goto end_playback;
   }
-  nRec = (nRec - (sizeof(aMagic)+sizeof(Pgno))) / sizeof(PageRecord);
 
   /* Read the beginning of the journal and truncate the
   ** database file back to its original size.
@@ -507,18 +584,33 @@ static int pager_playback(Pager *pPager){
     rc = SQLITE_PROTOCOL;
     goto end_playback;
   }
-  if( memcmp(aMagic, aOldJournalMagic, sizeof(aMagic))==0 ){
-    pPager->journalFormat = SQLITE_OLD_JOURNAL_FORMAT;
-  }else if( memcmp(aMagic, aJournalMagic, sizeof(aMagic))==0 ){
-    pPager->journalFormat = SQLITE_NEW_JOURNAL_FORMAT;
+  if( memcmp(aMagic, aJournalMagic3, sizeof(aMagic))==0 ){
+    format = JOURNAL_FORMAT_3;
+  }else if( memcmp(aMagic, aJournalMagic2, sizeof(aMagic))==0 ){
+    format = JOURNAL_FORMAT_2;
+  }else if( memcmp(aMagic, aJournalMagic1, sizeof(aMagic))==0 ){
+    format = JOURNAL_FORMAT_1;
   }else{
     rc = SQLITE_PROTOCOL;
     goto end_playback;
   }
-  rc = read32bits(pPager, &pPager->jfd, &mxPg);
+  if( format>=JOURNAL_FORMAT_3 ){
+    rc = read32bits(format, &pPager->jfd, &nRec);
+    if( rc ) goto end_playback;
+    rc = read32bits(format, &pPager->jfd, &pPager->cksumInit);
+    if( rc ) goto end_playback;
+    if( nRec==0xffffffff || useJournalSize ){
+      nRec = (szJ - JOURNAL_HDR_SZ(3))/JOURNAL_PG_SZ(3);
+    }
+  }else{
+    nRec = (szJ - JOURNAL_HDR_SZ(2))/JOURNAL_PG_SZ(2);
+    assert( nRec*JOURNAL_PG_SZ(2)+JOURNAL_HDR_SZ(2)==szJ );
+  }
+  rc = read32bits(format, &pPager->jfd, &mxPg);
   if( rc!=SQLITE_OK ){
     goto end_playback;
   }
+  assert( pPager->origDbSize==0 || pPager->origDbSize==mxPg );
   rc = sqliteOsTruncate(&pPager->fd, SQLITE_PAGE_SIZE*(off_t)mxPg);
   if( rc!=SQLITE_OK ){
     goto end_playback;
@@ -527,37 +619,42 @@ static int pager_playback(Pager *pPager){
   
   /* Copy original pages out of the journal and back into the database file.
   */
-  for(i=nRec-1; i>=0; i--){
-    rc = pager_playback_one_page(pPager, &pPager->jfd);
-    if( rc!=SQLITE_OK ) break;
+  for(i=0; i<nRec; i++){
+    rc = pager_playback_one_page(pPager, &pPager->jfd, format);
+    if( rc!=SQLITE_OK ){
+      if( rc==SQLITE_DONE ){
+        rc = SQLITE_OK;
+      }
+      break;
+    }
   }
 
-
-end_playback:
-#if !defined(NDEBUG) && defined(SQLITE_TEST)
-  /* For pages that were never written into the journal, restore the
-  ** memory copy from the original database file.
-  **
-  ** This is code is used during testing only.  It is necessary to
-  ** compensate for the sqliteOsTruncate() call inside 
-  ** sqlitepager_rollback().
+  /* Pages that have been written to the journal but never synced
+  ** where not restored by the loop above.  We have to restore those
+  ** pages by reading the back from the original database.
   */
   if( rc==SQLITE_OK ){
     PgHdr *pPg;
     for(pPg=pPager->pAll; pPg; pPg=pPg->pNextAll){
+      char zBuf[SQLITE_PAGE_SIZE];
+      if( !pPg->dirty ) continue;
       if( (int)pPg->pgno <= pPager->origDbSize ){
         sqliteOsSeek(&pPager->fd, SQLITE_PAGE_SIZE*(off_t)(pPg->pgno-1));
-        rc = sqliteOsRead(&pPager->fd, PGHDR_TO_DATA(pPg), SQLITE_PAGE_SIZE);
+        rc = sqliteOsRead(&pPager->fd, zBuf, SQLITE_PAGE_SIZE);
         if( rc ) break;
       }else{
-        memset(PGHDR_TO_DATA(pPg), 0, SQLITE_PAGE_SIZE);
+        memset(zBuf, 0, SQLITE_PAGE_SIZE);
       }
-      memset(PGHDR_TO_EXTRA(pPg), 0, pPager->nExtra);
+      if( pPg->nRef==0 || memcmp(zBuf, PGHDR_TO_DATA(pPg), SQLITE_PAGE_SIZE) ){
+        memcpy(PGHDR_TO_DATA(pPg), zBuf, SQLITE_PAGE_SIZE);
+        memset(PGHDR_TO_EXTRA(pPg), 0, pPager->nExtra);
+      }
       pPg->needSync = 0;
       pPg->dirty = 0;
     }
   }
-#endif
+
+end_playback:
   if( rc!=SQLITE_OK ){
     pager_unwritelock(pPager);
     pPager->errMask |= PAGER_ERR_CORRUPT;
@@ -583,7 +680,8 @@ end_playback:
 **         at offset pPager->ckptJSize.
 */
 static int pager_ckpt_playback(Pager *pPager){
-  off_t nRec;              /* Number of Records */
+  off_t szJ;               /* Size of the full journal */
+  int nRec;                /* Number of Records */
   int i;                   /* Loop counter */
   int rc;
 
@@ -599,15 +697,13 @@ static int pager_ckpt_playback(Pager *pPager){
   nRec = pPager->ckptNRec;
   
   /* Copy original pages out of the checkpoint journal and back into the
-  ** database file.
+  ** database file.  Note that the checkpoint journal always uses format
+  ** 2 instead of format 3 since it does not need to be concerned with
+  ** power failures corrupting the journal and can thus omit the checksums.
   */
-  if( pager_old_format ){
-    pPager->journalFormat = SQLITE_OLD_JOURNAL_FORMAT;
-  }else{
-    pPager->journalFormat = SQLITE_NEW_JOURNAL_FORMAT;
-  }
   for(i=nRec-1; i>=0; i--){
-    rc = pager_playback_one_page(pPager, &pPager->cpfd);
+    rc = pager_playback_one_page(pPager, &pPager->cpfd, 2);
+    assert( rc!=SQLITE_DONE );
     if( rc!=SQLITE_OK ) goto end_ckpt_playback;
   }
 
@@ -618,17 +714,19 @@ static int pager_ckpt_playback(Pager *pPager){
   if( rc!=SQLITE_OK ){
     goto end_ckpt_playback;
   }
-  rc = sqliteOsFileSize(&pPager->jfd, &nRec);
+  rc = sqliteOsFileSize(&pPager->jfd, &szJ);
   if( rc!=SQLITE_OK ){
     goto end_ckpt_playback;
   }
-  nRec = (nRec - pPager->ckptJSize)/sizeof(PageRecord);
+  nRec = (szJ - pPager->ckptJSize)/JOURNAL_PG_SZ(journal_format);
   for(i=nRec-1; i>=0; i--){
-    rc = pager_playback_one_page(pPager, &pPager->jfd);
-    if( rc!=SQLITE_OK ) goto end_ckpt_playback;
+    rc = pager_playback_one_page(pPager, &pPager->jfd, journal_format);
+    if( rc!=SQLITE_OK ){
+      assert( rc!=SQLITE_DONE );
+      goto end_ckpt_playback;
+    }
   }
   
-
 end_ckpt_playback:
   if( rc!=SQLITE_OK ){
     pPager->errMask |= PAGER_ERR_CORRUPT;
@@ -657,6 +755,36 @@ void sqlitepager_set_cachesize(Pager *pPager, int mxPage){
   if( mxPage>10 ){
     pPager->mxPage = mxPage;
   }
+}
+
+/*
+** Adjust the robustness of the database to damage due to OS crashes
+** or power failures by changing the number of syncs()s when writing
+** the rollback journal.  There are three levels:
+**
+**    OFF       sqliteOsSync() is never called.  This is the default
+**              for temporary and transient files.
+**
+**    NORMAL    The journal is synced once before writes begin on the
+**              database.  This is normally adequate protection, but
+**              it is theoretically possible, though very unlikely,
+**              that an inopertune power failure could leave the journal
+**              in a state which would cause damage to the database
+**              when it is rolled back.
+**
+**    FULL      The journal is synced twice before writes begin on the
+**              database (with some additional information being written
+**              in between the two syncs.  If we assume that writing a
+**              single disk sector is atomic, then this mode provides
+**              assurance that the journal will not be corrupted to the
+**              point of causing damage to the database during rollback.
+**
+** Numeric values associated with these states are OFF==1, NORMAL=2,
+** and FULL=3.
+*/
+void sqlitepager_set_safety_level(Pager *pPager, int level){
+  pPager->noSync =  level==1 || pPager->tempFile;
+  pPager->fullSync = level==3 && !pPager->tempFile;
 }
 
 /*
@@ -918,13 +1046,33 @@ static int syncAllPages(Pager *pPager){
     if( !pPager->tempFile ){
       assert( pPager->journalOpen );
       assert( !pPager->noSync );
+#ifndef NDEBUG
+      {
+        off_t hdrSz, pgSz, jSz;
+        hdrSz = JOURNAL_HDR_SZ(journal_format);
+        pgSz = JOURNAL_PG_SZ(journal_format);
+        rc = sqliteOsFileSize(&pPager->jfd, &jSz);
+        if( rc!=0 ) return rc;
+        assert( pPager->nRec*pgSz+hdrSz==jSz );
+      }
+#endif
+      if( journal_format>=3 ){
+        off_t szJ;
+        if( pPager->fullSync ){
+          TRACE1("SYNC\n");
+          rc = sqliteOsSync(&pPager->jfd);
+          if( rc!=0 ) return rc;
+        }
+        sqliteOsSeek(&pPager->jfd, sizeof(aJournalMagic1));
+        rc = write32bits(&pPager->jfd, pPager->nRec);
+        if( rc ) return rc;
+        szJ = JOURNAL_HDR_SZ(journal_format) +
+                 pPager->nRec*JOURNAL_PG_SZ(journal_format);
+        sqliteOsSeek(&pPager->jfd, szJ);
+      }
       TRACE1("SYNC\n");
       rc = sqliteOsSync(&pPager->jfd);
       if( rc!=0 ) return rc;
-#ifndef NDEBUG
-      rc = sqliteOsFileSize(&pPager->jfd, &pPager->syncJSize);
-      if( rc!=0 ) return rc;
-#endif
       pPager->journalStarted = 1;
     }
     pPager->needSync = 0;
@@ -1076,7 +1224,7 @@ int sqlitepager_get(Pager *pPager, Pgno pgno, void **ppPage){
        /* Playback and delete the journal.  Drop the database write
        ** lock and reacquire the read lock.
        */
-       rc = pager_playback(pPager);
+       rc = pager_playback(pPager, 0);
        if( rc!=SQLITE_OK ){
          return rc;
        }
@@ -1092,7 +1240,8 @@ int sqlitepager_get(Pager *pPager, Pgno pgno, void **ppPage){
     pPager->nMiss++;
     if( pPager->nPage<pPager->mxPage || pPager->pFirst==0 ){
       /* Create a new page */
-      pPg = sqliteMallocRaw( sizeof(*pPg) + SQLITE_PAGE_SIZE + pPager->nExtra );
+      pPg = sqliteMallocRaw( sizeof(*pPg) + SQLITE_PAGE_SIZE 
+                              + sizeof(u32) + pPager->nExtra );
       if( pPg==0 ){
         *ppPage = 0;
         pager_unwritelock(pPager);
@@ -1355,13 +1504,23 @@ static int pager_open_journal(Pager *pPager){
   pPager->journalStarted = 0;
   pPager->needSync = 0;
   pPager->alwaysRollback = 0;
+  pPager->nRec = 0;
   sqlitepager_pagecount(pPager);
   pPager->origDbSize = pPager->dbSize;
-  if( pager_old_format ){
-    rc = sqliteOsWrite(&pPager->jfd, aOldJournalMagic,
-                       sizeof(aOldJournalMagic));
+  if( journal_format==JOURNAL_FORMAT_3 ){
+    rc = sqliteOsWrite(&pPager->jfd, aJournalMagic3, sizeof(aJournalMagic3));
+    if( rc==SQLITE_OK ){
+      rc = write32bits(&pPager->jfd, pPager->noSync ? 0xffffffff : 0);
+    }
+    if( rc==SQLITE_OK ){
+      pPager->cksumInit = (u32)sqliteRandomInteger();
+      rc = write32bits(&pPager->jfd, pPager->cksumInit);
+    }
+  }else if( journal_format==JOURNAL_FORMAT_2 ){
+    rc = sqliteOsWrite(&pPager->jfd, aJournalMagic2, sizeof(aJournalMagic2));
   }else{
-    rc = sqliteOsWrite(&pPager->jfd, aJournalMagic, sizeof(aJournalMagic));
+    assert( journal_format==JOURNAL_FORMAT_1 );
+    rc = sqliteOsWrite(&pPager->jfd, aJournalMagic1, sizeof(aJournalMagic1));
   }
   if( rc==SQLITE_OK ){
     rc = write32bits(&pPager->jfd, pPager->dbSize);
@@ -1375,9 +1534,6 @@ static int pager_open_journal(Pager *pPager){
       rc = SQLITE_FULL;
     }
   }
-#ifndef NDEBUG
-  pPager->syncJSize = 0;
-#endif
   return rc;  
 }
 
@@ -1489,13 +1645,27 @@ int sqlitepager_write(void *pData){
   */
   if( !pPg->inJournal && pPager->useJournal ){
     if( (int)pPg->pgno <= pPager->origDbSize ){
-      storePageNumber(pPg);
-      rc = sqliteOsWrite(&pPager->jfd, &((char*)pData)[-4], SQLITE_PAGE_SIZE+4);
+      int szPg;
+      u32 saved;
+      if( journal_format>=JOURNAL_FORMAT_3 ){
+        u32 cksum = pager_cksum(pPager, pPg->pgno, pData);
+        saved = *(u32*)PGHDR_TO_EXTRA(pPg);
+        store32bits(cksum, pPg, SQLITE_PAGE_SIZE);
+        szPg = SQLITE_PAGE_SIZE+8;
+      }else{
+        szPg = SQLITE_PAGE_SIZE+4;
+      }
+      store32bits(pPg->pgno, pPg, -4);
+      rc = sqliteOsWrite(&pPager->jfd, &((char*)pData)[-4], szPg);
+      if( journal_format>=JOURNAL_FORMAT_3 ){
+        *(u32*)PGHDR_TO_EXTRA(pPg) = saved;
+      }
       if( rc!=SQLITE_OK ){
         sqlitepager_rollback(pPager);
         pPager->errMask |= PAGER_ERR_FULL;
         return rc;
       }
+      pPager->nRec++;
       assert( pPager->aInJournal!=0 );
       pPager->aInJournal[pPg->pgno/8] |= 1<<(pPg->pgno&7);
       pPg->needSync = !pPager->noSync;
@@ -1515,11 +1685,13 @@ int sqlitepager_write(void *pData){
   }
 
   /* If the checkpoint journal is open and the page is not in it,
-  ** then write the current page to the checkpoint journal.
+  ** then write the current page to the checkpoint journal.  Note that
+  ** the checkpoint journal always uses the simplier format 2 that lacks
+  ** checksums.  The header is also omitted from the checkpoint journal.
   */
   if( pPager->ckptInUse && !pPg->inCkpt && (int)pPg->pgno<=pPager->ckptSize ){
     assert( pPg->inJournal || (int)pPg->pgno>pPager->origDbSize );
-    storePageNumber(pPg);
+    store32bits(pPg->pgno, pPg, -4);
     rc = sqliteOsWrite(&pPager->cpfd, &((char*)pData)[-4], SQLITE_PAGE_SIZE+4);
     if( rc!=SQLITE_OK ){
       sqlitepager_rollback(pPager);
@@ -1706,34 +1878,16 @@ int sqlitepager_rollback(Pager *pPager){
     return rc;
   }
 
-#if defined(SQLITE_TEST) && !defined(NDEBUG)
-  /* Truncate the journal to the size it was at the conclusion of the
-  ** last sqliteOsSync() call.  This is really an error check.  If the
-  ** rollback still works, it means that the rollback would have also
-  ** worked if it had occurred after an OS crash or unexpected power
-  ** loss.
-  */
-  if( !pPager->noSync ){
-    assert( !pPager->tempFile );
-    if( pPager->syncJSize<sizeof(aJournalMagic)+sizeof(Pgno) ){
-      pPager->syncJSize = sizeof(aJournalMagic)+sizeof(Pgno);
-    }
-    TRACE2("TRUNCATE JOURNAL %lld\n", pPager->syncJSize);
-    rc =  sqliteOsTruncate(&pPager->jfd, pPager->syncJSize);
-    if( rc ) return rc;
-  }
-#endif
-
   if( pPager->errMask!=0 && pPager->errMask!=PAGER_ERR_FULL ){
     if( pPager->state>=SQLITE_WRITELOCK ){
-      pager_playback(pPager);
+      pager_playback(pPager, 1);
     }
     return pager_errcode(pPager);
   }
   if( pPager->state!=SQLITE_WRITELOCK ){
     return SQLITE_OK;
   }
-  rc = pager_playback(pPager);
+  rc = pager_playback(pPager, 1);
   if( rc!=SQLITE_OK ){
     rc = SQLITE_CORRUPT;
     pPager->errMask |= PAGER_ERR_CORRUPT;
@@ -1788,8 +1942,14 @@ int sqlitepager_ckpt_begin(Pager *pPager){
     sqliteOsReadLock(&pPager->fd);
     return SQLITE_NOMEM;
   }
+#ifndef NDEBUG
   rc = sqliteOsFileSize(&pPager->jfd, &pPager->ckptJSize);
   if( rc ) goto ckpt_begin_failed;
+  assert( pPager->ckptJSize == 
+    pPager->nRec*JOURNAL_PG_SZ(journal_format)+JOURNAL_HDR_SZ(journal_format) );
+#endif
+  pPager->ckptJSize = pPager->nRec*JOURNAL_PG_SZ(journal_format)
+                         + JOURNAL_HDR_SZ(journal_format);
   pPager->ckptSize = pPager->dbSize;
   if( !pPager->ckptOpen ){
     rc = sqlitepager_opentemp(zTemp, &pPager->cpfd);

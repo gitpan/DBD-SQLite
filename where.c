@@ -13,7 +13,7 @@
 ** the WHERE clause of SQL statements.  Also found here are subroutines
 ** to generate VDBE code to evaluate expressions.
 **
-** $Id: where.c,v 1.15 2003/01/27 21:50:55 matt Exp $
+** $Id: where.c,v 1.16 2003/03/04 07:51:45 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -62,8 +62,8 @@ static int exprSplit(int nSlot, ExprInfo *aSlot, Expr *pExpr){
     aSlot[0].p = pExpr->pLeft;
     cnt = 1 + exprSplit(nSlot-1, &aSlot[1], pExpr->pRight);
   }else{
-    cnt = exprSplit(nSlot, aSlot, pExpr->pRight);
-    cnt += exprSplit(nSlot-cnt, &aSlot[cnt], pExpr->pLeft);
+    cnt = exprSplit(nSlot, aSlot, pExpr->pLeft);
+    cnt += exprSplit(nSlot-cnt, &aSlot[cnt], pExpr->pRight);
   }
   return cnt;
 }

@@ -15,7 +15,7 @@
 ** or VDBE.  The VDBE implements an abstract machine that runs a
 ** simple program to access and modify the underlying database.
 **
-** $Id: vdbe.h,v 1.15 2003/01/27 21:50:55 matt Exp $
+** $Id: vdbe.h,v 1.16 2003/03/04 07:51:45 matt Exp $
 */
 #ifndef _SQLITE_VDBE_H_
 #define _SQLITE_VDBE_H_
@@ -50,9 +50,9 @@ typedef struct VdbeOp VdbeOp;
 ** Allowed values of VdbeOp.p3type
 */
 #define P3_NOTUSED    0   /* The P3 parameter is not used */
-#define P3_DYNAMIC    1   /* Pointer to a string obtained from sqliteMalloc() */
-#define P3_STATIC   (-1)  /* Pointer to a static string */
-#define P3_POINTER  (-2)  /* P3 is a pointer to some structure or object */
+#define P3_DYNAMIC  (-1)  /* Pointer to a string obtained from sqliteMalloc() */
+#define P3_STATIC   (-2)  /* Pointer to a static string */
+#define P3_POINTER  (-3)  /* P3 is a pointer to some structure or object */
 
 /*
 ** The following macro converts a relative address in the p2 field
@@ -83,9 +83,10 @@ void sqliteVdbeDequoteP3(Vdbe*, int addr);
 int sqliteVdbeFindOp(Vdbe*, int, int);
 int sqliteVdbeMakeLabel(Vdbe*);
 void sqliteVdbeDelete(Vdbe*);
-int sqliteVdbeExec(Vdbe*,sqlite_callback,void*,char**,void*,
-                   int(*)(void*,const char*,int));
-int sqliteVdbeList(Vdbe*,sqlite_callback,void*,char**);
+void sqliteVdbeMakeReady(Vdbe*,sqlite_callback,void*,int);
+int sqliteVdbeExec(Vdbe*);
+int sqliteVdbeList(Vdbe*);
+int sqliteVdbeFinalize(Vdbe*,char**);
 void sqliteVdbeResolveLabel(Vdbe*, int);
 int sqliteVdbeCurrentAddr(Vdbe*);
 void sqliteVdbeTrace(Vdbe*,FILE*);
