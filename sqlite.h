@@ -12,7 +12,7 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite.h,v 1.9 2002/06/26 13:34:47 matt Exp $
+** @(#) $Id: sqlite.h,v 1.10 2002/07/12 13:31:51 matt Exp $
 */
 #ifndef _SQLITE_H_
 #define _SQLITE_H_
@@ -21,7 +21,7 @@
 /*
 ** The version of the SQLite library.
 */
-#define SQLITE_VERSION         "2.5.3"
+#define SQLITE_VERSION         "2.5.6"
 
 /*
 ** Make sure we can call this stuff from C++.
@@ -495,6 +495,14 @@ void *sqlite_aggregate_context(sqlite_func*, int nBytes);
 ** routine always returns at least 1.
 */
 int sqlite_aggregate_count(sqlite_func*);
+
+/*
+** Attempt to open the file named in the argument as the auxiliary database
+** file.  The auxiliary database file is used to store TEMP tables.  But
+** by using this API, it is possible to trick SQLite into opening two
+** separate databases and acting on them as if they were one.
+*/
+int sqlite_open_aux_file(sqlite *db, const char *zName, char **pzErrMsg);
 
 #ifdef __cplusplus
 }  /* End of the 'extern "C"' block */

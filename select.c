@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle SELECT statements in SQLite.
 **
-** $Id: select.c,v 1.9 2002/06/26 13:34:47 matt Exp $
+** $Id: select.c,v 1.10 2002/07/12 13:31:51 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -157,13 +157,17 @@ static void addWhereTerm(
   dummy.z = zCol;
   dummy.n = strlen(zCol);
   pE1a = sqliteExpr(TK_ID, 0, 0, &dummy);
+  pE1a->staticToken = 1;
   pE2a = sqliteExpr(TK_ID, 0, 0, &dummy);
+  pE2a->staticToken = 1;
   dummy.z = pTab1->zName;
   dummy.n = strlen(dummy.z);
   pE1b = sqliteExpr(TK_ID, 0, 0, &dummy);
+  pE1b->staticToken = 1;
   dummy.z = pTab2->zName;
   dummy.n = strlen(dummy.z);
   pE2b = sqliteExpr(TK_ID, 0, 0, &dummy);
+  pE2b->staticToken = 1;
   pE1c = sqliteExpr(TK_DOT, pE1b, pE1a, 0);
   pE2c = sqliteExpr(TK_DOT, pE2b, pE2a, 0);
   pE = sqliteExpr(TK_EQ, pE1c, pE2c, 0);
@@ -311,7 +315,24 @@ static void pushOntoSorter(Parse *pParse, Vdbe *v, ExprList *pOrderBy){
   zSortOrder = sqliteMalloc( pOrderBy->nExpr + 1 );
   if( zSortOrder==0 ) return;
   for(i=0; i<pOrderBy->nExpr; i++){
-    zSortOrder[i] = pOrderBy->a[i].sortOrder ? '-' : '+';
+    int order = pOrderBy->a[i].sortOrder;
+    int type;
+    int c;
+    if( (order & SQLITE_SO_TYPEMASK)==SQLITE_SO_TEXT ){
+      type = SQLITE_SO_TEXT;
+    }else if( (order & SQLITE_SO_TYPEMASK)==SQLITE_SO_NUM ){
+      type = SQLITE_SO_NUM;
+    }else if( pParse->db->file_format>=3 ){
+      type = sqliteExprType(pOrderBy->a[i].pExpr);
+    }else{
+      type = SQLITE_SO_NUM;
+    }
+    if( (order & SQLITE_SO_DIRMASK)==SQLITE_SO_ASC ){
+      c = type==SQLITE_SO_TEXT ? 'A' : '+';
+    }else{
+      c = type==SQLITE_SO_TEXT ? 'D' : '-';
+    }
+    zSortOrder[i] = c;
     sqliteExprCode(pParse, pOrderBy->a[i].pExpr);
   }
   zSortOrder[pOrderBy->nExpr] = 0;
@@ -322,12 +343,36 @@ static void pushOntoSorter(Parse *pParse, Vdbe *v, ExprList *pOrderBy){
 }
 
 /*
+** This routine adds a P3 argument to the last VDBE opcode that was
+** inserted. The P3 argument added is a string suitable for the 
+** OP_MakeKey or OP_MakeIdxKey opcodes.  The string consists of
+** characters 't' or 'n' depending on whether or not the various
+** fields of the key to be generated should be treated as numeric
+** or as text.  See the OP_MakeKey and OP_MakeIdxKey opcode
+** documentation for additional information about the P3 string.
+** See also the sqliteAddIdxKeyType() routine.
+*/
+void sqliteAddKeyType(Vdbe *v, ExprList *pEList){
+  int nColumn = pEList->nExpr;
+  char *zType = sqliteMalloc( nColumn+1 );
+  int i;
+  if( zType==0 ) return;
+  for(i=0; i<nColumn; i++){
+    zType[i] = sqliteExprType(pEList->a[i].pExpr)==SQLITE_SO_NUM ? 'n' : 't';
+  }
+  zType[i] = 0;
+  sqliteVdbeChangeP3(v, -1, zType, nColumn);
+  sqliteFree(zType);
+}
+
+/*
 ** This routine generates the code for the inside of the inner loop
 ** of a SELECT.
 **
-** The pEList is used to determine the values for each column in the
-** result row.  Except  if pEList==NULL, then we just read nColumn
-** elements from the srcTab table.
+** If srcTab and nColumn are both zero, then the pEList expressions
+** are evaluated in order to get the data for this row.  If nColumn>0
+** then data is pulled from srcTab and pEList is used only to get the
+** datatypes for each column.
 */
 static int selectInnerLoop(
   Parse *pParse,          /* The parser context */
@@ -344,7 +389,9 @@ static int selectInnerLoop(
 ){
   Vdbe *v = pParse->pVdbe;
   int i;
+
   if( v==0 ) return 0;
+  assert( pEList!=0 );
 
   /* If there was a LIMIT clause on the SELECT statement, then do the check
   ** to see if this row should be output.
@@ -362,14 +409,14 @@ static int selectInnerLoop(
 
   /* Pull the requested columns.
   */
-  if( pEList ){
-    for(i=0; i<pEList->nExpr; i++){
-      sqliteExprCode(pParse, pEList->a[i].pExpr);
-    }
-    nColumn = pEList->nExpr;
-  }else{
+  if( nColumn>0 ){
     for(i=0; i<nColumn; i++){
       sqliteVdbeAddOp(v, OP_Column, srcTab, i);
+    }
+  }else{
+    nColumn = pEList->nExpr;
+    for(i=0; i<pEList->nExpr; i++){
+      sqliteExprCode(pParse, pEList->a[i].pExpr);
     }
   }
 
@@ -382,6 +429,7 @@ static int selectInnerLoop(
     sqliteVdbeAddOp(v, OP_IsNull, -pEList->nExpr, sqliteVdbeCurrentAddr(v)+7);
 #endif
     sqliteVdbeAddOp(v, OP_MakeKey, pEList->nExpr, 1);
+    if( pParse->db->file_format>=3 ) sqliteAddKeyType(v, pEList);
     sqliteVdbeAddOp(v, OP_Distinct, distinct, sqliteVdbeCurrentAddr(v)+3);
     sqliteVdbeAddOp(v, OP_Pop, pEList->nExpr+1, 0);
     sqliteVdbeAddOp(v, OP_Goto, 0, iContinue);
@@ -432,14 +480,16 @@ static int selectInnerLoop(
     ** item into the set table with bogus data.
     */
     case SRT_Set: {
+      int lbl = sqliteVdbeMakeLabel(v);
       assert( nColumn==1 );
-      sqliteVdbeAddOp(v, OP_IsNull, -1, sqliteVdbeCurrentAddr(v)+3);
-      sqliteVdbeAddOp(v, OP_String, 0, 0);
+      sqliteVdbeAddOp(v, OP_IsNull, -1, lbl);
       if( pOrderBy ){
         pushOntoSorter(pParse, v, pOrderBy);
       }else{
+        sqliteVdbeAddOp(v, OP_String, 0, 0);
         sqliteVdbeAddOp(v, OP_PutStrKey, iParm, 0);
       }
+      sqliteVdbeResolveLabel(v, lbl);
       break;
     }
 
@@ -562,9 +612,10 @@ static void generateColumnNames(
   int i;
   if( pParse->colNamesSet || v==0 || sqlite_malloc_failed ) return;
   pParse->colNamesSet = 1;
-  sqliteVdbeAddOp(v, OP_ColumnCount, pEList->nExpr, 0);
+  sqliteVdbeAddOp(v, OP_ColumnCount, pEList->nExpr*2+1, 0);
   for(i=0; i<pEList->nExpr; i++){
     Expr *p;
+    char *zType = 0;
     int showFullNames;
     if( pEList->a[i].zName ){
       char *zName = pEList->a[i].zName;
@@ -585,7 +636,13 @@ static void generateColumnNames(
       int iCol = p->iColumn;
       if( iCol<0 ) iCol = pTab->iPKey;
       assert( iCol==-1 || (iCol>=0 && iCol<pTab->nCol) );
-      zCol = iCol<0 ? "_ROWID_" : pTab->aCol[iCol].zName;
+      if( iCol<0 ){
+        zCol = "_ROWID_";
+        zType = "INTEGER";
+      }else{
+        zCol = pTab->aCol[iCol].zName;
+        zType = pTab->aCol[iCol].zType;
+      }
       if( pTabList->nSrc>1 || showFullNames ){
         char *zName = 0;
         char *zTab;
@@ -611,6 +668,15 @@ static void generateColumnNames(
       sqliteVdbeAddOp(v, OP_ColumnName, i, 0);
       sqliteVdbeChangeP3(v, -1, zName, strlen(zName));
     }
+    if( zType==0 ){
+      if( sqliteExprType(p)==SQLITE_SO_TEXT ){
+        zType = "TEXT";
+      }else{
+        zType = "NUMERIC";
+      }
+    }
+    sqliteVdbeAddOp(v, OP_ColumnName, i + pEList->nExpr + 1, 0);
+    sqliteVdbeChangeP3(v, -1, zType, P3_STATIC);
   }
 }
 
@@ -1097,7 +1163,7 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
         iCont = sqliteVdbeMakeLabel(v);
         sqliteVdbeAddOp(v, OP_Rewind, unionTab, iBreak);
         iStart = sqliteVdbeCurrentAddr(v);
-        rc = selectInnerLoop(pParse, p, 0, unionTab, p->pEList->nExpr,
+        rc = selectInnerLoop(pParse, p, p->pEList, unionTab, p->pEList->nExpr,
                              p->pOrderBy, -1, eDest, iParm, 
                              iCont, iBreak);
         if( rc ) return 1;
@@ -1153,7 +1219,7 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
       sqliteVdbeAddOp(v, OP_Rewind, tab1, iBreak);
       iStart = sqliteVdbeAddOp(v, OP_FullKey, tab1, 0);
       sqliteVdbeAddOp(v, OP_NotFound, tab2, iCont);
-      rc = selectInnerLoop(pParse, p, 0, tab1, p->pEList->nExpr,
+      rc = selectInnerLoop(pParse, p, p->pEList, tab1, p->pEList->nExpr,
                              p->pOrderBy, -1, eDest, iParm, 
                              iCont, iBreak);
       if( rc ) return 1;
@@ -1525,7 +1591,7 @@ static int simpleMinMaxQuery(Parse *pParse, Select *p, int eDest, int iParm){
   eList.a = &eListItem;
   eList.a[0].pExpr = pExpr;
   cont = sqliteVdbeMakeLabel(v);
-  selectInnerLoop(pParse, p, &eList, base, 1, 0, -1, eDest, iParm, cont, cont);
+  selectInnerLoop(pParse, p, &eList, 0, 0, 0, -1, eDest, iParm, cont, cont);
   sqliteVdbeResolveLabel(v, cont);
   sqliteVdbeAddOp(v, OP_Close, base, 0);
   return 1;
@@ -1892,6 +1958,7 @@ int sqliteSelect(
         sqliteExprCode(pParse, pGroupBy->a[i].pExpr);
       }
       sqliteVdbeAddOp(v, OP_MakeKey, pGroupBy->nExpr, 0);
+      if( pParse->db->file_format>=3 ) sqliteAddKeyType(v, pGroupBy);
       lbl1 = sqliteVdbeMakeLabel(v);
       sqliteVdbeAddOp(v, OP_AggFocus, 0, lbl1);
       for(i=0; i<pParse->nAgg; i++){

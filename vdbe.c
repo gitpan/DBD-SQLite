@@ -30,7 +30,7 @@
 ** But other routines are also provided to help in building up
 ** a program instruction by instruction.
 **
-** $Id: vdbe.c,v 1.10 2002/06/26 13:34:47 matt Exp $
+** $Id: vdbe.c,v 1.11 2002/07/12 13:31:51 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -1578,7 +1578,7 @@ case OP_ColumnCount: {
 ** a coredump.
 */
 case OP_ColumnName: {
-  p->azColName[pOp->p1] = pOp->p3 ? pOp->p3 : "";
+  p->azColName[pOp->p1] = pOp->p3;
   p->nCallback = 0;
   break;
 }
@@ -1649,7 +1649,8 @@ case OP_NullCallback: {
 ** Look at the first P1 elements of the stack.  Append them all 
 ** together with the lowest element first.  Use P3 as a separator.  
 ** Put the result on the top of the stack.  The original P1 elements
-** are popped from the stack if P2==0 and retained if P2==1.
+** are popped from the stack if P2==0 and retained if P2==1.  If
+** any element of the stack is NULL, then the result is NULL.
 **
 ** If P3 is NULL, then use no separator.  When P1==1, this routine
 ** makes a copy of the top stack element into memory obtained
@@ -1671,11 +1672,20 @@ case OP_Concat: {
   nByte = 1 - nSep;
   for(i=p->tos-nField+1; i<=p->tos; i++){
     if( aStack[i].flags & STK_Null ){
-      nByte += nSep;
+      nByte = -1;
+      break;
     }else{
       if( Stringify(p, i) ) goto no_mem;
       nByte += aStack[i].n - 1 + nSep;
     }
+  }
+  if( nByte<0 ){
+    if( pOp->p2==0 ) PopStack(p, nField);
+    VERIFY( NeedStack(p, p->tos+1); )
+    p->tos++;
+    aStack[p->tos].flags = STK_Null;
+    zStack[p->tos] = 0;
+    break;
   }
   zNew = sqliteMalloc( nByte );
   if( zNew==0 ) goto no_mem;
@@ -2622,7 +2632,7 @@ case OP_MakeRecord: {
 ** P3 is a string that is P1 characters long.  Each character is either
 ** an 'n' or a 't' to indicates if the argument should be numeric or
 ** text.  The first character corresponds to the lowest element on the
-** stack.
+** stack.  If P3 is NULL then all arguments are assumed to be numeric.
 **
 ** See also: MakeIdxKey, SortMakeKey
 */
@@ -2651,7 +2661,7 @@ case OP_MakeRecord: {
 ** P3 is a string that is P1 characters long.  Each character is either
 ** an 'n' or a 't' to indicates if the argument should be numeric or
 ** text.  The first character corresponds to the lowest element on the
-** stack.
+** stack.  If P3 is null then all arguments are assumed to be numeric.
 **
 ** See also:  MakeKey, SortMakeKey
 */
@@ -2845,6 +2855,8 @@ case OP_Commit: {
   if( rc==SQLITE_OK ){
     sqliteCommitInternalChanges(db);
   }else{
+    if( db->pBeTemp ) sqliteBtreeRollback(db->pBeTemp);
+    sqliteBtreeRollback(pBt);
     sqliteRollbackInternalChanges(db);
   }
   break;
@@ -4192,11 +4204,14 @@ case OP_SortPut: {
   pSorter->pNext = p->pSort;
   p->pSort = pSorter;
   assert( aStack[tos].flags & STK_Dyn );
-  assert( aStack[nos].flags & STK_Dyn );
   pSorter->nKey = aStack[tos].n;
   pSorter->zKey = zStack[tos];
   pSorter->nData = aStack[nos].n;
-  pSorter->pData = zStack[nos];
+  if( aStack[nos].flags & STK_Dyn ){
+    pSorter->pData = zStack[nos];
+  }else{
+    pSorter->pData = sqliteStrDup(zStack[nos]);
+  }
   aStack[tos].flags = 0;
   aStack[nos].flags = 0;
   zStack[tos] = 0;

@@ -12,7 +12,7 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.9 2002/06/26 13:34:47 matt Exp $
+** $Id: expr.c,v 1.10 2002/07/12 13:31:50 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -121,8 +121,10 @@ void sqliteExprDelete(Expr *p){
 */
 void sqliteExprMoveStrings(Expr *p, int offset){
   if( p==0 ) return;
-  if( p->token.z ) p->token.z += offset;
-  if( p->span.z ) p->span.z += offset;
+  if( !p->staticToken ){
+    if( p->token.z ) p->token.z += offset;
+    if( p->span.z ) p->span.z += offset;
+  }
   if( p->pLeft ) sqliteExprMoveStrings(p->pLeft, offset);
   if( p->pRight ) sqliteExprMoveStrings(p->pRight, offset);
   if( p->pList ) sqliteExprListMoveStrings(p->pList, offset);
@@ -166,16 +168,10 @@ Expr *sqliteExprDup(Expr *p){
   if( p==0 ) return 0;
   pNew = sqliteMalloc( sizeof(*p) );
   if( pNew==0 ) return 0;
-  pNew->op = p->op;
-  pNew->dataType = p->dataType;
+  memcpy(pNew, p, sizeof(*pNew));
   pNew->pLeft = sqliteExprDup(p->pLeft);
   pNew->pRight = sqliteExprDup(p->pRight);
   pNew->pList = sqliteExprListDup(p->pList);
-  pNew->iTable = p->iTable;
-  pNew->iColumn = p->iColumn;
-  pNew->iAgg = p->iAgg;
-  pNew->token = p->token;
-  pNew->span = p->span;
   pNew->pSelect = sqliteSelectDup(p->pSelect);
   return pNew;
 }
@@ -374,7 +370,7 @@ int sqliteExprIsInteger(Expr *p, int *pValue){
 /*
 ** Return TRUE if the given string is a row-id column name.
 */
-static int sqliteIsRowid(const char *z){
+int sqliteIsRowid(const char *z){
   if( sqliteStrICmp(z, "_ROWID_")==0 ) return 1;
   if( sqliteStrICmp(z, "ROWID")==0 ) return 1;
   if( sqliteStrICmp(z, "OID")==0 ) return 1;
@@ -889,6 +885,22 @@ int sqliteExprType(Expr *p){
       p = p->pSelect->pEList->a[0].pExpr;
       break;
 
+    case TK_CASE: {
+      if( p->pRight && sqliteExprType(p->pRight)==SQLITE_SO_NUM ){
+        return SQLITE_SO_NUM;
+      }
+      if( p->pList ){
+        int i;
+        ExprList *pList = p->pList;
+        for(i=1; i<pList->nExpr; i+=2){
+          if( sqliteExprType(pList->a[i].pExpr)==SQLITE_SO_NUM ){
+            return SQLITE_SO_NUM;
+          }
+        }
+      }
+      return SQLITE_SO_TEXT;
+    }
+
     default:
       assert( p->op==TK_ABORT );  /* Can't Happen */
       break;
@@ -1379,6 +1391,7 @@ int sqliteExprCompare(Expr *pA, Expr *pB){
     return 0;
   }
   if( pA->pSelect || pB->pSelect ) return 0;
+  if( pA->iTable!=pB->iTable || pA->iColumn!=pB->iColumn ) return 0;
   if( pA->token.z ){
     if( pB->token.z==0 ) return 0;
     if( pB->token.n!=pA->token.n ) return 0;

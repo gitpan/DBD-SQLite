@@ -9,7 +9,7 @@
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: btree.c,v 1.10 2002/06/26 13:34:46 matt Exp $
+** $Id: btree.c,v 1.11 2002/07/12 13:31:50 matt Exp $
 **
 ** This file implements a external (disk-based) database using BTrees.
 ** For a detailed discussion of BTrees, refer to
@@ -1569,6 +1569,12 @@ static int freePage(Btree *pBt, void *pPage, Pgno pgno){
     pgno = sqlitepager_pagenumber(pOvfl);
   }
   assert( pgno>2 );
+  pMemPage = (MemPage*)pPage;
+  pMemPage->isInit = 0;
+  if( pMemPage->pParent ){
+    sqlitepager_unref(pMemPage->pParent);
+    pMemPage->pParent = 0;
+  }
   rc = sqlitepager_write(pPage1);
   if( rc ){
     return rc;
@@ -1606,12 +1612,6 @@ static int freePage(Btree *pBt, void *pPage, Pgno pgno){
   pOvfl->iNext = pPage1->freeList;
   pPage1->freeList = pgno;
   memset(pOvfl->aPayload, 0, OVERFLOW_SIZE);
-  pMemPage = (MemPage*)pPage;
-  pMemPage->isInit = 0;
-  if( pMemPage->pParent ){
-    sqlitepager_unref(pMemPage->pParent);
-    pMemPage->pParent = 0;
-  }
   if( needUnref ) rc = sqlitepager_unref(pOvfl);
   return rc;
 }
@@ -2760,7 +2760,7 @@ static void checkAppendMsg(IntegrityCk *pCheck, char *zMsg1, char *zMsg2){
 */
 static int checkRef(IntegrityCk *pCheck, int iPage, char *zContext){
   if( iPage==0 ) return 1;
-  if( iPage>pCheck->nPage ){
+  if( iPage>pCheck->nPage || iPage<0 ){
     char zBuf[100];
     sprintf(zBuf, "invalid page number %d", iPage);
     checkAppendMsg(pCheck, zContext, zBuf);
@@ -3006,6 +3006,10 @@ char *sqliteBtreeIntegrityCheck(Btree *pBt, int *aRoot, int nRoot){
   sCheck.pBt = pBt;
   sCheck.pPager = pBt->pPager;
   sCheck.nPage = sqlitepager_pagecount(sCheck.pPager);
+  if( sCheck.nPage==0 ){
+    unlockBtreeIfUnused(pBt);
+    return 0;
+  }
   sCheck.anRef = sqliteMalloc( (sCheck.nPage+1)*sizeof(sCheck.anRef[0]) );
   sCheck.anRef[1] = 1;
   for(i=2; i<=sCheck.nPage; i++){ sCheck.anRef[i] = 0; }

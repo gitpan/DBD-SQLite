@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.11 2002/06/26 13:34:47 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.12 2002/07/12 13:31:51 matt Exp $
 */
 #include "sqlite.h"
 #include "hash.h"
@@ -432,6 +432,7 @@ struct Expr {
   u8 op;                 /* Operation performed by this node */
   u8 dataType;           /* Either SQLITE_SO_TEXT or SQLITE_SO_NUM */
   u8 isJoinExpr;         /* Origina is the ON or USING phrase of a join */
+  u8 staticToken;        /* Expr.token.z points to static memory */
   Expr *pLeft, *pRight;  /* Left and right subnodes */
   ExprList *pList;       /* A list of expressions used as function arguments
                          ** or in "<expr> IN (<expr-list)" */
@@ -870,6 +871,8 @@ void sqliteIdListDelete(IdList*);
 void sqliteSrcListDelete(SrcList*);
 void sqliteCreateIndex(Parse*, Token*, Token*, IdList*, int, Token*, Token*);
 void sqliteDropIndex(Parse*, Token*);
+void sqliteAddKeyType(Vdbe*, ExprList*);
+void sqliteAddIdxKeyType(Vdbe*, Index*);
 int sqliteSelect(Parse*, Select*, int, int, Select*, int, int*);
 Select *sqliteSelectNew(ExprList*,SrcList*,Expr*,ExprList*,Expr*,ExprList*,
                         int,int,int);
@@ -907,8 +910,9 @@ void sqliteRollbackTransaction(Parse*);
 char *sqlite_mprintf(const char *, ...);
 int sqliteExprIsConstant(Expr*);
 int sqliteExprIsInteger(Expr*, int*);
-void sqliteGenerateRowDelete(Vdbe*, Table*, int, int);
-void sqliteGenerateRowIndexDelete(Vdbe*, Table*, int, char*);
+int sqliteIsRowid(const char*);
+void sqliteGenerateRowDelete(sqlite*, Vdbe*, Table*, int, int);
+void sqliteGenerateRowIndexDelete(sqlite*, Vdbe*, Table*, int, char*);
 void sqliteGenerateConstraintChecks(Parse*,Table*,int,char*,int,int,int,int);
 void sqliteCompleteInsertion(Parse*, Table*, int, char*, int, int);
 void sqliteBeginWriteOperation(Parse*, int);
