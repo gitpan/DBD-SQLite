@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.36 2003/08/11 21:51:13 matt Exp $ */
+/* $Id: dbdimp.c,v 1.39 2003/08/23 10:45:57 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -6,6 +6,14 @@ DBISTATE_DECLARE;
 
 #ifndef SvPV_nolen
 #define SvPV_nolen(x) SvPV(x,PL_na)
+#endif
+
+#ifndef call_method
+#define call_method(x,y) perl_call_method(x,y)
+#endif
+
+#ifndef call_sv
+#define call_sv(x,y) perl_call_sv(x,y)
 #endif
 
 void
@@ -44,7 +52,7 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
 
     if ((imp_dbh->db = sqlite_open(dbname, 0, &errmsg)) == NULL) {
 	sqlite_error(dbh, (imp_xxh_t*)imp_dbh, 1, errmsg);
-        Safefree(errmsg);
+        sqlite_freemem(errmsg);
         return FALSE;
     }
     DBIc_IMPSET_on(imp_dbh);
@@ -64,7 +72,7 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
     {
         /*  warn("failed to set pragma: %s\n", errmsg); */
 	    sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
-        Safefree(errmsg);
+        sqlite_freemem(errmsg);
         return FALSE;
     }
 
@@ -74,7 +82,7 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
     {
         /*  warn("failed to set pragma: %s\n", errmsg); */
     	sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
-        Safefree(errmsg);
+        sqlite_freemem(errmsg);
         return FALSE;
     }
 
@@ -128,7 +136,7 @@ sqlite_db_rollback(SV *dbh, imp_dbh_t *imp_dbh)
             != SQLITE_OK)
         {
 	    sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
-            Safefree(errmsg);
+            sqlite_freemem(errmsg);
             return FALSE;
         }
         imp_dbh->in_tran = FALSE;
@@ -155,7 +163,7 @@ sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
             != SQLITE_OK)
         {
 	    sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
-            Safefree(errmsg);
+            sqlite_freemem(errmsg);
             return FALSE;
         }
         imp_dbh->in_tran = FALSE;
@@ -370,7 +378,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
             != SQLITE_OK)
         {
             sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, errmsg);
-            Safefree(errmsg);
+            sqlite_freemem(errmsg);
             return -2;
         }
         imp_dbh->in_tran = TRUE;
@@ -483,7 +491,7 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
             }
         }
         else {
-            (void)SvOK_off(AvARRAY(av)[i]);
+            sv_setsv(AvARRAY(av)[i], &PL_sv_undef);
         }
     }
     _sqlite_fetch_row(imp_sth);
@@ -543,7 +551,7 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
                     != SQLITE_OK)
                 {
 		    sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
-                    Safefree(errmsg);
+                    sqlite_freemem(errmsg);
                     return TRUE;
                 }
                 imp_dbh->in_tran = FALSE;

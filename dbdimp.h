@@ -1,4 +1,4 @@
-/* $Id: dbdimp.h,v 1.11 2003/08/11 21:51:13 matt Exp $ */
+/* $Id: dbdimp.h,v 1.12 2003/08/19 07:43:10 matt Exp $ */
 
 #ifndef _DBDIMP_H
 #define _DBDIMP_H   1
@@ -65,6 +65,9 @@ struct imp_sth_st {
 #define dbd_st_STORE_attrib_k   sqlite_st_STORE_attrib_k
 #define dbd_st_FETCH_attrib_k   sqlite_st_FETCH_attrib_k
 #define dbd_bind_ph             sqlite_bind_ph
+
+void sqlite_db_create_function(SV *dbh, const char *name, int argc, SV *func);
+void sqlite_db_create_aggregate( SV *dbh, const char *name, int argc, SV *aggr );
 
 #ifdef SvUTF8_on
 

@@ -12,7 +12,7 @@
 ** This module contains C code that generates VDBE code used to process
 ** the WHERE clause of SQL statements.
 **
-** $Id: where.c,v 1.18 2003/07/31 14:37:22 matt Exp $
+** $Id: where.c,v 1.19 2003/08/23 10:52:51 matt Exp $
 */
 #include "sqliteInt.h"
 

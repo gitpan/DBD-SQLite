@@ -1,5 +1,16 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.28
+    - Perl 5.8.0 removed long deprecated SvOK_off()
+    - Aliases for perl_call_*
+    - Updated to sqlite 2.8.6
+    - use sqlite_freemem everywhere
+
+0.27
+    - Changed API to use sqlite streaming API. This makes things slightly
+      slower for large result sets, at the benefit of being more "sane"
+      internally.
+
 0.26
     - Update to sqlite 2.8.5
     - Automatic binary encoding added (via a flag)

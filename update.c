@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle UPDATE statements.
 **
-** $Id: update.c,v 1.18 2003/07/31 14:37:22 matt Exp $
+** $Id: update.c,v 1.19 2003/08/23 10:52:51 matt Exp $
 */
 #include "sqliteInt.h"
 
