@@ -1,7 +1,9 @@
-require DBI;
-require DBI::DBD;
-die "Your DBI Version is too old - require at least 1.03"
-    unless $DBI::VERSION >= 1.03;
+eval {
+    require DBI;
+    require DBI::DBD;
+    die "Your DBI Version is too old - require at least 1.03"
+        unless $DBI::VERSION >= 1.03;
+};
 use ExtUtils::MakeMaker;
 use Config;
 use strict;
@@ -45,7 +47,7 @@ WriteMakefile(
     'OPTIMIZE'      => "-O2",
     'DEFINE'        => "-DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}" .
                        ($Config{d_usleep} ? " -DHAVE_USLEEP=1" : "") .
-                       ($DBI::VERSION > 1.42 ? '' : '-Dno_last_insert_id'),
+                       ($DBI::VERSION > 1.42 ? '' : ' -Dno_last_insert_id'),
     'clean'         => { FILES => 'SQLite.xsi config.h' },
     'PL_FILES'      => {},
     'EXE_FILES'     => [],

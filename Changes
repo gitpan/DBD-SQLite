@@ -1,5 +1,11 @@
 Revision history for Perl extension DBD::SQLite.
 
+1.06
+    - Resolve symbol conflicts on mac os x.
+    - Fix define in WriteMakefile lacking space.
+    - Fix DBI prereq in Makefile.PL
+    - Update to sqlite 3.0.7
+
 1.05
     - Enabled HAVE_USLEEP where available which should massively
       improve concurrent usage of DBD::SQLite

@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.50 2004/08/29 10:11:57 matt Exp $ */
+/* $Id: dbdimp.c,v 1.51 2004/09/13 07:19:48 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -128,7 +128,7 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
 }
 
 int
-sqlite_busy_timeout ( SV *dbh, int timeout )
+dbd_set_sqlite3_busy_timeout ( SV *dbh, int timeout )
 {
   D_imp_dbh(dbh);
   if (timeout) {
@@ -761,7 +761,7 @@ sqlite_db_func_dispatcher(sqlite3_context *context, int argc, sqlite3_value **va
 }
 
 void
-sqlite_db_create_function( SV *dbh, const char *name, int argc, SV *func )
+sqlite3_db_create_function( SV *dbh, const char *name, int argc, SV *func )
 {
     D_imp_dbh(dbh);
     int rv;
@@ -975,7 +975,7 @@ sqlite_db_aggr_finalize_dispatcher( sqlite3_context *context )
 }
 
 void
-sqlite_db_create_aggregate( SV *dbh, const char *name, int argc, SV *aggr_pkg )
+sqlite3_db_create_aggregate( SV *dbh, const char *name, int argc, SV *aggr_pkg )
 {
     D_imp_dbh(dbh);
     int rv;

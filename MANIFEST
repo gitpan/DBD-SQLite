@@ -8,7 +8,6 @@ date.c
 dbdimp.c
 dbdimp.h
 delete.c
-encode.c
 expr.c
 func.c
 getsqlite.pl

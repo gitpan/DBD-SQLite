@@ -51,4 +51,4 @@ src/tclsqlite.c
 src/shell.c
 src/lemon.c
 src/md5.c
-
+src/encode.c

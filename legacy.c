@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: legacy.c,v 1.3 2004/09/10 15:33:00 matt Exp $
+** $Id: legacy.c,v 1.4 2004/09/21 14:34:43 matt Exp $
 */
 
 #include "sqliteInt.h"
@@ -32,9 +32,9 @@
 ** is invoked, even for queries.
 */
 int sqlite3_exec(
-  sqlite *db,                 /* The database on which the SQL executes */
+  sqlite3 *db,                /* The database on which the SQL executes */
   const char *zSql,           /* The SQL to be executed */
-  sqlite_callback xCallback,  /* Invoke this callback routine */
+  sqlite3_callback xCallback, /* Invoke this callback routine */
   void *pArg,                 /* First argument to xCallback() */
   char **pzErrMsg             /* Write error messages here */
 ){

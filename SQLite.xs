@@ -1,4 +1,4 @@
-/* $Id: SQLite.xs,v 1.6 2004/07/21 20:50:42 matt Exp $ */
+/* $Id: SQLite.xs,v 1.7 2004/09/13 07:19:48 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -37,7 +37,7 @@ create_function(dbh, name, argc, func)
     SV *func
     CODE:
     {
-        sqlite_db_create_function( dbh, name, argc, func );
+        sqlite3_db_create_function( dbh, name, argc, func );
     }
 
 void
@@ -48,7 +48,7 @@ create_aggregate(dbh, name, argc, aggr)
     SV *aggr
     CODE:
     {
-        sqlite_db_create_aggregate( dbh, name, argc, aggr );
+        sqlite3_db_create_aggregate( dbh, name, argc, aggr );
     }
 
 int
@@ -56,7 +56,7 @@ busy_timeout(dbh, timeout=0)
   SV *dbh
   int timeout
   CODE:
-    RETVAL = sqlite_busy_timeout( dbh, timeout );
+    RETVAL = dbd_set_sqlite3_busy_timeout( dbh, timeout );
   OUTPUT:
     RETVAL
 

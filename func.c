@@ -16,7 +16,7 @@
 ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: func.c,v 1.23 2004/09/10 15:32:59 matt Exp $
+** $Id: func.c,v 1.24 2004/09/21 14:34:43 matt Exp $
 */
 #include <ctype.h>
 #include <math.h>
@@ -268,7 +268,7 @@ static void last_insert_rowid(
   int arg, 
   sqlite3_value **argv
 ){
-  sqlite *db = sqlite3_user_data(context);
+  sqlite3 *db = sqlite3_user_data(context);
   sqlite3_result_int64(context, sqlite3_last_insert_rowid(db));
 }
 
@@ -281,7 +281,7 @@ static void changes(
   int arg,
   sqlite3_value **argv
 ){
-  sqlite *db = sqlite3_user_data(context);
+  sqlite3 *db = sqlite3_user_data(context);
   sqlite3_result_int(context, sqlite3_changes(db));
 }
 
@@ -294,7 +294,7 @@ static void total_changes(
   int arg,
   sqlite3_value **argv
 ){
-  sqlite *db = sqlite3_user_data(context);
+  sqlite3 *db = sqlite3_user_data(context);
   sqlite3_result_int(context, sqlite3_total_changes(db));
 }
 
@@ -690,7 +690,7 @@ static void test_destructor(
 ){
   char *zVal;
   int len;
-  sqlite *db = sqlite3_user_data(pCtx);
+  sqlite3 *db = sqlite3_user_data(pCtx);
  
   test_destructor_count_var++;
   assert( nArg==1 );
@@ -917,7 +917,7 @@ static void minMaxFinalize(sqlite3_context *context){
 ** functions.  This should be the only routine in this file with
 ** external linkage.
 */
-void sqlite3RegisterBuiltinFunctions(sqlite *db){
+void sqlite3RegisterBuiltinFunctions(sqlite3 *db){
   static struct {
      char *zName;
      signed char nArg;
@@ -946,7 +946,7 @@ void sqlite3RegisterBuiltinFunctions(sqlite *db){
     { "random",            -1, 0, SQLITE_UTF8,    0, randomFunc },
     { "like",               2, 0, SQLITE_UTF8,    0, likeFunc   },
     { "glob",               2, 0, SQLITE_UTF8,    0, globFunc   },
-    { "nullif",             2, 0, SQLITE_UTF8,    0, nullifFunc },
+    { "nullif",             2, 0, SQLITE_UTF8,    1, nullifFunc },
     { "sqlite_version",     0, 0, SQLITE_UTF8,    0, versionFunc},
     { "quote",              1, 0, SQLITE_UTF8,    0, quoteFunc  },
     { "last_insert_rowid",  0, 1, SQLITE_UTF8,    0, last_insert_rowid },
