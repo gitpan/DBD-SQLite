@@ -4,9 +4,12 @@ CVS/.*
 \.tar$
 \.tgz$
 \.tar\.gz$
+\.o$
 output/.*
 ^.#
 ^mess/
+^sqlite/
+^output/
 ^tmp/
 ^blib/
 ^Makefile$

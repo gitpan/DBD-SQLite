@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.18 2002/03/13 11:27:46 matt Exp $ */
+/* $Id: dbdimp.c,v 1.20 2002/03/26 22:35:25 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -70,9 +70,10 @@ sqlite_db_disconnect (SV *dbh, imp_dbh_t *imp_dbh)
     dTHR;
     DBIc_ACTIVE_off(imp_dbh);
 
-    if (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
+    if (DBIc_is(imp_dbh, DBIcf_AutoCommit) == FALSE) {
         sqlite_db_rollback(dbh, imp_dbh);
     }
+
 
     sqlite_close(imp_dbh->db);
     imp_dbh->db = NULL;
@@ -257,7 +258,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     I32 i;
     int retval;
 
-    // warn("execute\n");
+    /* warn("execute\n"); */
 
     sv_setpv(DBIc_ERRSTR(imp_dbh), "");
 
@@ -329,8 +330,6 @@ sqlite_bind_ph (SV *sth, imp_sth_t *imp_sth,
                 SV *param, SV *value, IV sql_type, SV *attribs,
                                 int is_inout, IV maxlen)
 {
-    // warn("bind\n");
-
     if (is_inout) {
         croak("InOut bind params not implemented");
     }

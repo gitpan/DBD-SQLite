@@ -30,7 +30,7 @@
 ** But other routines are also provided to help in building up
 ** a program instruction by instruction.
 **
-** $Id: vdbe.c,v 1.6 2002/03/21 16:39:18 matt Exp $
+** $Id: vdbe.c,v 1.7 2002/03/26 14:17:52 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>

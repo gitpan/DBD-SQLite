@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle SELECT statements in SQLite.
 **
-** $Id: select.c,v 1.5 2002/03/21 16:39:18 matt Exp $
+** $Id: select.c,v 1.6 2002/03/26 14:17:52 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -609,6 +609,13 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
   */
   v = sqliteGetVdbe(pParse);
   if( v==0 ) return 1;
+
+  /* Create the destination temporary table if necessary
+  */
+  if( eDest==SRT_TempTable ){
+    sqliteVdbeAddOp(v, OP_OpenTemp, iParm, 0);
+    eDest = SRT_Table;
+  }
 
   /* Process the UNION or INTERSECTION
   */

@@ -12,7 +12,7 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite.h,v 1.5 2002/03/21 16:39:18 matt Exp $
+** @(#) $Id: sqlite.h,v 1.6 2002/03/26 14:17:52 matt Exp $
 */
 #ifndef _SQLITE_H_
 #define _SQLITE_H_
@@ -21,7 +21,7 @@
 /*
 ** The version of the SQLite library.
 */
-#define SQLITE_VERSION         "2.4.2"
+#define SQLITE_VERSION         "2.4.3"
 
 /*
 ** Make sure we can call this stuff from C++.
