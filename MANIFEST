@@ -1,3 +1,4 @@
+alter.c
 attach.c
 auth.c
 btree.c
@@ -8,12 +9,14 @@ date.c
 dbdimp.c
 dbdimp.h
 delete.c
+experimental.c
 expr.c
 func.c
 getsqlite.pl
 hash.c
 hash.h
 insert.c
+keywordhash.h
 legacy.c
 lib/DBD/SQLite.pm
 main.c

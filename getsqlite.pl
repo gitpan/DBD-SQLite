@@ -1,6 +1,5 @@
 use strict;
 use LWP::Simple qw(getstore);
-use Fatal qw(chdir);
 use ExtUtils::Command;
 
 my $version = shift || die "Usage: getsqlite.pl <version>\n";
@@ -15,9 +14,10 @@ print("done\n");
 
 rm_rf('sqlite');
 xsystem("tar zxvf sqlite.tar.gz");
-chdir("sqlite");
+chdir("sqlite") || chdir("sqlite-$version") || die "SQLite directory not found";
 xsystem("sh configure --enable-utf8");
 xsystem("make parse.c sqlite3.h opcodes.h opcodes.c");
+eval { xsystem("make keywordhash.h") };
 
 my %skip = map { $_ => 1 } map { chomp; $_ } <DATA>;
 warn("Skip: $_\n") for keys %skip;

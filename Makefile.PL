@@ -48,16 +48,17 @@ WriteMakefile(
     'DEFINE'        => "-DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}" .
                        ($Config{d_usleep} ? " -DHAVE_USLEEP=1" : "") .
                        ($DBI::VERSION > 1.42 ? '' : ' -Dno_last_insert_id'),
-    'clean'         => { FILES => 'SQLite.xsi config.h tv.log' },
+    'clean'         => { FILES => 'SQLite.xsi config.h tv.log output/foo' },
     'PL_FILES'      => {},
     'EXE_FILES'     => [],
 );
 
 package MY;
 sub postamble { 
-  DBI::DBD::dbd_postamble(@_);
+  eval { DBI::DBD::dbd_postamble(@_) };
 }
 sub libscan {
     my ($self, $path) = @_;
+    return if $path =~ /\.pl$/;
     ($path =~ m/\~$/) ? undef : $path;
 }

@@ -3,6 +3,7 @@ use strict;
 use Test;
 BEGIN { plan tests => 4 }
 use DBI;
+unlink("foo");
 my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "");
 ok($dbh);
 $dbh->{AutoCommit} = 1;

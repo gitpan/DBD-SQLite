@@ -8,6 +8,9 @@ MODULE = DBD::SQLite          PACKAGE = DBD::SQLite::db
 
 PROTOTYPES: DISABLE
 
+BOOT:
+    sv_setpv(get_sv("DBD::SQLite::sqlite_version", TRUE), SQLITE_VERSION);
+      
 AV *
 list_tables(dbh)
     SV *dbh

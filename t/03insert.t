@@ -8,12 +8,9 @@ ok($sth);
 ok(my $rows = $sth->execute("Fred", "Bloggs", "fred\@bloggs.com"));
 ok($rows == 1);
 ok($dbh->func('last_insert_rowid'));
-if ($DBI::VERSION < 1.43) {
-  skip("last_insert_id requires DBI v1.43");
-}
-else {
-  ok($dbh->last_insert_id(undef, undef, undef, undef));
-}
+my $unless_min_dbi =
+    $DBI::VERSION < 1.43 ? 'last_insert_id requires DBI v1.43' : '';
+skip($unless_min_dbi, $dbh->last_insert_id(undef, undef, undef, undef) );
 ok($sth->execute("test", "test", "1"));
 ok($sth->execute("test", "test", "2"));
 ok($sth->execute("test", "test", "3"));

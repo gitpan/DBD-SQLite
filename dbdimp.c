@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.52 2004/10/04 20:02:21 matt Exp $ */
+/* $Id: dbdimp.c,v 1.53 2004/10/12 18:42:55 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -7,6 +7,8 @@ DBISTATE_DECLARE;
 #ifndef SvPV_nolen
 #define SvPV_nolen(x) SvPV(x,PL_na)
 #endif
+
+#define SvPV_nolen_undef_ok(x) (SvOK(x) ? SvPV_nolen(x) : "undef")
 
 #ifndef call_method
 #define call_method(x,y) perl_call_method(x,y)
@@ -148,7 +150,10 @@ sqlite_db_disconnect (SV *dbh, imp_dbh_t *imp_dbh)
         sqlite_db_rollback(dbh, imp_dbh);
     }
 
-    sqlite3_close(imp_dbh->db);
+    if (sqlite3_close(imp_dbh->db) == SQLITE_BUSY) {
+        /* active statements! */
+        warn("closing dbh with active statement handles\n");
+    }
     imp_dbh->db = NULL;
 
     av_undef(imp_dbh->functions);
@@ -317,6 +322,9 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         if ((retval = sqlite3_prepare(imp_dbh->db, statement, 0, &(imp_sth->stmt), &extra))
             != SQLITE_OK)
         {
+            if (imp_sth->stmt) {
+                sqlite3_finalize(imp_sth->stmt);
+            }
             sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, (char*)sqlite3_errmsg(imp_dbh->db));
             return -1;
         }
@@ -328,14 +336,18 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         int sql_type = SvIV(sql_type_sv);
 
         sqlite_trace(4, "params left in 0x%p: %d", imp_sth->params, 1+av_len(imp_sth->params));
-        sqlite_trace(4, "bind %d type %d as %s", i, sql_type, SvPV_nolen(value));
+        sqlite_trace(4, "bind %d type %d as %s", i, sql_type, SvPV_nolen_undef_ok(value));
         
         if (!SvOK(value)) {
             sqlite_trace(5, "binding null");
             retval = sqlite3_bind_null(imp_sth->stmt, i+1);
         }
         else if (sql_type >= SQL_NUMERIC && sql_type <= SQL_SMALLINT) {
+#if defined(USE_64_BIT_INT)
+            retval = sqlite3_bind_int64(imp_sth->stmt, i+1, SvIV(value));
+#else
             retval = sqlite3_bind_int(imp_sth->stmt, i+1, SvIV(value));
+#endif
         }
         else if (sql_type >= SQL_FLOAT && sql_type <= SQL_DOUBLE) {
             retval = sqlite3_bind_double(imp_sth->stmt, i+1, SvNV(value));
@@ -345,7 +357,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
             char * data = SvPV(value, len);
             retval = sqlite3_bind_blob(imp_sth->stmt, i+1, data, len, SQLITE_TRANSIENT);
         }
-        else if (SvNIOK(value)) {
+        else if (looks_like_number(value)) {
             /* bind ordinary numbers as numbers - otherwise we might sort wrong */
             retval = sqlite3_bind_double(imp_sth->stmt, i+1, SvNV(value));
         }
@@ -431,7 +443,7 @@ sqlite_bind_ph (SV *sth, imp_sth_t *imp_sth,
     }
     pos = 2 * (SvIV(param) - 1);
     sqlite_trace(3, "bind into 0x%p: %d => %s (%d) pos %d\n",
-      imp_sth->params, SvIV(param), SvPV_nolen(value), sql_type, pos);
+      imp_sth->params, SvIV(param), SvPV_nolen_undef_ok(value), sql_type, pos);
     av_store(imp_sth->params, pos, SvREFCNT_inc(value));
     av_store(imp_sth->params, pos+1, newSViv(sql_type));
     
@@ -474,7 +486,11 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
         int col_type = sqlite3_column_type(imp_sth->stmt, i);
         switch(col_type) {
             case SQLITE_INTEGER:
-                sv_setiv(AvARRAY(av)[i], sqlite3_column_int(imp_sth->stmt, i));
+#if defined(USE_64_BIT_INT)
+                sv_setiv(AvARRAY(av)[i], sqlite3_column_int64(imp_sth->stmt, i));
+#else
+                sv_setnv(AvARRAY(av)[i], (double)sqlite3_column_int64(imp_sth->stmt, i));
+#endif
                 break;
             case SQLITE_FLOAT:
                 sv_setnv(AvARRAY(av)[i], sqlite3_column_double(imp_sth->stmt, i));
@@ -517,16 +533,21 @@ sqlite_st_finish (SV *sth, imp_sth_t *imp_sth)
     D_imp_dbh_from_sth;
     
     /* warn("finish statement\n"); */
-    if (DBIc_ACTIVE(imp_sth)) {
-        char *errmsg;
-        DBIc_ACTIVE_off(imp_sth);
-        if ((imp_sth->retval = sqlite3_finalize(imp_sth->stmt)) != SQLITE_OK) {
-            errmsg = (char*)sqlite3_errmsg(imp_dbh->db);
-            /* warn("finalize failed! %s\n", errmsg); */
-            sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, errmsg);
-            return FALSE;
-        }
+    if (!DBIc_ACTIVE(imp_sth))
+        return 1;
+
+    DBIc_ACTIVE_off(imp_sth);
+    
+    if (!DBIc_ACTIVE(imp_dbh))		/* no longer connected	*/
+        return 1;
+
+    if ((imp_sth->retval = sqlite3_finalize(imp_sth->stmt)) != SQLITE_OK) {
+        char *errmsg = (char*)sqlite3_errmsg(imp_dbh->db);
+        /* warn("finalize failed! %s\n", errmsg); */
+        sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, errmsg);
+        return FALSE;
     }
+    
     return TRUE;
 }
 
@@ -534,9 +555,11 @@ void
 sqlite_st_destroy (SV *sth, imp_sth_t *imp_sth)
 {
     /* warn("destroy statement\n"); */
+    /*
     if (DBIc_ACTIVE(imp_sth)) {
         sqlite_st_finish(sth, imp_sth);
     }
+    */
     SvREFCNT_dec((SV*)imp_sth->params);
     DBIc_IMPSET_off(imp_sth);
 }
