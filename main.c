@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.11 2002/08/13 22:10:44 matt Exp $
+** $Id: main.c,v 1.12 2002/10/16 22:36:02 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -251,6 +251,7 @@ int sqliteInit(sqlite *db, char **pzErrMsg){
   if( db->pBe==0 ) return SQLITE_OK;
   rc = sqliteBtreeCursor(db->pBe, 2, 0, &curMain);
   if( rc ){
+    sqliteSetString(pzErrMsg, sqlite_error_string(rc), 0);
     sqliteResetInternalSchema(db);
     return rc;
   }
@@ -259,6 +260,7 @@ int sqliteInit(sqlite *db, char **pzErrMsg){
   */
   rc = sqliteBtreeGetMeta(db->pBe, meta);
   if( rc ){
+    sqliteSetString(pzErrMsg, sqlite_error_string(rc), 0);
     sqliteResetInternalSchema(db);
     sqliteBtreeCloseCursor(curMain);
     return rc;
@@ -280,8 +282,8 @@ int sqliteInit(sqlite *db, char **pzErrMsg){
   */
   if( db->file_format==0 ){
     /* This happens if the database was initially empty */
-    db->file_format = 3;
-  }else if( db->file_format>3 ){
+    db->file_format = 4;
+  }else if( db->file_format>4 ){
     sqliteBtreeCloseCursor(curMain);
     sqliteSetString(pzErrMsg, "unsupported file format", 0);
     return SQLITE_ERROR;
@@ -352,7 +354,7 @@ sqlite *sqlite_open(const char *zFilename, int mode, char **pzErrMsg){
   sqliteHashInit(&db->idxHash, SQLITE_HASH_STRING, 0);
   sqliteHashInit(&db->trigHash, SQLITE_HASH_STRING, 0);
   sqliteHashInit(&db->aFunc, SQLITE_HASH_STRING, 1);
-  sqliteRegisterBuiltinFunctions(db);
+  sqliteHashInit(&db->aFKey, SQLITE_HASH_STRING, 1);
   db->onError = OE_Default;
   db->priorNewRowid = 0;
   db->magic = SQLITE_MAGIC_BUSY;
@@ -371,6 +373,7 @@ sqlite *sqlite_open(const char *zFilename, int mode, char **pzErrMsg){
   }
 
   /* Attempt to read the schema */
+  sqliteRegisterBuiltinFunctions(db);
   rc = sqliteInit(db, pzErrMsg);
   db->magic = SQLITE_MAGIC_OPEN;
   if( sqlite_malloc_failed ){
@@ -405,7 +408,7 @@ sqlite *sqlite_open(const char *zFilename, int mode, char **pzErrMsg){
       &zErr);
     if( rc==SQLITE_OK ){
       sqliteBtreeGetMeta(db->pBe, meta);
-      meta[2] = 3;
+      meta[2] = 4;
       sqliteBtreeUpdateMeta(db->pBe, meta);
       sqlite_exec(db, "COMMIT", 0, 0, 0);
     }
@@ -464,6 +467,7 @@ void sqlite_close(sqlite *db){
     }
   }
   sqliteHashClear(&db->aFunc);
+  sqliteHashClear(&db->aFKey);
   sqliteFree(db);
 }
 
@@ -601,7 +605,9 @@ int sqlite_exec(
   if( pzErrMsg ) *pzErrMsg = 0;
   if( sqliteSafetyOn(db) ) goto exec_misuse;
   if( (db->flags & SQLITE_Initialized)==0 ){
-    int rc = sqliteInit(db, pzErrMsg);
+    int rc, cnt = 1;
+    while( (rc = sqliteInit(db, pzErrMsg))==SQLITE_BUSY
+       && db->xBusyCallback && db->xBusyCallback(db->pBusyArg, "", cnt++)!=0 ){}
     if( rc!=SQLITE_OK ){
       sqliteStrRealloc(pzErrMsg);
       sqliteSafetyOff(db);
@@ -628,6 +634,9 @@ int sqlite_exec(
     if( db->pBeTemp ) sqliteBtreeRollback(db->pBeTemp);
     db->flags &= ~SQLITE_InTrans;
     sqliteResetInternalSchema(db);
+  }
+  if( sParse.rc!=SQLITE_OK && pzErrMsg && *pzErrMsg==0 ){
+    sqliteSetString(pzErrMsg, sqlite_error_string(sParse.rc), 0);
   }
   sqliteStrRealloc(pzErrMsg);
   if( sParse.rc==SQLITE_SCHEMA ){
@@ -795,8 +804,11 @@ int sqlite_create_function(
   void *pUserData      /* User data */
 ){
   FuncDef *p;
+  int nName;
   if( db==0 || zName==0 || sqliteSafetyCheck(db) ) return 1;
-  p = sqliteFindFunction(db, zName, strlen(zName), nArg, 1);
+  nName = strlen(zName);
+  if( nName>255 ) return 1;
+  p = sqliteFindFunction(db, zName, nName, nArg, 1);
   if( p==0 ) return 1;
   p->xFunc = xFunc;
   p->xStep = 0;
@@ -813,8 +825,11 @@ int sqlite_create_aggregate(
   void *pUserData      /* User data */
 ){
   FuncDef *p;
+  int nName;
   if( db==0 || zName==0 || sqliteSafetyCheck(db) ) return 1;
-  p = sqliteFindFunction(db, zName, strlen(zName), nArg, 1);
+  nName = strlen(zName);
+  if( nName>255 ) return 1;
+  p = sqliteFindFunction(db, zName, nName, nArg, 1);
   if( p==0 ) return 1;
   p->xFunc = 0;
   p->xStep = xStep;
@@ -844,7 +859,7 @@ int sqlite_function_type(sqlite *db, const char *zName, int dataType){
 ** separate databases and acting on them as if they were one.
 **
 ** This routine closes the existing auxiliary database file, which will
-** cause any previously created TEMP tables to be created.
+** cause any previously created TEMP tables to be dropped.
 **
 ** The zName parameter can be a NULL pointer or an empty string to cause
 ** a temporary file to be opened and automatically deleted when closed.

@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.13 2002/08/13 22:10:46 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.14 2002/10/16 22:36:04 matt Exp $
 */
 #include "sqlite.h"
 #include "hash.h"
@@ -175,6 +175,7 @@ typedef struct FuncDef FuncDef;
 typedef struct Trigger Trigger;
 typedef struct TriggerStep TriggerStep;
 typedef struct TriggerStack TriggerStack;
+typedef struct FKey FKey;
 
 /*
 ** Each database is an instance of the following structure.
@@ -206,6 +207,7 @@ struct sqlite {
   Hash idxHash;                 /* All (named) indices indexed by name */
   Hash trigHash;                /* All triggers indexed by name */
   Hash aFunc;                   /* All functions that can be in SQL exprs */
+  Hash aFKey;                   /* Foreign keys indexed by to-table */
   int lastRowid;                /* ROWID of most recent insert */
   int priorNewRowid;            /* Last randomly generated ROWID */
   int onError;                  /* Default conflict algorithm */
@@ -330,10 +332,52 @@ struct Table {
   u8 hasPrimKey;   /* True if there exists a primary key */
   u8 keyConf;      /* What to do in case of uniqueness conflict on iPKey */
   Trigger *pTrigger; /* List of SQL triggers on this table */
+  FKey *pFKey;       /* Linked list of all foreign keys in this table */
 };
 
 /*
-** SQLite supports 5 different ways to resolve a contraint
+** Each foreign key constraint is an instance of the following structure.
+**
+** A foreign key is associated with two tables.  The "from" table is
+** the table that contains the REFERENCES clause that creates the foreign
+** key.  The "to" table is the table that is named in the REFERENCES clause.
+** Consider this example:
+**
+**     CREATE TABLE ex1(
+**       a INTEGER PRIMARY KEY,
+**       b INTEGER CONSTRAINT fk1 REFERENCES ex2(x)
+**     );
+**
+** For foreign key "fk1", the from-table is "ex1" and the to-table is "ex2".
+**
+** Each REFERENCES clause generates an instance of the following structure
+** which is attached to the from-table.  The to-table need not exist when
+** the from-table is created.  The existance of the to-table is not checked
+** until an attempt is made to insert data into the from-table.
+**
+** The sqlite.aFKey hash table stores pointers to to this structure
+** given the name of a to-table.  For each to-table, all foreign keys
+** associated with that table are on a linked list using the FKey.pNextTo
+** field.
+*/
+struct FKey {
+  Table *pFrom;     /* The table that constains the REFERENCES clause */
+  FKey *pNextFrom;  /* Next foreign key in pFrom */
+  char *zTo;        /* Name of table that the key points to */
+  FKey *pNextTo;    /* Next foreign key that points to zTo */
+  int nCol;         /* Number of columns in this key */
+  struct sColMap {  /* Mapping of columns in pFrom to columns in zTo */
+    int iFrom;         /* Index of column in pFrom */
+    char *zCol;        /* Name of column in zTo.  If 0 use PRIMARY KEY */
+  } *aCol;          /* One entry for each of nCol column s */
+  u8 isDeferred;    /* True if constraint checking is deferred till COMMIT */
+  u8 updateConf;    /* How to resolve conflicts that occur on UPDATE */
+  u8 deleteConf;    /* How to resolve conflicts that occur on DELETE */
+  u8 insertConf;    /* How to resolve conflicts that occur on INSERT */
+};
+
+/*
+** SQLite supports many different ways to resolve a contraint
 ** error.  ROLLBACK processing means that a constraint violation
 ** causes the operation in process to fail and for the current transaction
 ** to be rolled back.  ABORT processing means the operation in process
@@ -346,6 +390,13 @@ struct Table {
 ** is returned.  REPLACE means that preexisting database rows that caused
 ** a UNIQUE constraint violation are removed so that the new insert or
 ** update can proceed.  Processing continues and no error is reported.
+**
+** RESTRICT, SETNULL, and CASCADE actions apply only to foreign keys.
+** RESTRICT is the same as ABORT for IMMEDIATE foreign keys and the
+** same as ROLLBACK for DEFERRED keys.  SETNULL means that the foreign
+** key is set to NULL.  CASCADE means that a DELETE or UPDATE of the
+** referenced table row is propagated into the row that holds the
+** foreign key.
 ** 
 ** The following there symbolic values are used to record which type
 ** of action to take.
@@ -356,7 +407,13 @@ struct Table {
 #define OE_Fail     3   /* Stop the operation but leave all prior changes */
 #define OE_Ignore   4   /* Ignore the error. Do not do the INSERT or UPDATE */
 #define OE_Replace  5   /* Delete existing record, then do INSERT or UPDATE */
-#define OE_Default  9   /* Do whatever the default action is */
+
+#define OE_Restrict 6   /* OE_Abort for IMMEDIATE, OE_Rollback for DEFERRED */
+#define OE_SetNull  7   /* Set the foreign key value to NULL */
+#define OE_SetDflt  8   /* Set the foreign key value to its default */
+#define OE_Cascade  9   /* Cascade the changes */
+
+#define OE_Default  99  /* Do whatever the default action is */
 
 /*
 ** Each SQL index is represented in memory by an
@@ -391,11 +448,19 @@ struct Index {
 
 /*
 ** Each token coming out of the lexer is an instance of
-** this structure.
+** this structure.  Tokens are also used as part of an expression.
+**
+** A "base" token is a real single token such as would come out of the
+** lexer.  There are also compound tokens which are aggregates of one
+** or more base tokens.  Compound tokens are used to name columns in the
+** result set of a SELECT statement.  In the expression "a+b+c", "b"
+** is a base token but "a+b" is a compound token.
 */
 struct Token {
   const char *z;      /* Text of the token.  Not NULL-terminated! */
-  int n;              /* Number of characters in this token */
+  unsigned dyn  : 1;  /* True for malloced memory, false for static */
+  unsigned base : 1;  /* True for a base token, false for compounds */
+  unsigned n    : 30; /* Number of characters in this token */
 };
 
 /*
@@ -411,10 +476,10 @@ struct Token {
 ** Expr.pRight and Expr.pLeft are subexpressions.  Expr.pList is a list
 ** of argument if the expression is a function.
 **
-** Expr.token is the operator token for this node.  Expr.span is the complete
-** subexpression represented by this node and all its decendents.  These
-** fields are used for error reporting and for reconstructing the text of
-** an expression to use as the column name in a SELECT statement.
+** Expr.token is the operator token for this node.  For some expressions
+** that have subexpressions, Expr.token can be the complete text that gave
+** rise to the Expr.  In the latter case, the token is marked as being
+** a compound token.
 **
 ** An expression of the form ID or ID.ID refers to a column in a table.
 ** For such expressions, Expr.op is set to TK_COLUMN and Expr.iTable is
@@ -435,13 +500,12 @@ struct Token {
 struct Expr {
   u8 op;                 /* Operation performed by this node */
   u8 dataType;           /* Either SQLITE_SO_TEXT or SQLITE_SO_NUM */
-  u8 isJoinExpr;         /* Origina is the ON or USING phrase of a join */
-  u8 staticToken;        /* Expr.token.z points to static memory */
+  u8 isJoinExpr;         /* Origin is the ON or USING phrase of a join */
+  u8 nFuncName;          /* Number of characters in a function name */
   Expr *pLeft, *pRight;  /* Left and right subnodes */
   ExprList *pList;       /* A list of expressions used as function arguments
                          ** or in "<expr> IN (<expr-list)" */
   Token token;           /* An operand token */
-  Token span;            /* Complete text of the expression */
   int iTable, iColumn;   /* When op==TK_COLUMN, then this expr node means the
                          ** iColumn-th field of the iTable-th table. */
   int iAgg;              /* When op==TK_COLUMN and pParse->useAgg==TRUE, pull
@@ -603,6 +667,7 @@ struct Select {
 #define SRT_TempTable    8  /* Store result in a trasient table */
 #define SRT_Discard      9  /* Do not save the results anywhere */
 #define SRT_Sorter      10  /* Store results in the sorter */
+#define SRT_Subroutine  11  /* Call a subroutine to handle results */
 
 /*
 ** When a SELECT uses aggregate functions (like "count(*)" or "avg(f1)")
@@ -677,11 +742,6 @@ struct Parse {
  *    linked list is stored as the "pTrigger" member of the associated
  *    struct Table.
  *
- * The "strings" member of struct Trigger contains a pointer to the memory 
- * referenced by the various Token structures referenced indirectly by the
- * "pWhen", "pColumns" and "step_list" members. (ie. the memory allocated for
- * use in conjunction with the sqliteExprMoveStrings() etc. interface).
- *
  * The "step_list" member points to the first element of a linked list
  * containing the SQL statements specified as the trigger program.
  *
@@ -708,7 +768,6 @@ struct Trigger {
   int foreach;            /* One of TK_ROW or TK_STATEMENT */
 
   TriggerStep *step_list; /* Link list of trigger program steps             */
-  char *strings;          /* pointer to allocation of Token strings */
   Trigger *pNext;         /* Next trigger associated with the table */
 };
 
@@ -918,12 +977,10 @@ void sqliteGenerateRowDelete(sqlite*, Vdbe*, Table*, int, int);
 void sqliteGenerateRowIndexDelete(sqlite*, Vdbe*, Table*, int, char*);
 void sqliteGenerateConstraintChecks(Parse*,Table*,int,char*,int,int,int,int);
 void sqliteCompleteInsertion(Parse*, Table*, int, char*, int, int);
-void sqliteBeginWriteOperation(Parse*, int);
+void sqliteBeginWriteOperation(Parse*, int, int);
 void sqliteEndWriteOperation(Parse*);
-void sqliteExprMoveStrings(Expr*, int);
-void sqliteExprListMoveStrings(ExprList*, int);
-void sqliteSelectMoveStrings(Select*, int);
 Expr *sqliteExprDup(Expr*);
+void sqliteTokenCopy(Token*, Token*);
 ExprList *sqliteExprListDup(ExprList*);
 SrcList *sqliteSrcListDup(SrcList*);
 IdList *sqliteIdListDup(IdList*);
@@ -935,7 +992,7 @@ int sqliteSafetyOff(sqlite*);
 int sqliteSafetyCheck(sqlite*);
 void sqliteChangeCookie(sqlite*, Vdbe*);
 void sqliteCreateTrigger(Parse*, Token*, int, int, IdList*, Token*, 
-                         int, Expr*, TriggerStep*, char const*,int);
+                         int, Expr*, TriggerStep*, Token*);
 void sqliteDropTrigger(Parse*, Token*, int);
 int sqliteTriggersExist(Parse* , Trigger* , int , int , int, ExprList*);
 int sqliteCodeRowTrigger(Parse*, int, ExprList*, int, Table *, int, int, 
@@ -947,3 +1004,5 @@ TriggerStep *sqliteTriggerUpdateStep(Token*, ExprList*, Expr*, int);
 TriggerStep *sqliteTriggerDeleteStep(Token*, Expr*);
 void sqliteDeleteTrigger(Trigger*);
 int sqliteJoinType(Parse*, Token*, Token*, Token*);
+void sqliteCreateForeignKey(Parse*, IdList*, Token*, IdList*, int);
+void sqliteDeferForeignKey(Parse*, int);

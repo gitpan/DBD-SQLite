@@ -16,7 +16,7 @@ xsystem("rm -fR sqlite");
 xsystem("tar zxvf sqlite.tar.gz");
 chdir("sqlite");
 xsystem("sh configure --enable-utf8");
-xsystem("make parse.c sqlite.h");
+xsystem("make parse.c sqlite.h opcodes.h opcodes.c");
 
 while (<DATA>) {
     chomp;
@@ -38,6 +38,8 @@ __DATA__
 parse.c
 parse.h
 sqlite.h
+opcodes.h
+opcodes.c
 src/btree.h
 src/btree.c
 src/build.c

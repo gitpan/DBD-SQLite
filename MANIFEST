@@ -36,6 +36,7 @@ t/02cr_table.t
 t/03insert.t
 t/04select.t
 t/05tran.t
+t/06error.t
 t/10dsnlist.t
 t/20createdrop.t
 t/30insertfetch.t

@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle SELECT statements in SQLite.
 **
-** $Id: select.c,v 1.11 2002/08/13 22:10:46 matt Exp $
+** $Id: select.c,v 1.12 2002/10/16 22:36:04 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -156,18 +156,16 @@ static void addWhereTerm(
 
   dummy.z = zCol;
   dummy.n = strlen(zCol);
+  dummy.base = 1;
+  dummy.dyn = 0;
   pE1a = sqliteExpr(TK_ID, 0, 0, &dummy);
-  pE1a->staticToken = 1;
   pE2a = sqliteExpr(TK_ID, 0, 0, &dummy);
-  pE2a->staticToken = 1;
   dummy.z = pTab1->zName;
   dummy.n = strlen(dummy.z);
   pE1b = sqliteExpr(TK_ID, 0, 0, &dummy);
-  pE1b->staticToken = 1;
   dummy.z = pTab2->zName;
   dummy.n = strlen(dummy.z);
   pE2b = sqliteExpr(TK_ID, 0, 0, &dummy);
-  pE2b->staticToken = 1;
   pE1c = sqliteExpr(TK_DOT, pE1b, pE1a, 0);
   pE2c = sqliteExpr(TK_DOT, pE2b, pE2a, 0);
   pE = sqliteExpr(TK_EQ, pE1c, pE2c, 0);
@@ -522,6 +520,19 @@ static int selectInnerLoop(
       break;
     }
 
+    /* Invoke a subroutine to handle the results.  The subroutine itself
+    ** is responsible for popping the results off of the stack.
+    */
+    case SRT_Subroutine: {
+      if( pOrderBy ){
+        sqliteVdbeAddOp(v, OP_MakeRecord, nColumn, 0);
+        pushOntoSorter(pParse, v, pOrderBy);
+      }else{
+        sqliteVdbeAddOp(v, OP_Gosub, 0, iParm);
+      }
+      break;
+    }
+
     /* Discard the results.  This is used for SELECT statements inside
     ** the body of a TRIGGER.  The purpose of such selects is to call
     ** user-defined functions that have side effects.  We do not care
@@ -587,6 +598,15 @@ static void generateSortTail(
       sqliteVdbeAddOp(v, OP_Goto, 0, end);
       break;
     }
+    case SRT_Subroutine: {
+      int i;
+      for(i=0; i<nColumn; i++){
+        sqliteVdbeAddOp(v, OP_Column, -1-i, i);
+      }
+      sqliteVdbeAddOp(v, OP_Gosub, 0, iParm);
+      sqliteVdbeAddOp(v, OP_Pop, 1, 0);
+      break;
+    }
     default: {
       /* Do nothing */
       break;
@@ -643,9 +663,9 @@ static void generateColumnNames(
         zCol = pTab->aCol[iCol].zName;
         zType = pTab->aCol[iCol].zType;
       }
-      if( p->span.z && p->span.z[0] && !showFullNames ){
+      if( p->token.z && p->token.z[0] && !showFullNames ){
         int addr = sqliteVdbeAddOp(v,OP_ColumnName, i, 0);
-        sqliteVdbeChangeP3(v, -1, p->span.z, p->span.n);
+        sqliteVdbeChangeP3(v, -1, p->token.z, p->token.n);
         sqliteVdbeCompressSpace(v, addr);
       }else if( pTabList->nSrc>1 || showFullNames ){
         char *zName = 0;
@@ -661,13 +681,13 @@ static void generateColumnNames(
         sqliteVdbeAddOp(v, OP_ColumnName, i, 0);
         sqliteVdbeChangeP3(v, -1, zCol, 0);
       }
-    }else if( p->span.z && p->span.z[0] && !showFullNames ){
+    }else if( p->token.z && p->token.z[0] && !showFullNames ){
       int addr = sqliteVdbeAddOp(v,OP_ColumnName, i, 0);
-      sqliteVdbeChangeP3(v, -1, p->span.z, p->span.n);
+      sqliteVdbeChangeP3(v, -1, p->token.z, p->token.n);
       sqliteVdbeCompressSpace(v, addr);
-    }else if( p->span.z && p->span.z[0] ){
+    }else if( p->token.z && p->token.z[0] ){
       int addr = sqliteVdbeAddOp(v,OP_ColumnName, i, 0);
-      sqliteVdbeChangeP3(v, -1, p->span.z, p->span.n);
+      sqliteVdbeChangeP3(v, -1, p->token.z, p->token.n);
       sqliteVdbeCompressSpace(v, addr);
     }else{
       char zName[30];
@@ -730,8 +750,8 @@ Table *sqliteResultSetOfSelect(Parse *pParse, char *zTabName, Select *pSelect){
     Expr *p;
     if( pEList->a[i].zName ){
       pTab->aCol[i].zName = sqliteStrDup(pEList->a[i].zName);
-    }else if( (p=pEList->a[i].pExpr)->span.z && p->span.z[0] ){
-      sqliteSetNString(&pTab->aCol[i].zName, p->span.z, p->span.n, 0);
+    }else if( (p=pEList->a[i].pExpr)->token.z && p->token.z[0] ){
+      sqliteSetNString(&pTab->aCol[i].zName, p->token.z, p->token.n, 0);
     }else if( p->op==TK_DOT && p->pRight && p->pRight->token.z &&
            p->pRight->token.z[0] ){
       sqliteSetNString(&pTab->aCol[i].zName, 
@@ -810,6 +830,7 @@ static int fillInColumnList(Parse *pParse, Select *p){
         if( sqliteViewGetColumnNames(pParse, pTab) ){
           return 1;
         }
+        sqliteSelectDelete(pTabList->a[i].pSelect);
         pTabList->a[i].pSelect = sqliteSelectDup(pTab->pSelect);
       }
     }
@@ -895,16 +916,22 @@ static int fillInColumnList(Parse *pParse, Select *p){
             if( pRight==0 ) break;
             pRight->token.z = zName;
             pRight->token.n = strlen(zName);
-            if( zTabName ){
+            pRight->token.dyn = 0;
+            pRight->token.base = 1;
+            if( zTabName && pTabList->nSrc>1 ){
               pLeft = sqliteExpr(TK_ID, 0, 0, 0);
-              if( pLeft==0 ) break;
-              pLeft->token.z = zTabName;
-              pLeft->token.n = strlen(zTabName);
               pExpr = sqliteExpr(TK_DOT, pLeft, pRight, 0);
               if( pExpr==0 ) break;
+              pLeft->token.z = zTabName;
+              pLeft->token.n = strlen(zTabName);
+              pLeft->token.dyn = 0;
+              pLeft->token.base = 1;
+              sqliteSetString((char**)&pExpr->token.z, zTabName, ".", zName, 0);
+              pExpr->token.n = strlen(pExpr->token.z);
+              pExpr->token.base = 0;
+              pExpr->token.dyn = 1;
             }else{
               pExpr = pRight;
-              pExpr->span = pExpr->token;
             }
             pNew = sqliteExprListAppend(pNew, pExpr, 0);
           }
@@ -945,8 +972,10 @@ void sqliteSelectUnbind(Select *p){
     if( (pTab = pSrc->a[i].pTab)!=0 ){
       if( pTab->isTransient ){
         sqliteDeleteTable(0, pTab);
+#if 0
         sqliteSelectDelete(pSrc->a[i].pSelect);
         pSrc->a[i].pSelect = 0;
+#endif
       }
       pSrc->a[i].pTab = 0;
       if( pSrc->a[i].pSelect ){
@@ -1068,7 +1097,6 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
   int rc;             /* Success code from a subroutine */
   Select *pPrior;     /* Another SELECT immediately to our left */
   Vdbe *v;            /* Generate code to this VDBE */
-  int base;           /* Baseline value for pParse->nTab */
 
   /* Make sure there is no ORDER BY clause on prior SELECTs.  Only the 
   ** last SELECT in the series may have an ORDER BY.
@@ -1096,7 +1124,6 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
 
   /* Generate code for the left and right SELECT statements.
   */
-  base = pParse->nTab;
   switch( p->op ){
     case TK_ALL: {
       if( p->pOrderBy==0 ){
@@ -1251,7 +1278,6 @@ static int multiSelect(Parse *pParse, Select *p, int eDest, int iParm){
     pParse->nErr++;
     return 1;
   }
-  pParse->nTab = base;
   return 0;
 }
 
@@ -1303,13 +1329,17 @@ static void substExpr(Expr *pExpr, int iTable, ExprList *pEList, int iSub){
     pNew = pEList->a[pExpr->iColumn].pExpr;
     assert( pNew!=0 );
     pExpr->op = pNew->op;
+    assert( pExpr->pLeft==0 );
     pExpr->pLeft = sqliteExprDup(pNew->pLeft);
+    assert( pExpr->pRight==0 );
     pExpr->pRight = sqliteExprDup(pNew->pRight);
+    assert( pExpr->pList==0 );
     pExpr->pList = sqliteExprListDup(pNew->pList);
     pExpr->iTable = pNew->iTable;
     pExpr->iColumn = pNew->iColumn;
     pExpr->iAgg = pNew->iAgg;
-    pExpr->token = pNew->token;
+    pExpr->nFuncName = pNew->nFuncName;
+    sqliteTokenCopy(&pExpr->token, &pNew->token);
     if( iSub!=iTable ){
       changeTables(pExpr, iSub, iTable);
     }
@@ -1392,7 +1422,13 @@ substExprList(ExprList *pList, int iTable, ExprList *pEList, int iSub){
 ** All of the expression analysis must occur on both the outer query and
 ** the subquery before this routine runs.
 */
-int flattenSubquery(Select *p, int iFrom, int isAgg, int subqueryIsAgg){
+static int flattenSubquery(
+  Parse *pParse,       /* The parsing context */
+  Select *p,           /* The parent or outer SELECT statement */
+  int iFrom,           /* Index in p->pSrc->a[] of the inner subquery */
+  int isAgg,           /* True if outer SELECT uses aggregate functions */
+  int subqueryIsAgg    /* True if the subquery uses aggregate functions */
+){
   Select *pSub;       /* The inner query or "subquery" */
   SrcList *pSrc;      /* The FROM clause of the outer query */
   SrcList *pSubSrc;   /* The FROM clause of the subquery */
@@ -1428,7 +1464,8 @@ int flattenSubquery(Select *p, int iFrom, int isAgg, int subqueryIsAgg){
   for(i=0; i<pList->nExpr; i++){
     if( pList->a[i].zName==0 ){
       Expr *pExpr = pList->a[i].pExpr;
-      pList->a[i].zName = sqliteStrNDup(pExpr->span.z, pExpr->span.n);
+      assert( pExpr->token.z!=0 );
+      pList->a[i].zName = sqliteStrNDup(pExpr->token.z, pExpr->token.n);
     }
   }
   if( isAgg ){
@@ -1474,6 +1511,7 @@ int flattenSubquery(Select *p, int iFrom, int isAgg, int subqueryIsAgg){
     }
   }
   p->isDistinct = p->isDistinct || pSub->isDistinct;
+
   if( pSub->nLimit>=0 ){
     if( p->nLimit<0 ){
       p->nLimit = pSub->nLimit;
@@ -1482,11 +1520,26 @@ int flattenSubquery(Select *p, int iFrom, int isAgg, int subqueryIsAgg){
     }
   }
   p->nOffset += pSub->nOffset;
+
+  /* If the subquery contains subqueries of its own, that were not
+  ** flattened, then code will have already been generated to put
+  ** the results of those sub-subqueries into VDBE cursors relative
+  ** to the subquery.  We must translate the cursor number into values
+  ** suitable for use by the outer query.
+  */
+  for(i=0; i<pSubSrc->nSrc; i++){
+    Vdbe *v;
+    if( pSubSrc->a[i].pSelect==0 ) continue;
+    v = sqliteGetVdbe(pParse);
+    sqliteVdbeAddOp(v, OP_RenameCursor, pSub->base+i, p->base+i);
+  }
+
   if( pSrc->a[iFrom].pTab && pSrc->a[iFrom].pTab->isTransient ){
     sqliteDeleteTable(0, pSrc->a[iFrom].pTab);
   }
   pSrc->a[iFrom].pTab = pSubSrc->a[0].pTab;
   pSubSrc->a[0].pTab = 0;
+  assert( pSrc->a[iFrom].pSelect==pSub );
   pSrc->a[iFrom].pSelect = pSubSrc->a[0].pSelect;
   pSubSrc->a[0].pSelect = 0;
   sqliteSelectDelete(pSub);
@@ -1535,7 +1588,7 @@ static int simpleMinMaxQuery(Parse *pParse, Select *p, int eDest, int iParm){
   pExpr = p->pEList->a[0].pExpr;
   if( pExpr->op!=TK_AGG_FUNCTION ) return 0;
   if( pExpr->pList==0 || pExpr->pList->nExpr!=1 ) return 0;
-  if( pExpr->token.n!=3 ) return 0;
+  if( pExpr->nFuncName!=3 ) return 0;
   if( sqliteStrNICmp(pExpr->token.z,"min",3)==0 ){
     seekOp = OP_Rewind;
   }else if( sqliteStrNICmp(pExpr->token.z,"max",3)==0 ){
@@ -1870,7 +1923,7 @@ int sqliteSelect(
   ** If flattening is a possiblity, do so and return immediately.  
   */
   if( pParent && pParentAgg &&
-      flattenSubquery(pParent, parentTab, *pParentAgg, isAgg) ){
+      flattenSubquery(pParse, pParent, parentTab, *pParentAgg, isAgg) ){
     if( isAgg ) *pParentAgg = 1;
     return rc;
   }
@@ -2046,7 +2099,7 @@ int sqliteSelect(
   ** successful coding of the SELECT.
   */
 select_end:
-  pParse->nTab = base;
+  /* pParse->nTab = base; */
   sqliteAggregateInfoReset(pParse);
   return rc;
 }

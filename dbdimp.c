@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.22 2002/08/03 23:55:48 matt Exp $ */
+/* $Id: dbdimp.c,v 1.24 2002/10/17 16:24:56 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -14,7 +14,7 @@ sqlite_init(dbistate_t *dbistate)
 }
 
 void
-do_error(SV *h, int rc, char *what)
+sqlite_error(SV *h, int rc, char *what)
 {
     dTHR;
     D_imp_xxh(h);
@@ -23,7 +23,7 @@ do_error(SV *h, int rc, char *what)
     sv_setiv(DBIc_ERR(imp_xxh), (IV)rc);
     sv_setpv(errstr, what);
     DBIh_EVENT2(h, ERROR_event, DBIc_ERR(imp_xxh), errstr);
-
+    
     if (dbis->debug >= 2) {
         fprintf(DBILOGFP, "%s error %d recorded: %s\n",
             what, rc, SvPV(errstr, myPL_na));
@@ -287,9 +287,10 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
             NULL, NULL, &errmsg)
             != SQLITE_OK)
         {
-            sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+            sqlite_error(sth, retval, errmsg);
+            /* sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg); */
             Safefree(errmsg);
-            return retval;
+            return -1;
         }
         imp_dbh->in_tran = TRUE;
     }
@@ -299,9 +300,8 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         &(imp_sth->nrow), &(imp_sth->ncols), &errmsg) != SQLITE_OK)
     {
         /*  warn("exec failed: %s\n", errmsg); */
-        sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+        sqlite_error(sth, retval, errmsg);
         Safefree(errmsg);
-        sv_setiv(DBIc_ERR(imp_dbh), retval);
         return -2;
     }
 
@@ -355,7 +355,7 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
         current_entry, numFields, imp_sth->nrow); */
 
     if (current_entry >= ((imp_sth->nrow * numFields) + 1)) {
-        DBIc_ACTIVE_off(imp_sth);
+        sqlite_st_finish(sth, imp_sth);
         return Nullav;
     }
 
@@ -390,8 +390,10 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
 int
 sqlite_st_finish (SV *sth, imp_sth_t *imp_sth)
 {
-    DBIc_ACTIVE_off(imp_sth);
-    sqlite_free_table(imp_sth->results);
+    if (DBIc_ACTIVE(imp_sth)) {
+        DBIc_ACTIVE_off(imp_sth);
+        sqlite_free_table(imp_sth->results);
+    }
     return TRUE;
 }
 

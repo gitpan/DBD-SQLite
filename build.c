@@ -25,7 +25,7 @@
 **     ROLLBACK
 **     PRAGMA
 **
-** $Id: build.c,v 1.11 2002/08/13 22:10:44 matt Exp $
+** $Id: build.c,v 1.12 2002/10/16 22:36:02 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -81,6 +81,10 @@ void sqliteExec(Parse *pParse){
     pParse->rc = rc;
     pParse->schemaVerified = 0;
   }
+  pParse->nTab = 0;
+  pParse->nMem = 0;
+  pParse->nSet = 0;
+  pParse->nAgg = 0;
 }
 
 /*
@@ -152,6 +156,7 @@ void sqliteResetInternalSchema(sqlite *db){
   Hash temp1;
   Hash temp2;
 
+  sqliteHashClear(&db->aFKey);
   temp1 = db->tblHash;
   temp2 = db->trigHash;
   sqliteHashInit(&db->trigHash, SQLITE_HASH_STRING, 0);
@@ -194,8 +199,10 @@ void sqliteCommitInternalChanges(sqlite *db){
 ** Table.  No changes are made to disk by this routine.
 **
 ** This routine just deletes the data structure.  It does not unlink
-** the table data structure from the hash table.  But it does destroy
-** memory structures of the indices associated with the table.
+** the table data structure from the hash table.  Nor does it remove
+** foreign keys from the sqlite.aFKey hash table.  But it does destroy
+** memory structures of the indices and foreign keys associated with 
+** the table.
 **
 ** Indices associated with the table are unlinked from the "db"
 ** data structure if db!=NULL.  If db==NULL, indices attached to
@@ -205,15 +212,32 @@ void sqliteCommitInternalChanges(sqlite *db){
 void sqliteDeleteTable(sqlite *db, Table *pTable){
   int i;
   Index *pIndex, *pNext;
+  FKey *pFKey, *pNextFKey;
+
   if( pTable==0 ) return;
+
+  /* Delete all indices associated with this table
+  */
+  for(pIndex = pTable->pIndex; pIndex; pIndex=pNext){
+    pNext = pIndex->pNext;
+    sqliteDeleteIndex(db, pIndex);
+  }
+
+  /* Delete all foreign keys associated with this table.  The keys
+  ** should have already been unlinked from the db->aFKey hash table 
+  */
+  for(pFKey=pTable->pFKey; pFKey; pFKey=pNextFKey){
+    pNextFKey = pFKey->pNextFrom;
+    assert( sqliteHashFind(&db->aFKey,pFKey->zTo,strlen(pFKey->zTo)+1)!=pFKey );
+    sqliteFree(pFKey);
+  }
+
+  /* Delete the Table structure itself.
+  */
   for(i=0; i<pTable->nCol; i++){
     sqliteFree(pTable->aCol[i].zName);
     sqliteFree(pTable->aCol[i].zDflt);
     sqliteFree(pTable->aCol[i].zType);
-  }
-  for(pIndex = pTable->pIndex; pIndex; pIndex=pNext){
-    pNext = pIndex->pNext;
-    sqliteDeleteIndex(db, pIndex);
   }
   sqliteFree(pTable->zName);
   sqliteFree(pTable->aCol);
@@ -223,13 +247,26 @@ void sqliteDeleteTable(sqlite *db, Table *pTable){
 
 /*
 ** Unlink the given table from the hash tables and the delete the
-** table structure with all its indices.
+** table structure with all its indices and foreign keys.
 */
 static void sqliteUnlinkAndDeleteTable(sqlite *db, Table *p){
   Table *pOld;
+  FKey *pF1, *pF2;
   assert( db!=0 );
   pOld = sqliteHashInsert(&db->tblHash, p->zName, strlen(p->zName)+1, 0);
   assert( pOld==0 || pOld==p );
+  for(pF1=p->pFKey; pF1; pF1=pF1->pNextFrom){
+    int nTo = strlen(pF1->zTo) + 1;
+    pF2 = sqliteHashFind(&db->aFKey, pF1->zTo, nTo);
+    if( pF2==pF1 ){
+      sqliteHashInsert(&db->aFKey, pF1->zTo, nTo, pF1->pNextTo);
+    }else{
+      while( pF2 && pF2->pNextTo!=pF1 ){ pF2=pF2->pNextTo; }
+      if( pF2 ){
+        pF2->pNextTo = pF1->pNextTo;
+      }
+    }
+  }
   sqliteDeleteTable(db, p);
 }
 
@@ -365,7 +402,7 @@ void sqliteStartTable(Parse *pParse, Token *pStart, Token *pName, int isTemp){
   ** now.
   */
   if( !pParse->initFlag && (v = sqliteGetVdbe(pParse))!=0 ){
-    sqliteBeginWriteOperation(pParse, 0);
+    sqliteBeginWriteOperation(pParse, 0, isTemp);
     if( !isTemp ){
       sqliteVdbeAddOp(v, OP_Integer, db->file_format, 0);
       sqliteVdbeAddOp(v, OP_SetCookie, 0, 1);
@@ -461,35 +498,37 @@ void sqliteAddColumnType(Parse *pParse, Token *pFirst, Token *pLast){
   }
   z[j] = 0;
   pCol->sortOrder = SQLITE_SO_NUM;
-  for(i=0; z[i]; i++){
-    switch( z[i] ){
-      case 'b':
-      case 'B': {
-        if( sqliteStrNICmp(&z[i],"blob",4)==0 ){
-          pCol->sortOrder = SQLITE_SO_TEXT;
-          return;
+  if( pParse->db->file_format>=4 ){
+    for(i=0; z[i]; i++){
+      switch( z[i] ){
+        case 'b':
+        case 'B': {
+          if( sqliteStrNICmp(&z[i],"blob",4)==0 ){
+            pCol->sortOrder = SQLITE_SO_TEXT;
+            return;
+          }
+          break;
         }
-        break;
-      }
-      case 'c':
-      case 'C': {
-        if( sqliteStrNICmp(&z[i],"char",4)==0 ||
-                sqliteStrNICmp(&z[i],"clob",4)==0 ){
-          pCol->sortOrder = SQLITE_SO_TEXT;
-          return;
+        case 'c':
+        case 'C': {
+          if( sqliteStrNICmp(&z[i],"char",4)==0 ||
+                  sqliteStrNICmp(&z[i],"clob",4)==0 ){
+            pCol->sortOrder = SQLITE_SO_TEXT;
+            return;
+          }
+          break;
         }
-        break;
-      }
-      case 'x':
-      case 'X': {
-        if( i>=2 && sqliteStrNICmp(&z[i-2],"text",4)==0 ){
-          pCol->sortOrder = SQLITE_SO_TEXT;
-          return;
+        case 'x':
+        case 'X': {
+          if( i>=2 && sqliteStrNICmp(&z[i-2],"text",4)==0 ){
+            pCol->sortOrder = SQLITE_SO_TEXT;
+            return;
+          }
+          break;
         }
-        break;
-      }
-      default: {
-        break;
+        default: {
+          break;
+        }
       }
     }
   }
@@ -737,10 +776,16 @@ void sqliteEndTable(Parse *pParse, Token *pEnd, Select *pSelect){
   assert( pParse->nameClash==0 || pParse->initFlag==1 );
   if( pParse->explain==0 && pParse->nameClash==0 ){
     Table *pOld;
+    FKey *pFKey;
     pOld = sqliteHashInsert(&db->tblHash, p->zName, strlen(p->zName)+1, p);
     if( pOld ){
       assert( p==pOld );  /* Malloc must have failed inside HashInsert() */
       return;
+    }
+    for(pFKey=p->pFKey; pFKey; pFKey=pFKey->pNextFrom){
+      int nTo = strlen(pFKey->zTo) + 1;
+      pFKey->pNextTo = sqliteHashFind(&db->aFKey, pFKey->zTo, nTo);
+      sqliteHashInsert(&db->aFKey, pFKey->zTo, nTo, pFKey);
     }
     pParse->pNewTable = 0;
     db->nTable++;
@@ -842,10 +887,10 @@ void sqliteCreateView(
   Select *pSelect,   /* A SELECT statement that will become the new view */
   int isTemp         /* TRUE for a TEMPORARY view */
 ){
-  Token sEnd;
   Table *p;
+  int n;
   const char *z;
-  int n, offset;
+  Token sEnd;
 
   sqliteStartTable(pParse, pBegin, pName, isTemp);
   p = pParse->pNewTable;
@@ -858,12 +903,20 @@ void sqliteCreateView(
     sqliteExprListDelete(pSelect->pOrderBy);
     pSelect->pOrderBy = 0;
   }
-  p->pSelect = pSelect;
+  /* Make a copy of the entire SELECT statement that defines the view.
+  ** This will force all the Expr.token.z values to be dynamically
+  ** allocated rather than point to the input string - which means that
+  ** they will persist after the current sqlite_exec() call returns.
+  */
+  p->pSelect = sqliteSelectDup(pSelect);
+  sqliteSelectDelete(pSelect);
   if( !pParse->initFlag ){
-    if( sqliteViewGetColumnNames(pParse, p) ){
-      return;
-    }
+    sqliteViewGetColumnNames(pParse, p);
   }
+
+  /* Locate the end of the CREATE VIEW statement.  Make sEnd point to
+  ** the end.
+  */
   sEnd = pParse->sLastToken;
   if( sEnd.z[0]!=0 && sEnd.z[0]!=';' ){
     sEnd.z += sEnd.n;
@@ -874,12 +927,9 @@ void sqliteCreateView(
   while( n>0 && (z[n-1]==';' || isspace(z[n-1])) ){ n--; }
   sEnd.z = &z[n-1];
   sEnd.n = 1;
-  z = p->pSelect->zSelect = sqliteStrNDup(z, n);
-  if( z ){
-    offset = ((int)z) - (int)pBegin->z;
-    sqliteSelectMoveStrings(p->pSelect, offset);
-    sqliteEndTable(pParse, &sEnd, 0);
-  }
+
+  /* Use sqliteEndTable() to add the view to the SQLITE_MASTER table */
+  sqliteEndTable(pParse, &sEnd, 0);
   return;
 }
 
@@ -1059,7 +1109,7 @@ void sqliteDropTable(Parse *pParse, Token *pName, int isView){
     };
     Index *pIdx;
     Trigger *pTrigger;
-    sqliteBeginWriteOperation(pParse, 0);
+    sqliteBeginWriteOperation(pParse, 0, pTable->isTemp);
     sqliteOpenMasterTable(v, pTable->isTemp);
     /* Drop all triggers associated with the table being dropped */
     pTrigger = pTable->pTrigger;
@@ -1132,6 +1182,138 @@ void sqliteAddIdxKeyType(Vdbe *v, Index *pIdx){
   zType[n] = 0;
   sqliteVdbeChangeP3(v, -1, zType, n);
   sqliteFree(zType);
+}
+
+/*
+** This routine is called to create a new foreign key on the table
+** currently under construction.  pFromCol determines which columns
+** in the current table point to the foreign key.  If pFromCol==0 then
+** connect the key to the last column inserted.  pTo is the name of
+** the table referred to.  pToCol is a list of tables in the other
+** pTo table that the foreign key points to.  flags contains all
+** information about the conflict resolution algorithms specified
+** in the ON DELETE, ON UPDATE and ON INSERT clauses.
+**
+** An FKey structure is created and added to the table currently
+** under construction in the pParse->pNewTable field.  The new FKey
+** is not linked into db->aFKey at this point - that does not happen
+** until sqliteEndTable().
+**
+** The foreign key is set for IMMEDIATE processing.  A subsequent call
+** to sqliteDeferForeignKey() might change this to DEFERRED.
+*/
+void sqliteCreateForeignKey(
+  Parse *pParse,       /* Parsing context */
+  IdList *pFromCol,    /* Columns in this table that point to other table */
+  Token *pTo,          /* Name of the other table */
+  IdList *pToCol,      /* Columns in the other table */
+  int flags            /* Conflict resolution algorithms. */
+){
+  Table *p = pParse->pNewTable;
+  int nByte;
+  int i;
+  int nCol;
+  char *z;
+  FKey *pFKey = 0;
+
+  assert( pTo!=0 );
+  if( p==0 || pParse->nErr ) goto fk_end;
+  if( pFromCol==0 ){
+    int iCol = p->nCol-1;
+    if( iCol<0 ) goto fk_end;
+    if( pToCol && pToCol->nId!=1 ){
+      sqliteSetNString(&pParse->zErrMsg, "foreign key on ", -1,
+         p->aCol[iCol].zName, -1, 
+         " should reference only one column of table ", -1,
+         pTo->z, pTo->n, 0);
+      pParse->nErr++;
+      goto fk_end;
+    }
+    nCol = 1;
+  }else if( pToCol && pToCol->nId!=pFromCol->nId ){
+    sqliteSetString(&pParse->zErrMsg, 
+        "number of columns in foreign key does not match the number of "
+        "columns in the referenced table", 0);
+    pParse->nErr++;
+    goto fk_end;
+  }else{
+    nCol = pFromCol->nId;
+  }
+  nByte = sizeof(*pFKey) + nCol*sizeof(pFKey->aCol[0]) + pTo->n + 1;
+  if( pToCol ){
+    for(i=0; i<pToCol->nId; i++){
+      nByte += strlen(pToCol->a[i].zName) + 1;
+    }
+  }
+  pFKey = sqliteMalloc( nByte );
+  if( pFKey==0 ) goto fk_end;
+  pFKey->pFrom = p;
+  pFKey->pNextFrom = p->pFKey;
+  z = (char*)&pFKey[1];
+  pFKey->aCol = (struct sColMap*)z;
+  z += sizeof(struct sColMap)*nCol;
+  pFKey->zTo = z;
+  memcpy(z, pTo->z, pTo->n);
+  z[pTo->n] = 0;
+  z += pTo->n+1;
+  pFKey->pNextTo = 0;
+  pFKey->nCol = nCol;
+  if( pFromCol==0 ){
+    pFKey->aCol[0].iFrom = p->nCol-1;
+  }else{
+    for(i=0; i<nCol; i++){
+      int j;
+      for(j=0; j<p->nCol; j++){
+        if( sqliteStrICmp(p->aCol[j].zName, pFromCol->a[i].zName)==0 ){
+          pFKey->aCol[i].iFrom = j;
+          break;
+        }
+      }
+      if( j>=p->nCol ){
+        sqliteSetString(&pParse->zErrMsg, "unknown column \"", 
+          pFromCol->a[i].zName, "\" in foreign key definition", 0);
+        pParse->nErr++;
+        goto fk_end;
+      }
+    }
+  }
+  if( pToCol ){
+    for(i=0; i<nCol; i++){
+      int n = strlen(pToCol->a[i].zName);
+      pFKey->aCol[i].zCol = z;
+      memcpy(z, pToCol->a[i].zName, n);
+      z[n] = 0;
+      z += n+1;
+    }
+  }
+  pFKey->isDeferred = 0;
+  pFKey->deleteConf = flags & 0xff;
+  pFKey->updateConf = (flags >> 8 ) & 0xff;
+  pFKey->insertConf = (flags >> 16 ) & 0xff;
+
+  /* Link the foreign key to the table as the last step.
+  */
+  p->pFKey = pFKey;
+  pFKey = 0;
+
+fk_end:
+  sqliteFree(pFKey);
+  sqliteIdListDelete(pFromCol);
+  sqliteIdListDelete(pToCol);
+}
+
+/*
+** This routine is called when an INITIALLY IMMEDIATE or INITIALLY DEFERRED
+** clause is seen as part of a foreign key definition.  The isDeferred
+** parameter is 1 for INITIALLY DEFERRED and 0 for INITIALLY IMMEDIATE.
+** The behavior of the most recently created foreign key is adjusted
+** accordingly.
+*/
+void sqliteDeferForeignKey(Parse *pParse, int isDeferred){
+  Table *pTab;
+  FKey *pFKey;
+  if( (pTab = pParse->pNewTable)==0 || (pFKey = pTab->pFKey)==0 ) return;
+  pFKey->isDeferred = isDeferred;
 }
 
 /*
@@ -1360,7 +1542,7 @@ void sqliteCreateIndex(
     v = sqliteGetVdbe(pParse);
     if( v==0 ) goto exit_create_index;
     if( pTable!=0 ){
-      sqliteBeginWriteOperation(pParse, 0);
+      sqliteBeginWriteOperation(pParse, 0, isTemp);
       sqliteOpenMasterTable(v, isTemp);
     }
     sqliteVdbeAddOp(v, OP_NewRecno, 0, 0);
@@ -1466,7 +1648,7 @@ void sqliteDropIndex(Parse *pParse, Token *pName){
     int base;
     Table *pTab = pIndex->pTable;
 
-    sqliteBeginWriteOperation(pParse, 0);
+    sqliteBeginWriteOperation(pParse, 0, pTab->isTemp);
     sqliteOpenMasterTable(v, pTab->isTemp);
     base = sqliteVdbeAddOpList(v, ArraySize(dropIndex), dropIndex);
     sqliteVdbeChangeP3(v, base+1, pIndex->zName, 0);
@@ -1647,7 +1829,7 @@ void sqliteCopy(
   v = sqliteGetVdbe(pParse);
   if( v ){
     int openOp;
-    sqliteBeginWriteOperation(pParse, 1);
+    sqliteBeginWriteOperation(pParse, 1, pTab->isTemp);
     addr = sqliteVdbeAddOp(v, OP_FileOpen, 0, 0);
     sqliteVdbeChangeP3(v, addr, pFilename->z, pFilename->n);
     sqliteVdbeDequoteP3(v, addr);
@@ -1727,8 +1909,13 @@ void sqliteBeginTransaction(Parse *pParse, int onError){
 
   if( pParse==0 || (db=pParse->db)==0 || db->pBe==0 ) return;
   if( pParse->nErr || sqlite_malloc_failed ) return;
-  if( db->flags & SQLITE_InTrans ) return;
-  sqliteBeginWriteOperation(pParse, 0);
+  if( db->flags & SQLITE_InTrans ){
+    pParse->nErr++;
+    sqliteSetString(&pParse->zErrMsg, "cannot start a transaction "
+       "within a transaction", 0);
+    return;
+  }
+  sqliteBeginWriteOperation(pParse, 0, 0);
   db->flags |= SQLITE_InTrans;
   db->onError = onError;
 }
@@ -1741,7 +1928,12 @@ void sqliteCommitTransaction(Parse *pParse){
 
   if( pParse==0 || (db=pParse->db)==0 || db->pBe==0 ) return;
   if( pParse->nErr || sqlite_malloc_failed ) return;
-  if( (db->flags & SQLITE_InTrans)==0 ) return;
+  if( (db->flags & SQLITE_InTrans)==0 ){
+    pParse->nErr++;
+    sqliteSetString(&pParse->zErrMsg, 
+       "cannot commit - no transaction is active", 0);
+    return;
+  }
   db->flags &= ~SQLITE_InTrans;
   sqliteEndWriteOperation(pParse);
   db->onError = OE_Default;
@@ -1756,7 +1948,12 @@ void sqliteRollbackTransaction(Parse *pParse){
 
   if( pParse==0 || (db=pParse->db)==0 || db->pBe==0 ) return;
   if( pParse->nErr || sqlite_malloc_failed ) return;
-  if( (db->flags & SQLITE_InTrans)==0 ) return;
+  if( (db->flags & SQLITE_InTrans)==0 ){
+    pParse->nErr++;
+    sqliteSetString(&pParse->zErrMsg,
+       "cannot rollback - no transaction is active", 0);
+    return; 
+  }
   v = sqliteGetVdbe(pParse);
   if( v ){
     sqliteVdbeAddOp(v, OP_Rollback, 0, 0);
@@ -1777,16 +1974,23 @@ void sqliteRollbackTransaction(Parse *pParse){
 ** rollback the whole transaction.  For operations where all constraints
 ** can be checked before any changes are made to the database, it is never
 ** necessary to undo a write and the checkpoint should not be set.
+**
+** The tempOnly flag indicates that only temporary tables will be changed
+** during this write operation.  The primary database table is not
+** write-locked.  Only the temporary database file gets a write lock.
+** Other processes can continue to read or write the primary database file.
 */
-void sqliteBeginWriteOperation(Parse *pParse, int setCheckpoint){
+void sqliteBeginWriteOperation(Parse *pParse, int setCheckpoint, int tempOnly){
   Vdbe *v;
   v = sqliteGetVdbe(pParse);
   if( v==0 ) return;
   if( pParse->trigStack ) return; /* if this is in a trigger */
   if( (pParse->db->flags & SQLITE_InTrans)==0 ){
-    sqliteVdbeAddOp(v, OP_Transaction, 0, 0);
-    sqliteVdbeAddOp(v, OP_VerifyCookie, pParse->db->schema_cookie, 0);
-    pParse->schemaVerified = 1;
+    sqliteVdbeAddOp(v, OP_Transaction, tempOnly, 0);
+    if( !tempOnly ){
+      sqliteVdbeAddOp(v, OP_VerifyCookie, pParse->db->schema_cookie, 0);
+      pParse->schemaVerified = 1;
+    }
   }else if( setCheckpoint ){
     sqliteVdbeAddOp(v, OP_Checkpoint, 0, 0);
   }
@@ -1889,7 +2093,7 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       int addr;
       int size = atoi(zRight);
       if( size<0 ) size = -size;
-      sqliteBeginWriteOperation(pParse, 0);
+      sqliteBeginWriteOperation(pParse, 0, 0);
       sqliteVdbeAddOp(v, OP_Integer, size, 0);
       sqliteVdbeAddOp(v, OP_ReadCookie, 0, 2);
       addr = sqliteVdbeAddOp(v, OP_Integer, 0, 0);
@@ -1980,7 +2184,7 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       int addr;
       int size = db->cache_size;
       if( size<0 ) size = -size;
-      sqliteBeginWriteOperation(pParse, 0);
+      sqliteBeginWriteOperation(pParse, 0, 0);
       sqliteVdbeAddOp(v, OP_ReadCookie, 0, 2);
       sqliteVdbeAddOp(v, OP_Dup, 0, 0);
       addr = sqliteVdbeAddOp(v, OP_Integer, 0, 0);

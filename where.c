@@ -13,7 +13,7 @@
 ** the WHERE clause of SQL statements.  Also found here are subroutines
 ** to generate VDBE code to evaluate expressions.
 **
-** $Id: where.c,v 1.11 2002/08/13 22:10:46 matt Exp $
+** $Id: where.c,v 1.12 2002/10/16 22:36:04 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -181,6 +181,10 @@ static Index *findSortingIndex(
       /* Indices can only be used for ascending sort order */
       return 0;
     }
+    if( (pOrderBy->a[i].sortOrder & SQLITE_SO_TYPEMASK)!=SQLITE_SO_UNK ){
+      /* Do not sort by index if there is a COLLATE clause */
+      return 0;
+    }
     p = pOrderBy->a[i].pExpr;
     if( p->op!=TK_COLUMN || p->iTable!=base ){
       /* Can not use an index sort on anything that is not a column in the
@@ -300,7 +304,6 @@ WhereInfo *sqliteWhereBegin(
   int nExpr;           /* Number of subexpressions in the WHERE clause */
   int loopMask;        /* One bit set for each outer loop */
   int haveKey;         /* True if KEY is on the stack */
-  int aDirect[32];     /* If TRUE, then index this table using ROWID */
   int iDirectEq[32];   /* Term of the form ROWID==X for the N-th table */
   int iDirectLt[32];   /* Term of the form ROWID<X or ROWID<=X */
   int iDirectGt[32];   /* Term of the form ROWID>X or ROWID>=X */
@@ -408,7 +411,7 @@ WhereInfo *sqliteWhereBegin(
   ** to the limit of 32 bits in an integer bitmask.
   */
   loopMask = 0;
-  for(i=0; i<pTabList->nSrc && i<ARRAYSIZE(aDirect); i++){
+  for(i=0; i<pTabList->nSrc && i<ARRAYSIZE(iDirectEq); i++){
     int j;
     int idx = aOrder[i];
     Table *pTab = pTabList->a[idx].pTab;
@@ -574,6 +577,8 @@ WhereInfo *sqliteWhereBegin(
     if( pBestIdx ){
       pWInfo->a[i].iCur = pParse->nTab++;
       pWInfo->peakNTab = pParse->nTab;
+    }else{
+      pWInfo->a[i].iCur = -1;
     }
   }
 
@@ -747,6 +752,7 @@ WhereInfo *sqliteWhereBegin(
       pLevel->iMem = pParse->nMem++;
       cont = pLevel->cont = sqliteVdbeMakeLabel(v);
       sqliteVdbeAddOp(v, OP_MakeKey, nColumn, 0);
+      sqliteAddIdxKeyType(v, pIdx);
       if( nColumn==pIdx->nColumn ){
         sqliteVdbeAddOp(v, OP_MemStore, pLevel->iMem, 0);
         testOp = OP_IdxGT;
@@ -929,6 +935,7 @@ WhereInfo *sqliteWhereBegin(
       if( testOp!=OP_Noop ){
         pLevel->iMem = pParse->nMem++;
         sqliteVdbeAddOp(v, OP_MakeKey, nEqColumn + (score & 1), 0);
+        sqliteAddIdxKeyType(v, pIdx);
         if( leFlag ){
           sqliteVdbeAddOp(v, OP_IncrKey, 0, 0);
         }
@@ -973,6 +980,7 @@ WhereInfo *sqliteWhereBegin(
       cont = pLevel->cont = sqliteVdbeMakeLabel(v);
       if( nEqColumn>0 || (score&2)!=0 ){
         sqliteVdbeAddOp(v, OP_MakeKey, nEqColumn + ((score&2)!=0), 0);
+        sqliteAddIdxKeyType(v, pIdx);
         if( !geFlag ){
           sqliteVdbeAddOp(v, OP_IncrKey, 0, 0);
         }
@@ -1077,8 +1085,11 @@ void sqliteWhereEnd(WhereInfo *pWInfo){
     if( pLevel->iLeftJoin ){
       int addr;
       addr = sqliteVdbeAddOp(v, OP_MemLoad, pLevel->iLeftJoin, 0);
-      sqliteVdbeAddOp(v, OP_NotNull, 1, addr+4);
+      sqliteVdbeAddOp(v, OP_NotNull, 1, addr+4 + (pLevel->iCur>=0));
       sqliteVdbeAddOp(v, OP_NullRow, base+i, 0);
+      if( pLevel->iCur>=0 ){
+        sqliteVdbeAddOp(v, OP_NullRow, pLevel->iCur, 0);
+      }
       sqliteVdbeAddOp(v, OP_Goto, 0, pLevel->top);
     }
   }
@@ -1091,9 +1102,11 @@ void sqliteWhereEnd(WhereInfo *pWInfo){
       sqliteVdbeAddOp(v, OP_Close, pLevel->iCur, 0);
     }
   }
+#if 0  /* Never reuse a cursor */
   if( pWInfo->pParse->nTab==pWInfo->peakNTab ){
     pWInfo->pParse->nTab = pWInfo->savedNTab;
   }
+#endif
   sqliteFree(pWInfo);
   return;
 }

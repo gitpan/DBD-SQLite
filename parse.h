@@ -117,9 +117,10 @@
 #define TK_UNION                          117
 #define TK_UNIQUE                         118
 #define TK_UPDATE                         119
-#define TK_USING                          120
-#define TK_VACUUM                         121
-#define TK_VALUES                         122
-#define TK_VIEW                           123
-#define TK_WHEN                           124
-#define TK_WHERE                          125
+#define TK_UPLUS                          120
+#define TK_USING                          121
+#define TK_VACUUM                         122
+#define TK_VALUES                         123
+#define TK_VIEW                           124
+#define TK_WHEN                           125
+#define TK_WHERE                          126
