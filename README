@@ -26,5 +26,13 @@ off it went up to 1000 rows per second.
 This module is distributed under the same terms as Perl itself, and
 is copyright Matt Sergeant, 2002.
 
-The underlying SQLite database engine is copyright free.
+The underlying SQLite database engine is copyright free, and is
+included in the distribution so that you don't have to download it
+separately. Just run:
+
+  perl Makefile.PL
+  make test
+  make install
+
+And you have a complete database solution.
 

@@ -40,7 +40,6 @@ struct imp_sth_st {
     int retval;
     int nrow;
     AV *params;
-    char *statement;
 };
 
 #define dbd_init                sqlite_init
