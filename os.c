@@ -579,7 +579,6 @@ int sqliteOsFileSize(OsFile *id, int *pSize){
 #endif
 }
 
-
 /*
 ** Change the status of the lock on the file "id" to be a readlock.
 ** If the file was write locked, then this reduces the lock to a read.

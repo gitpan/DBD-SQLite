@@ -1,5 +1,9 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.19
+    - Upgrade to SQLite 2.6.3 - this now allows databases to work across
+      different endian architectures.
+
 0.18
     - Upgraded to SQLite 2.5.6 - All users are advised to upgrade
       due to a corruption bug in SQLite 2.4.0 - 2.5.6

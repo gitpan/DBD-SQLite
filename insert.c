@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle INSERT statements in SQLite.
 **
-** $Id: insert.c,v 1.10 2002/07/12 13:31:50 matt Exp $
+** $Id: insert.c,v 1.11 2002/08/13 22:10:44 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -90,6 +90,14 @@ void sqliteInsert(
   zTab = 0;
 
   if( pTab==0 ) goto insert_cleanup;
+
+  /* If pTab is really a view, make sure it has been initialized.
+  */
+  if( pTab->pSelect ){
+    if( sqliteViewGetColumnNames(pParse, pTab) ){
+      goto insert_cleanup;
+    }
+  }
 
   /* Allocate a VDBE
   */
@@ -616,7 +624,7 @@ void sqliteGenerateConstraintChecks(
       }
     }
     jumpInst1 = sqliteVdbeAddOp(v, OP_MakeIdxKey, pIdx->nColumn, 0);
-    if( pParse->db->file_format>=3 ) sqliteAddIdxKeyType(v, pIdx);
+    if( pParse->db->file_format>=4 ) sqliteAddIdxKeyType(v, pIdx);
     onError = pIdx->onError;
     if( onError==OE_None ) continue;
     if( overrideError!=OE_Default ){

@@ -25,7 +25,7 @@
 **     ROLLBACK
 **     PRAGMA
 **
-** $Id: build.c,v 1.10 2002/07/12 13:31:50 matt Exp $
+** $Id: build.c,v 1.11 2002/08/13 22:10:44 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -839,14 +839,15 @@ void sqliteCreateView(
   Parse *pParse,     /* The parsing context */
   Token *pBegin,     /* The CREATE token that begins the statement */
   Token *pName,      /* The token that holds the name of the view */
-  Select *pSelect    /* A SELECT statement that will become the new view */
+  Select *pSelect,   /* A SELECT statement that will become the new view */
+  int isTemp         /* TRUE for a TEMPORARY view */
 ){
   Token sEnd;
   Table *p;
   const char *z;
   int n, offset;
 
-  sqliteStartTable(pParse, pBegin, pName, 0);
+  sqliteStartTable(pParse, pBegin, pName, isTemp);
   p = pParse->pNewTable;
   if( p==0 ){
     sqliteSelectDelete(pSelect);
@@ -1273,6 +1274,7 @@ void sqliteCreateIndex(
   pIndex->pTable = pTab;
   pIndex->nColumn = pList->nId;
   pIndex->onError = pIndex->isUnique = onError;
+  pIndex->autoIndex = pName==0;
 
   /* Scan the names of the columns of the table to be indexed and
   ** load the column indices into the Index structure.  Report an error
@@ -1396,7 +1398,7 @@ void sqliteCreateIndex(
         sqliteVdbeAddOp(v, OP_Column, 2, pIndex->aiColumn[i]);
       }
       sqliteVdbeAddOp(v, OP_MakeIdxKey, pIndex->nColumn, 0);
-      if( db->file_format>=3 ) sqliteAddIdxKeyType(v, pIndex);
+      if( db->file_format>=4 ) sqliteAddIdxKeyType(v, pIndex);
       sqliteVdbeAddOp(v, OP_IdxPut, 1, pIndex->onError!=OE_None);
       sqliteVdbeAddOp(v, OP_Next, 2, lbl1);
       sqliteVdbeResolveLabel(v, lbl2);
@@ -1437,6 +1439,12 @@ void sqliteDropIndex(Parse *pParse, Token *pName){
   if( pIndex==0 ){
     sqliteSetNString(&pParse->zErrMsg, "no such index: ", 0, 
         pName->z, pName->n, 0);
+    pParse->nErr++;
+    return;
+  }
+  if( pIndex->autoIndex ){
+    sqliteSetString(&pParse->zErrMsg, "index associated with UNIQUE "
+      "or PRIMARY KEY constraint cannot be dropped", 0);
     pParse->nErr++;
     return;
   }
@@ -2040,6 +2048,14 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       db->flags |= SQLITE_FullColNames;
     }else{
       db->flags &= ~SQLITE_FullColNames;
+    }
+  }else
+
+  if( sqliteStrICmp(zLeft, "show_datatypes")==0 ){
+    if( getBoolean(zRight) ){
+      db->flags |= SQLITE_ReportTypes;
+    }else{
+      db->flags &= ~SQLITE_ReportTypes;
     }
   }else
 

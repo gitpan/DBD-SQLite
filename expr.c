@@ -12,7 +12,7 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.10 2002/07/12 13:31:50 matt Exp $
+** $Id: expr.c,v 1.11 2002/08/13 22:10:44 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -137,9 +137,18 @@ void sqliteExprListMoveStrings(ExprList *pList, int offset){
     sqliteExprMoveStrings(pList->a[i].pExpr, offset);
   }
 }
+static void sqliteSrcListMoveStrings(SrcList *pSrc, int offset){
+  int i;
+  if( pSrc==0 ) return;
+  for(i=0; i<pSrc->nSrc; i++){
+    sqliteSelectMoveStrings(pSrc->a[i].pSelect, offset);
+    sqliteExprMoveStrings(pSrc->a[i].pOn, offset);
+  }
+}
 void sqliteSelectMoveStrings(Select *pSelect, int offset){
   if( pSelect==0 ) return;
   sqliteExprListMoveStrings(pSelect->pEList, offset);
+  sqliteSrcListMoveStrings(pSelect->pSrc, offset);
   sqliteExprMoveStrings(pSelect->pWhere, offset);
   sqliteExprListMoveStrings(pSelect->pGroupBy, offset);
   sqliteExprMoveStrings(pSelect->pHaving, offset);
@@ -990,7 +999,7 @@ void sqliteExprCode(Parse *pParse, Expr *pExpr){
     case TK_GE:
     case TK_NE:
     case TK_EQ: {
-      if( pParse->db->file_format>=3 && sqliteExprType(pExpr)==SQLITE_SO_TEXT ){
+      if( pParse->db->file_format>=4 && sqliteExprType(pExpr)==SQLITE_SO_TEXT ){
         op += 6;  /* Convert numeric opcodes to text opcodes */
       }
       /* Fall through into the next case */
@@ -1223,7 +1232,7 @@ void sqliteExprIfTrue(Parse *pParse, Expr *pExpr, int dest, int jumpIfNull){
     case TK_EQ: {
       sqliteExprCode(pParse, pExpr->pLeft);
       sqliteExprCode(pParse, pExpr->pRight);
-      if( pParse->db->file_format>=3 && sqliteExprType(pExpr)==SQLITE_SO_TEXT ){
+      if( pParse->db->file_format>=4 && sqliteExprType(pExpr)==SQLITE_SO_TEXT ){
         op += 6;  /* Convert numeric opcodes to text opcodes */
       }
       sqliteVdbeAddOp(v, op, jumpIfNull, dest);
@@ -1316,7 +1325,7 @@ void sqliteExprIfFalse(Parse *pParse, Expr *pExpr, int dest, int jumpIfNull){
     case TK_GE:
     case TK_NE:
     case TK_EQ: {
-      if( pParse->db->file_format>=3 && sqliteExprType(pExpr)==SQLITE_SO_TEXT ){
+      if( pParse->db->file_format>=4 && sqliteExprType(pExpr)==SQLITE_SO_TEXT ){
         op += 6;  /* Convert numeric opcodes to text opcodes */
       }
       sqliteExprCode(pParse, pExpr->pLeft);

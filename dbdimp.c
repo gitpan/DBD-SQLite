@@ -1,12 +1,10 @@
-/* $Id: dbdimp.c,v 1.21 2002/03/28 15:53:21 matt Exp $ */
+/* $Id: dbdimp.c,v 1.22 2002/08/03 23:55:48 matt Exp $ */
 
 #include "SQLiteXS.h"
 
 DBISTATE_DECLARE;
 
-#ifndef PL_na
-STRLEN PL_na;
-#endif
+STRLEN myPL_na;
 
 void
 sqlite_init(dbistate_t *dbistate)
@@ -28,7 +26,7 @@ do_error(SV *h, int rc, char *what)
 
     if (dbis->debug >= 2) {
         fprintf(DBILOGFP, "%s error %d recorded: %s\n",
-            what, rc, SvPV(errstr, PL_na));
+            what, rc, SvPV(errstr, myPL_na));
     }
 }
 
@@ -166,7 +164,7 @@ sqlite_st_parse_sql(imp_sth_t *imp_sth, char *statement)
     /* warn("parsing: %s\n", statement); */
 
     while (*statement) {
-        /*  warn("parse: %c => %s\n", *statement, SvPV(chunk, PL_na)); */
+        /*  warn("parse: %c => %s\n", *statement, SvPV(chunk, myPL_na)); */
         if (*statement == '\'') {
             if (in_literal) {
                 /*  either end of literal, or escape */
@@ -226,7 +224,7 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
 char *
 sqlite_quote(SV *val)
 {
-    char *cval = SvPV(val, PL_na);
+    char *cval = SvPV(val, myPL_na);
     SV *ret = sv_2mortal(NEWSV(0, SvCUR(val) + 2));
     if (strchr(cval, '\'')) {
         sv_setpvn(ret, "", 0);
@@ -240,7 +238,7 @@ sqlite_quote(SV *val)
             }
             *cval++;
         }
-        return SvPV(ret, PL_na);
+        return SvPV(ret, myPL_na);
     }
     else {
         return cval;
@@ -268,7 +266,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     for (i = 0; i < num_params; i++) {
         SV *value = av_shift(imp_sth->params);
         if (value && SvOK(value)) {
-            /* warn("binding param: %s\n", SvPV(value, PL_na)); */
+            /* warn("binding param: %s\n", SvPV(value, myPL_na)); */
             sv_catpvn(sql, "'", 1);
             sv_catpv(sql, sqlite_quote(value));
             sv_catpvn(sql, "'", 1);
@@ -282,7 +280,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         }
         sv_catsv(sql, AvARRAY(imp_sth->sql)[pos++]);
     }
-    /* warn("Executing: %s\n", SvPV(sql, PL_na)); */
+    /* warn("Executing: %s\n", SvPV(sql, myPL_na)); */
 
     if ( (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) && (!imp_dbh->in_tran) ) {
         if (retval = sqlite_exec(imp_dbh->db, "BEGIN TRANSACTION",
@@ -297,7 +295,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     }
 
     imp_sth->results = NULL;
-    if (retval = sqlite_get_table(imp_dbh->db, SvPV(sql, PL_na), &(imp_sth->results),
+    if (retval = sqlite_get_table(imp_dbh->db, SvPV(sql, myPL_na), &(imp_sth->results),
         &(imp_sth->nrow), &(imp_sth->ncols), &errmsg) != SQLITE_OK)
     {
         /*  warn("exec failed: %s\n", errmsg); */
@@ -334,7 +332,7 @@ sqlite_bind_ph (SV *sth, imp_sth_t *imp_sth,
     if (is_inout) {
         croak("InOut bind params not implemented");
     }
-    /* warn("bind: %s => %s\n", SvPV(param, PL_na), SvPV(value, PL_na)); */
+    /* warn("bind: %s => %s\n", SvPV(param, myPL_na), SvPV(value, myPL_na)); */
     if (sql_type >= SQL_NUMERIC && sql_type <= SQL_DOUBLE) {
         av_store(imp_sth->params, SvIV(param) - 1, newSVnv(SvNV(value)));
     }
@@ -418,7 +416,7 @@ int
 sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
 {
     dTHR;
-    char *key = SvPV(keysv, PL_na);
+    char *key = SvPV(keysv, myPL_na);
     char *errmsg;
     int retval;
 
@@ -456,7 +454,7 @@ SV *
 sqlite_db_FETCH_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv)
 {
     dTHR;
-    char *key = SvPV(keysv, PL_na);
+    char *key = SvPV(keysv, myPL_na);
 
     if (strncmp(key, "AutoCommit", 10) == 0) {
         /* warn("fetching autocommit\n"); */
@@ -484,7 +482,7 @@ sqlite_db_FETCH_attrib_k (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, int dbikey)
 int
 sqlite_st_STORE_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv, SV *valuesv)
 {
-    char *key = SvPV(keysv, PL_na);
+    char *key = SvPV(keysv, myPL_na);
 
     if (strEQ(key, "ChopBlanks")) {
         DBIc_set(imp_sth, DBIcf_ChopBlanks, SvIV(valuesv));
@@ -495,7 +493,7 @@ sqlite_st_STORE_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv, SV *valuesv)
 SV *
 sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
 {
-    char *key = SvPV(keysv, PL_na);
+    char *key = SvPV(keysv, myPL_na);
     SV *retsv = NULL;
     int i;
 

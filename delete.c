@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle DELETE FROM statements.
 **
-** $Id: delete.c,v 1.10 2002/07/12 13:31:50 matt Exp $
+** $Id: delete.c,v 1.11 2002/08/13 22:10:44 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -170,13 +170,12 @@ void sqliteDeleteFrom(
       int endOfLoop = sqliteVdbeMakeLabel(v);
       int addr;
       openOp = pTab->isTemp ? OP_OpenAux : OP_Open;
-      assert( base==0 );
-      sqliteVdbeAddOp(v, openOp, 0, pTab->tnum);
-      sqliteVdbeAddOp(v, OP_Rewind, 0, sqliteVdbeCurrentAddr(v)+2);
+      sqliteVdbeAddOp(v, openOp, base, pTab->tnum);
+      sqliteVdbeAddOp(v, OP_Rewind, base, sqliteVdbeCurrentAddr(v)+2);
       addr = sqliteVdbeAddOp(v, OP_AddImm, 1, 0);
-      sqliteVdbeAddOp(v, OP_Next, 0, addr);
+      sqliteVdbeAddOp(v, OP_Next, base, addr);
       sqliteVdbeResolveLabel(v, endOfLoop);
-      sqliteVdbeAddOp(v, OP_Close, 0, 0);
+      sqliteVdbeAddOp(v, OP_Close, base, 0);
     }
     sqliteVdbeAddOp(v, OP_Clear, pTab->tnum, pTab->isTemp);
     for(pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext){
@@ -381,7 +380,7 @@ void sqliteGenerateRowIndexDelete(
       }
     }
     sqliteVdbeAddOp(v, OP_MakeIdxKey, pIdx->nColumn, 0);
-    if( db->file_format>=3 ) sqliteAddIdxKeyType(v, pIdx);
+    if( db->file_format>=4 ) sqliteAddIdxKeyType(v, pIdx);
     sqliteVdbeAddOp(v, OP_IdxDelete, base+i, 0);
   }
 }

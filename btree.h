@@ -13,7 +13,7 @@
 ** subsystem.  See comments in the source code for a detailed description
 ** of what each interface routine does.
 **
-** @(#) $Id: btree.h,v 1.10 2002/07/12 13:31:50 matt Exp $
+** @(#) $Id: btree.h,v 1.11 2002/08/13 22:10:44 matt Exp $
 */
 #ifndef _BTREE_H_
 #define _BTREE_H_
@@ -63,6 +63,7 @@ char *sqliteBtreeIntegrityCheck(Btree*, int*, int);
 int sqliteBtreePageDump(Btree*, int, int);
 int sqliteBtreeCursorDump(BtCursor*, int*);
 struct Pager *sqliteBtreePager(Btree*);
+int btree_native_byte_order;
 #endif
 
 #endif /* _BTREE_H_ */

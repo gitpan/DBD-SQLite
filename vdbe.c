@@ -30,7 +30,7 @@
 ** But other routines are also provided to help in building up
 ** a program instruction by instruction.
 **
-** $Id: vdbe.c,v 1.11 2002/07/12 13:31:51 matt Exp $
+** $Id: vdbe.c,v 1.12 2002/08/13 22:10:46 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -1241,6 +1241,32 @@ static int byteSwap(int x){
 #endif
 
 /*
+** The following routine works like a replacement for the standard
+** library routine fgets().  The difference is in how end-of-line (EOL)
+** is handled.  Standard fgets() uses LF for EOL under unix, CRLF
+** under windows, and CR under mac.  This routine accepts any of these
+** character sequences as an EOL mark.  The EOL mark is replaced by
+** a single LF character in zBuf.
+*/
+static char *vdbe_fgets(char *zBuf, int nBuf, FILE *in){
+  int i, c;
+  for(i=0; i<nBuf-1 && (c=getc(in))!=EOF; i++){
+    zBuf[i] = c;
+    if( c=='\r' || c=='\n' ){
+      if( c=='\r' ){
+        zBuf[i] = '\n';
+        c = getc(in);
+        if( c!=EOF && c!='\n' ) ungetc(c, in);
+      }
+      i++;
+      break;
+    }
+  }
+  zBuf[i]  = 0;
+  return i>0 ? zBuf : 0;
+}
+
+/*
 ** Execute the program in the VDBE.
 **
 ** If an error occurs, an error message is written to memory obtained
@@ -1950,12 +1976,16 @@ case OP_AddImm: {
   break;
 }
 
-/* Opcode: MustBeInt  * P2 *
+/* Opcode: MustBeInt P1 P2 *
 ** 
 ** Force the top of the stack to be an integer.  If the top of the
 ** stack is not an integer and cannot be converted into an integer
 ** with out data loss, then jump immediately to P2, or if P2==0
 ** raise an SQLITE_MISMATCH exception.
+**
+** If the top of the stack is not an integer and P2 is not zero and
+** P1 is 1, then the stack is popped.  In all other cases, the depth
+** of the stack is unchanged.
 */
 case OP_MustBeInt: {
   int tos = p->tos;
@@ -1986,6 +2016,7 @@ mismatch:
     rc = SQLITE_MISMATCH;
     goto abort_due_to_error;
   }else{
+    if( pOp->p1 ) POPSTACK;
     pc = pOp->p2 - 1;
   }
   break;
@@ -2634,6 +2665,20 @@ case OP_MakeRecord: {
 ** text.  The first character corresponds to the lowest element on the
 ** stack.  If P3 is NULL then all arguments are assumed to be numeric.
 **
+** The key is a concatenation of fields.  Each field is terminated by
+** a single 0x00 character.  A NULL field is introduced by an 'a' and
+** is followed immediately by its 0x00 terminator.  A numeric field is
+** introduced by a single character 'b' and is followed by a sequence
+** of characters that represent the number such that a comparison of
+** the character string using memcpy() sorts the numbers in numerical
+** order.  The character strings for numbers are generated using the
+** sqliteRealToSortable() function.  A text field is introduced by a
+** 'c' character and is followed by the exact text of the field.  The
+** use of an 'a', 'b', or 'c' character at the beginning of each field
+** guarantees that NULL sort before numbers and that numbers sort
+** before text.  0x00 characters do not occur except as separators
+** between fields.
+**
 ** See also: MakeIdxKey, SortMakeKey
 */
 /* Opcode: MakeIdxKey P1 P2 P3
@@ -2687,41 +2732,24 @@ case OP_MakeKey: {
       containsNull = 1;
     }else if( pOp->p3 && pOp->p3[j]=='t' ){
       Stringify(p, i);
-    }else if( flags & STK_Real ){
-      z = aStack[i].z;
-      sqliteRealToSortable(aStack[i].r, &z[1]);
-      z[0] = 0;
+      aStack[i].flags &= ~(STK_Int|STK_Real);
+      nByte += aStack[i].n+1;
+    }else if( (flags & (STK_Real|STK_Int))!=0 || isNumber(zStack[i]) ){
+      if( (flags & (STK_Real|STK_Int))==STK_Int ){
+        aStack[i].r = aStack[i].i;
+      }else if( (flags & (STK_Real|STK_Int))==0 ){
+        aStack[i].r = atof(zStack[i]);
+      }
       Release(p, i);
-      len = strlen(&z[1]);
+      z = aStack[i].z;
+      sqliteRealToSortable(aStack[i].r, z);
+      len = strlen(z);
       zStack[i] = 0;
       aStack[i].flags = STK_Real;
-      aStack[i].n = len+2;
-      nByte += aStack[i].n;
-    }else if( flags & STK_Int ){
-      z = aStack[i].z;
-      aStack[i].r = aStack[i].i;
-      sqliteRealToSortable(aStack[i].r, &z[1]);
-      z[0] = 0;
-      Release(p, i);
-      len = strlen(&z[1]);
-      zStack[i] = 0;
-      aStack[i].flags = STK_Int;
-      aStack[i].n = len+2;
-      nByte += aStack[i].n;
+      aStack[i].n = len+1;
+      nByte += aStack[i].n+1;
     }else{
-      assert( flags & STK_Str );
-      if( isNumber(zStack[i]) ){
-        aStack[i].r = atof(zStack[i]);
-        Release(p, i);
-        z = aStack[i].z;
-        sqliteRealToSortable(aStack[i].r, &z[1]);
-        z[0] = 0;
-        len = strlen(&z[1]);
-        zStack[i] = 0;
-        aStack[i].flags = STK_Real;
-        aStack[i].n = len+2;
-      }
-      nByte += aStack[i].n;
+      nByte += aStack[i].n+1;
     }
   }
   if( nByte+sizeof(u32)>MAX_BYTES_PER_ROW ){
@@ -2734,9 +2762,14 @@ case OP_MakeKey: {
   j = 0;
   for(i=p->tos-nField+1; i<=p->tos; i++){
     if( aStack[i].flags & STK_Null ){
-      zNewKey[j++] = 0;
+      zNewKey[j++] = 'a';
       zNewKey[j++] = 0;
     }else{
+      if( aStack[i].flags & (STK_Int|STK_Real) ){
+        zNewKey[j++] = 'b';
+      }else{
+        zNewKey[j++] = 'c';
+      }
       memcpy(&zNewKey[j], zStack[i] ? zStack[i] : aStack[i].z, aStack[i].n);
       j += aStack[i].n;
     }
@@ -4468,7 +4501,7 @@ case OP_FileRead: {
       }
       p->zLine = zLine;
     }
-    if( fgets(&p->zLine[n], p->nLineAlloc-n, p->pFile)==0 ){
+    if( vdbe_fgets(&p->zLine[n], p->nLineAlloc-n, p->pFile)==0 ){
       eol = 1;
       p->zLine[n] = 0;
     }else{

@@ -14,11 +14,21 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.10 2002/07/12 13:31:50 matt Exp $
+** $Id: main.c,v 1.11 2002/08/13 22:10:44 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
 #include <ctype.h>
+
+/*
+** A pointer to this structure is used to communicate information
+** from sqliteInit into the sqliteInitCallback.
+*/
+typedef struct {
+  sqlite *db;         /* The database being initialized */
+  char **pzErrMsg;    /* Error message stored here */
+} InitData;
+
 
 /*
 ** This is the callback routine for the code that initializes the
@@ -33,8 +43,9 @@
 **     argv[4] = "1" for temporary files, "0" for main database
 **
 */
-int sqliteInitCallback(void *pDb, int argc, char **argv, char **azColName){
-  sqlite *db = (sqlite*)pDb;
+static
+int sqliteInitCallback(void *pInit, int argc, char **argv, char **azColName){
+  InitData *pData = (InitData*)pInit;
   Parse sParse;
   int nErr = 0;
 
@@ -54,11 +65,11 @@ int sqliteInitCallback(void *pDb, int argc, char **argv, char **azColName){
         ** structures that describe the table, index, or view.
         */
         memset(&sParse, 0, sizeof(sParse));
-        sParse.db = db;
+        sParse.db = pData->db;
         sParse.initFlag = 1;
         sParse.isTemp = argv[4][0] - '0';
         sParse.newTnum = atoi(argv[2]);
-        sqliteRunParser(&sParse, argv[3], 0);
+        sqliteRunParser(&sParse, argv[3], pData->pzErrMsg);
       }else{
         /* If the SQL column is blank it means this is an index that
         ** was created to be the PRIMARY KEY or to fulfill a UNIQUE
@@ -66,7 +77,7 @@ int sqliteInitCallback(void *pDb, int argc, char **argv, char **azColName){
         ** been created when we processed the CREATE TABLE.  All we have
         ** to do here is record the root page number for that index.
         */
-        Index *pIndex = sqliteFindIndex(db, argv[1]);
+        Index *pIndex = sqliteFindIndex(pData->db, argv[1]);
         if( pIndex==0 || pIndex->tnum!=0 ){
           /* This can occur if there exists an index on a TEMP table which
           ** has the same name as another index on a permanent index.  Since
@@ -90,6 +101,56 @@ int sqliteInitCallback(void *pDb, int argc, char **argv, char **azColName){
 }
 
 /*
+** This is a callback procedure used to reconstruct a table.  The
+** name of the table to be reconstructed is passed in as argv[0].
+**
+** This routine is used to automatically upgrade a database from
+** format version 1 or 2 to version 3.  The correct operation of
+** this routine relys on the fact that no indices are used when
+** copying a table out to a temporary file.
+*/
+static
+int upgrade_3_callback(void *pInit, int argc, char **argv, char **NotUsed){
+  InitData *pData = (InitData*)pInit;
+  int rc;
+  Table *pTab;
+  Trigger *pTrig;
+  char *zErr = 0;
+
+  pTab = sqliteFindTable(pData->db, argv[0]);
+  assert( pTab!=0 );
+  assert( sqliteStrICmp(pTab->zName, argv[0])==0 );
+  if( pTab ){
+    pTrig = pTab->pTrigger;
+    pTab->pTrigger = 0;  /* Disable all triggers before rebuilding the table */
+  }
+  rc = sqlite_exec_printf(pData->db,
+    "CREATE TEMP TABLE sqlite_x AS SELECT * FROM '%q'; "
+    "DELETE FROM '%q'; "
+    "INSERT INTO '%q' SELECT * FROM sqlite_x; "
+    "DROP TABLE sqlite_x;",
+    0, 0, &zErr, argv[0], argv[0], argv[0]);
+  if( zErr ){
+    sqliteSetString(pData->pzErrMsg, zErr, 0);
+    sqlite_freemem(zErr);
+  }
+
+  /* If an error occurred in the SQL above, then the transaction will
+  ** rollback which will delete the internal symbol tables.  This will
+  ** cause the structure that pTab points to be deleted.  In case that
+  ** happened, we need to refetch pTab.
+  */
+  pTab = sqliteFindTable(pData->db, argv[0]);
+  if( pTab ){
+    assert( sqliteStrICmp(pTab->zName, argv[0])==0 );
+    pTab->pTrigger = pTrig;  /* Re-enable triggers */
+  }
+  return rc!=SQLITE_OK;
+}
+
+
+
+/*
 ** Attempt to read the database schema and initialize internal
 ** data structures.  Return one of the SQLITE_ error codes to
 ** indicate success or failure.
@@ -109,6 +170,7 @@ int sqliteInit(sqlite *db, char **pzErrMsg){
   char *azArg[6];
   int meta[SQLITE_N_BTREE_META];
   Parse sParse;
+  InitData initData;
 
   /*
   ** The master database table has a structure like this
@@ -168,7 +230,9 @@ int sqliteInit(sqlite *db, char **pzErrMsg){
   azArg[3] = master_schema;
   azArg[4] = "0";
   azArg[5] = 0;
-  sqliteInitCallback(db, 5, azArg, 0);
+  initData.db = db;
+  initData.pzErrMsg = pzErrMsg;
+  sqliteInitCallback(&initData, 5, azArg, 0);
   pTab = sqliteFindTable(db, MASTER_NAME);
   if( pTab ){
     pTab->readOnly = 1;
@@ -176,7 +240,7 @@ int sqliteInit(sqlite *db, char **pzErrMsg){
   azArg[1] = TEMP_MASTER_NAME;
   azArg[3] = temp_master_schema;
   azArg[4] = "1";
-  sqliteInitCallback(db, 5, azArg, 0);
+  sqliteInitCallback(&initData, 5, azArg, 0);
   pTab = sqliteFindTable(db, TEMP_MASTER_NAME);
   if( pTab ){
     pTab->readOnly = 1;
@@ -186,12 +250,16 @@ int sqliteInit(sqlite *db, char **pzErrMsg){
   */
   if( db->pBe==0 ) return SQLITE_OK;
   rc = sqliteBtreeCursor(db->pBe, 2, 0, &curMain);
-  if( rc ) return rc;
+  if( rc ){
+    sqliteResetInternalSchema(db);
+    return rc;
+  }
 
   /* Get the database meta information
   */
   rc = sqliteBtreeGetMeta(db->pBe, meta);
   if( rc ){
+    sqliteResetInternalSchema(db);
     sqliteBtreeCloseCursor(curMain);
     return rc;
   }
@@ -206,15 +274,17 @@ int sqliteInit(sqlite *db, char **pzErrMsg){
   /*
   **     file_format==1    Version 2.1.0.
   **     file_format==2    Version 2.2.0. Add support for INTEGER PRIMARY KEY.
-  **     file_format==3    Version 2.6.0. Add support for separate numeric and
+  **     file_format==3    Version 2.6.0. Fix empty-string index bug.
+  **     file_format==4    Version 2.7.0. Add support for separate numeric and
   **                       text datatypes.
   */
   if( db->file_format==0 ){
-    db->file_format = 2;
-  }else if( db->file_format>2 ){
+    /* This happens if the database was initially empty */
+    db->file_format = 3;
+  }else if( db->file_format>3 ){
     sqliteBtreeCloseCursor(curMain);
     sqliteSetString(pzErrMsg, "unsupported file format", 0);
-    rc = SQLITE_ERROR;
+    return SQLITE_ERROR;
   }
 
   /* Read the schema information out of the schema tables
@@ -223,7 +293,7 @@ int sqliteInit(sqlite *db, char **pzErrMsg){
   sParse.db = db;
   sParse.pBe = db->pBe;
   sParse.xCallback = sqliteInitCallback;
-  sParse.pArg = (void*)db;
+  sParse.pArg = (void*)&initData;
   sParse.initFlag = 1;
   sqliteRunParser(&sParse,
       db->file_format>=2 ? init_script : older_init_script,
@@ -248,6 +318,7 @@ int sqliteInit(sqlite *db, char **pzErrMsg){
 /*
 ** The version of the library
 */
+const char rcsid[] = "@(#) \044Id: SQLite version " SQLITE_VERSION " $";
 const char sqlite_version[] = SQLITE_VERSION;
 
 /*
@@ -313,6 +384,44 @@ sqlite *sqlite_open(const char *zFilename, int mode, char **pzErrMsg){
     sqliteFree(*pzErrMsg);
     *pzErrMsg = 0;
   }
+
+  /* If the database is in formats 1 or 2, then upgrade it to
+  ** version 3.  This will reconstruct all indices.  If the
+  ** upgrade fails for any reason (ex: out of disk space, database
+  ** is read only, interrupt receive, etc.) then refuse to open.
+  */
+  if( rc==SQLITE_OK && db->file_format<3 ){
+    char *zErr = 0;
+    InitData initData;
+    int meta[SQLITE_N_BTREE_META];
+
+    initData.db = db;
+    initData.pzErrMsg = &zErr;
+    db->file_format = 3;
+    rc = sqlite_exec(db,
+      "BEGIN; SELECT name FROM sqlite_master WHERE type='table';",
+      upgrade_3_callback,
+      &initData,
+      &zErr);
+    if( rc==SQLITE_OK ){
+      sqliteBtreeGetMeta(db->pBe, meta);
+      meta[2] = 3;
+      sqliteBtreeUpdateMeta(db->pBe, meta);
+      sqlite_exec(db, "COMMIT", 0, 0, 0);
+    }
+    if( rc!=SQLITE_OK ){
+      sqliteSetString(pzErrMsg, 
+        "unable to upgrade database to the version 2.6 format",
+        zErr ? ": " : 0, zErr, 0);
+      sqlite_freemem(zErr);
+      sqliteStrRealloc(pzErrMsg);
+      sqlite_close(db);
+      return 0;
+    }
+    sqlite_freemem(zErr);
+  }
+
+  /* Return a pointer to the newly opened database structure */
   return db;
 
 no_mem_on_open:
@@ -498,6 +607,11 @@ int sqlite_exec(
       sqliteSafetyOff(db);
       return rc;
     }
+  }
+  if( db->file_format<3 ){
+    sqliteSafetyOff(db);
+    sqliteSetString(pzErrMsg, "obsolete database file format", 0);
+    return SQLITE_ERROR;
   }
   if( db->recursionDepth==0 ){ db->nChange = 0; }
   db->recursionDepth++;

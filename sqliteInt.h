@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.12 2002/07/12 13:31:51 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.13 2002/08/13 22:10:46 matt Exp $
 */
 #include "sqlite.h"
 #include "hash.h"
@@ -187,7 +187,8 @@ typedef struct TriggerStack TriggerStack;
 **
 **     file_format==1    Version 2.1.0.
 **     file_format==2    Version 2.2.0. Add support for INTEGER PRIMARY KEY.
-**     file_format==3    Version 2.6.0. Add support for separate numeric and
+**     file_format==3    Version 2.6.0. Fix empty-string index bug.
+**     file_format==4    Version 2.7.0. Add support for separate numeric and
 **                       text datatypes.
 */
 struct sqlite {
@@ -230,6 +231,8 @@ struct sqlite {
 #define SQLITE_ResultDetails  0x00000100  /* Details added to result set */
 #define SQLITE_UnresetViews   0x00000200  /* True if one or more views have */
                                           /*   defined column names */
+#define SQLITE_ReportTypes    0x00000400  /* Include information on datatypes */
+                                          /*   in 4th argument of callback */
 
 /*
 ** Possible values for the sqlite.magic field.
@@ -382,6 +385,7 @@ struct Index {
   int tnum;        /* Page containing root of this index in database file */
   u8 isUnique;     /* OE_Abort, OE_Ignore, OE_Replace, or OE_None */
   u8 onError;      /* OE_Abort, OE_Ignore, OE_Replace, or OE_None */
+  u8 autoIndex;    /* True if is automatically created (ex: by UNIQUE) */
   Index *pNext;    /* The next index associated with the same table */
 };
 
@@ -857,7 +861,7 @@ void sqliteAddDefaultValue(Parse*,Token*,int);
 int sqliteCollateType(Parse*, Token*);
 void sqliteAddCollateType(Parse*, int);
 void sqliteEndTable(Parse*,Token*,Select*);
-void sqliteCreateView(Parse*,Token*,Token*,Select*);
+void sqliteCreateView(Parse*,Token*,Token*,Select*,int);
 int sqliteViewGetColumnNames(Parse*,Table*);
 void sqliteViewResetAll(sqlite*);
 void sqliteDropTable(Parse*, Token*, int);
@@ -907,7 +911,6 @@ int sqliteRandomInteger(void);
 void sqliteBeginTransaction(Parse*, int);
 void sqliteCommitTransaction(Parse*);
 void sqliteRollbackTransaction(Parse*);
-char *sqlite_mprintf(const char *, ...);
 int sqliteExprIsConstant(Expr*);
 int sqliteExprIsInteger(Expr*, int*);
 int sqliteIsRowid(const char*);
@@ -944,4 +947,3 @@ TriggerStep *sqliteTriggerUpdateStep(Token*, ExprList*, Expr*, int);
 TriggerStep *sqliteTriggerDeleteStep(Token*, Expr*);
 void sqliteDeleteTrigger(Trigger*);
 int sqliteJoinType(Parse*, Token*, Token*, Token*);
-int sqliteInitCallback(void*,int,char**,char**);

@@ -13,7 +13,7 @@
 ** the WHERE clause of SQL statements.  Also found here are subroutines
 ** to generate VDBE code to evaluate expressions.
 **
-** $Id: where.c,v 1.10 2002/07/12 13:31:51 matt Exp $
+** $Id: where.c,v 1.11 2002/08/13 22:10:46 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -690,7 +690,7 @@ WhereInfo *sqliteWhereBegin(
       }
       aExpr[k].p = 0;
       cont = pLevel->cont = sqliteVdbeMakeLabel(v);
-      sqliteVdbeAddOp(v, OP_MustBeInt, 0, brk);
+      sqliteVdbeAddOp(v, OP_MustBeInt, 1, brk);
       haveKey = 0;
       sqliteVdbeAddOp(v, OP_NotExists, base+idx, brk);
       pLevel->op = OP_Noop;
@@ -787,7 +787,7 @@ WhereInfo *sqliteWhereBegin(
         }else{
           sqliteExprCode(pParse, aExpr[k].p->pLeft);
         }
-        sqliteVdbeAddOp(v, OP_MustBeInt, 0, brk);
+        sqliteVdbeAddOp(v, OP_MustBeInt, 1, brk);
         if( aExpr[k].p->op==TK_LT || aExpr[k].p->op==TK_GT ){
           sqliteVdbeAddOp(v, OP_AddImm, 1, 0);
         }
@@ -806,7 +806,7 @@ WhereInfo *sqliteWhereBegin(
         }else{
           sqliteExprCode(pParse, aExpr[k].p->pLeft);
         }
-        sqliteVdbeAddOp(v, OP_MustBeInt, 0, sqliteVdbeCurrentAddr(v)+1);
+        sqliteVdbeAddOp(v, OP_MustBeInt, 1, sqliteVdbeCurrentAddr(v)+1);
         pLevel->iMem = pParse->nMem++;
         sqliteVdbeAddOp(v, OP_MemStore, pLevel->iMem, 0);
         if( aExpr[k].p->op==TK_LT || aExpr[k].p->op==TK_GT ){
