@@ -25,7 +25,7 @@
 **     ROLLBACK
 **     PRAGMA
 **
-** $Id: build.c,v 1.7 2002/04/02 10:43:03 matt Exp $
+** $Id: build.c,v 1.8 2002/06/17 23:46:21 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -250,6 +250,22 @@ void sqliteCommitInternalChanges(sqlite *db){
     sqliteUnlinkAndDeleteIndex(db, pIndex);
   }
   sqliteHashClear(&db->idxDrop);
+
+  /* Set the commit flag on all triggers added this transaction */
+  for(pElem=sqliteHashFirst(&db->trigHash); pElem; pElem=sqliteHashNext(pElem)){
+    Trigger *pTrigger = sqliteHashData(pElem);
+    pTrigger->isCommit = 1;
+  }
+
+  /* Delete the structures for triggers removed this transaction */
+  pElem = sqliteHashFirst(&db->trigDrop);
+  while( pElem ){
+    Trigger *pTrigger = sqliteHashData(pElem);
+    sqliteDeleteTrigger(pTrigger);
+    pElem = sqliteHashNext(pElem);
+  }
+  sqliteHashClear(&db->trigDrop);
+
   db->flags &= ~SQLITE_InternChanges;
 }
 
@@ -304,6 +320,47 @@ void sqliteRollbackInternalChanges(sqlite *db){
     assert( pOld==0 || pOld==p );
   }
   sqliteHashClear(&db->idxDrop);
+
+  /* Remove any triggers that haven't been commited yet */
+  for(pElem = sqliteHashFirst(&db->trigHash); pElem; 
+      pElem = (pElem?sqliteHashNext(pElem):0)){
+    Trigger *pTrigger = sqliteHashData(pElem);
+    if( !pTrigger->isCommit ){
+      Table *pTbl = sqliteFindTable(db, pTrigger->table);
+      if( pTbl ){
+        if( pTbl->pTrigger == pTrigger ){
+          pTbl->pTrigger = pTrigger->pNext;
+        }else{
+          Trigger *cc = pTbl->pTrigger;
+          while( cc ){
+            if( cc->pNext == pTrigger ){
+              cc->pNext = cc->pNext->pNext;
+              break;
+            }
+            cc = cc->pNext;
+          }
+          assert(cc);
+        }
+      }
+      sqliteHashInsert(&db->trigHash, pTrigger->name,
+              1 + strlen(pTrigger->name), 0);
+      sqliteDeleteTrigger(pTrigger);
+      pElem = sqliteHashFirst(&db->trigHash);
+    }
+  }
+
+  /* Any triggers that were dropped - put 'em back in place */
+  for(pElem = sqliteHashFirst(&db->trigDrop); pElem; 
+      pElem = sqliteHashNext(pElem)){
+    Trigger *pTrigger = sqliteHashData(pElem);
+    Table *pTbl = sqliteFindTable(db, pTrigger->table);
+    sqliteHashInsert(&db->trigHash, pTrigger->name, 
+        strlen(pTrigger->name) + 1, pTrigger);
+    pTrigger->pNext = pTbl->pTrigger;
+    pTbl->pTrigger = pTrigger;
+  }
+
+  sqliteHashClear(&db->trigDrop);
   db->flags &= ~SQLITE_InternChanges;
 }
 
@@ -421,7 +478,7 @@ void sqliteStartTable(Parse *pParse, Token *pStart, Token *pName, int isTemp){
   ** now.
   */
   if( !pParse->initFlag && (v = sqliteGetVdbe(pParse))!=0 ){
-    sqliteBeginWriteOperation(pParse);
+    sqliteBeginWriteOperation(pParse, 0);
     if( !isTemp ){
       sqliteVdbeAddOp(v, OP_Integer, db->file_format, 0);
       sqliteVdbeAddOp(v, OP_SetCookie, 0, 1);
@@ -445,8 +502,20 @@ void sqliteStartTable(Parse *pParse, Token *pStart, Token *pName, int isTemp){
 */
 void sqliteAddColumn(Parse *pParse, Token *pName){
   Table *p;
-  char **pz;
+  int i;
+  char *z = 0;
   if( (p = pParse->pNewTable)==0 ) return;
+  sqliteSetNString(&z, pName->z, pName->n, 0);
+  if( z==0 ) return;
+  sqliteDequote(z);
+  for(i=0; i<p->nCol; i++){
+    if( sqliteStrICmp(z, p->aCol[i].zName)==0 ){
+      sqliteSetString(&pParse->zErrMsg, "duplicate column name: ", z, 0);
+      pParse->nErr++;
+      sqliteFree(z);
+      return;
+    }
+  }
   if( (p->nCol & 0x7)==0 ){
     Column *aNew;
     aNew = sqliteRealloc( p->aCol, (p->nCol+8)*sizeof(p->aCol[0]));
@@ -454,9 +523,7 @@ void sqliteAddColumn(Parse *pParse, Token *pName){
     p->aCol = aNew;
   }
   memset(&p->aCol[p->nCol], 0, sizeof(p->aCol[0]));
-  pz = &p->aCol[p->nCol++].zName;
-  sqliteSetNString(pz, pName->z, pName->n, 0);
-  sqliteDequote(*pz);
+  p->aCol[p->nCol++].zName = z;
 }
 
 /*
@@ -579,6 +646,38 @@ void sqliteAddPrimaryKey(Parse *pParse, IdList *pList, int onError){
 }
 
 /*
+** Return the appropriate collating type given the collation type token.
+** Report an error if the type is undefined.
+*/
+int sqliteCollateType(Parse *pParse, Token *pType){
+  if( pType==0 ) return SQLITE_SO_UNK;
+  if( pType->n==4 && sqliteStrNICmp(pType->z, "text", 4)==0 ){
+    return SQLITE_SO_TEXT;
+  }
+  if( pType->n==7 && sqliteStrNICmp(pType->z, "numeric", 7)==0 ){
+    return SQLITE_SO_NUM;
+  }
+  sqliteSetNString(&pParse->zErrMsg, "unknown collating type: ", -1,
+    pType->z, pType->n, 0);
+  pParse->nErr++;
+  return SQLITE_SO_UNK;
+}
+
+/*
+** This routine is called by the parser while in the middle of
+** parsing a CREATE TABLE statement.  A "COLLATE" clause has
+** been seen on a column.  This routine sets the Column.sortOrder on
+** the column currently under construction.
+*/
+void sqliteAddCollateType(Parse *pParse, int collType){
+  Table *p;
+  int i;
+  if( (p = pParse->pNewTable)==0 ) return;
+  i = p->nCol-1;
+  if( i>=0 ) p->aCol[i].sortOrder = collType;
+}
+
+/*
 ** Come up with a new random value for the schema cookie.  Make sure
 ** the new value is different from the old.
 **
@@ -595,7 +694,7 @@ void sqliteAddPrimaryKey(Parse *pParse, IdList *pList, int onError){
 ** and the probability of hitting the same cookie value is only
 ** 1 chance in 2^32.  So we're safe enough.
 */
-static void changeCookie(sqlite *db){
+void sqliteChangeCookie(sqlite *db){
   if( db->next_cookie==db->schema_cookie ){
     db->next_cookie = db->schema_cookie + sqliteRandomByte() + 1;
     db->flags |= SQLITE_InternChanges;
@@ -794,7 +893,7 @@ void sqliteEndTable(Parse *pParse, Token *pEnd, Select *pSelect){
       }
       sqliteVdbeAddOp(v, OP_MakeRecord, 5, 0);
       sqliteVdbeAddOp(v, OP_PutIntKey, 0, 0);
-      changeCookie(db);
+      sqliteChangeCookie(db);
       sqliteVdbeAddOp(v, OP_Integer, db->next_cookie, 0);
       sqliteVdbeAddOp(v, OP_SetCookie, 0, 0);
       sqliteVdbeAddOp(v, OP_Close, 0, 0);
@@ -828,6 +927,11 @@ void sqliteCreateView(
   if( p==0 ){
     sqliteSelectDelete(pSelect);
     return;
+  }
+  /* Ignore ORDER BY clauses on a SELECT */
+  if( pSelect->pOrderBy ){
+    sqliteExprListDelete(pSelect->pOrderBy);
+    pSelect->pOrderBy = 0;
   }
   p->pSelect = pSelect;
   if( !pParse->initFlag ){
@@ -1030,11 +1134,18 @@ void sqliteDropTable(Parse *pParse, Token *pName, int isView){
       { OP_Close,      0, 0,        0},
     };
     Index *pIdx;
-    sqliteBeginWriteOperation(pParse);
+    sqliteBeginWriteOperation(pParse, 0);
+    /* Drop all triggers associated with the table being dropped */
+    while( pTable->pTrigger ){
+      Token tt;
+      tt.z = pTable->pTrigger->name;
+      tt.n = strlen(pTable->pTrigger->name);
+      sqliteDropTrigger(pParse, &tt, 1);
+    }
     if( !pTable->isTemp ){
       base = sqliteVdbeAddOpList(v, ArraySize(dropTable), dropTable);
       sqliteVdbeChangeP3(v, base+2, pTable->zName, 0);
-      changeCookie(db);
+      sqliteChangeCookie(db);
       sqliteVdbeChangeP1(v, base+9, db->next_cookie);
     }
     if( !isView ){
@@ -1286,7 +1397,7 @@ void sqliteCreateIndex(
     v = sqliteGetVdbe(pParse);
     if( v==0 ) goto exit_create_index;
     if( pTable!=0 ){
-      sqliteBeginWriteOperation(pParse);
+      sqliteBeginWriteOperation(pParse, 0);
       if( !isTemp ){
         sqliteVdbeAddOp(v, OP_OpenWrite, 0, 2);
         sqliteVdbeChangeP3(v, -1, MASTER_NAME, P3_STATIC);
@@ -1339,7 +1450,7 @@ void sqliteCreateIndex(
     }
     if( pTable!=0 ){
       if( !isTemp ){
-        changeCookie(db);
+        sqliteChangeCookie(db);
         sqliteVdbeAddOp(v, OP_Integer, db->next_cookie, 0);
         sqliteVdbeAddOp(v, OP_SetCookie, 0, 0);
         sqliteVdbeAddOp(v, OP_Close, 0, 0);
@@ -1398,11 +1509,11 @@ void sqliteDropIndex(Parse *pParse, Token *pName){
     int base;
     Table *pTab = pIndex->pTable;
 
-    sqliteBeginWriteOperation(pParse);
+    sqliteBeginWriteOperation(pParse, 0);
     if( !pTab->isTemp ){
       base = sqliteVdbeAddOpList(v, ArraySize(dropIndex), dropIndex);
       sqliteVdbeChangeP3(v, base+2, pIndex->zName, P3_STATIC);
-      changeCookie(db);
+      sqliteChangeCookie(db);
       sqliteVdbeChangeP1(v, base+10, db->next_cookie);
     }
     sqliteVdbeAddOp(v, OP_Destroy, pIndex->tnum, pTab->isTemp);
@@ -1457,29 +1568,92 @@ IdList *sqliteIdListAppend(IdList *pList, Token *pToken){
 }
 
 /*
+** Append a new table name to the given SrcList.  Create a new SrcList if
+** need be.  A new entry is created in the SrcList even if pToken is NULL.
+**
+** A new SrcList is returned, or NULL if malloc() fails.
+*/
+SrcList *sqliteSrcListAppend(SrcList *pList, Token *pToken){
+  if( pList==0 ){
+    pList = sqliteMalloc( sizeof(IdList) );
+    if( pList==0 ) return 0;
+  }
+  if( (pList->nSrc & 7)==0 ){
+    struct SrcList_item *a;
+    a = sqliteRealloc(pList->a, (pList->nSrc+8)*sizeof(pList->a[0]) );
+    if( a==0 ){
+      sqliteSrcListDelete(pList);
+      return 0;
+    }
+    pList->a = a;
+  }
+  memset(&pList->a[pList->nSrc], 0, sizeof(pList->a[0]));
+  if( pToken ){
+    char **pz = &pList->a[pList->nSrc].zName;
+    sqliteSetNString(pz, pToken->z, pToken->n, 0);
+    if( *pz==0 ){
+      sqliteSrcListDelete(pList);
+      return 0;
+    }else{
+      sqliteDequote(*pz);
+    }
+  }
+  pList->nSrc++;
+  return pList;
+}
+
+/*
 ** Add an alias to the last identifier on the given identifier list.
 */
-void sqliteIdListAddAlias(IdList *pList, Token *pToken){
-  if( pList && pList->nId>0 ){
-    int i = pList->nId - 1;
+void sqliteSrcListAddAlias(SrcList *pList, Token *pToken){
+  if( pList && pList->nSrc>0 ){
+    int i = pList->nSrc - 1;
     sqliteSetNString(&pList->a[i].zAlias, pToken->z, pToken->n, 0);
     sqliteDequote(pList->a[i].zAlias);
   }
 }
 
 /*
-** Delete an entire IdList.
+** Delete an IdList.
 */
 void sqliteIdListDelete(IdList *pList){
   int i;
   if( pList==0 ) return;
   for(i=0; i<pList->nId; i++){
     sqliteFree(pList->a[i].zName);
+  }
+  sqliteFree(pList->a);
+  sqliteFree(pList);
+}
+
+/*
+** Return the index in pList of the identifier named zId.  Return -1
+** if not found.
+*/
+int sqliteIdListIndex(IdList *pList, const char *zName){
+  int i;
+  if( pList==0 ) return -1;
+  for(i=0; i<pList->nId; i++){
+    if( sqliteStrICmp(pList->a[i].zName, zName)==0 ) return i;
+  }
+  return -1;
+}
+
+/*
+** Delete an entire SrcList including all its substructure.
+*/
+void sqliteSrcListDelete(SrcList *pList){
+  int i;
+  if( pList==0 ) return;
+  for(i=0; i<pList->nSrc; i++){
+    sqliteFree(pList->a[i].zName);
     sqliteFree(pList->a[i].zAlias);
     if( pList->a[i].pTab && pList->a[i].pTab->isTransient ){
       sqliteDeleteTable(0, pList->a[i].pTab);
     }
     sqliteSelectDelete(pList->a[i].pSelect);
+    sqliteExprDelete(pList->a[i].pOn);
+    sqliteIdListDelete(pList->a[i].pUsing);
   }
   sqliteFree(pList->a);
   sqliteFree(pList);
@@ -1519,7 +1693,7 @@ void sqliteCopy(
   v = sqliteGetVdbe(pParse);
   if( v ){
     int openOp;
-    sqliteBeginMultiWriteOperation(pParse);
+    sqliteBeginWriteOperation(pParse, 1);
     addr = sqliteVdbeAddOp(v, OP_FileOpen, 0, 0);
     sqliteVdbeChangeP3(v, addr, pFilename->z, pFilename->n);
     sqliteVdbeDequoteP3(v, addr);
@@ -1600,7 +1774,7 @@ void sqliteBeginTransaction(Parse *pParse, int onError){
   if( pParse==0 || (db=pParse->db)==0 || db->pBe==0 ) return;
   if( pParse->nErr || sqlite_malloc_failed ) return;
   if( db->flags & SQLITE_InTrans ) return;
-  sqliteBeginWriteOperation(pParse);
+  sqliteBeginWriteOperation(pParse, 0);
   db->flags |= SQLITE_InTrans;
   db->onError = onError;
 }
@@ -1639,39 +1813,27 @@ void sqliteRollbackTransaction(Parse *pParse){
 
 /*
 ** Generate VDBE code that prepares for doing an operation that
-** might change the database.  The operation will be atomic in the
-** sense that it will either do its changes completely or not at
-** all.  So there is not need to set a checkpoint is a transaction
-** is already in effect.
+** might change the database.
+**
+** This routine starts a new transaction if we are not already within
+** a transaction.  If we are already within a transaction, then a checkpoint
+** is set if the setCheckpoint parameter is true.  A checkpoint should
+** be set for operations that might fail (due to a constraint) part of
+** the way through and which will need to undo some writes without having to
+** rollback the whole transaction.  For operations where all constraints
+** can be checked before any changes are made to the database, it is never
+** necessary to undo a write and the checkpoint should not be set.
 */
-void sqliteBeginWriteOperation(Parse *pParse){
+void sqliteBeginWriteOperation(Parse *pParse, int setCheckpoint){
   Vdbe *v;
   v = sqliteGetVdbe(pParse);
   if( v==0 ) return;
-  if( (pParse->db->flags & SQLITE_InTrans)==0  ){
-    sqliteVdbeAddOp(v, OP_Transaction, 0, 0);
-    sqliteVdbeAddOp(v, OP_VerifyCookie, pParse->db->schema_cookie, 0);
-    pParse->schemaVerified = 1;
-  }
-}
-
-/*
-** Generate VDBE code that prepares for doing an operation that
-** might change the database.  The operation might not be atomic in
-** the sense that an error may be discovered and the operation might
-** abort after some changes have been made.  If we are in the middle 
-** of a transaction, then this sets a checkpoint.  If we are not in
-** a transaction, then start a transaction.
-*/
-void sqliteBeginMultiWriteOperation(Parse *pParse){
-  Vdbe *v;
-  v = sqliteGetVdbe(pParse);
-  if( v==0 ) return;
+  if( pParse->trigStack ) return; /* if this is in a trigger */
   if( (pParse->db->flags & SQLITE_InTrans)==0 ){
     sqliteVdbeAddOp(v, OP_Transaction, 0, 0);
     sqliteVdbeAddOp(v, OP_VerifyCookie, pParse->db->schema_cookie, 0);
     pParse->schemaVerified = 1;
-  }else{
+  }else if( setCheckpoint ){
     sqliteVdbeAddOp(v, OP_Checkpoint, 0, 0);
   }
 }
@@ -1684,6 +1846,7 @@ void sqliteBeginMultiWriteOperation(Parse *pParse){
 */
 void sqliteEndWriteOperation(Parse *pParse){
   Vdbe *v;
+  if( pParse->trigStack ) return; /* if this is in a trigger */
   v = sqliteGetVdbe(pParse);
   if( v==0 ) return;
   if( pParse->db->flags & SQLITE_InTrans ){
@@ -1772,7 +1935,7 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       int addr;
       int size = atoi(zRight);
       if( size<0 ) size = -size;
-      sqliteBeginWriteOperation(pParse);
+      sqliteBeginWriteOperation(pParse, 0);
       sqliteVdbeAddOp(v, OP_Integer, size, 0);
       sqliteVdbeAddOp(v, OP_ReadCookie, 0, 2);
       addr = sqliteVdbeAddOp(v, OP_Integer, 0, 0);
@@ -1863,7 +2026,7 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       int addr;
       int size = db->cache_size;
       if( size<0 ) size = -size;
-      sqliteBeginWriteOperation(pParse);
+      sqliteBeginWriteOperation(pParse, 0);
       sqliteVdbeAddOp(v, OP_ReadCookie, 0, 2);
       sqliteVdbeAddOp(v, OP_Dup, 0, 0);
       addr = sqliteVdbeAddOp(v, OP_Integer, 0, 0);
@@ -1907,6 +2070,14 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
       if( !getBoolean(zRight) ) size = -size;
       db->cache_size = size;
       sqliteBtreeSetCacheSize(db->pBe, db->cache_size);
+    }
+  }else
+
+  if( sqliteStrICmp(zLeft, "trigger_overhead_test")==0 ){
+    if( getBoolean(zRight) ){
+      always_code_trigger_setup = 1;
+    }else{
+      always_code_trigger_setup = 0;
     }
   }else
 
@@ -2035,8 +2206,8 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
         sqliteVdbeChangeP3(v, -1, pIdx->zName, P3_STATIC);
         sqliteVdbeAddOp(v, OP_Integer, pIdx->onError!=OE_None, 0);
         sqliteVdbeAddOp(v, OP_Callback, 3, 0);
-	++i;
-	pIdx = pIdx->pNext;
+        ++i;
+        pIdx = pIdx->pNext;
       }
     }
   }else

@@ -1,5 +1,8 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.16
+    - Upgraded to SQLite 2.5.0
+
 0.15
     - Upgraded to SQLite 2.4.5
 

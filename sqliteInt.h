@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.9 2002/04/02 10:43:04 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.10 2002/06/17 23:46:22 matt Exp $
 */
 #include "sqlite.h"
 #include "hash.h"
@@ -29,6 +29,32 @@
 */
 #define MAX_PAGES   2000
 #define TEMP_PAGES   500
+
+/*
+** If the following macro is set to 1, then NULL values are considered
+** distinct for the SELECT DISTINCT statement and for UNION or EXCEPT
+** compound queries.  No other SQL database engine (among those tested) 
+** works this way except for OCELOT.  But the SQL92 spec implies that
+** this is how things should work.
+**
+** If the following macro is set to 0, then NULLs are indistinct for
+** SELECT DISTINCT and for UNION.
+*/
+#define NULL_ALWAYS_DISTINCT 0
+
+/*
+** If the following macro is set to 1, then NULL values are considered
+** distinct when determining whether or not two entries are the same
+** in a UNIQUE index.  This is the way PostgreSQL, Oracle, DB2, MySQL,
+** OCELOT, and Firebird all work.  The SQL92 spec explicitly says this
+** is the way things are suppose to work.
+**
+** If the following macro is set to 0, the NULLs are indistinct for
+** a UNIQUE index.  In this mode, you can only have a single NULL entry
+** for a column declared UNIQUE.  This is the way Informix and SQL Server
+** work.
+*/
+#define NULL_DISTINCT_FOR_UNIQUE 1
 
 /*
 ** Integers of known sizes.  These typedefs might change for architectures
@@ -139,11 +165,15 @@ typedef struct ExprList ExprList;
 typedef struct Parse Parse;
 typedef struct Token Token;
 typedef struct IdList IdList;
+typedef struct SrcList SrcList;
 typedef struct WhereInfo WhereInfo;
 typedef struct WhereLevel WhereLevel;
 typedef struct Select Select;
 typedef struct AggExpr AggExpr;
 typedef struct FuncDef FuncDef;
+typedef struct Trigger Trigger;
+typedef struct TriggerStep TriggerStep;
+typedef struct TriggerStack TriggerStack;
 
 /*
 ** Each database is an instance of the following structure
@@ -167,6 +197,12 @@ struct sqlite {
   int lastRowid;                /* ROWID of most recent insert */
   int priorNewRowid;            /* Last randomly generated ROWID */
   int onError;                  /* Default conflict algorithm */
+  int magic;                    /* Magic number for detect library misuse */
+  int nChange;                  /* Number of rows changed */
+  int recursionDepth;           /* Number of nested calls to sqlite_exec() */
+
+  Hash trigHash;                /* All triggers indexed by name */
+  Hash trigDrop;                /* Uncommited dropped triggers */
 };
 
 /*
@@ -188,13 +224,23 @@ struct sqlite {
                                           /*   defined column names */
 
 /*
+** Possible values for the sqlite.magic field.
+** The numbers are obtained at random and have no special meaning, other
+** than being distinct from one another.
+*/
+#define SQLITE_MAGIC_OPEN     0xa029a697  /* Database is open */
+#define SQLITE_MAGIC_CLOSED   0x9f3c2d33  /* Database is closed */
+#define SQLITE_MAGIC_BUSY     0xf03b7906  /* Database currently in use */
+#define SQLITE_MAGIC_ERROR    0xb5357930  /* An SQLITE_MISUSE error occurred */
+
+/*
 ** Each SQL function is defined by an instance of the following
 ** structure.  A pointer to this structure is stored in the sqlite.aFunc
 ** hash table.  When multiple functions have the same name, the hash table
 ** points to a linked list of these structures.
 */
 struct FuncDef {
-  void (*xFunc)(sqlite_func*,int,const char**);   /* Regular function */
+  void (*xFunc)(sqlite_func*,int,const char**);  /* Regular function */
   void (*xStep)(sqlite_func*,int,const char**);  /* Aggregate function step */
   void (*xFinalize)(sqlite_func*);           /* Aggregate function finializer */
   int nArg;                                  /* Number of arguments */
@@ -212,7 +258,22 @@ struct Column {
   char *zType;     /* Data type for this column */
   u8 notNull;      /* True if there is a NOT NULL constraint */
   u8 isPrimKey;    /* True if this column is an INTEGER PRIMARY KEY */
+  u8 sortOrder;    /* Some combination of SQLITE_SO_... values */
 };
+
+/*
+** The allowed sort orders.
+**
+** The TEXT and NUM values use bits that do not overlap with DESC and ASC.
+** That way the two can be combined into a single number.
+*/
+#define SQLITE_SO_UNK       0  /* Use the default collating type.  (SCT_NUM) */
+#define SQLITE_SO_TEXT      2  /* Sort using memcmp() */
+#define SQLITE_SO_NUM       4  /* Sort using sqliteCompare() */
+#define SQLITE_SO_TYPEMASK  6  /* Mask to extract the collating sequence */
+#define SQLITE_SO_ASC       0  /* Sort in ascending order */
+#define SQLITE_SO_DESC      1  /* Sort in descending order */
+#define SQLITE_SO_DIRMASK   1  /* Mask to extract the sort direction */
 
 /*
 ** Each SQL table is represented in memory by an instance of the
@@ -257,12 +318,14 @@ struct Table {
   u8 isTransient;  /* True if automatically deleted when VDBE finishes */
   u8 hasPrimKey;   /* True if there exists a primary key */
   u8 keyConf;      /* What to do in case of uniqueness conflict on iPKey */
+
+  Trigger *pTrigger; /* List of SQL triggers on this table */
 };
 
 /*
 ** SQLite supports 5 different ways to resolve a contraint
 ** error.  ROLLBACK processing means that a constraint violation
-** causes the operation in proces to fail and for the current transaction
+** causes the operation in process to fail and for the current transaction
 ** to be rolled back.  ABORT processing means the operation in process
 ** fails and any prior changes from that one operation are backed out,
 ** but the transaction is not rolled back.  FAIL processing means that
@@ -361,17 +424,19 @@ struct Token {
 ** operand.
 */
 struct Expr {
-  int op;                /* Operation performed by this node */
+  u16 op;                /* Operation performed by this node */
+  u8 dataType;           /* Either SQLITE_SO_TEXT or SQLITE_SO_NUM */
   Expr *pLeft, *pRight;  /* Left and right subnodes */
-  ExprList *pList;       /* A list of expressions used as a function argument */
+  ExprList *pList;       /* A list of expressions used as function arguments
+                         ** or in "<expr> IN (<expr-list)" */
   Token token;           /* An operand token */
   Token span;            /* Complete text of the expression */
   int iTable, iColumn;   /* When op==TK_COLUMN, then this expr node means the
-                         ** iColumn-th field of the iTable-th table.  When
-                         ** op==TK_FUNCTION, iColumn holds the function id */
+                         ** iColumn-th field of the iTable-th table. */
   int iAgg;              /* When op==TK_COLUMN and pParse->useAgg==TRUE, pull
                          ** result from the iAgg-th element of the aggregator */
-  Select *pSelect;       /* When the expression is a sub-select */
+  Select *pSelect;       /* When the expression is a sub-select.  Also the
+                         ** right side of "<expr> IN (<select>)" */
 };
 
 /*
@@ -379,7 +444,7 @@ struct Expr {
 ** name.  An expr/name combination can be used in several ways, such
 ** as the list of "expr AS ID" fields following a "SELECT" or in the
 ** list of "ID = expr" items in an UPDATE.  A list of expressions can
-** also be used as the argument to a function, in which case the azName
+** also be used as the argument to a function, in which case the a.zName
 ** field is not used.
 */
 struct ExprList {
@@ -387,25 +452,62 @@ struct ExprList {
   struct ExprList_item {
     Expr *pExpr;           /* The list of expressions */
     char *zName;           /* Token associated with this expression */
-    char sortOrder;        /* 1 for DESC or 0 for ASC */
-    char isAgg;            /* True if this is an aggregate like count(*) */
-    char done;             /* A flag to indicate when processing is finished */
+    u8 sortOrder;          /* 1 for DESC or 0 for ASC */
+    u8 isAgg;              /* True if this is an aggregate like count(*) */
+    u8 done;               /* A flag to indicate when processing is finished */
   } *a;                  /* One entry for each expression */
 };
 
 /*
-** A list of identifiers.
+** An instance of this structure can hold a simple list of identifiers,
+** such as the list "a,b,c" in the following statements:
+**
+**      INSERT INTO t(a,b,c) VALUES ...;
+**      CREATE INDEX idx ON t(a,b,c);
+**      CREATE TRIGGER trig BEFORE UPDATE ON t(a,b,c) ...;
+**
+** The IdList.a.idx field is used when the IdList represents the list of
+** column names after a table name in an INSERT statement.  In the statement
+**
+**     INSERT INTO t(a,b,c) ...
+**
+** If "a" is the k-th column of table "t", then IdList.a[0].idx==k.
 */
 struct IdList {
   int nId;         /* Number of identifiers on the list */
   struct IdList_item {
-    char *zName;      /* Text of the identifier. */
-    char *zAlias;     /* The "B" part of a "A AS B" phrase.  zName is the "A" */
+    char *zName;      /* Name of the identifier */
     int idx;          /* Index in some Table.aCol[] of a column named zName */
+  } *a;
+};
+
+/*
+** The following structure describes the FROM clause of a SELECT statement.
+** Each table or subquery in the FROM clause is a separate element of
+** the SrcList.a[] array.
+*/
+struct SrcList {
+  int nSrc;        /* Number of tables or subqueries in the FROM clause */
+  struct SrcList_item {
+    char *zName;      /* Name of the table */
+    char *zAlias;     /* The "B" part of a "A AS B" phrase.  zName is the "A" */
     Table *pTab;      /* An SQL table corresponding to zName */
     Select *pSelect;  /* A SELECT statement used in place of a table name */
+    int jointype;     /* Type of join between this table and the next */
+    Expr *pOn;        /* The ON clause of a join */
+    IdList *pUsing;   /* The USING clause of a join */
   } *a;            /* One entry for each identifier on the list */
 };
+
+/*
+** Permitted values of the SrcList.a.jointype field
+*/
+#define JT_INNER     0x0001    /* Any kind of inner or cross join */
+#define JT_NATURAL   0x0002    /* True for a "natural" join */
+#define JT_LEFT      0x0004    /* Left outer join */
+#define JT_RIGHT     0x0008    /* Right outer join */
+#define JT_OUTER     0x0010    /* The "OUTER" keyword is present */
+#define JT_ERROR     0x0020    /* unknown or unsupported join type */
 
 /*
 ** For each nested loop in a WHERE clause implementation, the WhereInfo
@@ -421,6 +523,9 @@ struct WhereLevel {
   int brk;             /* Jump here to break out of the loop */
   int cont;            /* Jump here to continue with the next loop cycle */
   int op, p1, p2;      /* Opcode used to terminate the loop */
+  int iLeftJoin;       /* Memory cell used to implement LEFT OUTER JOIN */
+  int top;             /* First instruction of interior of the loop */
+  int inOp, inP1, inP2;/* Opcode used to implement an IN operator */
 };
 
 /*
@@ -432,7 +537,7 @@ struct WhereLevel {
 */
 struct WhereInfo {
   Parse *pParse;
-  IdList *pTabList;    /* List of tables in the join */
+  SrcList *pTabList;   /* List of tables in the join */
   int iContinue;       /* Jump here to continue with next record */
   int iBreak;          /* Jump here to break out of the loop */
   int base;            /* Index of first Open opcode */
@@ -457,7 +562,7 @@ struct WhereInfo {
 struct Select {
   int isDistinct;        /* True if the DISTINCT keyword is present */
   ExprList *pEList;      /* The fields of the result */
-  IdList *pSrc;          /* The FROM clause */
+  SrcList *pSrc;         /* The FROM clause */
   Expr *pWhere;          /* The WHERE clause */
   ExprList *pGroupBy;    /* The GROUP BY clause */
   Expr *pHaving;         /* The HAVING clause */
@@ -479,6 +584,7 @@ struct Select {
 #define SRT_Except       6  /* Remove result from a UNION table */
 #define SRT_Table        7  /* Store result as data with a unique key */
 #define SRT_TempTable    8  /* Store result in a trasient table */
+#define SRT_Discard      9  /* Do not save the results anywhere */
 
 /*
 ** When a SELECT uses aggregate functions (like "count(*)" or "avg(f1)")
@@ -537,7 +643,154 @@ struct Parse {
                        ** while generating expressions.  Normally false */
   int schemaVerified;  /* True if an OP_VerifySchema has been coded someplace
                        ** other than after an OP_Transaction */
+  TriggerStack *trigStack;
 };
+
+/*
+ * Each trigger present in the database schema is stored as an instance of
+ * struct Trigger. 
+ *
+ * Pointers to instances of struct Trigger are stored in two ways.
+ * 1. In the "trigHash" hash table (part of the sqlite* that represents the 
+ *    database). This allows Trigger structures to be retrieved by name.
+ * 2. All triggers associated with a single table form a linked list, using the
+ *    pNext member of struct Trigger. A pointer to the first element of the
+ *    linked list is stored as the "pTrigger" member of the associated
+ *    struct Table.
+ *
+ * The "strings" member of struct Trigger contains a pointer to the memory 
+ * referenced by the various Token structures referenced indirectly by the
+ * "pWhen", "pColumns" and "step_list" members. (ie. the memory allocated for
+ * use in conjunction with the sqliteExprMoveStrings() etc. interface).
+ *
+ * The "step_list" member points to the first element of a linked list
+ * containing the SQL statements specified as the trigger program.
+ *
+ * When a trigger is initially created, the "isCommit" member is set to FALSE.
+ * When a transaction is rolled back, any Trigger structures with "isCommit" set
+ * to FALSE are deleted by the logic in sqliteRollbackInternalChanges(). When
+ * a transaction is commited, the "isCommit" member is set to TRUE for any
+ * Trigger structures for which it is FALSE.
+ *
+ * When a trigger is dropped, using the sqliteDropTrigger() interfaced, it is 
+ * removed from the trigHash hash table and added to the trigDrop hash table.
+ * If the transaction is rolled back, the trigger is re-added into the trigHash
+ * hash table (and hence the database schema). If the transaction is commited,
+ * then the Trigger structure is deleted permanently.
+ */
+struct Trigger {
+  char *name;             /* The name of the trigger                        */
+  char *table;            /* The table or view to which the trigger applies */
+  int op;                 /* One of TK_DELETE, TK_UPDATE, TK_INSERT         */
+  int tr_tm;              /* One of TK_BEFORE, TK_AFTER */
+  Expr *pWhen;            /* The WHEN clause of the expresion (may be NULL) */
+  IdList *pColumns;       /* If this is an UPDATE OF <column-list> trigger,
+                             the <column-list> is stored here */
+  int foreach;            /* One of TK_ROW or TK_STATEMENT */
+
+  TriggerStep *step_list; /* Link list of trigger program steps             */
+  char *strings;          /* pointer to allocation of Token strings */
+  Trigger *pNext;         /* Next trigger associated with the table */
+  int isCommit;           /* Set to TRUE once the trigger has been committed */
+};
+
+/*
+ * An instance of struct TriggerStep is used to store a single SQL statement
+ * that is a part of a trigger-program. 
+ *
+ * Instances of struct TriggerStep are stored in a singly linked list (linked
+ * using the "pNext" member) referenced by the "step_list" member of the 
+ * associated struct Trigger instance. The first element of the linked list is
+ * the first step of the trigger-program.
+ * 
+ * The "op" member indicates whether this is a "DELETE", "INSERT", "UPDATE" or
+ * "SELECT" statement. The meanings of the other members is determined by the 
+ * value of "op" as follows:
+ *
+ * (op == TK_INSERT)
+ * orconf    -> stores the ON CONFLICT algorithm
+ * pSelect   -> If this is an INSERT INTO ... SELECT ... statement, then
+ *              this stores a pointer to the SELECT statement. Otherwise NULL.
+ * target    -> A token holding the name of the table to insert into.
+ * pExprList -> If this is an INSERT INTO ... VALUES ... statement, then
+ *              this stores values to be inserted. Otherwise NULL.
+ * pIdList   -> If this is an INSERT INTO ... (<column-names>) VALUES ... 
+ *              statement, then this stores the column-names to be
+ *              inserted into.
+ *
+ * (op == TK_DELETE)
+ * target    -> A token holding the name of the table to delete from.
+ * pWhere    -> The WHERE clause of the DELETE statement if one is specified.
+ *              Otherwise NULL.
+ * 
+ * (op == TK_UPDATE)
+ * target    -> A token holding the name of the table to update rows of.
+ * pWhere    -> The WHERE clause of the UPDATE statement if one is specified.
+ *              Otherwise NULL.
+ * pExprList -> A list of the columns to update and the expressions to update
+ *              them to. See sqliteUpdate() documentation of "pChanges"
+ *              argument.
+ * 
+ */
+struct TriggerStep {
+  int op;              /* One of TK_DELETE, TK_UPDATE, TK_INSERT, TK_SELECT */
+  int orconf;          /* OE_Rollback etc. */
+
+  Select *pSelect;     /* Valid for SELECT and sometimes 
+			  INSERT steps (when pExprList == 0) */
+  Token target;        /* Valid for DELETE, UPDATE, INSERT steps */
+  Expr *pWhere;        /* Valid for DELETE, UPDATE steps */
+  ExprList *pExprList; /* Valid for UPDATE statements and sometimes 
+			   INSERT steps (when pSelect == 0)         */
+  IdList *pIdList;     /* Valid for INSERT statements only */
+
+  TriggerStep * pNext; /* Next in the link-list */
+};
+
+/*
+ * An instance of struct TriggerStack stores information required during code
+ * generation of a single trigger program. While the trigger program is being
+ * coded, its associated TriggerStack instance is pointed to by the
+ * "pTriggerStack" member of the Parse structure.
+ *
+ * The pTab member points to the table that triggers are being coded on. The 
+ * newIdx member contains the index of the vdbe cursor that points at the temp
+ * table that stores the new.* references. If new.* references are not valid
+ * for the trigger being coded (for example an ON DELETE trigger), then newIdx
+ * is set to -1. The oldIdx member is analogous to newIdx, for old.* references.
+ *
+ * The ON CONFLICT policy to be used for the trigger program steps is stored 
+ * as the orconf member. If this is OE_Default, then the ON CONFLICT clause 
+ * specified for individual triggers steps is used.
+ *
+ * struct TriggerStack has a "pNext" member, to allow linked lists to be
+ * constructed. When coding nested triggers (triggers fired by other triggers)
+ * each nested trigger stores its parent trigger's TriggerStack as the "pNext" 
+ * pointer. Once the nested trigger has been coded, the pNext value is restored
+ * to the pTriggerStack member of the Parse stucture and coding of the parent
+ * trigger continues.
+ *
+ * Before a nested trigger is coded, the linked list pointed to by the 
+ * pTriggerStack is scanned to ensure that the trigger is not about to be coded
+ * recursively. If this condition is detected, the nested trigger is not coded.
+ */
+struct TriggerStack {
+  Table *pTab;         /* Table that triggers are currently being coded on */
+  int newIdx;          /* Index of vdbe cursor to "new" temp table */
+  int oldIdx;          /* Index of vdbe cursor to "old" temp table */
+  int orconf;          /* Current orconf policy */
+  int ignoreJump;      /* where to jump to for a RAISE(IGNORE) */
+  Trigger *pTrigger;
+
+  TriggerStack *pNext;
+};
+
+/*
+ * This global flag is set for performance testing of triggers. When it is set
+ * SQLite will perform the overhead of building new and old trigger references 
+ * even when no triggers exist
+ */
+extern int always_code_trigger_setup;
 
 /*
 ** Internal function prototypes
@@ -583,6 +836,8 @@ void sqliteAddNotNull(Parse*, int);
 void sqliteAddPrimaryKey(Parse*, IdList*, int);
 void sqliteAddColumnType(Parse*,Token*,Token*);
 void sqliteAddDefaultValue(Parse*,Token*,int);
+int sqliteCollateType(Parse*, Token*);
+void sqliteAddCollateType(Parse*, int);
 void sqliteEndTable(Parse*,Token*,Select*);
 void sqliteCreateView(Parse*,Token*,Token*,Select*);
 int sqliteViewGetColumnNames(Parse*,Table*);
@@ -591,24 +846,27 @@ void sqliteDropTable(Parse*, Token*, int);
 void sqliteDeleteTable(sqlite*, Table*);
 void sqliteInsert(Parse*, Token*, ExprList*, Select*, IdList*, int);
 IdList *sqliteIdListAppend(IdList*, Token*);
-void sqliteIdListAddAlias(IdList*, Token*);
+int sqliteIdListIndex(IdList*,const char*);
+SrcList *sqliteSrcListAppend(SrcList*, Token*);
+void sqliteSrcListAddAlias(SrcList*, Token*);
 void sqliteIdListDelete(IdList*);
+void sqliteSrcListDelete(SrcList*);
 void sqliteCreateIndex(Parse*, Token*, Token*, IdList*, int, Token*, Token*);
 void sqliteDropIndex(Parse*, Token*);
 int sqliteSelect(Parse*, Select*, int, int, Select*, int, int*);
-Select *sqliteSelectNew(ExprList*,IdList*,Expr*,ExprList*,Expr*,ExprList*,
+Select *sqliteSelectNew(ExprList*,SrcList*,Expr*,ExprList*,Expr*,ExprList*,
                         int,int,int);
 void sqliteSelectDelete(Select*);
 void sqliteSelectUnbind(Select*);
 Table *sqliteTableNameToTable(Parse*, const char*);
-IdList *sqliteTableTokenToIdList(Parse*, Token*);
+SrcList *sqliteTableTokenToSrcList(Parse*, Token*);
 void sqliteDeleteFrom(Parse*, Token*, Expr*);
 void sqliteUpdate(Parse*, Token*, ExprList*, Expr*, int);
-WhereInfo *sqliteWhereBegin(Parse*, int, IdList*, Expr*, int);
+WhereInfo *sqliteWhereBegin(Parse*, int, SrcList*, Expr*, int);
 void sqliteWhereEnd(WhereInfo*);
 void sqliteExprCode(Parse*, Expr*);
-void sqliteExprIfTrue(Parse*, Expr*, int);
-void sqliteExprIfFalse(Parse*, Expr*, int);
+void sqliteExprIfTrue(Parse*, Expr*, int, int);
+void sqliteExprIfFalse(Parse*, Expr*, int, int);
 Table *sqliteFindTable(sqlite*,const char*);
 Index *sqliteFindIndex(sqlite*,const char*);
 void sqliteUnlinkAndDeleteIndex(sqlite*,Index*);
@@ -620,7 +878,7 @@ char *sqliteTableNameFromToken(Token*);
 int sqliteExprCheck(Parse*, Expr*, int, int*);
 int sqliteExprCompare(Expr*, Expr*);
 int sqliteFuncId(Token*);
-int sqliteExprResolveIds(Parse*, int, IdList*, ExprList*, Expr*);
+int sqliteExprResolveIds(Parse*, int, SrcList*, ExprList*, Expr*);
 int sqliteExprAnalyzeAggregates(Parse*, Expr*);
 Vdbe *sqliteGetVdbe(Parse*);
 int sqliteRandomByte(void);
@@ -630,19 +888,38 @@ void sqliteCommitTransaction(Parse*);
 void sqliteRollbackTransaction(Parse*);
 char *sqlite_mprintf(const char *, ...);
 int sqliteExprIsConstant(Expr*);
-void sqliteGenerateRowDelete(Vdbe*, Table*, int);
+int sqliteExprIsInteger(Expr*, int*);
+void sqliteGenerateRowDelete(Vdbe*, Table*, int, int);
 void sqliteGenerateRowIndexDelete(Vdbe*, Table*, int, char*);
 void sqliteGenerateConstraintChecks(Parse*,Table*,int,char*,int,int,int,int);
 void sqliteCompleteInsertion(Parse*, Table*, int, char*, int, int);
-void sqliteBeginWriteOperation(Parse*);
-void sqliteBeginMultiWriteOperation(Parse*);
+void sqliteBeginWriteOperation(Parse*, int);
 void sqliteEndWriteOperation(Parse*);
 void sqliteExprMoveStrings(Expr*, int);
 void sqliteExprListMoveStrings(ExprList*, int);
 void sqliteSelectMoveStrings(Select*, int);
 Expr *sqliteExprDup(Expr*);
 ExprList *sqliteExprListDup(ExprList*);
+SrcList *sqliteSrcListDup(SrcList*);
 IdList *sqliteIdListDup(IdList*);
 Select *sqliteSelectDup(Select*);
 FuncDef *sqliteFindFunction(sqlite*,const char*,int,int,int);
-void sqliteRegisterBuildinFunctions(sqlite*);
+void sqliteRegisterBuiltinFunctions(sqlite*);
+int sqliteSafetyOn(sqlite*);
+int sqliteSafetyOff(sqlite*);
+int sqliteSafetyCheck(sqlite*);
+void sqliteChangeCookie(sqlite *);
+void sqliteCreateTrigger(Parse*, Token*, int, int, IdList*, Token*, 
+                         int, Expr*, TriggerStep*, char const*,int);
+void sqliteDropTrigger(Parse*, Token*, int);
+int sqliteTriggersExist(Parse* , Trigger* , int , int , int, ExprList*);
+int sqliteCodeRowTrigger(Parse*, int, ExprList*, int, Table *, int, int, 
+                         int, int);
+void sqliteViewTriggers(Parse*, Table*, Expr*, int, ExprList*);
+TriggerStep *sqliteTriggerSelectStep(Select*);
+TriggerStep *sqliteTriggerInsertStep(Token*, IdList*, ExprList*, Select*, int);
+TriggerStep *sqliteTriggerUpdateStep(Token*, ExprList*, Expr*, int);
+TriggerStep *sqliteTriggerDeleteStep(Token*, Expr*);
+void sqliteDeleteTrigger(Trigger*);
+int sqliteJoinType(Parse*, Token*, Token*, Token*);
+int sqliteInitCallback(void*,int,char**,char**);

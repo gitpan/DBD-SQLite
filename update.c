@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle UPDATE statements.
 **
-** $Id: update.c,v 1.7 2002/04/02 10:43:04 matt Exp $
+** $Id: update.c,v 1.8 2002/06/17 23:46:22 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -28,7 +28,7 @@ void sqliteUpdate(
 ){
   int i, j;              /* Loop counters */
   Table *pTab;           /* The table to be updated */
-  IdList *pTabList = 0;  /* List containing only pTab */
+  SrcList *pTabList = 0; /* Fake FROM clause containing only pTab */
   int addr;              /* VDBE instruction address of the start of the loop */
   WhereInfo *pWInfo;     /* Information about the WHERE clause */
   Vdbe *v;               /* The virtual database engine */
@@ -47,21 +47,56 @@ void sqliteUpdate(
   Expr *pRecnoExpr;      /* Expression defining the new record number */
   int openAll;           /* True if all indices need to be opened */
 
+  int row_triggers_exist = 0;
+
+  int newIdx      = -1;  /* index of trigger "new" temp table       */
+  int oldIdx      = -1;  /* index of trigger "old" temp table       */
+
   if( pParse->nErr || sqlite_malloc_failed ) goto update_cleanup;
   db = pParse->db;
 
+  /* Check for the special case of a VIEW with one or more ON UPDATE triggers 
+   * defined 
+   */
+  {
+    char *zTab = sqliteTableNameFromToken(pTableName);
+
+    if( zTab != 0 ){
+      pTab = sqliteFindTable(pParse->db, zTab);
+      if( pTab ){
+        row_triggers_exist = 
+          sqliteTriggersExist(pParse, pTab->pTrigger, 
+              TK_UPDATE, TK_BEFORE, TK_ROW, pChanges) ||
+          sqliteTriggersExist(pParse, pTab->pTrigger, 
+              TK_UPDATE, TK_AFTER, TK_ROW, pChanges);
+      }
+      sqliteFree(zTab);
+      if( row_triggers_exist &&  pTab->pSelect ){
+        /* Just fire VIEW triggers */
+        sqliteViewTriggers(pParse, pTab, pWhere, onError, pChanges);
+        return;
+      }
+    }
+  }
+
   /* Locate the table which we want to update.  This table has to be
-  ** put in an IdList structure because some of the subroutines we
+  ** put in an SrcList structure because some of the subroutines we
   ** will be calling are designed to work with multiple tables and expect
-  ** an IdList* parameter instead of just a Table* parameter.
+  ** an SrcList* parameter instead of just a Table* parameter.
   */
-  pTabList = sqliteTableTokenToIdList(pParse, pTableName);
+  pTabList = sqliteTableTokenToSrcList(pParse, pTableName);
   if( pTabList==0 ) goto update_cleanup;
   pTab = pTabList->a[0].pTab;
   assert( pTab->pSelect==0 );  /* This table is not a VIEW */
   aXRef = sqliteMalloc( sizeof(int) * pTab->nCol );
   if( aXRef==0 ) goto update_cleanup;
   for(i=0; i<pTab->nCol; i++) aXRef[i] = -1;
+
+  /* If there are FOR EACH ROW triggers, allocate temp tables */
+  if( row_triggers_exist ){
+    newIdx = pParse->nTab++;
+    oldIdx = pParse->nTab++;
+  }
 
   /* Resolve the column names in all the expressions in both the
   ** WHERE clause and in the new values.  Also find the column index
@@ -142,7 +177,7 @@ void sqliteUpdate(
   */
   v = sqliteGetVdbe(pParse);
   if( v==0 ) goto update_cleanup;
-  sqliteBeginMultiWriteOperation(pParse);
+  sqliteBeginWriteOperation(pParse, 1);
 
   /* Begin the database scan
   */
@@ -159,8 +194,58 @@ void sqliteUpdate(
 
   /* Initialize the count of updated rows
   */
-  if( db->flags & SQLITE_CountRows ){
+  if( db->flags & SQLITE_CountRows && !pParse->trigStack ){
     sqliteVdbeAddOp(v, OP_Integer, 0, 0);
+  }
+
+  if( row_triggers_exist ){
+    int ii;
+
+    sqliteVdbeAddOp(v, OP_OpenTemp, oldIdx, 0);
+    sqliteVdbeAddOp(v, OP_OpenTemp, newIdx, 0);
+
+    sqliteVdbeAddOp(v, OP_ListRewind, 0, 0);
+    addr = sqliteVdbeAddOp(v, OP_ListRead, 0, 0);
+    sqliteVdbeAddOp(v, OP_Dup, 0, 0);
+
+    sqliteVdbeAddOp(v, OP_Dup, 0, 0);
+    sqliteVdbeAddOp(v, OP_Open, base, pTab->tnum);
+    sqliteVdbeAddOp(v, OP_MoveTo, base, 0);
+
+    sqliteVdbeAddOp(v, OP_Integer, 13, 0);
+    for(ii = 0; ii < pTab->nCol; ii++){
+      if( ii == pTab->iPKey ){
+	sqliteVdbeAddOp(v, OP_Recno, base, 0);
+      }else{
+	sqliteVdbeAddOp(v, OP_Column, base, ii);
+      }
+    }
+    sqliteVdbeAddOp(v, OP_MakeRecord, pTab->nCol, 0);
+    sqliteVdbeAddOp(v, OP_PutIntKey, oldIdx, 0);
+
+    sqliteVdbeAddOp(v, OP_Integer, 13, 0);
+    for(ii = 0; ii < pTab->nCol; ii++){
+      if( aXRef[ii] < 0 ){
+        if( ii == pTab->iPKey ){
+          sqliteVdbeAddOp(v, OP_Recno, base, 0);
+	}else{
+          sqliteVdbeAddOp(v, OP_Column, base, ii);
+	}
+      }else{
+        sqliteExprCode(pParse, pChanges->a[aXRef[ii]].pExpr);
+      }
+    }
+    sqliteVdbeAddOp(v, OP_MakeRecord, pTab->nCol, 0);
+    sqliteVdbeAddOp(v, OP_PutIntKey, newIdx, 0);
+    sqliteVdbeAddOp(v, OP_Close, base, 0);
+
+    sqliteVdbeAddOp(v, OP_Rewind, oldIdx, 0);
+    sqliteVdbeAddOp(v, OP_Rewind, newIdx, 0);
+
+    if( sqliteCodeRowTrigger(pParse, TK_UPDATE, pChanges, TK_BEFORE, pTab, 
+          newIdx, oldIdx, onError, addr) ){
+      goto update_cleanup;
+    }
   }
 
   /* Rewind the list of records that need to be updated and
@@ -169,7 +254,6 @@ void sqliteUpdate(
   ** action, then we need to open all indices because we might need
   ** to be deleting some records.
   */
-  sqliteVdbeAddOp(v, OP_ListRewind, 0, 0);
   openOp = pTab->isTemp ? OP_OpenWrAux : OP_OpenWrite;
   sqliteVdbeAddOp(v, openOp, base, pTab->tnum);
   if( onError==OE_Replace ){
@@ -197,9 +281,12 @@ void sqliteUpdate(
   ** Also, the old data is needed to delete the old index entires.
   ** So make the cursor point at the old record.
   */
-  addr = sqliteVdbeAddOp(v, OP_ListRead, 0, 0);
-  sqliteVdbeAddOp(v, OP_Dup, 0, 0);
-  sqliteVdbeAddOp(v, OP_MoveTo, base, 0);
+  if( !row_triggers_exist ){
+    sqliteVdbeAddOp(v, OP_ListRewind, 0, 0);
+    addr = sqliteVdbeAddOp(v, OP_ListRead, 0, 0);
+    sqliteVdbeAddOp(v, OP_Dup, 0, 0);
+  }
+  sqliteVdbeAddOp(v, OP_NotExists, base, addr);
 
   /* If the record number will change, push the record number as it
   ** will be after the update. (The old record number is currently
@@ -241,7 +328,7 @@ void sqliteUpdate(
   /* If changing the record number, delete the old record.
   */
   if( chngRecno ){
-    sqliteVdbeAddOp(v, OP_Delete, 0, 0);
+    sqliteVdbeAddOp(v, OP_Delete, base, 0);
   }
 
   /* Create the new index entries and the new record.
@@ -250,8 +337,22 @@ void sqliteUpdate(
 
   /* Increment the row counter 
   */
-  if( db->flags & SQLITE_CountRows ){
+  if( db->flags & SQLITE_CountRows && !pParse->trigStack){
     sqliteVdbeAddOp(v, OP_AddImm, 1, 0);
+  }
+
+  if( row_triggers_exist ){
+    for(i=0, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, i++){
+      if( openAll || aIdxUsed[i] )
+        sqliteVdbeAddOp(v, OP_Close, base+i+1, 0);
+    }
+    sqliteVdbeAddOp(v, OP_Close, base, 0);
+    pParse->nTab = base;
+
+    if( sqliteCodeRowTrigger(pParse, TK_UPDATE, pChanges, TK_AFTER, pTab, 
+          newIdx, oldIdx, onError, addr) ){
+      goto update_cleanup;
+    }
   }
 
   /* Repeat the above with the next record to be updated, until
@@ -260,12 +361,27 @@ void sqliteUpdate(
   sqliteVdbeAddOp(v, OP_Goto, 0, addr);
   sqliteVdbeChangeP2(v, addr, sqliteVdbeCurrentAddr(v));
   sqliteVdbeAddOp(v, OP_ListReset, 0, 0);
+
+  /* Close all tables if there were no FOR EACH ROW triggers */
+  if( !row_triggers_exist ){
+    for(i=0, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, i++){
+      if( openAll || aIdxUsed[i] ){
+        sqliteVdbeAddOp(v, OP_Close, base+i+1, 0);
+      }
+    }
+    sqliteVdbeAddOp(v, OP_Close, base, 0);
+    pParse->nTab = base;
+  }else{
+    sqliteVdbeAddOp(v, OP_Close, newIdx, 0);
+    sqliteVdbeAddOp(v, OP_Close, oldIdx, 0);
+  }
+
   sqliteEndWriteOperation(pParse);
 
   /*
   ** Return the number of rows that were changed.
   */
-  if( db->flags & SQLITE_CountRows ){
+  if( db->flags & SQLITE_CountRows && !pParse->trigStack ){
     sqliteVdbeAddOp(v, OP_ColumnCount, 1, 0);
     sqliteVdbeAddOp(v, OP_ColumnName, 0, 0);
     sqliteVdbeChangeP3(v, -1, "rows updated", P3_STATIC);
@@ -275,7 +391,7 @@ void sqliteUpdate(
 update_cleanup:
   sqliteFree(apIdx);
   sqliteFree(aXRef);
-  sqliteIdListDelete(pTabList);
+  sqliteSrcListDelete(pTabList);
   sqliteExprListDelete(pChanges);
   sqliteExprDelete(pWhere);
   return;

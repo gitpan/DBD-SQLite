@@ -14,10 +14,11 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.7 2002/04/02 10:43:03 matt Exp $
+** $Id: main.c,v 1.8 2002/06/17 23:46:21 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
+#include <ctype.h>
 
 /*
 ** This is the callback routine for the code that initializes the
@@ -31,7 +32,7 @@
 **     argv[3] = SQL create statement for the table or index
 **
 */
-static int sqliteOpenCb(void *pDb, int argc, char **argv, char **azColName){
+int sqliteInitCallback(void *pDb, int argc, char **argv, char **azColName){
   sqlite *db = (sqlite*)pDb;
   Parse sParse;
   int nErr = 0;
@@ -258,7 +259,7 @@ static int sqliteInit(sqlite *db, char **pzErrMsg){
     return SQLITE_NOMEM;
   }
   sqliteVdbeAddOpList(vdbe, sizeof(initProg)/sizeof(initProg[0]), initProg);
-  rc = sqliteVdbeExec(vdbe, sqliteOpenCb, db, pzErrMsg, 
+  rc = sqliteVdbeExec(vdbe, sqliteInitCallback, db, pzErrMsg, 
                       db->pBusyArg, db->xBusyCallback);
   sqliteVdbeDelete(vdbe);
   if( rc==SQLITE_OK && db->nTable==0 ){
@@ -281,7 +282,7 @@ static int sqliteInit(sqlite *db, char **pzErrMsg){
     azArg[2] = "2";
     azArg[3] = master_schema;
     azArg[4] = 0;
-    sqliteOpenCb(db, 4, azArg, 0);
+    sqliteInitCallback(db, 4, azArg, 0);
     pTab = sqliteFindTable(db, MASTER_NAME);
     if( pTab ){
       pTab->readOnly = 1;
@@ -326,12 +327,15 @@ sqlite *sqlite_open(const char *zFilename, int mode, char **pzErrMsg){
   if( db==0 ) goto no_mem_on_open;
   sqliteHashInit(&db->tblHash, SQLITE_HASH_STRING, 0);
   sqliteHashInit(&db->idxHash, SQLITE_HASH_STRING, 0);
+  sqliteHashInit(&db->trigHash, SQLITE_HASH_STRING, 0);
+  sqliteHashInit(&db->trigDrop, SQLITE_HASH_STRING, 0);
   sqliteHashInit(&db->tblDrop, SQLITE_HASH_POINTER, 0);
   sqliteHashInit(&db->idxDrop, SQLITE_HASH_POINTER, 0);
   sqliteHashInit(&db->aFunc, SQLITE_HASH_STRING, 1);
-  sqliteRegisterBuildinFunctions(db);
+  sqliteRegisterBuiltinFunctions(db);
   db->onError = OE_Default;
   db->priorNewRowid = 0;
+  db->magic = SQLITE_MAGIC_BUSY;
   
   /* Open the backend database driver */
   rc = sqliteBtreeOpen(zFilename, mode, MAX_PAGES, &db->pBe);
@@ -348,6 +352,7 @@ sqlite *sqlite_open(const char *zFilename, int mode, char **pzErrMsg){
 
   /* Attempt to read the schema */
   rc = sqliteInit(db, pzErrMsg);
+  db->magic = SQLITE_MAGIC_OPEN;
   if( sqlite_malloc_failed ){
     sqlite_close(db);
     goto no_mem_on_open;
@@ -381,11 +386,32 @@ no_mem_on_open:
 static void clearHashTable(sqlite *db, int preserveTemps){
   HashElem *pElem;
   Hash temp1;
-  assert( sqliteHashFirst(&db->tblDrop)==0 ); /* There can not be uncommitted */
-  assert( sqliteHashFirst(&db->idxDrop)==0 ); /*   DROP TABLEs or DROP INDEXs */
+  Hash temp2;
+
+  /* Make sure there are no uncommited DROPs */
+  assert( sqliteHashFirst(&db->tblDrop)==0 || sqlite_malloc_failed );
+  assert( sqliteHashFirst(&db->idxDrop)==0 || sqlite_malloc_failed );
+  assert( sqliteHashFirst(&db->trigDrop)==0 || sqlite_malloc_failed );
   temp1 = db->tblHash;
-  sqliteHashInit(&db->tblHash, SQLITE_HASH_STRING, 0);
+  temp2 = db->trigHash;
+  sqliteHashInit(&db->trigHash, SQLITE_HASH_STRING, 0);
   sqliteHashClear(&db->idxHash);
+
+  for(pElem=sqliteHashFirst(&temp2); pElem; pElem=sqliteHashNext(pElem)){
+    Trigger * pTrigger = sqliteHashData(pElem);
+    Table *pTab = sqliteFindTable(db, pTrigger->table);
+    assert(pTab);
+    if( pTab->isTemp && preserveTemps ){ 
+      sqliteHashInsert(&db->trigHash, pTrigger->name, strlen(pTrigger->name), 
+          pTrigger);
+    }else{
+      sqliteDeleteTrigger(pTrigger);
+    }
+  }
+  sqliteHashClear(&temp2);
+
+  sqliteHashInit(&db->tblHash, SQLITE_HASH_STRING, 0);
+
   for(pElem=sqliteHashFirst(&temp1); pElem; pElem=sqliteHashNext(pElem)){
     Table *pTab = sqliteHashData(pElem);
     if( preserveTemps && pTab->isTemp ){
@@ -422,10 +448,19 @@ int sqlite_last_insert_rowid(sqlite *db){
 }
 
 /*
+** Return the number of changes in the most recent call to sqlite_exec().
+*/
+int sqlite_changes(sqlite *db){
+  return db->nChange;
+}
+
+/*
 ** Close an existing SQLite database
 */
 void sqlite_close(sqlite *db){
   HashElem *i;
+  if( sqliteSafetyCheck(db) || sqliteSafetyOn(db) ){ return; }
+  db->magic = SQLITE_MAGIC_CLOSED;
   sqliteBtreeClose(db->pBe);
   clearHashTable(db, 0);
   if( db->pBeTemp ){
@@ -444,13 +479,22 @@ void sqlite_close(sqlite *db){
 
 /*
 ** Return TRUE if the given SQL string ends in a semicolon.
+**
+** Special handling is require for CREATE TRIGGER statements.
+** Whenever the CREATE TRIGGER keywords are seen, the statement
+** must end with ";END;".
 */
 int sqlite_complete(const char *zSql){
-  int isComplete = 0;
+  int isComplete = 1;
+  int requireEnd = 0;
+  int seenText = 0;
+  int seenCreate = 0;
   while( *zSql ){
     switch( *zSql ){
       case ';': {
         isComplete = 1;
+        seenText = 1;
+        seenCreate = 0;
         break;
       }
       case ' ':
@@ -461,42 +505,88 @@ int sqlite_complete(const char *zSql){
       }
       case '[': {
         isComplete = 0;
+        seenText = 1;
+        seenCreate = 0;
         zSql++;
         while( *zSql && *zSql!=']' ){ zSql++; }
         if( *zSql==0 ) return 0;
         break;
       }
+      case '"':
       case '\'': {
+        int c = *zSql;
         isComplete = 0;
+        seenText = 1;
+        seenCreate = 0;
         zSql++;
-        while( *zSql && *zSql!='\'' ){ zSql++; }
-        if( *zSql==0 ) return 0;
-        break;
-      }
-      case '"': {
-        isComplete = 0;
-        zSql++;
-        while( *zSql && *zSql!='"' ){ zSql++; }
+        while( *zSql && *zSql!=c ){ zSql++; }
         if( *zSql==0 ) return 0;
         break;
       }
       case '-': {
         if( zSql[1]!='-' ){
           isComplete = 0;
+          seenCreate = 0;
           break;
         }
         while( *zSql && *zSql!='\n' ){ zSql++; }
-        if( *zSql==0 ) return isComplete;
+        if( *zSql==0 ) return seenText && isComplete && requireEnd==0;
         break;
-      } 
+      }
+      case 'c':
+      case 'C': {
+        seenText = 1;
+        if( !isComplete ) break;
+        isComplete = 0;
+        if( sqliteStrNICmp(zSql, "create", 6)!=0 ) break;
+        if( !isspace(zSql[6]) ) break;
+        zSql += 5;
+        seenCreate = 1;
+        while( isspace(zSql[1]) ) zSql++;
+        if( sqliteStrNICmp(&zSql[1],"trigger", 7)!=0 ) break;
+        zSql += 7;
+        requireEnd++;
+        break;
+      }
+      case 't':
+      case 'T': {
+        seenText = 1;
+        if( !seenCreate ) break;
+        seenCreate = 0;
+        isComplete = 0;
+        if( sqliteStrNICmp(zSql, "trigger", 7)!=0 ) break;
+        if( !isspace(zSql[7]) ) break;
+        zSql += 6;
+        requireEnd++;
+        break;
+      }
+      case 'e':
+      case 'E': {
+        seenCreate = 0;
+        seenText = 1;
+        if( !isComplete ) break;
+        isComplete = 0;
+        if( requireEnd==0 ) break;
+        if( sqliteStrNICmp(zSql, "end", 3)!=0 ) break;
+        zSql += 2;
+        while( isspace(zSql[1]) ) zSql++;
+        if( zSql[1]==';' ){
+          zSql++;
+          isComplete = 1;
+          requireEnd--;
+        }
+        break;
+      }
       default: {
+        seenCreate = 0;
+        seenText = 1;
         isComplete = 0;
         break;
       }
     }
     zSql++;
   }
-  return isComplete;
+  return seenText && isComplete && requireEnd==0;
 }
 
 /*
@@ -519,13 +609,17 @@ int sqlite_exec(
   Parse sParse;
 
   if( pzErrMsg ) *pzErrMsg = 0;
+  if( sqliteSafetyOn(db) ) goto exec_misuse;
   if( (db->flags & SQLITE_Initialized)==0 ){
     int rc = sqliteInit(db, pzErrMsg);
     if( rc!=SQLITE_OK ){
       sqliteStrRealloc(pzErrMsg);
+      sqliteSafetyOff(db);
       return rc;
     }
   }
+  if( db->recursionDepth==0 ){ db->nChange = 0; }
+  db->recursionDepth++;
   memset(&sParse, 0, sizeof(sParse));
   sParse.db = db;
   sParse.pBe = db->pBe;
@@ -544,7 +638,51 @@ int sqlite_exec(
   if( sParse.rc==SQLITE_SCHEMA ){
     clearHashTable(db, 1);
   }
+  db->recursionDepth--;
+  if( sqliteSafetyOff(db) ) goto exec_misuse;
   return sParse.rc;
+
+exec_misuse:
+  if( pzErrMsg ){
+    *pzErrMsg = 0;
+    sqliteSetString(pzErrMsg, sqlite_error_string(SQLITE_MISUSE), 0);
+    sqliteStrRealloc(pzErrMsg);
+  }
+  return SQLITE_MISUSE;
+}
+
+/*
+** Return a static string that describes the kind of error specified in the
+** argument.
+*/
+const char *sqlite_error_string(int rc){
+  const char *z;
+  switch( rc ){
+    case SQLITE_OK:         z = "not an error";                          break;
+    case SQLITE_ERROR:      z = "SQL logic error or missing database";   break;
+    case SQLITE_INTERNAL:   z = "internal SQLite implementation flaw";   break;
+    case SQLITE_PERM:       z = "access permission denied";              break;
+    case SQLITE_ABORT:      z = "callback requested query abort";        break;
+    case SQLITE_BUSY:       z = "database is locked";                    break;
+    case SQLITE_LOCKED:     z = "database table is locked";              break;
+    case SQLITE_NOMEM:      z = "out of memory";                         break;
+    case SQLITE_READONLY:   z = "attempt to write a readonly database";  break;
+    case SQLITE_INTERRUPT:  z = "interrupted";                           break;
+    case SQLITE_IOERR:      z = "disk I/O error";                        break;
+    case SQLITE_CORRUPT:    z = "database disk image is malformed";      break;
+    case SQLITE_NOTFOUND:   z = "table or record not found";             break;
+    case SQLITE_FULL:       z = "database is full";                      break;
+    case SQLITE_CANTOPEN:   z = "unable to open database file";          break;
+    case SQLITE_PROTOCOL:   z = "database locking protocol failure";     break;
+    case SQLITE_EMPTY:      z = "table contains no data";                break;
+    case SQLITE_SCHEMA:     z = "database schema has changed";           break;
+    case SQLITE_TOOBIG:     z = "too much data for one table row";       break;
+    case SQLITE_CONSTRAINT: z = "constraint failed";                     break;
+    case SQLITE_MISMATCH:   z = "datatype mismatch";                     break;
+    case SQLITE_MISUSE:     z = "library routine called out of sequence";break;
+    default:                z = "unknown error";                         break;
+  }
+  return z;
 }
 
 /*
@@ -662,7 +800,7 @@ int sqlite_create_function(
   void *pUserData      /* User data */
 ){
   FuncDef *p;
-  if( db==0 || zName==0 ) return 1;
+  if( db==0 || zName==0 || sqliteSafetyCheck(db) ) return 1;
   p = sqliteFindFunction(db, zName, strlen(zName), nArg, 1);
   if( p==0 ) return 1;
   p->xFunc = xFunc;
@@ -680,7 +818,7 @@ int sqlite_create_aggregate(
   void *pUserData      /* User data */
 ){
   FuncDef *p;
-  if( db==0 || zName==0 ) return 1;
+  if( db==0 || zName==0 || sqliteSafetyCheck(db) ) return 1;
   p = sqliteFindFunction(db, zName, strlen(zName), nArg, 1);
   if( p==0 ) return 1;
   p->xFunc = 0;

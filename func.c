@@ -16,7 +16,7 @@
 ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: func.c,v 1.5 2002/04/02 10:43:03 matt Exp $
+** $Id: func.c,v 1.6 2002/06/17 23:46:21 matt Exp $
 */
 #include <ctype.h>
 #include <math.h>
@@ -33,7 +33,9 @@ static void minFunc(sqlite_func *context, int argc, const char **argv){
 
   if( argc==0 ) return;
   zBest = argv[0];
+  if( zBest==0 ) return;
   for(i=1; i<argc; i++){
+    if( argv[i]==0 ) return;
     if( sqliteCompare(argv[i], zBest)<0 ){
       zBest = argv[i];
     }
@@ -46,7 +48,9 @@ static void maxFunc(sqlite_func *context, int argc, const char **argv){
 
   if( argc==0 ) return;
   zBest = argv[0];
+  if( zBest==0 ) return;
   for(i=1; i<argc; i++){
+    if( argv[i]==0 ) return;
     if( sqliteCompare(argv[i], zBest)>0 ){
       zBest = argv[i];
     }
@@ -63,15 +67,12 @@ static void lengthFunc(sqlite_func *context, int argc, const char **argv){
 
   assert( argc==1 );
   z = argv[0];
-  if( z==0 ){
-    len = 0;
-  }else{
+  if( z==0 ) return;
 #ifdef SQLITE_UTF8
-    for(len=0; *z; z++){ if( (0xc0&*z)!=0x80 ) len++; }
+  for(len=0; *z; z++){ if( (0xc0&*z)!=0x80 ) len++; }
 #else
-    len = strlen(z);
+  len = strlen(z);
 #endif
-  }
   sqlite_set_result_int(context, len);
 }
 
@@ -82,7 +83,8 @@ static void absFunc(sqlite_func *context, int argc, const char **argv){
   const char *z;
   assert( argc==1 );
   z = argv[0];
-  if( z && z[0]=='-' && isdigit(z[1]) ) z++;
+  if( z==0 ) return;
+  if( z[0]=='-' && isdigit(z[1]) ) z++;
   sqlite_set_result_string(context, z, -1);
 }
 
@@ -142,10 +144,11 @@ static void roundFunc(sqlite_func *context, int argc, const char **argv){
   double r;
   char zBuf[100];
   assert( argc==1 || argc==2 );
-  n = argc==2 && argv[1] ? atoi(argv[1]) : 0;
+  if( argv[0]==0 || (argc==2 && argv[1]==0) ) return;
+  n = argc==2 ? atoi(argv[1]) : 0;
   if( n>30 ) n = 30;
   if( n<0 ) n = 0;
-  r = argv[0] ? atof(argv[0]) : 0.0;
+  r = atof(argv[0]);
   sprintf(zBuf,"%.*f",n,r);
   sqlite_set_result_string(context, zBuf, -1);
 }
@@ -197,12 +200,61 @@ static void randomFunc(sqlite_func *context, int argc, const char **argv){
 }
 
 /*
+** Implementation of the last_insert_rowid() SQL function.  The return
+** value is the same as the sqlite_last_insert_rowid() API function.
+*/
+static void last_insert_rowid(sqlite_func *context, int arg, const char **argv){
+  sqlite *db = sqlite_user_data(context);
+  sqlite_set_result_int(context, sqlite_last_insert_rowid(db));
+}
+
+/*
+** Implementation of the like() SQL function.  This function implements
+** the build-in LIKE operator.  The first argument to the function is the
+** string and the second argument is the pattern.  So, the SQL statements:
+**
+**       A LIKE B
+**
+** is implemented as like(A,B).
+*/
+static void likeFunc(sqlite_func *context, int arg, const char **argv){
+  if( argv[0]==0 || argv[1]==0 ) return;
+  sqlite_set_result_int(context, sqliteLikeCompare(argv[0], argv[1]));
+}
+
+/*
+** Implementation of the glob() SQL function.  This function implements
+** the build-in GLOB operator.  The first argument to the function is the
+** string and the second argument is the pattern.  So, the SQL statements:
+**
+**       A GLOB B
+**
+** is implemented as glob(A,B).
+*/
+static void globFunc(sqlite_func *context, int arg, const char **argv){
+  if( argv[0]==0 || argv[1]==0 ) return;
+  sqlite_set_result_int(context, sqliteGlobCompare(argv[0], argv[1]));
+}
+
+/*
+** Implementation of the NULLIF(x,y) function.  The result is the first
+** argument if the arguments are different.  The result is NULL if the
+** arguments are equal to each other.
+*/
+static void nullifFunc(sqlite_func *context, int argc, const char **argv){
+  if( argv[0]!=0 && sqliteCompare(argv[0],argv[1])!=0 ){
+    sqlite_set_result_string(context, argv[0], -1);
+  }
+}
+
+/*
 ** An instance of the following structure holds the context of a
 ** sum() or avg() aggregate computation.
 */
 typedef struct SumCtx SumCtx;
 struct SumCtx {
   double sum;     /* Sum of terms */
+  int cnt;        /* Number of elements summed */
 };
 
 /*
@@ -210,12 +262,12 @@ struct SumCtx {
 */
 static void sumStep(sqlite_func *context, int argc, const char **argv){
   SumCtx *p;
-  double x;
   if( argc<1 ) return;
   p = sqlite_aggregate_context(context, sizeof(*p));
-  if( p==0 ) return;
-  x = argv[0] ? atof(argv[0]) : 0.0;
-  p->sum += x;
+  if( p && argv[0] ){
+    p->sum += atof(argv[0]);
+    p->cnt++;
+  }
 }
 static void sumFinalize(sqlite_func *context){
   SumCtx *p;
@@ -224,11 +276,9 @@ static void sumFinalize(sqlite_func *context){
 }
 static void avgFinalize(sqlite_func *context){
   SumCtx *p;
-  double rN;
   p = sqlite_aggregate_context(context, sizeof(*p));
-  rN = sqlite_aggregate_count(context);
-  if( p && rN>0.0 ){
-    sqlite_set_result_double(context, p->sum/rN);
+  if( p && p->cnt>0 ){
+    sqlite_set_result_double(context, p->sum/(double)p->cnt);
   }
 }
 
@@ -240,6 +290,7 @@ typedef struct StdDevCtx StdDevCtx;
 struct StdDevCtx {
   double sum;     /* Sum of terms */
   double sum2;    /* Sum of the squares of terms */
+  int cnt;        /* Number of terms counted */
 };
 
 #if 0   /* Omit because math library is required */
@@ -251,17 +302,20 @@ static void stdDevStep(sqlite_func *context, int argc, const char **argv){
   double x;
   if( argc<1 ) return;
   p = sqlite_aggregate_context(context, sizeof(*p));
-  if( p==0 ) return;
-  x = argv[0] ? atof(argv[0]) : 0.0;
-  p->sum += x;
-  p->sum2 += x*x;
+  if( p && argv[0] ){
+    x = atof(argv[0]);
+    p->sum += x;
+    p->sum2 += x*x;
+    p->cnt++;
+  }
 }
 static void stdDevFinalize(sqlite_func *context){
   double rN = sqlite_aggregate_count(context);
   StdDevCtx *p = sqlite_aggregate_context(context, sizeof(*p));
-  if( p && rN>1.0 ){
+  if( p && p->cnt>1 ){
+    double rCnt = cnt;
     sqlite_set_result_double(context, 
-       sqrt((p->sum2 - p->sum*p->sum/rN)/(rN-1.0)));
+       sqrt((p->sum2 - p->sum*p->sum/rCnt)/(rCnt-1.0)));
   }
 }
 #endif
@@ -307,45 +361,39 @@ struct MinMaxCtx {
 static void minStep(sqlite_func *context, int argc, const char **argv){
   MinMaxCtx *p;
   p = sqlite_aggregate_context(context, sizeof(*p));
-  if( p==0 || argc<1 ) return;
-  if( sqlite_aggregate_count(context)==1 || sqliteCompare(argv[0],p->z)<0 ){
+  if( p==0 || argc<1 || argv[0]==0 ) return;
+  if( p->z==0 || sqliteCompare(argv[0],p->z)<0 ){
+    int len;
     if( p->z && p->z!=p->zBuf ){
       sqliteFree(p->z);
     }
-    if( argv[0] ){
-      int len = strlen(argv[0]);
-      if( len < sizeof(p->zBuf) ){
-        p->z = p->zBuf;
-      }else{
-        p->z = sqliteMalloc( len+1 );
-        if( p->z==0 ) return;
-      }
-      strcpy(p->z, argv[0]);
+    len = strlen(argv[0]);
+    if( len < sizeof(p->zBuf) ){
+      p->z = p->zBuf;
     }else{
-      p->z = 0;
+      p->z = sqliteMalloc( len+1 );
+      if( p->z==0 ) return;
     }
+    strcpy(p->z, argv[0]);
   }
 }
 static void maxStep(sqlite_func *context, int argc, const char **argv){
   MinMaxCtx *p;
   p = sqlite_aggregate_context(context, sizeof(*p));
-  if( p==0 || argc<1 ) return;
-  if( sqlite_aggregate_count(context)==1 || sqliteCompare(argv[0],p->z)>0 ){
+  if( p==0 || argc<1 || argv[0]==0 ) return;
+  if( p->z==0 || sqliteCompare(argv[0],p->z)>0 ){
+    int len;
     if( p->z && p->z!=p->zBuf ){
       sqliteFree(p->z);
     }
-    if( argv[0] ){
-      int len = strlen(argv[0]);
-      if( len < sizeof(p->zBuf) ){
-        p->z = p->zBuf;
-      }else{
-        p->z = sqliteMalloc( len+1 );
-        if( p->z==0 ) return;
-      }
-      strcpy(p->z, argv[0]);
+    len = strlen(argv[0]);
+    if( len < sizeof(p->zBuf) ){
+      p->z = p->zBuf;
     }else{
-      p->z = 0;
+      p->z = sqliteMalloc( len+1 );
+      if( p->z==0 ) return;
     }
+    strcpy(p->z, argv[0]);
   }
 }
 static void minMaxFinalize(sqlite_func *context){
@@ -364,7 +412,7 @@ static void minMaxFinalize(sqlite_func *context){
 ** functions.  This should be the only routine in this file with
 ** external linkage.
 */
-void sqliteRegisterBuildinFunctions(sqlite *db){
+void sqliteRegisterBuiltinFunctions(sqlite *db){
   static struct {
      char *zName;
      int nArg;
@@ -384,7 +432,11 @@ void sqliteRegisterBuildinFunctions(sqlite *db){
     { "coalesce",  -1, ifnullFunc },
     { "coalesce",   0, 0          },
     { "coalesce",   1, 0          },
+    { "ifnull",     2, ifnullFunc },
     { "random",    -1, randomFunc },
+    { "like",       2, likeFunc   },
+    { "glob",       2, globFunc   },
+    { "nullif",     2, nullifFunc },
   };
   static struct {
     char *zName;
@@ -408,6 +460,8 @@ void sqliteRegisterBuildinFunctions(sqlite *db){
     sqlite_create_function(db, aFuncs[i].zName,
            aFuncs[i].nArg, aFuncs[i].xFunc, 0);
   }
+  sqlite_create_function(db, "last_insert_rowid", 0, 
+           last_insert_rowid, db);
   for(i=0; i<sizeof(aAggs)/sizeof(aAggs[0]); i++){
     sqlite_create_aggregate(db, aAggs[i].zName,
            aAggs[i].nArg, aAggs[i].xStep, aAggs[i].xFinalize, 0);

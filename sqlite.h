@@ -12,7 +12,7 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite.h,v 1.7 2002/04/02 10:43:03 matt Exp $
+** @(#) $Id: sqlite.h,v 1.8 2002/06/17 23:46:22 matt Exp $
 */
 #ifndef _SQLITE_H_
 #define _SQLITE_H_
@@ -21,7 +21,7 @@
 /*
 ** The version of the SQLite library.
 */
-#define SQLITE_VERSION         "2.4.5"
+#define SQLITE_VERSION         "2.5.0"
 
 /*
 ** Make sure we can call this stuff from C++.
@@ -161,6 +161,7 @@ int sqlite_exec(
 #define SQLITE_TOOBIG      18   /* Too much data for one row of a table */
 #define SQLITE_CONSTRAINT  19   /* Abort due to contraint violation */
 #define SQLITE_MISMATCH    20   /* Data type mismatch */
+#define SQLITE_MISUSE      21   /* Library used incorrectly */
 
 /*
 ** Each entry in an SQLite table has a unique integer key.  (The key is
@@ -172,6 +173,28 @@ int sqlite_exec(
 ** This function is similar to the mysql_insert_id() function from MySQL.
 */
 int sqlite_last_insert_rowid(sqlite*);
+
+/*
+** This function returns the number of database rows that were changed
+** (or inserted or deleted) by the most recent called sqlite_exec().
+**
+** All changes are counted, even if they were later undone by a
+** ROLLBACK or ABORT.  Except, changes associated with creating and
+** dropping tables are not counted.
+**
+** If a callback invokes sqlite_exec() recursively, then the changes
+** in the inner, recursive call are counted together with the changes
+** in the outer call.
+**
+** SQLite implements the command "DELETE FROM table" without a WHERE clause
+** by dropping and recreating the table.  (This is much faster than going
+** through and deleting individual elements form the table.)  Because of
+** this optimization, the change count for "DELETE FROM table" will be
+** zero regardless of the number of elements that were originally in the
+** table. To get an accurate count of the number of rows deleted, use
+** "DELETE FROM table WHERE 1" instead.
+*/
+int sqlite_changes(sqlite*);
 
 /* If the parameter to this routine is one of the return value constants
 ** defined above, then this routine returns a constant text string which

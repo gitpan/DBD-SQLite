@@ -72,6 +72,8 @@ enum et_type {    /* The type of the format field */
 /* The rest are extensions, not normally found in printf() */
    etCHARLIT,          /* Literal characters.  %' */
    etSQLESCAPE,        /* Strings with '\'' doubled.  %q */
+   etSQLESCAPE2,       /* Strings with '\'' doubled and enclosed in '',
+                          NULL pointers replaced by SQL NULL.  %Q */
    etORDINAL           /* 1st, 2nd, 3rd and so forth */
 };
 
@@ -96,6 +98,7 @@ static et_info fmtinfo[] = {
   { 'd',  10,  "0123456789",       1,    0, etRADIX,      },
   { 's',   0,  0,                  0,    0, etSTRING,     }, 
   { 'q',   0,  0,                  0,    0, etSQLESCAPE,  },
+  { 'Q',   0,  0,                  0,    0, etSQLESCAPE2, },
   { 'c',   0,  0,                  0,    0, etCHARX,      },
   { 'o',   8,  "01234567",         0,  "0", etRADIX,      },
   { 'u',  10,  "0123456789",       0,    0, etRADIX,      },
@@ -336,7 +339,7 @@ static int vxprintf(
       case etORDINAL:
       case etRADIX:
         if( flag_long )  longvalue = va_arg(ap,long);
-	else             longvalue = va_arg(ap,int);
+        else             longvalue = va_arg(ap,int);
 #ifdef etCOMPATIBILITY
         /* For the format %#x, the value zero is printed "0" not "0x0".
         ** I think this is stupid. */
@@ -356,7 +359,7 @@ static int vxprintf(
         }else                        prefix = 0;
         if( flag_zeropad && precision<width-(prefix!=0) ){
           precision = width-(prefix!=0);
-	}
+        }
         bufpt = &buf[etBUFSIZE];
         if( xtype==etORDINAL ){
           long a,b;
@@ -386,18 +389,18 @@ static int vxprintf(
             *(--bufpt) = cset[longvalue%base];
             longvalue = longvalue/base;
           }while( longvalue>0 );
-	}
+        }
         length = (long)&buf[etBUFSIZE]-(long)bufpt;
         for(idx=precision-length; idx>0; idx--){
           *(--bufpt) = '0';                             /* Zero pad */
-	}
+        }
         if( prefix ) *(--bufpt) = prefix;               /* Add sign */
         if( flag_alternateform && infop->prefix ){      /* Add "0" or "0x" */
           char *pre, x;
           pre = infop->prefix;
           if( *bufpt!=pre[0] ){
             for(pre=infop->prefix; (x=(*pre))!=0; pre++) *(--bufpt) = x;
-	  }
+          }
         }
         length = (long)&buf[etBUFSIZE]-(long)bufpt;
         break;
@@ -411,11 +414,11 @@ static int vxprintf(
         if( realvalue<0.0 ){
           realvalue = -realvalue;
           prefix = '-';
-	}else{
+        }else{
           if( flag_plussign )          prefix = '+';
           else if( flag_blanksign )    prefix = ' ';
           else                         prefix = 0;
-	}
+        }
         if( infop->type==etGENERIC && precision>0 ) precision--;
         rounder = 0.0;
 #ifdef COMPATIBILITY
@@ -439,7 +442,7 @@ static int vxprintf(
             length = 3;
             break;
           }
-	}
+        }
         bufpt = buf;
         /*
         ** If the field type is etGENERIC, then convert to either etEXP
@@ -458,9 +461,9 @@ static int vxprintf(
             precision = precision - exp;
             xtype = etFLOAT;
           }
-	}else{
+        }else{
           flag_rtz = 0;
-	}
+        }
         /*
         ** The "exp+precision" test causes output to be of type etEXP if
         ** the precision is too large to fit in buf[].
@@ -482,7 +485,7 @@ static int vxprintf(
             if( bufpt>=buf && *bufpt=='.' ) *(bufpt--) = 0;
           }
           bufpt++;                            /* point to next free slot */
-	}else{    /* etEXP or etGENERIC */
+        }else{    /* etEXP or etGENERIC */
           flag_dp = (precision>0 || flag_alternateform);
           if( prefix ) *(bufpt++) = prefix;   /* Sign */
           *(bufpt++) = et_getdigit(&realvalue,&nsd);  /* First digit */
@@ -501,11 +504,11 @@ static int vxprintf(
             if( exp>=100 ){
               *(bufpt++) = (exp/100)+'0';                /* 100's digit */
               exp %= 100;
-  	    }
+            }
             *(bufpt++) = exp/10+'0';                     /* 10's digit */
             *(bufpt++) = exp%10+'0';                     /* 1's digit */
           }
-	}
+        }
         /* The converted number is in buf[] and zero terminated. Output it.
         ** Note that the number is in the usual order, not reversed as with
         ** integer conversions. */
@@ -541,9 +544,9 @@ static int vxprintf(
         if( precision>=0 ){
           for(idx=1; idx<precision; idx++) buf[idx] = c;
           length = precision;
-	}else{
+        }else{
           length =1;
-	}
+        }
         bufpt = buf;
         break;
       case etSTRING:
@@ -553,24 +556,29 @@ static int vxprintf(
         if( precision>=0 && precision<length ) length = precision;
         break;
       case etSQLESCAPE:
+      case etSQLESCAPE2:
         {
-          int i, j, n, c;
+          int i, j, n, c, isnull;
           char *arg = va_arg(ap,char*);
-          if( arg==0 ) arg = "(NULL)";
+          isnull = arg==0;
+          if( isnull ) arg = (xtype==etSQLESCAPE2 ? "NULL" : "(NULL)");
           for(i=n=0; (c=arg[i])!=0; i++){
             if( c=='\'' )  n++;
           }
-          n += i + 1;
+          n += i + 1 + ((!isnull && xtype==etSQLESCAPE2) ? 2 : 0);
           if( n>etBUFSIZE ){
             bufpt = zExtra = sqliteMalloc( n );
             if( bufpt==0 ) return -1;
           }else{
             bufpt = buf;
           }
-          for(i=j=0; (c=arg[i])!=0; i++){
+          j = 0;
+          if( !isnull && xtype==etSQLESCAPE2 ) bufpt[j++] = '\'';
+          for(i=0; (c=arg[i])!=0; i++){
             bufpt[j++] = c;
             if( c=='\'' ) bufpt[j++] = c;
           }
+          if( !isnull && xtype==etSQLESCAPE2 ) bufpt[j++] = '\'';
           bufpt[j] = 0;
           length = j;
           if( precision>=0 && precision<length ) length = precision;
@@ -599,7 +607,7 @@ static int vxprintf(
           nspace = nspace/2;
           width -= nspace;
           flag_leftjustify = 1;
-	}
+        }
         count += nspace;
         while( nspace>=etSPACESIZE ){
           (*func)(arg,spaces,etSPACESIZE);

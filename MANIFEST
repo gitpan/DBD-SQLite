@@ -54,6 +54,7 @@ t/lib.pl
 table.c
 test.pl
 tokenize.c
+trigger.c
 update.c
 util.c
 vdbe.c
