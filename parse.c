@@ -62,29 +62,29 @@ struct twoint { int a,b; };
 */
 /*  */
 #define YYCODETYPE unsigned char
-#define YYNOCODE 162
+#define YYNOCODE 169
 #define YYACTIONTYPE unsigned short int
 #define sqliteParserTOKENTYPE Token
 typedef union {
   sqliteParserTOKENTYPE yy0;
-  Expr* yy132;
-  int yy144;
-  IdList* yy152;
-  Token yy224;
-  Select* yy233;
-  ExprList* yy270;
-  struct twoint yy303;
-  int yy323;
+  IdList* yy82;
+  ExprList* yy144;
+  Expr* yy146;
+  int yy172;
+  struct twoint yy191;
+  Token yy210;
+  Select* yy219;
+  int yy337;
 } YYMINORTYPE;
 #define YYSTACKDEPTH 100
 #define sqliteParserARG_SDECL Parse *pParse;
 #define sqliteParserARG_PDECL ,Parse *pParse
 #define sqliteParserARG_FETCH Parse *pParse = yypParser->pParse
 #define sqliteParserARG_STORE yypParser->pParse = pParse
-#define YYNSTATE 393
-#define YYNRULE 223
-#define YYERRORSYMBOL 115
-#define YYERRSYMDT yy323
+#define YYNSTATE 411
+#define YYNRULE 232
+#define YYERRORSYMBOL 122
+#define YYERRSYMDT yy337
 #define YY_NO_ACTION      (YYNSTATE+YYNRULE+2)
 #define YY_ACCEPT_ACTION  (YYNSTATE+YYNRULE+1)
 #define YY_ERROR_ACTION   (YYNSTATE+YYNRULE)
@@ -115,3579 +115,4174 @@ struct yyActionEntry {
 typedef struct yyActionEntry yyActionEntry;
 static const yyActionEntry yyActionTable[] = {
 /* State 0 */
-  {  50,   4, 358}, /*  1:                 INSERT shift  358 */
-  {  76,   0, 360}, /*  2:                REPLACE shift  360 */
-  { 127,   9, 617}, /*  3:                  input accept */
-  {  25,   0, 321}, /*  4:                 DELETE shift  321 */
-  { 104,   0, 388}, /*  5:                    cmd shift  388 */
-  { 130,  10, 340}, /*  6:             insert_cmd shift  340 */
-  {  81,  13, 390}, /*  7:                   SEMI shift  390 */
-  {   7,   0,   6}, /*  8:                  BEGIN shift  6 */
-  {  77,   0,  43}, /*  9:               ROLLBACK shift  43 */
-  { 105,  16,   1}, /* 10:                cmdlist shift  1 */
-  {  35,   0, 391}, /* 11:                EXPLAIN shift  391 */
-  { 111,   0,  45}, /* 12:           create_table shift  45 */
-  {  31,   0,  41}, /* 13:                    END shift  41 */
-  { 138,   0,  78}, /* 14:              oneselect shift  78 */
-  { 114,   0, 392}, /* 15:                   ecmd shift  392 */
-  {  80,  18,  82}, /* 16:                 SELECT shift  82 */
-  { 116,   0,   3}, /* 17:                explain shift  3 */
-  {  30,   0, 313}, /* 18:                   DROP shift  313 */
-  {  18,   0,  39}, /* 19:                 COMMIT shift  39 */
-  {  94,   0, 325}, /* 20:                 UPDATE shift  325 */
-  {  96,   0, 369}, /* 21:                 VACUUM shift  369 */
-  { 146,  21, 320}, /* 22:                 select shift  320 */
-  {  22,   0, 361}, /* 23:                   COPY shift  361 */
-  {  73,  25, 371}, /* 24:                 PRAGMA shift  371 */
-  {  23,   0, 294}, /* 25:                 CREATE shift  294 */
+  {  75,   0, 389}, /*  1:                 PRAGMA shift  389 */
+  {  26,   0, 339}, /*  2:                 DELETE shift  339 */
+  {  52,   0, 376}, /*  3:                 INSERT shift  376 */
+  { 153,   6, 338}, /*  4:                 select shift  338 */
+  {  79,   0,  45}, /*  5:               ROLLBACK shift  45 */
+  {  78,   0, 378}, /*  6:                REPLACE shift  378 */
+  {  31,   0, 331}, /*  7:                   DROP shift  331 */
+  {  82,  11,  84}, /*  8:                 SELECT shift  84 */
+  {  83,  14, 408}, /*  9:                   SEMI shift  408 */
+  { 134,   0, 644}, /* 10:                  input accept */
+  {   7,   0,   6}, /* 11:                  BEGIN shift  6 */
+  { 111,   0, 406}, /* 12:                    cmd shift  406 */
+  { 137,  15, 358}, /* 13:             insert_cmd shift  358 */
+  {  33,   0,  43}, /* 14:                    END shift  43 */
+  { 112,  16,   1}, /* 15:                cmdlist shift  1 */
+  {  37,   0, 409}, /* 16:                EXPLAIN shift  409 */
+  {  23,   0, 379}, /* 17:                   COPY shift  379 */
+  {  24,   0, 312}, /* 18:                 CREATE shift  312 */
+  { 118,   0,  47}, /* 19:           create_table shift  47 */
+  {  19,   0,  41}, /* 20:                 COMMIT shift  41 */
+  { 145,   0,  80}, /* 21:              oneselect shift  80 */
+  { 121,   0, 410}, /* 22:                   ecmd shift  410 */
+  {  97,   0, 343}, /* 23:                 UPDATE shift  343 */
+  { 123,  17,   3}, /* 24:                explain shift  3 */
+  {  99,  18, 387}, /* 25:                 VACUUM shift  387 */
 /* State 1 */
-  {  96,   4, 369}, /*  1:                 VACUUM shift  369 */
-  {  73,  13, 371}, /*  2:                 PRAGMA shift  371 */
-  { 146,  14, 320}, /*  3:                 select shift  320 */
-  {   0,   0, 393}, /*  4:                      $ reduce 0 */
-  {  76,   0, 360}, /*  5:                REPLACE shift  360 */
-  {  77,   0,  43}, /*  6:               ROLLBACK shift  43 */
-  {  30,   0, 313}, /*  7:                   DROP shift  313 */
-  {  31,  15,  41}, /*  8:                    END shift  41 */
-  { 104,  17, 388}, /*  9:                    cmd shift  388 */
-  {  81,   0, 390}, /* 10:                   SEMI shift  390 */
-  { 130,   0, 340}, /* 11:             insert_cmd shift  340 */
-  {  35,   0, 391}, /* 12:                EXPLAIN shift  391 */
-  {  25,   0, 321}, /* 13:                 DELETE shift  321 */
-  {  50,   0, 358}, /* 14:                 INSERT shift  358 */
-  {   7,   0,   6}, /* 15:                  BEGIN shift  6 */
-  { 111,   0,  45}, /* 16:           create_table shift  45 */
-  {  80,   0,  82}, /* 17:                 SELECT shift  82 */
-  { 114,  20,   2}, /* 18:                   ecmd shift  2 */
-  { 138,  18,  78}, /* 19:              oneselect shift  78 */
-  {  18,   0,  39}, /* 20:                 COMMIT shift  39 */
-  { 116,   0,   3}, /* 21:                explain shift  3 */
-  {  22,   0, 361}, /* 22:                   COPY shift  361 */
-  {  94,  22, 325}, /* 23:                 UPDATE shift  325 */
-  {  23,   0, 294}, /* 24:                 CREATE shift  294 */
+  {  24,   6, 312}, /*  1:                 CREATE shift  312 */
+  { 145,   9,  80}, /*  2:              oneselect shift  80 */
+  {  26,   0, 339}, /*  3:                 DELETE shift  339 */
+  { 123,  13,   3}, /*  4:                explain shift  3 */
+  {  52,   0, 376}, /*  5:                 INSERT shift  376 */
+  {   0,   0, 411}, /*  6:                      $ reduce 0 */
+  {  78,   0, 378}, /*  7:                REPLACE shift  378 */
+  {  79,  15,  45}, /*  8:               ROLLBACK shift  45 */
+  { 121,  17,   2}, /*  9:                   ecmd shift  2 */
+  { 153,  19, 338}, /* 10:                 select shift  338 */
+  {  82,   0,  84}, /* 11:                 SELECT shift  84 */
+  {  83,   0, 408}, /* 12:                   SEMI shift  408 */
+  {  99,  21, 387}, /* 13:                 VACUUM shift  387 */
+  {  37,   0, 409}, /* 14:                EXPLAIN shift  409 */
+  {  31,  22, 331}, /* 15:                   DROP shift  331 */
+  { 111,   0, 406}, /* 16:                    cmd shift  406 */
+  {  97,   0, 343}, /* 17:                 UPDATE shift  343 */
+  { 137,   0, 358}, /* 18:             insert_cmd shift  358 */
+  {  33,   0,  43}, /* 19:                    END shift  43 */
+  {  19,   0,  41}, /* 20:                 COMMIT shift  41 */
+  {  75,   0, 389}, /* 21:                 PRAGMA shift  389 */
+  {   7,   0,   6}, /* 22:                  BEGIN shift  6 */
+  { 118,   0,  47}, /* 23:           create_table shift  47 */
+  {  23,   0, 379}, /* 24:                   COPY shift  379 */
 /* State 3 */
-  {  76,   0, 360}, /*  1:                REPLACE shift  360 */
-  {  96,   3, 369}, /*  2:                 VACUUM shift  369 */
-  {  77,   0,  43}, /*  3:               ROLLBACK shift  43 */
-  {  22,   0, 361}, /*  4:                   COPY shift  361 */
-  {  80,   9,  82}, /*  5:                 SELECT shift  82 */
-  { 138,   0,  78}, /*  6:              oneselect shift  78 */
-  {  25,   0, 321}, /*  7:                 DELETE shift  321 */
-  {   7,   0,   6}, /*  8:                  BEGIN shift  6 */
-  {  23,   0, 294}, /*  9:                 CREATE shift  294 */
-  { 104,   0,   4}, /* 10:                    cmd shift  4 */
-  {  31,   0,  41}, /* 11:                    END shift  41 */
-  {  30,   0, 313}, /* 12:                   DROP shift  313 */
-  {  50,  11, 358}, /* 13:                 INSERT shift  358 */
-  { 146,   0, 320}, /* 14:                 select shift  320 */
-  { 111,  16,  45}, /* 15:           create_table shift  45 */
-  {  73,   0, 371}, /* 16:                 PRAGMA shift  371 */
-  { 130,  15, 340}, /* 17:             insert_cmd shift  340 */
-  {  18,   0,  39}, /* 18:                 COMMIT shift  39 */
-  {  94,  18, 325}, /* 19:                 UPDATE shift  325 */
+  {  19,   0,  41}, /*  1:                 COMMIT shift  41 */
+  { 153,   0, 338}, /*  2:                 select shift  338 */
+  {  97,   9, 343}, /*  3:                 UPDATE shift  343 */
+  {  79,   0,  45}, /*  4:               ROLLBACK shift  45 */
+  { 137,  10, 358}, /*  5:             insert_cmd shift  358 */
+  {  24,   0, 312}, /*  6:                 CREATE shift  312 */
+  {  82,   0,  84}, /*  7:                 SELECT shift  84 */
+  {  26,  11, 339}, /*  8:                 DELETE shift  339 */
+  {  78,   0, 378}, /*  9:                REPLACE shift  378 */
+  { 118,  12,  47}, /* 10:           create_table shift  47 */
+  {   7,   0,   6}, /* 11:                  BEGIN shift  6 */
+  {  99,  14, 387}, /* 12:                 VACUUM shift  387 */
+  { 145,  16,  80}, /* 13:              oneselect shift  80 */
+  {  23,   0, 379}, /* 14:                   COPY shift  379 */
+  {  52,  18, 376}, /* 15:                 INSERT shift  376 */
+  {  31,   0, 331}, /* 16:                   DROP shift  331 */
+  { 111,   0,   4}, /* 17:                    cmd shift  4 */
+  {  33,   0,  43}, /* 18:                    END shift  43 */
+  {  75,   0, 389}, /* 19:                 PRAGMA shift  389 */
 /* State 4 */
-  {  81,   0,   5}, /*  1:                   SEMI shift  5 */
+  {  83,   0,   5}, /*  1:                   SEMI shift  5 */
 /* State 6 */
-  { 156,   0,   7}, /*  1:              trans_opt shift  7 */
-  {  89,   0,  17}, /*  2:            TRANSACTION shift  17 */
+  {  92,   0,  17}, /*  1:            TRANSACTION shift  17 */
+  { 163,   0,   7}, /*  2:              trans_opt shift  7 */
 /* State 7 */
-  {  81,   2, 472}, /*  1:                   SEMI reduce 79 */
-  {  69,   0,   9}, /*  2:                     ON shift  9 */
-  { 137,   0,   8}, /*  3:                 onconf shift  8 */
+  { 144,   0,   8}, /*  1:                 onconf shift  8 */
+  {  71,   0,   9}, /*  2:                     ON shift  9 */
+  {  83,   2, 492}, /*  3:                   SEMI reduce 81 */
 /* State 8 */
-  {  81,   0, 400}, /*  1:                   SEMI reduce 7 */
+  {  83,   0, 418}, /*  1:                   SEMI reduce 7 */
 /* State 9 */
-  {  20,   0,  10}, /*  1:               CONFLICT shift  10 */
+  {  21,   0,  10}, /*  1:               CONFLICT shift  10 */
 /* State 10 */
-  {  36,   0,  14}, /*  1:                   FAIL shift  14 */
-  {   1,   0,  13}, /*  2:                  ABORT shift  13 */
-  {  46,   0,  15}, /*  3:                 IGNORE shift  15 */
-  {  77,   0,  12}, /*  4:               ROLLBACK shift  12 */
-  {  76,   3,  16}, /*  5:                REPLACE shift  16 */
-  { 143,   4,  11}, /*  6:            resolvetype shift  11 */
+  { 150,   4,  11}, /*  1:            resolvetype shift  11 */
+  {  79,   5,  12}, /*  2:               ROLLBACK shift  12 */
+  {  38,   0,  14}, /*  3:                   FAIL shift  14 */
+  {  78,   6,  16}, /*  4:                REPLACE shift  16 */
+  {   1,   0,  13}, /*  5:                  ABORT shift  13 */
+  {  48,   0,  15}, /*  6:                 IGNORE shift  15 */
 /* State 17 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0,  18}, /* 20:                    ids shift  18 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 39 */
-  { 156,   2,  40}, /*  1:              trans_opt shift  40 */
-  {  81,   0, 401}, /*  2:                   SEMI reduce 8 */
-  {  89,   0,  17}, /*  3:            TRANSACTION shift  17 */
-/* State 40 */
-  {  81,   0, 404}, /*  1:                   SEMI reduce 11 */
-/* State 41 */
-  { 156,   2,  42}, /*  1:              trans_opt shift  42 */
-  {  81,   0, 401}, /*  2:                   SEMI reduce 8 */
-  {  89,   0,  17}, /*  3:            TRANSACTION shift  17 */
-/* State 42 */
-  {  81,   0, 405}, /*  1:                   SEMI reduce 12 */
-/* State 43 */
-  { 156,   2,  44}, /*  1:              trans_opt shift  44 */
-  {  81,   0, 401}, /*  2:                   SEMI reduce 8 */
-  {  89,   0,  17}, /*  3:            TRANSACTION shift  17 */
-/* State 44 */
-  {  81,   0, 406}, /*  1:                   SEMI reduce 13 */
-/* State 45 */
-  {  60,   0,  47}, /*  1:                     LP shift  47 */
-  { 112,   0,  46}, /*  2:      create_table_args shift  46 */
-  {   5,   0, 292}, /*  3:                     AS shift  292 */
-/* State 46 */
-  {  81,   0, 407}, /*  1:                   SEMI reduce 14 */
-/* State 47 */
-  {  96,   0,  23}, /*  1:                 VACUUM shift  23 */
-  {  73,   6,  26}, /*  2:                 PRAGMA shift  26 */
-  {  26,   0,  21}, /*  3:             DELIMITERS shift  21 */
-  { 123,  10,  37}, /*  4:                     id shift  37 */
-  { 124,  14, 265}, /*  5:                    ids shift  265 */
-  {   1,   0,  32}, /*  6:                  ABORT shift  32 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {  31,  16,  25}, /*  8:                    END shift  25 */
-  {  56,   0,  31}, /*  9:                    KEY shift  31 */
-  {  27,   0,  19}, /* 10:                   DESC shift  19 */
-  { 106,   0, 291}, /* 11:                 column shift  291 */
-  { 107,  18,  53}, /* 12:               columnid shift  53 */
-  { 108,  19,  48}, /* 13:             columnlist shift  48 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  86,  20,  38}, /* 15:                 STRING shift  38 */
-  {   7,   0,  24}, /* 16:                  BEGIN shift  24 */
-  {  88,   0,  29}, /* 17:                   TEMP shift  29 */
-  {  35,   0,  22}, /* 18:                EXPLAIN shift  22 */
-  {  36,   0,  35}, /* 19:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 20:                CLUSTER shift  27 */
-  {  68,  24,  30}, /* 21:                 OFFSET shift  30 */
-  {  45,   0,  28}, /* 22:                     ID shift  28 */
-  {  46,   0,  33}, /* 23:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 24:               CONFLICT shift  36 */
-/* State 48 */
-  {  78,   0, 463}, /*  1:                     RP reduce 70 */
-  {  16,   0,  51}, /*  2:                  COMMA shift  51 */
-  { 110,   0,  49}, /*  3:           conslist_opt shift  49 */
-/* State 49 */
-  {  78,   0,  50}, /*  1:                     RP shift  50 */
-/* State 50 */
-  {  81,   0, 411}, /*  1:                   SEMI reduce 18 */
-/* State 51 */
-  {   1,   0,  32}, /*  1:                  ABORT shift  32 */
-  {  88,   1,  29}, /*  2:                   TEMP shift  29 */
-  {  31,   0,  25}, /*  3:                    END shift  25 */
-  {  35,   5,  22}, /*  4:                EXPLAIN shift  22 */
-  {   6,   0,  20}, /*  5:                    ASC shift  20 */
-  {  36,  12,  35}, /*  6:                   FAIL shift  35 */
-  {  93,   4, 281}, /*  7:                 UNIQUE shift  281 */
-  { 123,   6,  37}, /*  8:                     id shift  37 */
-  { 124,   0, 265}, /*  9:                    ids shift  265 */
-  { 154,  13, 290}, /* 10:                  tcons shift  290 */
-  {  68,   0,  30}, /* 11:                 OFFSET shift  30 */
-  {   7,   0,  24}, /* 12:                  BEGIN shift  24 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  13,   0, 286}, /* 14:                  CHECK shift  286 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  73,   0,  26}, /* 16:                 PRAGMA shift  26 */
-  {  74,  24, 271}, /* 17:                PRIMARY shift  271 */
-  {  46,   0,  33}, /* 18:                 IGNORE shift  33 */
-  {  76,   0,  34}, /* 19:                REPLACE shift  34 */
-  { 106,   0,  52}, /* 20:                 column shift  52 */
-  { 107,  25,  53}, /* 21:               columnid shift  53 */
-  {  21,   0, 269}, /* 22:             CONSTRAINT shift  269 */
-  { 109,   0, 266}, /* 23:               conslist shift  266 */
-  {  45,   0,  28}, /* 24:                     ID shift  28 */
-  {  20,   0,  36}, /* 25:               CONFLICT shift  36 */
-  {  27,   0,  19}, /* 26:                   DESC shift  19 */
-  {  26,   0,  21}, /* 27:             DELIMITERS shift  21 */
-  {  56,  26,  31}, /* 28:                    KEY shift  31 */
-  {  86,   0,  38}, /* 29:                 STRING shift  38 */
-/* State 53 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  73,   6,  26}, /*  3:                 PRAGMA shift  26 */
-  {  26,   0,  21}, /*  4:             DELIMITERS shift  21 */
-  {  96,   3,  23}, /*  5:                 VACUUM shift  23 */
-  {  27,   0,  19}, /*  6:                   DESC shift  19 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {  76,  12,  34}, /*  8:                REPLACE shift  34 */
-  { 123,  16,  37}, /*  9:                     id shift  37 */
-  { 124,   0, 264}, /* 10:                    ids shift  264 */
-  {  56,   0,  31}, /* 11:                    KEY shift  31 */
-  {   7,   0,  24}, /* 12:                  BEGIN shift  24 */
-  {  35,   0,  22}, /* 13:                EXPLAIN shift  22 */
-  {  36,   0,  35}, /* 14:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  31,   0,  25}, /* 16:                    END shift  25 */
-  {  88,   0,  29}, /* 17:                   TEMP shift  29 */
-  {  86,   0,  38}, /* 18:                 STRING shift  38 */
-  {  20,   0,  36}, /* 19:               CONFLICT shift  36 */
-  { 157,  17,  54}, /* 20:                   type shift  54 */
-  { 158,  19, 251}, /* 21:               typename shift  251 */
-  {  45,   0,  28}, /* 22:                     ID shift  28 */
-  {  68,  22,  30}, /* 23:                 OFFSET shift  30 */
-/* State 54 */
-  { 102,   0,  55}, /*  1:               carglist shift  55 */
-/* State 55 */
-  {  24,   0, 239}, /*  1:                DEFAULT shift  239 */
-  {  65,   0,  60}, /*  2:                    NOT shift  60 */
-  {  74,   0,  63}, /*  3:                PRIMARY shift  63 */
-  {  93,   5,  69}, /*  4:                 UNIQUE shift  69 */
-  {  21,   7,  57}, /*  5:             CONSTRAINT shift  57 */
-  { 101,   4,  56}, /*  6:                   carg shift  56 */
-  {  13,   0,  71}, /*  7:                  CHECK shift  71 */
-  { 103,   0, 238}, /*  8:                  ccons shift  238 */
-/* State 57 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0,  58}, /* 20:                    ids shift  58 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 58 */
-  {  65,   0,  60}, /*  1:                    NOT shift  60 */
-  {  93,   3,  69}, /*  2:                 UNIQUE shift  69 */
-  {  13,   0,  71}, /*  3:                  CHECK shift  71 */
-  { 103,   2,  59}, /*  4:                  ccons shift  59 */
-  {  74,   0,  63}, /*  5:                PRIMARY shift  63 */
-/* State 60 */
-  {  67,   0,  61}, /*  1:                   NULL shift  61 */
-/* State 61 */
-  {  69,   0,   9}, /*  1:                     ON shift  9 */
-  { 137,   1,  62}, /*  2:                 onconf shift  62 */
-/* State 63 */
-  {  56,   0,  64}, /*  1:                    KEY shift  64 */
-/* State 64 */
-  {  27,   2,  68}, /*  1:                   DESC shift  68 */
-  {   6,   0,  67}, /*  2:                    ASC shift  67 */
-  { 152,   0,  65}, /*  3:              sortorder shift  65 */
-/* State 65 */
-  {  69,   0,   9}, /*  1:                     ON shift  9 */
-  { 137,   1,  66}, /*  2:                 onconf shift  66 */
-/* State 69 */
-  {  69,   0,   9}, /*  1:                     ON shift  9 */
-  { 137,   1,  70}, /*  2:                 onconf shift  70 */
-/* State 71 */
-  {  60,   0,  72}, /*  1:                     LP shift  72 */
-/* State 72 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 235}, /* 28:                   expr shift  235 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 73 */
-  {  60,   0,  74}, /*  1:                     LP shift  74 */
-/* State 74 */
-  {   1,   0,  32}, /*  1:                  ABORT shift  32 */
-  {  67,   1, 105}, /*  2:                   NULL shift  105 */
-  {  68,   6,  30}, /*  3:                 OFFSET shift  30 */
-  {  36,   0,  35}, /*  4:                   FAIL shift  35 */
-  {  37,   0, 110}, /*  5:                  FLOAT shift  110 */
-  {  35,   0,  22}, /*  6:                EXPLAIN shift  22 */
-  {  72,   9, 178}, /*  7:                   PLUS shift  178 */
-  {  73,  10,  26}, /*  8:                 PRAGMA shift  26 */
-  {   6,   0,  20}, /*  9:                    ASC shift  20 */
-  {   7,   0,  24}, /* 10:                  BEGIN shift  24 */
-  {  76,  12,  34}, /* 11:                REPLACE shift  34 */
-  {  10,   0, 174}, /* 12:                 BITNOT shift  174 */
-  {  45,   0,  73}, /* 13:                     ID shift  73 */
-  {  46,   0,  33}, /* 14:                 IGNORE shift  33 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  51,   0, 109}, /* 16:                INTEGER shift  109 */
-  {  85,   0, 233}, /* 17:                   STAR shift  233 */
-  {  86,  22,  76}, /* 18:                 STRING shift  76 */
-  { 117,  16, 171}, /* 19:                   expr shift  171 */
-  { 118,  17, 184}, /* 20:               expritem shift  184 */
-  { 119,  18, 231}, /* 21:               exprlist shift  231 */
-  {  20,   0,  36}, /* 22:               CONFLICT shift  36 */
-  {  88,   0,  29}, /* 23:                   TEMP shift  29 */
-  {  56,   0,  31}, /* 24:                    KEY shift  31 */
-  { 123,   0,  75}, /* 25:                     id shift  75 */
-  { 124,   0, 106}, /* 26:                    ids shift  106 */
-  {  26,   0,  21}, /* 27:             DELIMITERS shift  21 */
-  {  60,  29,  77}, /* 28:                     LP shift  77 */
-  {  27,   0,  19}, /* 29:                   DESC shift  19 */
-  {  63,   0, 176}, /* 30:                  MINUS shift  176 */
-  {  96,  30,  23}, /* 31:                 VACUUM shift  23 */
-  {  31,   0,  25}, /* 32:                    END shift  25 */
-  {  65,   0, 172}, /* 33:                    NOT shift  172 */
-/* State 75 */
-  {  29,   0, 435}, /*  1:                    DOT reduce 42 */
-/* State 76 */
-  {  29,   0, 436}, /*  1:                    DOT reduce 43 */
-/* State 77 */
-  {   1,   0,  32}, /*  1:                  ABORT shift  32 */
-  {  67,   1, 105}, /*  2:                   NULL shift  105 */
-  {  68,   6,  30}, /*  3:                 OFFSET shift  30 */
-  {  36,   0,  35}, /*  4:                   FAIL shift  35 */
-  {  37,   0, 110}, /*  5:                  FLOAT shift  110 */
-  {  35,   0,  22}, /*  6:                EXPLAIN shift  22 */
-  { 138,   9,  78}, /*  7:              oneselect shift  78 */
-  {  73,  10,  26}, /*  8:                 PRAGMA shift  26 */
-  {  72,  12, 178}, /*  9:                   PLUS shift  178 */
-  {   7,   0,  24}, /* 10:                  BEGIN shift  24 */
-  {  76,  16,  34}, /* 11:                REPLACE shift  34 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
   {   6,   0,  20}, /* 12:                    ASC shift  20 */
-  {  45,   0,  73}, /* 13:                     ID shift  73 */
-  {  46,   0,  33}, /* 14:                 IGNORE shift  33 */
-  { 146,  17,  79}, /* 15:                 select shift  79 */
-  {  10,   0, 174}, /* 16:                 BITNOT shift  174 */
-  {  80,  18,  82}, /* 17:                 SELECT shift  82 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 117,  20, 229}, /* 19:                   expr shift  229 */
-  {  51,   0, 109}, /* 20:                INTEGER shift  109 */
-  {  86,  22,  76}, /* 21:                 STRING shift  76 */
-  {  20,   0,  36}, /* 22:               CONFLICT shift  36 */
-  {  88,   0,  29}, /* 23:                   TEMP shift  29 */
-  {  56,   0,  31}, /* 24:                    KEY shift  31 */
-  { 123,   0,  75}, /* 25:                     id shift  75 */
-  { 124,   0, 106}, /* 26:                    ids shift  106 */
-  {  26,   0,  21}, /* 27:             DELIMITERS shift  21 */
-  {  60,  29,  77}, /* 28:                     LP shift  77 */
-  {  27,   0,  19}, /* 29:                   DESC shift  19 */
-  {  63,   0, 176}, /* 30:                  MINUS shift  176 */
-  {  96,  30,  23}, /* 31:                 VACUUM shift  23 */
-  {  31,   0,  25}, /* 32:                    END shift  25 */
-  {  65,   0, 172}, /* 33:                    NOT shift  172 */
-/* State 79 */
-  { 135,   0,  80}, /*  1:         multiselect_op shift  80 */
-  {  52,   0, 168}, /*  2:              INTERSECT shift  168 */
-  {  92,   2, 166}, /*  3:                  UNION shift  166 */
-  {  78,   0, 228}, /*  4:                     RP shift  228 */
-  {  34,   0, 169}, /*  5:                 EXCEPT shift  169 */
-/* State 80 */
-  { 138,   2,  81}, /*  1:              oneselect shift  81 */
-  {  80,   0,  82}, /*  2:                 SELECT shift  82 */
-/* State 82 */
-  {   3,   0, 227}, /*  1:                    ALL shift  227 */
-  {  28,   0, 226}, /*  2:               DISTINCT shift  226 */
-  { 113,   0,  83}, /*  3:               distinct shift  83 */
-/* State 83 */
-  { 144,   0, 221}, /*  1:                   sclp shift  221 */
-  { 145,   0,  84}, /*  2:             selcollist shift  84 */
-/* State 84 */
-  { 120,   0,  85}, /*  1:                   from shift  85 */
-  {  16,   0, 207}, /*  2:                  COMMA shift  207 */
-  {  38,   0, 208}, /*  3:                   FROM shift  208 */
-/* State 85 */
-  { 160,   0,  86}, /*  1:              where_opt shift  86 */
-  {  99,   0, 205}, /*  2:                  WHERE shift  205 */
-/* State 86 */
-  {  42,   0, 202}, /*  1:                  GROUP shift  202 */
-  { 121,   0,  87}, /*  2:            groupby_opt shift  87 */
-/* State 87 */
-  { 122,   2,  88}, /*  1:             having_opt shift  88 */
-  {  44,   0, 200}, /*  2:                 HAVING shift  200 */
-/* State 88 */
-  { 140,   0,  89}, /*  1:            orderby_opt shift  89 */
-  {  71,   0,  97}, /*  2:                  ORDER shift  97 */
-/* State 89 */
-  { 132,   0,  90}, /*  1:              limit_opt shift  90 */
-  {  59,   0,  91}, /*  2:                  LIMIT shift  91 */
-/* State 91 */
-  {  51,   0,  92}, /*  1:                INTEGER shift  92 */
-/* State 92 */
-  {  16,   0,  96}, /*  1:                  COMMA shift  96 */
-  { 133,   1,  93}, /*  2:              limit_sep shift  93 */
-  {  68,   0,  95}, /*  3:                 OFFSET shift  95 */
-/* State 93 */
-  {  51,   0,  94}, /*  1:                INTEGER shift  94 */
-/* State 95 */
-  {  51,   0, 524}, /*  1:                INTEGER reduce 131 */
-/* State 96 */
-  {  51,   0, 525}, /*  1:                INTEGER reduce 132 */
-/* State 97 */
-  {  12,   0,  98}, /*  1:                     BY shift  98 */
-/* State 98 */
-  {  96,   0,  23}, /*  1:                 VACUUM shift  23 */
-  {  65,   3, 172}, /*  2:                    NOT shift  172 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  {  67,  12, 105}, /*  4:                   NULL shift  105 */
-  {  68,  16,  30}, /*  5:                 OFFSET shift  30 */
-  {  37,   0, 110}, /*  6:                  FLOAT shift  110 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  72,   0, 178}, /*  9:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 10:                 PRAGMA shift  26 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  76,   0,  34}, /* 13:                REPLACE shift  34 */
-  {  45,   0,  73}, /* 14:                     ID shift  73 */
-  {  46,  17,  33}, /* 15:                 IGNORE shift  33 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 17:                CLUSTER shift  27 */
-  {  86,   0,  76}, /* 18:                 STRING shift  76 */
-  {  56,   0,  31}, /* 19:                    KEY shift  31 */
-  {  51,   0, 109}, /* 20:                INTEGER shift  109 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  { 117,   0, 103}, /* 22:                   expr shift  103 */
-  { 150,  18, 198}, /* 23:               sortitem shift  198 */
-  { 151,   0,  99}, /* 24:               sortlist shift  99 */
-  {  88,  19,  29}, /* 25:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 26:                   DESC shift  19 */
-  {  26,   0,  21}, /* 27:             DELIMITERS shift  21 */
-  { 123,  26,  75}, /* 28:                     id shift  75 */
-  { 124,  30, 106}, /* 29:                    ids shift  106 */
-  {  60,   0,  77}, /* 30:                     LP shift  77 */
-  {  31,   0,  25}, /* 31:                    END shift  25 */
-  {  63,  31, 176}, /* 32:                  MINUS shift  176 */
-/* State 99 */
-  {  16,   0, 100}, /*  1:                  COMMA shift  100 */
-/* State 100 */
-  { 124,   3, 106}, /*  1:                    ids shift  106 */
-  {  63,   9, 176}, /*  2:                  MINUS shift  176 */
-  {  31,   0,  25}, /*  3:                    END shift  25 */
-  {  96,  10,  23}, /*  4:                 VACUUM shift  23 */
-  {  35,   0,  22}, /*  5:                EXPLAIN shift  22 */
-  {  67,  13, 105}, /*  6:                   NULL shift  105 */
-  {  68,  14,  30}, /*  7:                 OFFSET shift  30 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {   1,   0,  32}, /*  9:                  ABORT shift  32 */
-  {  65,   0, 172}, /* 10:                    NOT shift  172 */
-  {  72,  17, 178}, /* 11:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 12:                 PRAGMA shift  26 */
-  {  36,   0,  35}, /* 13:                   FAIL shift  35 */
-  {  37,  18, 110}, /* 14:                  FLOAT shift  110 */
-  {  76,  19,  34}, /* 15:                REPLACE shift  34 */
-  {  46,   0,  33}, /* 16:                 IGNORE shift  33 */
-  {  10,   0, 174}, /* 17:                 BITNOT shift  174 */
-  {   6,   0,  20}, /* 18:                    ASC shift  20 */
-  {  45,  20,  73}, /* 19:                     ID shift  73 */
-  {  14,   0,  27}, /* 20:                CLUSTER shift  27 */
-  {  51,  22, 109}, /* 21:                INTEGER shift  109 */
-  {  20,   0,  36}, /* 22:               CONFLICT shift  36 */
-  {  86,   0,  76}, /* 23:                 STRING shift  76 */
-  {  88,  29,  29}, /* 24:                   TEMP shift  29 */
-  { 117,  23, 103}, /* 25:                   expr shift  103 */
-  {  56,   0,  31}, /* 26:                    KEY shift  31 */
-  { 150,  24, 101}, /* 27:               sortitem shift  101 */
-  {  27,   0,  19}, /* 28:                   DESC shift  19 */
-  {  26,   0,  21}, /* 29:             DELIMITERS shift  21 */
-  {  60,   0,  77}, /* 30:                     LP shift  77 */
-  { 123,   0,  75}, /* 31:                     id shift  75 */
-/* State 101 */
-  {  27,   2,  68}, /*  1:                   DESC shift  68 */
-  {   6,   0,  67}, /*  2:                    ASC shift  67 */
-  { 152,   0, 102}, /*  3:              sortorder shift  102 */
-/* State 103 */
-  {  57,   0, 118}, /*  1:                     LE shift  118 */
-  {  79,   0, 132}, /*  2:                 RSHIFT shift  132 */
-  {  54,   0, 154}, /*  3:                     IS shift  154 */
-  {  55,   0, 153}, /*  4:                 ISNULL shift  153 */
-  {   4,   0, 104}, /*  5:                    AND shift  104 */
-  {  83,   1, 147}, /*  6:                  SLASH shift  147 */
-  {  58,   0, 134}, /*  7:                   LIKE shift  134 */
-  {  85,  17, 145}, /*  8:                   STAR shift  145 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  61,  22, 130}, /* 10:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /* 11:                     LT shift  114 */
-  {  63,  25, 143}, /* 12:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 13:                     NE shift  122 */
-  {  65,   0, 136}, /* 14:                    NOT shift  136 */
-  {  66,  26, 158}, /* 15:                NOTNULL shift  158 */
-  {  41,   0, 139}, /* 16:                   GLOB shift  139 */
-  {  33,   0, 124}, /* 17:                     EQ shift  124 */
-  {  43,   0, 116}, /* 18:                     GT shift  116 */
-  {  70,   0, 112}, /* 19:                     OR shift  112 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {  72,   0, 141}, /* 21:                   PLUS shift  141 */
-  {   9,   0, 126}, /* 22:                 BITAND shift  126 */
-  {  48,   0, 163}, /* 23:                     IN shift  163 */
-  {  75,   0, 149}, /* 24:                    REM shift  149 */
-  {  11,   0, 128}, /* 25:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 26:                     GE shift  120 */
-/* State 104 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 111}, /* 28:                   expr shift  111 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 106 */
-  {  29,   0, 107}, /*  1:                    DOT shift  107 */
-/* State 107 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0,  18}, /* 17:                    ids shift  18 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 41 */
+  {  83,   0, 419}, /*  1:                   SEMI reduce 8 */
+  { 163,   0,  42}, /*  2:              trans_opt shift  42 */
+  {  92,   1,  17}, /*  3:            TRANSACTION shift  17 */
+/* State 42 */
+  {  83,   0, 422}, /*  1:                   SEMI reduce 11 */
+/* State 43 */
+  {  83,   0, 419}, /*  1:                   SEMI reduce 8 */
+  { 163,   0,  44}, /*  2:              trans_opt shift  44 */
+  {  92,   1,  17}, /*  3:            TRANSACTION shift  17 */
+/* State 44 */
+  {  83,   0, 423}, /*  1:                   SEMI reduce 12 */
+/* State 45 */
+  {  83,   0, 419}, /*  1:                   SEMI reduce 8 */
+  { 163,   0,  46}, /*  2:              trans_opt shift  46 */
+  {  92,   1,  17}, /*  3:            TRANSACTION shift  17 */
+/* State 46 */
+  {  83,   0, 424}, /*  1:                   SEMI reduce 13 */
+/* State 47 */
+  {  62,   2,  49}, /*  1:                     LP shift  49 */
+  {   5,   0, 310}, /*  2:                     AS shift  310 */
+  { 119,   1,  48}, /*  3:      create_table_args shift  48 */
+/* State 48 */
+  {  83,   0, 425}, /*  1:                   SEMI reduce 14 */
+/* State 49 */
+  { 130,   4,  39}, /*  1:                     id shift  39 */
+  { 131,   5, 283}, /*  2:                    ids shift  283 */
+  {  28,   0,  26}, /*  3:                   DESC shift  26 */
+  {  78,   0,  35}, /*  4:                REPLACE shift  35 */
+  {  27,   6,  25}, /*  5:             DELIMITERS shift  25 */
+  {   1,   0,  19}, /*  6:                  ABORT shift  19 */
+  {  58,   9,  32}, /*  7:                    KEY shift  32 */
+  {  33,  14,  27}, /*  8:                    END shift  27 */
+  {   6,   0,  20}, /*  9:                    ASC shift  20 */
+  { 113,   0, 309}, /* 10:                 column shift  309 */
+  { 114,  15,  55}, /* 11:               columnid shift  55 */
+  { 115,  17,  50}, /* 12:             columnlist shift  50 */
+  {  90,  18,  36}, /* 13:                   TEMP shift  36 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  88,   0,  40}, /* 15:                 STRING shift  40 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  37,   0,  28}, /* 17:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /* 18:                   FAIL shift  29 */
+  {  70,   0,  33}, /* 19:                 OFFSET shift  33 */
+  {  47,  21,  30}, /* 20:                     ID shift  30 */
+  {  21,   0,  23}, /* 21:               CONFLICT shift  23 */
+  {  99,  20,  37}, /* 22:                 VACUUM shift  37 */
+  {  48,   0,  31}, /* 23:                 IGNORE shift  31 */
+  { 101,  25,  38}, /* 24:                   VIEW shift  38 */
+  {  75,  26,  34}, /* 25:                 PRAGMA shift  34 */
+  {  23,   0,  24}, /* 26:                   COPY shift  24 */
+/* State 50 */
+  { 117,   0,  51}, /*  1:           conslist_opt shift  51 */
+  {  17,   0,  53}, /*  2:                  COMMA shift  53 */
+  {  80,   2, 483}, /*  3:                     RP reduce 72 */
+/* State 51 */
+  {  80,   0,  52}, /*  1:                     RP shift  52 */
+/* State 52 */
+  {  83,   0, 429}, /*  1:                   SEMI reduce 18 */
+/* State 53 */
+  { 130,   5,  39}, /*  1:                     id shift  39 */
+  {   1,   0,  19}, /*  2:                  ABORT shift  19 */
+  {  33,   0,  27}, /*  3:                    END shift  27 */
+  {  96,   0, 299}, /*  4:                 UNIQUE shift  299 */
+  {  99,   6,  37}, /*  5:                 VACUUM shift  37 */
+  {  37,  10,  28}, /*  6:                EXPLAIN shift  28 */
+  { 161,   1, 308}, /*  7:                  tcons shift  308 */
+  { 131,  11, 283}, /*  8:                    ids shift  283 */
+  { 101,  12,  38}, /*  9:                   VIEW shift  38 */
   {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 108}, /* 20:                    ids shift  108 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 111 */
-  {  72,   2, 141}, /*  1:                   PLUS shift  141 */
-  {  48,   0, 163}, /*  2:                     IN shift  163 */
-  {  55,   0, 153}, /*  3:                 ISNULL shift  153 */
-  {  75,   0, 149}, /*  4:                    REM shift  149 */
-  {  33,   6, 124}, /*  5:                     EQ shift  124 */
-  {   9,   0, 126}, /*  6:                 BITAND shift  126 */
-  {  54,   0, 154}, /*  7:                     IS shift  154 */
-  {  79,   3, 132}, /*  8:                 RSHIFT shift  132 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  57,   5, 118}, /* 10:                     LE shift  118 */
-  {  58,   0, 134}, /* 11:                   LIKE shift  134 */
-  {  83,  13, 147}, /* 12:                  SLASH shift  147 */
-  {  11,   0, 128}, /* 13:                  BITOR shift  128 */
-  {  85,  21, 145}, /* 14:                   STAR shift  145 */
-  {  62,   0, 114}, /* 15:                     LT shift  114 */
-  {  63,   0, 143}, /* 16:                  MINUS shift  143 */
-  {  64,  22, 122}, /* 17:                     NE shift  122 */
-  {  65,  23, 136}, /* 18:                    NOT shift  136 */
-  {  66,   0, 158}, /* 19:                NOTNULL shift  158 */
-  {  43,  24, 116}, /* 20:                     GT shift  116 */
-  {  61,   0, 130}, /* 21:                 LSHIFT shift  130 */
-  {  40,   0, 120}, /* 22:                     GE shift  120 */
-  {  41,   0, 139}, /* 23:                   GLOB shift  139 */
-  {  19,   0, 151}, /* 24:                 CONCAT shift  151 */
-/* State 112 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 113}, /* 28:                   expr shift  113 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 113 */
-  {  75,   0, 149}, /*  1:                    REM shift  149 */
-  {  54,   3, 154}, /*  2:                     IS shift  154 */
-  {   4,   0, 104}, /*  3:                    AND shift  104 */
-  {  58,   7, 134}, /*  4:                   LIKE shift  134 */
-  {  79,   2, 132}, /*  5:                 RSHIFT shift  132 */
-  {  55,   0, 153}, /*  6:                 ISNULL shift  153 */
-  {  33,  18, 124}, /*  7:                     EQ shift  124 */
-  {  57,   0, 118}, /*  8:                     LE shift  118 */
-  {  83,   4, 147}, /*  9:                  SLASH shift  147 */
-  {   9,   0, 126}, /* 10:                 BITAND shift  126 */
-  {  85,   0, 145}, /* 11:                   STAR shift  145 */
-  {  61,  21, 130}, /* 12:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /* 13:                     LT shift  114 */
-  {  63,   0, 143}, /* 14:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 15:                     NE shift  122 */
-  {  65,  22, 136}, /* 16:                    NOT shift  136 */
-  {  66,  25, 158}, /* 17:                NOTNULL shift  158 */
-  {   8,   0, 159}, /* 18:                BETWEEN shift  159 */
-  {  43,   0, 116}, /* 19:                     GT shift  116 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {  11,   0, 128}, /* 21:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 22:                     GE shift  120 */
-  {  72,   0, 141}, /* 23:                   PLUS shift  141 */
-  {  48,   0, 163}, /* 24:                     IN shift  163 */
-  {  41,   0, 139}, /* 25:                   GLOB shift  139 */
-/* State 114 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 115}, /* 28:                   expr shift  115 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 115 */
-  {  11,   0, 128}, /*  1:                  BITOR shift  128 */
-  {  61,   1, 130}, /*  2:                 LSHIFT shift  130 */
-  {  72,   0, 141}, /*  3:                   PLUS shift  141 */
-  {  83,   5, 147}, /*  4:                  SLASH shift  147 */
-  {  63,   0, 143}, /*  5:                  MINUS shift  143 */
-  {  85,   7, 145}, /*  6:                   STAR shift  145 */
-  {  75,   0, 149}, /*  7:                    REM shift  149 */
-  {  19,   9, 151}, /*  8:                 CONCAT shift  151 */
-  {   9,   0, 126}, /*  9:                 BITAND shift  126 */
-  {  79,   8, 132}, /* 10:                 RSHIFT shift  132 */
-/* State 116 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 117}, /* 28:                   expr shift  117 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 117 */
-  {  11,   0, 128}, /*  1:                  BITOR shift  128 */
-  {  61,   1, 130}, /*  2:                 LSHIFT shift  130 */
-  {  72,   0, 141}, /*  3:                   PLUS shift  141 */
-  {  83,   5, 147}, /*  4:                  SLASH shift  147 */
-  {  63,   0, 143}, /*  5:                  MINUS shift  143 */
-  {  85,   7, 145}, /*  6:                   STAR shift  145 */
-  {  75,   0, 149}, /*  7:                    REM shift  149 */
-  {  19,   9, 151}, /*  8:                 CONCAT shift  151 */
-  {   9,   0, 126}, /*  9:                 BITAND shift  126 */
-  {  79,   8, 132}, /* 10:                 RSHIFT shift  132 */
-/* State 118 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 119}, /* 28:                   expr shift  119 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 119 */
-  {  11,   0, 128}, /*  1:                  BITOR shift  128 */
-  {  61,   1, 130}, /*  2:                 LSHIFT shift  130 */
-  {  72,   0, 141}, /*  3:                   PLUS shift  141 */
-  {  83,   5, 147}, /*  4:                  SLASH shift  147 */
-  {  63,   0, 143}, /*  5:                  MINUS shift  143 */
-  {  85,   7, 145}, /*  6:                   STAR shift  145 */
-  {  75,   0, 149}, /*  7:                    REM shift  149 */
-  {  19,   9, 151}, /*  8:                 CONCAT shift  151 */
-  {   9,   0, 126}, /*  9:                 BITAND shift  126 */
-  {  79,   8, 132}, /* 10:                 RSHIFT shift  132 */
-/* State 120 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 121}, /* 28:                   expr shift  121 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 121 */
-  {  11,   0, 128}, /*  1:                  BITOR shift  128 */
-  {  61,   1, 130}, /*  2:                 LSHIFT shift  130 */
-  {  72,   0, 141}, /*  3:                   PLUS shift  141 */
-  {  83,   5, 147}, /*  4:                  SLASH shift  147 */
-  {  63,   0, 143}, /*  5:                  MINUS shift  143 */
-  {  85,   7, 145}, /*  6:                   STAR shift  145 */
-  {  75,   0, 149}, /*  7:                    REM shift  149 */
-  {  19,   9, 151}, /*  8:                 CONCAT shift  151 */
-  {   9,   0, 126}, /*  9:                 BITAND shift  126 */
-  {  79,   8, 132}, /* 10:                 RSHIFT shift  132 */
-/* State 122 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 123}, /* 28:                   expr shift  123 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 123 */
-  {  57,   4, 118}, /*  1:                     LE shift  118 */
-  {  85,   1, 145}, /*  2:                   STAR shift  145 */
-  {  72,   0, 141}, /*  3:                   PLUS shift  141 */
-  {  43,   0, 116}, /*  4:                     GT shift  116 */
-  {  61,   9, 130}, /*  5:                 LSHIFT shift  130 */
-  {  75,   5, 149}, /*  6:                    REM shift  149 */
-  {  62,   0, 114}, /*  7:                     LT shift  114 */
-  {  63,   0, 143}, /*  8:                  MINUS shift  143 */
-  {  19,   0, 151}, /*  9:                 CONCAT shift  151 */
-  {  79,  11, 132}, /* 10:                 RSHIFT shift  132 */
-  {   9,   0, 126}, /* 11:                 BITAND shift  126 */
-  {  11,   0, 128}, /* 12:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 13:                     GE shift  120 */
-  {  83,   0, 147}, /* 14:                  SLASH shift  147 */
-/* State 124 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 125}, /* 28:                   expr shift  125 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 125 */
-  {  57,   4, 118}, /*  1:                     LE shift  118 */
-  {  85,   1, 145}, /*  2:                   STAR shift  145 */
-  {  72,   0, 141}, /*  3:                   PLUS shift  141 */
-  {  43,   0, 116}, /*  4:                     GT shift  116 */
-  {  61,   9, 130}, /*  5:                 LSHIFT shift  130 */
-  {  75,   5, 149}, /*  6:                    REM shift  149 */
-  {  62,   0, 114}, /*  7:                     LT shift  114 */
-  {  63,   0, 143}, /*  8:                  MINUS shift  143 */
-  {  19,   0, 151}, /*  9:                 CONCAT shift  151 */
-  {  79,  11, 132}, /* 10:                 RSHIFT shift  132 */
-  {   9,   0, 126}, /* 11:                 BITAND shift  126 */
-  {  11,   0, 128}, /* 12:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 13:                     GE shift  120 */
-  {  83,   0, 147}, /* 14:                  SLASH shift  147 */
-/* State 126 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 127}, /* 28:                   expr shift  127 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 127 */
-  {  72,   0, 141}, /*  1:                   PLUS shift  141 */
-  {  85,   3, 145}, /*  2:                   STAR shift  145 */
-  {  19,   0, 151}, /*  3:                 CONCAT shift  151 */
-  {  75,   5, 149}, /*  4:                    REM shift  149 */
-  {  63,   0, 143}, /*  5:                  MINUS shift  143 */
-  {  83,   0, 147}, /*  6:                  SLASH shift  147 */
-/* State 128 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 129}, /* 28:                   expr shift  129 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 129 */
-  {  72,   0, 141}, /*  1:                   PLUS shift  141 */
-  {  85,   3, 145}, /*  2:                   STAR shift  145 */
-  {  19,   0, 151}, /*  3:                 CONCAT shift  151 */
-  {  75,   5, 149}, /*  4:                    REM shift  149 */
-  {  63,   0, 143}, /*  5:                  MINUS shift  143 */
-  {  83,   0, 147}, /*  6:                  SLASH shift  147 */
-/* State 130 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 131}, /* 28:                   expr shift  131 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 131 */
-  {  72,   0, 141}, /*  1:                   PLUS shift  141 */
-  {  85,   3, 145}, /*  2:                   STAR shift  145 */
-  {  19,   0, 151}, /*  3:                 CONCAT shift  151 */
-  {  75,   5, 149}, /*  4:                    REM shift  149 */
-  {  63,   0, 143}, /*  5:                  MINUS shift  143 */
-  {  83,   0, 147}, /*  6:                  SLASH shift  147 */
-/* State 132 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 133}, /* 28:                   expr shift  133 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 133 */
-  {  72,   0, 141}, /*  1:                   PLUS shift  141 */
-  {  85,   3, 145}, /*  2:                   STAR shift  145 */
-  {  19,   0, 151}, /*  3:                 CONCAT shift  151 */
-  {  75,   5, 149}, /*  4:                    REM shift  149 */
-  {  63,   0, 143}, /*  5:                  MINUS shift  143 */
-  {  83,   0, 147}, /*  6:                  SLASH shift  147 */
-/* State 134 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 135}, /* 28:                   expr shift  135 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 135 */
-  {  57,   4, 118}, /*  1:                     LE shift  118 */
-  {  85,   1, 145}, /*  2:                   STAR shift  145 */
-  {  72,   0, 141}, /*  3:                   PLUS shift  141 */
-  {  43,   0, 116}, /*  4:                     GT shift  116 */
-  {  61,   9, 130}, /*  5:                 LSHIFT shift  130 */
-  {  75,   5, 149}, /*  6:                    REM shift  149 */
-  {  62,   0, 114}, /*  7:                     LT shift  114 */
-  {  63,   0, 143}, /*  8:                  MINUS shift  143 */
-  {  19,   0, 151}, /*  9:                 CONCAT shift  151 */
-  {  79,  11, 132}, /* 10:                 RSHIFT shift  132 */
-  {   9,   0, 126}, /* 11:                 BITAND shift  126 */
-  {  11,   0, 128}, /* 12:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 13:                     GE shift  120 */
-  {  83,   0, 147}, /* 14:                  SLASH shift  147 */
-/* State 136 */
-  {  48,   5, 192}, /*  1:                     IN shift  192 */
-  {  41,   0, 185}, /*  2:                   GLOB shift  185 */
-  {  67,   0, 187}, /*  3:                   NULL shift  187 */
-  {  58,   1, 137}, /*  4:                   LIKE shift  137 */
-  {   8,   0, 188}, /*  5:                BETWEEN shift  188 */
-/* State 137 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 138}, /* 28:                   expr shift  138 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 138 */
-  {  72,   2, 141}, /*  1:                   PLUS shift  141 */
-  {  48,   0, 163}, /*  2:                     IN shift  163 */
-  {  55,   0, 153}, /*  3:                 ISNULL shift  153 */
-  {  75,   0, 149}, /*  4:                    REM shift  149 */
-  {  33,   6, 124}, /*  5:                     EQ shift  124 */
-  {   9,   0, 126}, /*  6:                 BITAND shift  126 */
-  {  54,   0, 154}, /*  7:                     IS shift  154 */
-  {  79,   3, 132}, /*  8:                 RSHIFT shift  132 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  57,   5, 118}, /* 10:                     LE shift  118 */
-  {  58,   0, 134}, /* 11:                   LIKE shift  134 */
-  {  83,  13, 147}, /* 12:                  SLASH shift  147 */
-  {  11,   0, 128}, /* 13:                  BITOR shift  128 */
-  {  85,  21, 145}, /* 14:                   STAR shift  145 */
-  {  62,   0, 114}, /* 15:                     LT shift  114 */
-  {  63,   0, 143}, /* 16:                  MINUS shift  143 */
-  {  64,  22, 122}, /* 17:                     NE shift  122 */
-  {  65,  23, 136}, /* 18:                    NOT shift  136 */
-  {  66,   0, 158}, /* 19:                NOTNULL shift  158 */
-  {  43,  24, 116}, /* 20:                     GT shift  116 */
-  {  61,   0, 130}, /* 21:                 LSHIFT shift  130 */
-  {  40,   0, 120}, /* 22:                     GE shift  120 */
-  {  41,   0, 139}, /* 23:                   GLOB shift  139 */
-  {  19,   0, 151}, /* 24:                 CONCAT shift  151 */
-/* State 139 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 140}, /* 28:                   expr shift  140 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 140 */
-  {  57,   4, 118}, /*  1:                     LE shift  118 */
-  {  85,   1, 145}, /*  2:                   STAR shift  145 */
-  {  72,   0, 141}, /*  3:                   PLUS shift  141 */
-  {  43,   0, 116}, /*  4:                     GT shift  116 */
-  {  61,   9, 130}, /*  5:                 LSHIFT shift  130 */
-  {  75,   5, 149}, /*  6:                    REM shift  149 */
-  {  62,   0, 114}, /*  7:                     LT shift  114 */
-  {  63,   0, 143}, /*  8:                  MINUS shift  143 */
-  {  19,   0, 151}, /*  9:                 CONCAT shift  151 */
-  {  79,  11, 132}, /* 10:                 RSHIFT shift  132 */
-  {   9,   0, 126}, /* 11:                 BITAND shift  126 */
-  {  11,   0, 128}, /* 12:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 13:                     GE shift  120 */
-  {  83,   0, 147}, /* 14:                  SLASH shift  147 */
-/* State 141 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 142}, /* 28:                   expr shift  142 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 142 */
-  {  75,   3, 149}, /*  1:                    REM shift  149 */
-  {  85,   0, 145}, /*  2:                   STAR shift  145 */
-  {  19,   0, 151}, /*  3:                 CONCAT shift  151 */
-  {  83,   1, 147}, /*  4:                  SLASH shift  147 */
-/* State 143 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 144}, /* 28:                   expr shift  144 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 144 */
-  {  75,   3, 149}, /*  1:                    REM shift  149 */
-  {  85,   0, 145}, /*  2:                   STAR shift  145 */
-  {  19,   0, 151}, /*  3:                 CONCAT shift  151 */
-  {  83,   1, 147}, /*  4:                  SLASH shift  147 */
-/* State 145 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 146}, /* 28:                   expr shift  146 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 146 */
-  {  19,   0, 151}, /*  1:                 CONCAT shift  151 */
-/* State 147 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 148}, /* 28:                   expr shift  148 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 148 */
-  {  19,   0, 151}, /*  1:                 CONCAT shift  151 */
-/* State 149 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 150}, /* 28:                   expr shift  150 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 150 */
-  {  19,   0, 151}, /*  1:                 CONCAT shift  151 */
-/* State 151 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 152}, /* 28:                   expr shift  152 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 154 */
-  {  65,   0, 156}, /*  1:                    NOT shift  156 */
-  {  67,   1, 155}, /*  2:                   NULL shift  155 */
-/* State 156 */
-  {  67,   0, 157}, /*  1:                   NULL shift  157 */
-/* State 159 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 160}, /* 28:                   expr shift  160 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 160 */
-  {  57,   0, 118}, /*  1:                     LE shift  118 */
-  {  79,   0, 132}, /*  2:                 RSHIFT shift  132 */
-  {  54,   0, 154}, /*  3:                     IS shift  154 */
-  {  55,   0, 153}, /*  4:                 ISNULL shift  153 */
-  {   4,   0, 161}, /*  5:                    AND shift  161 */
-  {  83,   1, 147}, /*  6:                  SLASH shift  147 */
-  {  58,   0, 134}, /*  7:                   LIKE shift  134 */
-  {  85,  17, 145}, /*  8:                   STAR shift  145 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  61,  22, 130}, /* 10:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /* 11:                     LT shift  114 */
-  {  63,  25, 143}, /* 12:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 13:                     NE shift  122 */
-  {  65,   0, 136}, /* 14:                    NOT shift  136 */
-  {  66,  26, 158}, /* 15:                NOTNULL shift  158 */
-  {  41,   0, 139}, /* 16:                   GLOB shift  139 */
-  {  33,   0, 124}, /* 17:                     EQ shift  124 */
-  {  43,   0, 116}, /* 18:                     GT shift  116 */
-  {  70,   0, 112}, /* 19:                     OR shift  112 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {  72,   0, 141}, /* 21:                   PLUS shift  141 */
-  {   9,   0, 126}, /* 22:                 BITAND shift  126 */
-  {  48,   0, 163}, /* 23:                     IN shift  163 */
-  {  75,   0, 149}, /* 24:                    REM shift  149 */
-  {  11,   0, 128}, /* 25:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 26:                     GE shift  120 */
-/* State 161 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 162}, /* 28:                   expr shift  162 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 162 */
-  {  57,   4, 118}, /*  1:                     LE shift  118 */
-  {  85,   1, 145}, /*  2:                   STAR shift  145 */
-  {  72,   0, 141}, /*  3:                   PLUS shift  141 */
-  {  43,   0, 116}, /*  4:                     GT shift  116 */
-  {  61,   9, 130}, /*  5:                 LSHIFT shift  130 */
-  {  75,   5, 149}, /*  6:                    REM shift  149 */
-  {  62,   0, 114}, /*  7:                     LT shift  114 */
-  {  63,   0, 143}, /*  8:                  MINUS shift  143 */
-  {  19,   0, 151}, /*  9:                 CONCAT shift  151 */
-  {  79,  11, 132}, /* 10:                 RSHIFT shift  132 */
-  {   9,   0, 126}, /* 11:                 BITAND shift  126 */
-  {  11,   0, 128}, /* 12:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 13:                     GE shift  120 */
-  {  83,   0, 147}, /* 14:                  SLASH shift  147 */
-/* State 163 */
-  {  60,   0, 164}, /*  1:                     LP shift  164 */
-/* State 164 */
-  {  35,   0,  22}, /*  1:                EXPLAIN shift  22 */
-  {  36,   5,  35}, /*  2:                   FAIL shift  35 */
-  {  72,   6, 178}, /*  3:                   PLUS shift  178 */
-  {  73,   0,  26}, /*  4:                 PRAGMA shift  26 */
-  {   1,   0,  32}, /*  5:                  ABORT shift  32 */
-  {  37,   0, 110}, /*  6:                  FLOAT shift  110 */
-  { 146,   9, 165}, /*  7:                 select shift  165 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  76,  10,  34}, /*  9:                REPLACE shift  34 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  80,  16,  82}, /* 11:                 SELECT shift  82 */
-  {  46,   0,  33}, /* 12:                 IGNORE shift  33 */
-  { 117,   0, 171}, /* 13:                   expr shift  171 */
-  { 118,   0, 184}, /* 14:               expritem shift  184 */
-  { 119,  18, 180}, /* 15:               exprlist shift  180 */
-  {  45,  23,  73}, /* 16:                     ID shift  73 */
-  {  86,  24,  76}, /* 17:                 STRING shift  76 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,  25,  75}, /* 19:                     id shift  75 */
-  { 124,   0, 106}, /* 20:                    ids shift  106 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  56,   0,  31}, /* 22:                    KEY shift  31 */
-  {  10,   0, 174}, /* 23:                 BITNOT shift  174 */
-  {  51,   0, 109}, /* 24:                INTEGER shift  109 */
-  {  88,   0,  29}, /* 25:                   TEMP shift  29 */
-  {  60,   0,  77}, /* 26:                     LP shift  77 */
-  {  96,  30,  23}, /* 27:                 VACUUM shift  23 */
-  {  27,   0,  19}, /* 28:                   DESC shift  19 */
-  {  63,   0, 176}, /* 29:                  MINUS shift  176 */
-  {  26,   0,  21}, /* 30:             DELIMITERS shift  21 */
-  {  65,   0, 172}, /* 31:                    NOT shift  172 */
-  {  31,   0,  25}, /* 32:                    END shift  25 */
-  {  67,   0, 105}, /* 33:                   NULL shift  105 */
-  { 138,  35,  78}, /* 34:              oneselect shift  78 */
-  {  68,   0,  30}, /* 35:                 OFFSET shift  30 */
-/* State 165 */
-  { 135,   0,  80}, /*  1:         multiselect_op shift  80 */
-  {  52,   0, 168}, /*  2:              INTERSECT shift  168 */
-  {  92,   2, 166}, /*  3:                  UNION shift  166 */
-  {  78,   0, 170}, /*  4:                     RP shift  170 */
-  {  34,   0, 169}, /*  5:                 EXCEPT shift  169 */
-/* State 166 */
-  {  80,   0, 487}, /*  1:                 SELECT reduce 94 */
-  {   3,   0, 167}, /*  2:                    ALL shift  167 */
-/* State 167 */
-  {  80,   0, 488}, /*  1:                 SELECT reduce 95 */
-/* State 168 */
-  {  80,   0, 489}, /*  1:                 SELECT reduce 96 */
-/* State 169 */
-  {  80,   0, 490}, /*  1:                 SELECT reduce 97 */
-/* State 171 */
-  {  57,   0, 118}, /*  1:                     LE shift  118 */
-  {  79,   0, 132}, /*  2:                 RSHIFT shift  132 */
-  {  54,   0, 154}, /*  3:                     IS shift  154 */
-  {  55,   0, 153}, /*  4:                 ISNULL shift  153 */
-  {   4,   0, 104}, /*  5:                    AND shift  104 */
-  {  83,   1, 147}, /*  6:                  SLASH shift  147 */
-  {  58,   0, 134}, /*  7:                   LIKE shift  134 */
-  {  85,  17, 145}, /*  8:                   STAR shift  145 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  61,  22, 130}, /* 10:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /* 11:                     LT shift  114 */
-  {  63,  25, 143}, /* 12:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 13:                     NE shift  122 */
-  {  65,   0, 136}, /* 14:                    NOT shift  136 */
-  {  66,  26, 158}, /* 15:                NOTNULL shift  158 */
-  {  41,   0, 139}, /* 16:                   GLOB shift  139 */
-  {  33,   0, 124}, /* 17:                     EQ shift  124 */
-  {  43,   0, 116}, /* 18:                     GT shift  116 */
-  {  70,   0, 112}, /* 19:                     OR shift  112 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {  72,   0, 141}, /* 21:                   PLUS shift  141 */
-  {   9,   0, 126}, /* 22:                 BITAND shift  126 */
-  {  48,   0, 163}, /* 23:                     IN shift  163 */
-  {  75,   0, 149}, /* 24:                    REM shift  149 */
-  {  11,   0, 128}, /* 25:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 26:                     GE shift  120 */
-/* State 172 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 173}, /* 28:                   expr shift  173 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 173 */
-  {  72,   2, 141}, /*  1:                   PLUS shift  141 */
-  {  48,   0, 163}, /*  2:                     IN shift  163 */
-  {  55,   0, 153}, /*  3:                 ISNULL shift  153 */
-  {  75,   0, 149}, /*  4:                    REM shift  149 */
-  {  33,   6, 124}, /*  5:                     EQ shift  124 */
-  {   9,   0, 126}, /*  6:                 BITAND shift  126 */
-  {  54,   0, 154}, /*  7:                     IS shift  154 */
-  {  79,   3, 132}, /*  8:                 RSHIFT shift  132 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  57,   5, 118}, /* 10:                     LE shift  118 */
-  {  58,   0, 134}, /* 11:                   LIKE shift  134 */
-  {  83,  13, 147}, /* 12:                  SLASH shift  147 */
-  {  11,   0, 128}, /* 13:                  BITOR shift  128 */
-  {  85,  21, 145}, /* 14:                   STAR shift  145 */
-  {  62,   0, 114}, /* 15:                     LT shift  114 */
-  {  63,   0, 143}, /* 16:                  MINUS shift  143 */
-  {  64,  22, 122}, /* 17:                     NE shift  122 */
-  {  65,  23, 136}, /* 18:                    NOT shift  136 */
-  {  66,   0, 158}, /* 19:                NOTNULL shift  158 */
-  {  43,  24, 116}, /* 20:                     GT shift  116 */
-  {  61,   0, 130}, /* 21:                 LSHIFT shift  130 */
-  {  40,   0, 120}, /* 22:                     GE shift  120 */
-  {  41,   0, 139}, /* 23:                   GLOB shift  139 */
-  {  19,   0, 151}, /* 24:                 CONCAT shift  151 */
-/* State 174 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 175}, /* 28:                   expr shift  175 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 176 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 177}, /* 28:                   expr shift  177 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 178 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 179}, /* 28:                   expr shift  179 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 180 */
-  {  78,   2, 181}, /*  1:                     RP shift  181 */
-  {  16,   0, 182}, /*  2:                  COMMA shift  182 */
-/* State 182 */
-  { 124,   3, 106}, /*  1:                    ids shift  106 */
-  {  63,   9, 176}, /*  2:                  MINUS shift  176 */
-  {  31,   0,  25}, /*  3:                    END shift  25 */
-  {  96,  10,  23}, /*  4:                 VACUUM shift  23 */
-  {  35,   0,  22}, /*  5:                EXPLAIN shift  22 */
-  {  67,  13, 105}, /*  6:                   NULL shift  105 */
-  {  68,  14,  30}, /*  7:                 OFFSET shift  30 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {   1,   0,  32}, /*  9:                  ABORT shift  32 */
-  {  65,   0, 172}, /* 10:                    NOT shift  172 */
-  {  72,  17, 178}, /* 11:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 12:                 PRAGMA shift  26 */
-  {  36,   0,  35}, /* 13:                   FAIL shift  35 */
-  {  37,  18, 110}, /* 14:                  FLOAT shift  110 */
-  {  76,  19,  34}, /* 15:                REPLACE shift  34 */
-  {  46,   0,  33}, /* 16:                 IGNORE shift  33 */
-  {  10,   0, 174}, /* 17:                 BITNOT shift  174 */
-  {   6,   0,  20}, /* 18:                    ASC shift  20 */
-  {  45,  20,  73}, /* 19:                     ID shift  73 */
-  {  14,   0,  27}, /* 20:                CLUSTER shift  27 */
-  {  51,  22, 109}, /* 21:                INTEGER shift  109 */
-  {  20,   0,  36}, /* 22:               CONFLICT shift  36 */
-  {  86,   0,  76}, /* 23:                 STRING shift  76 */
-  {  56,   0,  31}, /* 24:                    KEY shift  31 */
-  { 117,  23, 171}, /* 25:                   expr shift  171 */
-  { 118,  24, 183}, /* 26:               expritem shift  183 */
-  {  88,  29,  29}, /* 27:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 28:                   DESC shift  19 */
-  {  26,   0,  21}, /* 29:             DELIMITERS shift  21 */
-  {  60,   0,  77}, /* 30:                     LP shift  77 */
-  { 123,   0,  75}, /* 31:                     id shift  75 */
-/* State 185 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 186}, /* 28:                   expr shift  186 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 186 */
-  {  72,   2, 141}, /*  1:                   PLUS shift  141 */
-  {  48,   0, 163}, /*  2:                     IN shift  163 */
-  {  55,   0, 153}, /*  3:                 ISNULL shift  153 */
-  {  75,   0, 149}, /*  4:                    REM shift  149 */
-  {  33,   6, 124}, /*  5:                     EQ shift  124 */
-  {   9,   0, 126}, /*  6:                 BITAND shift  126 */
-  {  54,   0, 154}, /*  7:                     IS shift  154 */
-  {  79,   3, 132}, /*  8:                 RSHIFT shift  132 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  57,   5, 118}, /* 10:                     LE shift  118 */
-  {  58,   0, 134}, /* 11:                   LIKE shift  134 */
-  {  83,  13, 147}, /* 12:                  SLASH shift  147 */
-  {  11,   0, 128}, /* 13:                  BITOR shift  128 */
-  {  85,  21, 145}, /* 14:                   STAR shift  145 */
-  {  62,   0, 114}, /* 15:                     LT shift  114 */
-  {  63,   0, 143}, /* 16:                  MINUS shift  143 */
-  {  64,  22, 122}, /* 17:                     NE shift  122 */
-  {  65,  23, 136}, /* 18:                    NOT shift  136 */
-  {  66,   0, 158}, /* 19:                NOTNULL shift  158 */
-  {  43,  24, 116}, /* 20:                     GT shift  116 */
-  {  61,   0, 130}, /* 21:                 LSHIFT shift  130 */
-  {  40,   0, 120}, /* 22:                     GE shift  120 */
-  {  41,   0, 139}, /* 23:                   GLOB shift  139 */
-  {  19,   0, 151}, /* 24:                 CONCAT shift  151 */
-/* State 188 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 189}, /* 28:                   expr shift  189 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 189 */
-  {  57,   0, 118}, /*  1:                     LE shift  118 */
-  {  79,   0, 132}, /*  2:                 RSHIFT shift  132 */
-  {  54,   0, 154}, /*  3:                     IS shift  154 */
-  {  55,   0, 153}, /*  4:                 ISNULL shift  153 */
-  {   4,   0, 190}, /*  5:                    AND shift  190 */
-  {  83,   1, 147}, /*  6:                  SLASH shift  147 */
-  {  58,   0, 134}, /*  7:                   LIKE shift  134 */
-  {  85,  17, 145}, /*  8:                   STAR shift  145 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  61,  22, 130}, /* 10:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /* 11:                     LT shift  114 */
-  {  63,  25, 143}, /* 12:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 13:                     NE shift  122 */
-  {  65,   0, 136}, /* 14:                    NOT shift  136 */
-  {  66,  26, 158}, /* 15:                NOTNULL shift  158 */
-  {  41,   0, 139}, /* 16:                   GLOB shift  139 */
-  {  33,   0, 124}, /* 17:                     EQ shift  124 */
-  {  43,   0, 116}, /* 18:                     GT shift  116 */
-  {  70,   0, 112}, /* 19:                     OR shift  112 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {  72,   0, 141}, /* 21:                   PLUS shift  141 */
-  {   9,   0, 126}, /* 22:                 BITAND shift  126 */
-  {  48,   0, 163}, /* 23:                     IN shift  163 */
-  {  75,   0, 149}, /* 24:                    REM shift  149 */
-  {  11,   0, 128}, /* 25:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 26:                     GE shift  120 */
-/* State 190 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 191}, /* 28:                   expr shift  191 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 191 */
-  {  72,   2, 141}, /*  1:                   PLUS shift  141 */
-  {  48,   0, 163}, /*  2:                     IN shift  163 */
-  {  55,   0, 153}, /*  3:                 ISNULL shift  153 */
-  {  75,   0, 149}, /*  4:                    REM shift  149 */
-  {  33,   6, 124}, /*  5:                     EQ shift  124 */
-  {   9,   0, 126}, /*  6:                 BITAND shift  126 */
-  {  54,   0, 154}, /*  7:                     IS shift  154 */
-  {  79,   3, 132}, /*  8:                 RSHIFT shift  132 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  57,   5, 118}, /* 10:                     LE shift  118 */
-  {  58,   0, 134}, /* 11:                   LIKE shift  134 */
-  {  83,  13, 147}, /* 12:                  SLASH shift  147 */
-  {  11,   0, 128}, /* 13:                  BITOR shift  128 */
-  {  85,  21, 145}, /* 14:                   STAR shift  145 */
-  {  62,   0, 114}, /* 15:                     LT shift  114 */
-  {  63,   0, 143}, /* 16:                  MINUS shift  143 */
-  {  64,  22, 122}, /* 17:                     NE shift  122 */
-  {  65,  23, 136}, /* 18:                    NOT shift  136 */
-  {  66,   0, 158}, /* 19:                NOTNULL shift  158 */
-  {  43,  24, 116}, /* 20:                     GT shift  116 */
-  {  61,   0, 130}, /* 21:                 LSHIFT shift  130 */
-  {  40,   0, 120}, /* 22:                     GE shift  120 */
-  {  41,   0, 139}, /* 23:                   GLOB shift  139 */
-  {  19,   0, 151}, /* 24:                 CONCAT shift  151 */
-/* State 192 */
-  {  60,   0, 193}, /*  1:                     LP shift  193 */
-/* State 193 */
-  {  35,   0,  22}, /*  1:                EXPLAIN shift  22 */
-  {  36,   5,  35}, /*  2:                   FAIL shift  35 */
-  {  72,   6, 178}, /*  3:                   PLUS shift  178 */
-  {  73,   0,  26}, /*  4:                 PRAGMA shift  26 */
-  {   1,   0,  32}, /*  5:                  ABORT shift  32 */
-  {  37,   0, 110}, /*  6:                  FLOAT shift  110 */
-  { 146,   9, 194}, /*  7:                 select shift  194 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  76,  10,  34}, /*  9:                REPLACE shift  34 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  80,  16,  82}, /* 11:                 SELECT shift  82 */
-  {  46,   0,  33}, /* 12:                 IGNORE shift  33 */
-  { 117,   0, 171}, /* 13:                   expr shift  171 */
-  { 118,   0, 184}, /* 14:               expritem shift  184 */
-  { 119,  18, 196}, /* 15:               exprlist shift  196 */
-  {  45,  23,  73}, /* 16:                     ID shift  73 */
-  {  86,  24,  76}, /* 17:                 STRING shift  76 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,  25,  75}, /* 19:                     id shift  75 */
-  { 124,   0, 106}, /* 20:                    ids shift  106 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  56,   0,  31}, /* 22:                    KEY shift  31 */
-  {  10,   0, 174}, /* 23:                 BITNOT shift  174 */
-  {  51,   0, 109}, /* 24:                INTEGER shift  109 */
-  {  88,   0,  29}, /* 25:                   TEMP shift  29 */
-  {  60,   0,  77}, /* 26:                     LP shift  77 */
-  {  96,  30,  23}, /* 27:                 VACUUM shift  23 */
-  {  27,   0,  19}, /* 28:                   DESC shift  19 */
-  {  63,   0, 176}, /* 29:                  MINUS shift  176 */
-  {  26,   0,  21}, /* 30:             DELIMITERS shift  21 */
-  {  65,   0, 172}, /* 31:                    NOT shift  172 */
-  {  31,   0,  25}, /* 32:                    END shift  25 */
-  {  67,   0, 105}, /* 33:                   NULL shift  105 */
-  { 138,  35,  78}, /* 34:              oneselect shift  78 */
-  {  68,   0,  30}, /* 35:                 OFFSET shift  30 */
-/* State 194 */
-  { 135,   0,  80}, /*  1:         multiselect_op shift  80 */
-  {  52,   0, 168}, /*  2:              INTERSECT shift  168 */
-  {  92,   2, 166}, /*  3:                  UNION shift  166 */
-  {  78,   0, 195}, /*  4:                     RP shift  195 */
-  {  34,   0, 169}, /*  5:                 EXCEPT shift  169 */
-/* State 196 */
-  {  78,   2, 197}, /*  1:                     RP shift  197 */
-  {  16,   0, 182}, /*  2:                  COMMA shift  182 */
-/* State 198 */
-  {  27,   2,  68}, /*  1:                   DESC shift  68 */
-  {   6,   0,  67}, /*  2:                    ASC shift  67 */
-  { 152,   0, 199}, /*  3:              sortorder shift  199 */
-/* State 200 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 201}, /* 28:                   expr shift  201 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 201 */
-  {  57,   0, 118}, /*  1:                     LE shift  118 */
-  {  79,   0, 132}, /*  2:                 RSHIFT shift  132 */
-  {  54,   0, 154}, /*  3:                     IS shift  154 */
-  {  55,   0, 153}, /*  4:                 ISNULL shift  153 */
-  {   4,   0, 104}, /*  5:                    AND shift  104 */
-  {  83,   1, 147}, /*  6:                  SLASH shift  147 */
-  {  58,   0, 134}, /*  7:                   LIKE shift  134 */
-  {  85,  17, 145}, /*  8:                   STAR shift  145 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  61,  22, 130}, /* 10:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /* 11:                     LT shift  114 */
-  {  63,  25, 143}, /* 12:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 13:                     NE shift  122 */
-  {  65,   0, 136}, /* 14:                    NOT shift  136 */
-  {  66,  26, 158}, /* 15:                NOTNULL shift  158 */
-  {  41,   0, 139}, /* 16:                   GLOB shift  139 */
-  {  33,   0, 124}, /* 17:                     EQ shift  124 */
-  {  43,   0, 116}, /* 18:                     GT shift  116 */
-  {  70,   0, 112}, /* 19:                     OR shift  112 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {  72,   0, 141}, /* 21:                   PLUS shift  141 */
-  {   9,   0, 126}, /* 22:                 BITAND shift  126 */
-  {  48,   0, 163}, /* 23:                     IN shift  163 */
-  {  75,   0, 149}, /* 24:                    REM shift  149 */
-  {  11,   0, 128}, /* 25:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 26:                     GE shift  120 */
-/* State 202 */
-  {  12,   0, 203}, /*  1:                     BY shift  203 */
-/* State 203 */
-  {  96,   0,  23}, /*  1:                 VACUUM shift  23 */
-  {  65,   3, 172}, /*  2:                    NOT shift  172 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  {  67,  12, 105}, /*  4:                   NULL shift  105 */
-  {  68,  16,  30}, /*  5:                 OFFSET shift  30 */
-  {  37,   0, 110}, /*  6:                  FLOAT shift  110 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  72,   0, 178}, /*  9:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 10:                 PRAGMA shift  26 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  76,   0,  34}, /* 13:                REPLACE shift  34 */
-  {  45,   0,  73}, /* 14:                     ID shift  73 */
-  {  46,  17,  33}, /* 15:                 IGNORE shift  33 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 17:                CLUSTER shift  27 */
-  {  86,   0,  76}, /* 18:                 STRING shift  76 */
-  {  56,   0,  31}, /* 19:                    KEY shift  31 */
-  {  51,   0, 109}, /* 20:                INTEGER shift  109 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  { 117,   0, 171}, /* 22:                   expr shift  171 */
-  { 118,  18, 184}, /* 23:               expritem shift  184 */
-  { 119,   0, 204}, /* 24:               exprlist shift  204 */
-  {  88,  19,  29}, /* 25:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 26:                   DESC shift  19 */
-  {  26,   0,  21}, /* 27:             DELIMITERS shift  21 */
-  { 123,  26,  75}, /* 28:                     id shift  75 */
-  { 124,  30, 106}, /* 29:                    ids shift  106 */
-  {  60,   0,  77}, /* 30:                     LP shift  77 */
-  {  31,   0,  25}, /* 31:                    END shift  25 */
-  {  63,  31, 176}, /* 32:                  MINUS shift  176 */
-/* State 204 */
-  {  16,   0, 182}, /*  1:                  COMMA shift  182 */
-/* State 205 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 206}, /* 28:                   expr shift  206 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 206 */
-  {  57,   0, 118}, /*  1:                     LE shift  118 */
-  {  79,   0, 132}, /*  2:                 RSHIFT shift  132 */
-  {  54,   0, 154}, /*  3:                     IS shift  154 */
-  {  55,   0, 153}, /*  4:                 ISNULL shift  153 */
-  {   4,   0, 104}, /*  5:                    AND shift  104 */
-  {  83,   1, 147}, /*  6:                  SLASH shift  147 */
-  {  58,   0, 134}, /*  7:                   LIKE shift  134 */
-  {  85,  17, 145}, /*  8:                   STAR shift  145 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  61,  22, 130}, /* 10:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /* 11:                     LT shift  114 */
-  {  63,  25, 143}, /* 12:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 13:                     NE shift  122 */
-  {  65,   0, 136}, /* 14:                    NOT shift  136 */
-  {  66,  26, 158}, /* 15:                NOTNULL shift  158 */
-  {  41,   0, 139}, /* 16:                   GLOB shift  139 */
-  {  33,   0, 124}, /* 17:                     EQ shift  124 */
-  {  43,   0, 116}, /* 18:                     GT shift  116 */
-  {  70,   0, 112}, /* 19:                     OR shift  112 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {  72,   0, 141}, /* 21:                   PLUS shift  141 */
-  {   9,   0, 126}, /* 22:                 BITAND shift  126 */
-  {  48,   0, 163}, /* 23:                     IN shift  163 */
-  {  75,   0, 149}, /* 24:                    REM shift  149 */
-  {  11,   0, 128}, /* 25:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 26:                     GE shift  120 */
-/* State 208 */
-  { 147,   0, 209}, /*  1:             seltablist shift  209 */
-  { 153,   1, 211}, /*  2:             stl_prefix shift  211 */
-/* State 209 */
-  {  16,   0, 210}, /*  1:                  COMMA shift  210 */
-/* State 211 */
-  {  88,   0,  29}, /*  1:                   TEMP shift  29 */
-  {  45,   4,  28}, /*  2:                     ID shift  28 */
-  {  68,  12,  30}, /*  3:                 OFFSET shift  30 */
-  {   1,   0,  32}, /*  4:                  ABORT shift  32 */
-  {  26,   0,  21}, /*  5:             DELIMITERS shift  21 */
-  {  27,   0,  19}, /*  6:                   DESC shift  19 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {  73,  16,  26}, /*  8:                 PRAGMA shift  26 */
-  {  96,   0,  23}, /*  9:                 VACUUM shift  23 */
-  {  31,   0,  25}, /* 10:                    END shift  25 */
-  {  76,   0,  34}, /* 11:                REPLACE shift  34 */
-  {  46,   0,  33}, /* 12:                 IGNORE shift  33 */
-  {  56,   0,  31}, /* 13:                    KEY shift  31 */
-  { 123,  18,  37}, /* 14:                     id shift  37 */
-  { 124,  19, 212}, /* 15:                    ids shift  212 */
-  {   7,   0,  24}, /* 16:                  BEGIN shift  24 */
-  {  60,   0, 216}, /* 17:                     LP shift  216 */
-  {  35,   0,  22}, /* 18:                EXPLAIN shift  22 */
-  {  36,  20,  35}, /* 19:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 20:                CLUSTER shift  27 */
-  {  86,  22,  38}, /* 21:                 STRING shift  38 */
-  {  20,   0,  36}, /* 22:               CONFLICT shift  36 */
-/* State 212 */
-  {  78,   3, 505}, /*  1:                     RP reduce 112 */
-  {  92,   0, 505}, /*  2:                  UNION reduce 112 */
-  {  52,   0, 505}, /*  3:              INTERSECT reduce 112 */
-  {  81,   5, 505}, /*  4:                   SEMI reduce 112 */
-  {  42,  11, 505}, /*  5:                  GROUP reduce 112 */
-  {  44,  12, 505}, /*  6:                 HAVING reduce 112 */
-  {  71,   0, 505}, /*  7:                  ORDER reduce 112 */
-  {  59,   0, 505}, /*  8:                  LIMIT reduce 112 */
-  {  99,  13, 505}, /*  9:                  WHERE reduce 112 */
-  { 100,   0, 214}, /* 10:                     as shift  214 */
-  {  16,   0, 505}, /* 11:                  COMMA reduce 112 */
-  {   5,   0, 213}, /* 12:                     AS shift  213 */
-  {  34,   0, 505}, /* 13:                 EXCEPT reduce 112 */
-/* State 214 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 215}, /* 20:                    ids shift  215 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 216 */
-  { 138,   0,  78}, /*  1:              oneselect shift  78 */
-  {  80,   0,  82}, /*  2:                 SELECT shift  82 */
-  { 146,   2, 217}, /*  3:                 select shift  217 */
-/* State 217 */
-  { 135,   0,  80}, /*  1:         multiselect_op shift  80 */
-  {  52,   0, 168}, /*  2:              INTERSECT shift  168 */
-  {  92,   2, 166}, /*  3:                  UNION shift  166 */
-  {  78,   0, 218}, /*  4:                     RP shift  218 */
-  {  34,   0, 169}, /*  5:                 EXCEPT shift  169 */
-/* State 218 */
-  {  78,   3, 507}, /*  1:                     RP reduce 114 */
-  {  92,   0, 507}, /*  2:                  UNION reduce 114 */
-  {  52,   0, 507}, /*  3:              INTERSECT reduce 114 */
-  {  81,   5, 507}, /*  4:                   SEMI reduce 114 */
-  {  42,  11, 507}, /*  5:                  GROUP reduce 114 */
-  {  44,  12, 507}, /*  6:                 HAVING reduce 114 */
-  {  71,   0, 507}, /*  7:                  ORDER reduce 114 */
-  {  59,   0, 507}, /*  8:                  LIMIT reduce 114 */
-  {  99,  13, 507}, /*  9:                  WHERE reduce 114 */
-  { 100,   0, 219}, /* 10:                     as shift  219 */
-  {  16,   0, 507}, /* 11:                  COMMA reduce 114 */
-  {   5,   0, 213}, /* 12:                     AS shift  213 */
-  {  34,   0, 507}, /* 13:                 EXCEPT reduce 114 */
-/* State 219 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 220}, /* 20:                    ids shift  220 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 221 */
-  { 124,   3, 106}, /*  1:                    ids shift  106 */
-  {  63,   9, 176}, /*  2:                  MINUS shift  176 */
-  {  31,   0,  25}, /*  3:                    END shift  25 */
-  {  96,  10,  23}, /*  4:                 VACUUM shift  23 */
-  {  35,   0,  22}, /*  5:                EXPLAIN shift  22 */
-  {  67,  13, 105}, /*  6:                   NULL shift  105 */
-  {  68,  14,  30}, /*  7:                 OFFSET shift  30 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {   1,   0,  32}, /*  9:                  ABORT shift  32 */
-  {  65,   0, 172}, /* 10:                    NOT shift  172 */
-  {  72,  17, 178}, /* 11:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 12:                 PRAGMA shift  26 */
-  {  36,   0,  35}, /* 13:                   FAIL shift  35 */
-  {  37,  18, 110}, /* 14:                  FLOAT shift  110 */
-  {  76,  19,  34}, /* 15:                REPLACE shift  34 */
-  {  46,   0,  33}, /* 16:                 IGNORE shift  33 */
-  {  10,   0, 174}, /* 17:                 BITNOT shift  174 */
-  {   6,   0,  20}, /* 18:                    ASC shift  20 */
-  {  45,  20,  73}, /* 19:                     ID shift  73 */
-  {  14,   0,  27}, /* 20:                CLUSTER shift  27 */
-  {  51,  22, 109}, /* 21:                INTEGER shift  109 */
-  {  20,   0,  36}, /* 22:               CONFLICT shift  36 */
-  {  86,   0,  76}, /* 23:                 STRING shift  76 */
-  {  85,   0, 225}, /* 24:                   STAR shift  225 */
-  { 117,  23, 222}, /* 25:                   expr shift  222 */
-  {  56,   0,  31}, /* 26:                    KEY shift  31 */
-  {  88,  29,  29}, /* 27:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 28:                   DESC shift  19 */
-  {  26,   0,  21}, /* 29:             DELIMITERS shift  21 */
-  {  60,   0,  77}, /* 30:                     LP shift  77 */
-  { 123,   0,  75}, /* 31:                     id shift  75 */
-/* State 222 */
-  {  33,   0, 124}, /*  1:                     EQ shift  124 */
-  {  61,   0, 130}, /*  2:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /*  3:                     LT shift  114 */
-  {  63,   1, 143}, /*  4:                  MINUS shift  143 */
-  {  64,   8, 122}, /*  5:                     NE shift  122 */
-  {  65,  15, 136}, /*  6:                    NOT shift  136 */
-  {  66,   0, 158}, /*  7:                NOTNULL shift  158 */
-  {   4,   0, 104}, /*  8:                    AND shift  104 */
-  {  38,  18, 497}, /*  9:                   FROM reduce 104 */
-  {   9,   0, 126}, /* 10:                 BITAND shift  126 */
-  { 100,  21, 223}, /* 11:                     as shift  223 */
-  {  41,  22, 139}, /* 12:                   GLOB shift  139 */
-  {  72,   0, 141}, /* 13:                   PLUS shift  141 */
-  {  43,   0, 116}, /* 14:                     GT shift  116 */
-  {   5,   0, 213}, /* 15:                     AS shift  213 */
-  {  75,   0, 149}, /* 16:                    REM shift  149 */
-  {  16,   0, 497}, /* 17:                  COMMA reduce 104 */
-  {   8,   0, 159}, /* 18:                BETWEEN shift  159 */
-  {  48,   0, 163}, /* 19:                     IN shift  163 */
-  {  79,  23, 132}, /* 20:                 RSHIFT shift  132 */
-  {  70,  27, 112}, /* 21:                     OR shift  112 */
-  {  11,   0, 128}, /* 22:                  BITOR shift  128 */
-  {  19,   0, 151}, /* 23:                 CONCAT shift  151 */
-  {  83,   0, 147}, /* 24:                  SLASH shift  147 */
-  {  54,   0, 154}, /* 25:                     IS shift  154 */
-  {  85,  30, 145}, /* 26:                   STAR shift  145 */
-  {  40,   0, 120}, /* 27:                     GE shift  120 */
-  {  57,   0, 118}, /* 28:                     LE shift  118 */
-  {  58,   0, 134}, /* 29:                   LIKE shift  134 */
-  {  55,   0, 153}, /* 30:                 ISNULL shift  153 */
-/* State 223 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 224}, /* 20:                    ids shift  224 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 229 */
-  {  54,   0, 154}, /*  1:                     IS shift  154 */
-  {  55,   0, 153}, /*  2:                 ISNULL shift  153 */
-  {  83,   0, 147}, /*  3:                  SLASH shift  147 */
-  {  57,   0, 118}, /*  4:                     LE shift  118 */
-  {  85,   6, 145}, /*  5:                   STAR shift  145 */
-  {  58,  16, 134}, /*  6:                   LIKE shift  134 */
-  {  33,   0, 124}, /*  7:                     EQ shift  124 */
-  {  61,   0, 130}, /*  8:                 LSHIFT shift  130 */
-  {  62,  18, 114}, /*  9:                     LT shift  114 */
-  {  63,  21, 143}, /* 10:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 11:                     NE shift  122 */
-  {  65,  23, 136}, /* 12:                    NOT shift  136 */
-  {  66,   0, 158}, /* 13:                NOTNULL shift  158 */
-  {  40,   0, 120}, /* 14:                     GE shift  120 */
-  {  41,   0, 139}, /* 15:                   GLOB shift  139 */
-  {   4,   0, 104}, /* 16:                    AND shift  104 */
-  {  70,  24, 112}, /* 17:                     OR shift  112 */
-  {   8,   0, 159}, /* 18:                BETWEEN shift  159 */
-  {  72,   0, 141}, /* 19:                   PLUS shift  141 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {   9,   0, 126}, /* 21:                 BITAND shift  126 */
-  {  75,  27, 149}, /* 22:                    REM shift  149 */
-  {  11,   0, 128}, /* 23:                  BITOR shift  128 */
-  {  43,   0, 116}, /* 24:                     GT shift  116 */
-  {  78,   0, 230}, /* 25:                     RP shift  230 */
-  {  79,   0, 132}, /* 26:                 RSHIFT shift  132 */
-  {  48,   0, 163}, /* 27:                     IN shift  163 */
-/* State 231 */
-  {  78,   2, 232}, /*  1:                     RP shift  232 */
-  {  16,   0, 182}, /*  2:                  COMMA shift  182 */
-/* State 233 */
-  {  78,   0, 234}, /*  1:                     RP shift  234 */
-/* State 235 */
-  {  54,   0, 154}, /*  1:                     IS shift  154 */
-  {  55,   0, 153}, /*  2:                 ISNULL shift  153 */
-  {  83,   0, 147}, /*  3:                  SLASH shift  147 */
-  {  57,   0, 118}, /*  4:                     LE shift  118 */
-  {  85,   6, 145}, /*  5:                   STAR shift  145 */
-  {  58,  16, 134}, /*  6:                   LIKE shift  134 */
-  {  33,   0, 124}, /*  7:                     EQ shift  124 */
-  {  61,   0, 130}, /*  8:                 LSHIFT shift  130 */
-  {  62,  18, 114}, /*  9:                     LT shift  114 */
-  {  63,  21, 143}, /* 10:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 11:                     NE shift  122 */
-  {  65,  23, 136}, /* 12:                    NOT shift  136 */
-  {  66,   0, 158}, /* 13:                NOTNULL shift  158 */
-  {  40,   0, 120}, /* 14:                     GE shift  120 */
-  {  41,   0, 139}, /* 15:                   GLOB shift  139 */
-  {   4,   0, 104}, /* 16:                    AND shift  104 */
-  {  70,  24, 112}, /* 17:                     OR shift  112 */
-  {   8,   0, 159}, /* 18:                BETWEEN shift  159 */
-  {  72,   0, 141}, /* 19:                   PLUS shift  141 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {   9,   0, 126}, /* 21:                 BITAND shift  126 */
-  {  75,  27, 149}, /* 22:                    REM shift  149 */
-  {  11,   0, 128}, /* 23:                  BITOR shift  128 */
-  {  43,   0, 116}, /* 24:                     GT shift  116 */
-  {  78,   0, 236}, /* 25:                     RP shift  236 */
-  {  79,   0, 132}, /* 26:                 RSHIFT shift  132 */
-  {  48,   0, 163}, /* 27:                     IN shift  163 */
-/* State 236 */
-  {  69,   0,   9}, /*  1:                     ON shift  9 */
-  { 137,   1, 237}, /*  2:                 onconf shift  237 */
-/* State 239 */
-  {  63,   0, 246}, /*  1:                  MINUS shift  246 */
-  {  72,   6, 243}, /*  2:                   PLUS shift  243 */
-  {  86,   2, 240}, /*  3:                 STRING shift  240 */
-  {  45,   0, 241}, /*  4:                     ID shift  241 */
-  {  67,   0, 250}, /*  5:                   NULL shift  250 */
-  {  51,   7, 242}, /*  6:                INTEGER shift  242 */
-  {  37,   0, 249}, /*  7:                  FLOAT shift  249 */
-/* State 243 */
-  {  37,   0, 245}, /*  1:                  FLOAT shift  245 */
-  {  51,   1, 244}, /*  2:                INTEGER shift  244 */
-/* State 246 */
-  {  37,   0, 248}, /*  1:                  FLOAT shift  248 */
-  {  51,   1, 247}, /*  2:                INTEGER shift  247 */
-/* State 251 */
-  {  88,   0,  29}, /*  1:                   TEMP shift  29 */
-  {  45,   4,  28}, /*  2:                     ID shift  28 */
-  {  68,  12,  30}, /*  3:                 OFFSET shift  30 */
-  {   1,   0,  32}, /*  4:                  ABORT shift  32 */
-  {  26,   0,  21}, /*  5:             DELIMITERS shift  21 */
-  {  27,   0,  19}, /*  6:                   DESC shift  19 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {  73,  16,  26}, /*  8:                 PRAGMA shift  26 */
-  {  96,   0,  23}, /*  9:                 VACUUM shift  23 */
-  {  31,   0,  25}, /* 10:                    END shift  25 */
-  {  76,   0,  34}, /* 11:                REPLACE shift  34 */
-  {  46,   0,  33}, /* 12:                 IGNORE shift  33 */
-  {  56,   0,  31}, /* 13:                    KEY shift  31 */
-  { 123,  18,  37}, /* 14:                     id shift  37 */
-  { 124,  19, 263}, /* 15:                    ids shift  263 */
-  {   7,   0,  24}, /* 16:                  BEGIN shift  24 */
-  {  60,   0, 252}, /* 17:                     LP shift  252 */
-  {  35,   0,  22}, /* 18:                EXPLAIN shift  22 */
-  {  36,  20,  35}, /* 19:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 20:                CLUSTER shift  27 */
-  {  86,  22,  38}, /* 21:                 STRING shift  38 */
-  {  20,   0,  36}, /* 22:               CONFLICT shift  36 */
-/* State 252 */
-  {  72,   0, 259}, /*  1:                   PLUS shift  259 */
-  { 149,   0, 253}, /*  2:                 signed shift  253 */
-  {  51,   0, 258}, /*  3:                INTEGER shift  258 */
-  {  63,   3, 261}, /*  4:                  MINUS shift  261 */
-/* State 253 */
-  {  78,   2, 254}, /*  1:                     RP shift  254 */
-  {  16,   0, 255}, /*  2:                  COMMA shift  255 */
-/* State 255 */
-  {  72,   0, 259}, /*  1:                   PLUS shift  259 */
-  { 149,   0, 256}, /*  2:                 signed shift  256 */
-  {  51,   0, 258}, /*  3:                INTEGER shift  258 */
-  {  63,   3, 261}, /*  4:                  MINUS shift  261 */
-/* State 256 */
-  {  78,   0, 257}, /*  1:                     RP shift  257 */
-/* State 259 */
-  {  51,   0, 260}, /*  1:                INTEGER shift  260 */
-/* State 261 */
-  {  51,   0, 262}, /*  1:                INTEGER shift  262 */
-/* State 266 */
-  { 154,   4, 289}, /*  1:                  tcons shift  289 */
-  {  78,   0, 464}, /*  2:                     RP reduce 71 */
-  {  93,   6, 281}, /*  3:                 UNIQUE shift  281 */
-  {  21,   0, 269}, /*  4:             CONSTRAINT shift  269 */
-  {  74,   0, 271}, /*  5:                PRIMARY shift  271 */
-  {  16,   0, 267}, /*  6:                  COMMA shift  267 */
-  {  13,   0, 286}, /*  7:                  CHECK shift  286 */
-/* State 267 */
-  {  13,   0, 286}, /*  1:                  CHECK shift  286 */
-  {  21,   0, 269}, /*  2:             CONSTRAINT shift  269 */
-  {  74,   0, 271}, /*  3:                PRIMARY shift  271 */
-  {  93,   1, 281}, /*  4:                 UNIQUE shift  281 */
-  { 154,   3, 268}, /*  5:                  tcons shift  268 */
-/* State 269 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 270}, /* 20:                    ids shift  270 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 271 */
-  {  56,   0, 272}, /*  1:                    KEY shift  272 */
-/* State 272 */
-  {  60,   0, 273}, /*  1:                     LP shift  273 */
-/* State 273 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  73,   6,  26}, /*  3:                 PRAGMA shift  26 */
-  {  26,   0,  21}, /*  4:             DELIMITERS shift  21 */
-  {  96,   3,  23}, /*  5:                 VACUUM shift  23 */
-  {  27,   0,  19}, /*  6:                   DESC shift  19 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {  76,  16,  34}, /*  8:                REPLACE shift  34 */
-  { 123,  17,  37}, /*  9:                     id shift  37 */
-  { 124,   0, 279}, /* 10:                    ids shift  279 */
-  { 125,  19, 280}, /* 11:                idxitem shift  280 */
-  { 126,   0, 274}, /* 12:                idxlist shift  274 */
-  {  35,   0,  22}, /* 13:                EXPLAIN shift  22 */
-  {  36,   0,  35}, /* 14:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {   7,   0,  24}, /* 16:                  BEGIN shift  24 */
-  {  31,   0,  25}, /* 17:                    END shift  25 */
-  {  86,   0,  38}, /* 18:                 STRING shift  38 */
-  {  56,   0,  31}, /* 19:                    KEY shift  31 */
-  {  88,   0,  29}, /* 20:                   TEMP shift  29 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  45,   0,  28}, /* 22:                     ID shift  28 */
-  {  68,  22,  30}, /* 23:                 OFFSET shift  30 */
-/* State 274 */
-  {  78,   2, 275}, /*  1:                     RP shift  275 */
-  {  16,   0, 277}, /*  2:                  COMMA shift  277 */
-/* State 275 */
-  {  69,   0,   9}, /*  1:                     ON shift  9 */
-  { 137,   1, 276}, /*  2:                 onconf shift  276 */
-/* State 277 */
-  {  88,   0,  29}, /*  1:                   TEMP shift  29 */
-  {  45,   4,  28}, /*  2:                     ID shift  28 */
-  {  68,  12,  30}, /*  3:                 OFFSET shift  30 */
-  {   1,   0,  32}, /*  4:                  ABORT shift  32 */
-  {  26,   0,  21}, /*  5:             DELIMITERS shift  21 */
-  {  27,   0,  19}, /*  6:                   DESC shift  19 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {  73,  17,  26}, /*  8:                 PRAGMA shift  26 */
-  {  96,   0,  23}, /*  9:                 VACUUM shift  23 */
-  {  31,   0,  25}, /* 10:                    END shift  25 */
-  {  76,   0,  34}, /* 11:                REPLACE shift  34 */
-  {  46,   0,  33}, /* 12:                 IGNORE shift  33 */
-  {  56,   0,  31}, /* 13:                    KEY shift  31 */
-  { 123,  18,  37}, /* 14:                     id shift  37 */
-  { 124,  19, 279}, /* 15:                    ids shift  279 */
-  { 125,   0, 278}, /* 16:                idxitem shift  278 */
-  {   7,   0,  24}, /* 17:                  BEGIN shift  24 */
-  {  35,   0,  22}, /* 18:                EXPLAIN shift  22 */
-  {  36,  20,  35}, /* 19:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 20:                CLUSTER shift  27 */
-  {  86,  22,  38}, /* 21:                 STRING shift  38 */
-  {  20,   0,  36}, /* 22:               CONFLICT shift  36 */
-/* State 281 */
-  {  60,   0, 282}, /*  1:                     LP shift  282 */
-/* State 282 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  73,   6,  26}, /*  3:                 PRAGMA shift  26 */
-  {  26,   0,  21}, /*  4:             DELIMITERS shift  21 */
-  {  96,   3,  23}, /*  5:                 VACUUM shift  23 */
-  {  27,   0,  19}, /*  6:                   DESC shift  19 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {  76,  16,  34}, /*  8:                REPLACE shift  34 */
-  { 123,  17,  37}, /*  9:                     id shift  37 */
-  { 124,   0, 279}, /* 10:                    ids shift  279 */
-  { 125,  19, 280}, /* 11:                idxitem shift  280 */
-  { 126,   0, 283}, /* 12:                idxlist shift  283 */
-  {  35,   0,  22}, /* 13:                EXPLAIN shift  22 */
-  {  36,   0,  35}, /* 14:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {   7,   0,  24}, /* 16:                  BEGIN shift  24 */
-  {  31,   0,  25}, /* 17:                    END shift  25 */
-  {  86,   0,  38}, /* 18:                 STRING shift  38 */
-  {  56,   0,  31}, /* 19:                    KEY shift  31 */
-  {  88,   0,  29}, /* 20:                   TEMP shift  29 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  45,   0,  28}, /* 22:                     ID shift  28 */
-  {  68,  22,  30}, /* 23:                 OFFSET shift  30 */
-/* State 283 */
-  {  78,   2, 284}, /*  1:                     RP shift  284 */
-  {  16,   0, 277}, /*  2:                  COMMA shift  277 */
-/* State 284 */
-  {  69,   0,   9}, /*  1:                     ON shift  9 */
-  { 137,   1, 285}, /*  2:                 onconf shift  285 */
-/* State 286 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 287}, /* 28:                   expr shift  287 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 287 */
-  {  57,   0, 118}, /*  1:                     LE shift  118 */
-  {  85,   1, 145}, /*  2:                   STAR shift  145 */
-  {  58,   0, 134}, /*  3:                   LIKE shift  134 */
-  {  33,   0, 124}, /*  4:                     EQ shift  124 */
-  {   4,   0, 104}, /*  5:                    AND shift  104 */
-  {  61,   4, 130}, /*  6:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /*  7:                     LT shift  114 */
-  {  63,   0, 143}, /*  8:                  MINUS shift  143 */
-  {  64,  18, 122}, /*  9:                     NE shift  122 */
-  {  65,  19, 136}, /* 10:                    NOT shift  136 */
-  {  66,   0, 158}, /* 11:                NOTNULL shift  158 */
-  {  11,   0, 128}, /* 12:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 13:                     GE shift  120 */
-  {  69,  22,   9}, /* 14:                     ON shift  9 */
-  {  70,   0, 112}, /* 15:                     OR shift  112 */
-  {  43,   0, 116}, /* 16:                     GT shift  116 */
-  {  72,   0, 141}, /* 17:                   PLUS shift  141 */
-  {   8,   0, 159}, /* 18:                BETWEEN shift  159 */
-  {   9,   0, 126}, /* 19:                 BITAND shift  126 */
-  {  75,  23, 149}, /* 20:                    REM shift  149 */
-  {  48,   0, 163}, /* 21:                     IN shift  163 */
-  {  41,   0, 139}, /* 22:                   GLOB shift  139 */
-  {  19,   0, 151}, /* 23:                 CONCAT shift  151 */
-  {  79,   0, 132}, /* 24:                 RSHIFT shift  132 */
-  {  55,   0, 153}, /* 25:                 ISNULL shift  153 */
-  { 137,   0, 288}, /* 26:                 onconf shift  288 */
-  {  54,   0, 154}, /* 27:                     IS shift  154 */
-  {  83,  25, 147}, /* 28:                  SLASH shift  147 */
-/* State 292 */
-  { 138,   0,  78}, /*  1:              oneselect shift  78 */
-  {  80,   0,  82}, /*  2:                 SELECT shift  82 */
-  { 146,   2, 293}, /*  3:                 select shift  293 */
-/* State 293 */
-  { 135,   0,  80}, /*  1:         multiselect_op shift  80 */
-  {  81,   0, 412}, /*  2:                   SEMI reduce 19 */
-  {  92,   4, 166}, /*  3:                  UNION shift  166 */
-  {  52,   0, 168}, /*  4:              INTERSECT shift  168 */
-  {  34,   0, 169}, /*  5:                 EXCEPT shift  169 */
-/* State 294 */
-  {  98,   7, 299}, /*  1:                   VIEW shift  299 */
-  { 155,   0, 295}, /*  2:                   temp shift  295 */
-  {  93,   0, 312}, /*  3:                 UNIQUE shift  312 */
-  {  87,   0, 410}, /*  4:                  TABLE reduce 17 */
-  {  88,   0, 298}, /*  5:                   TEMP shift  298 */
-  { 159,   0, 303}, /*  6:             uniqueflag shift  303 */
-  {  49,   0, 595}, /*  7:                  INDEX reduce 202 */
-/* State 295 */
-  {  87,   0, 296}, /*  1:                  TABLE shift  296 */
-/* State 296 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 297}, /* 20:                    ids shift  297 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 298 */
-  {  87,   0, 409}, /*  1:                  TABLE reduce 16 */
-/* State 299 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 300}, /* 20:                    ids shift  300 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 300 */
-  {   5,   0, 301}, /*  1:                     AS shift  301 */
-/* State 301 */
-  { 138,   0,  78}, /*  1:              oneselect shift  78 */
-  {  80,   0,  82}, /*  2:                 SELECT shift  82 */
-  { 146,   2, 302}, /*  3:                 select shift  302 */
-/* State 302 */
-  { 135,   0,  80}, /*  1:         multiselect_op shift  80 */
-  {  81,   0, 482}, /*  2:                   SEMI reduce 89 */
-  {  92,   4, 166}, /*  3:                  UNION shift  166 */
-  {  52,   0, 168}, /*  4:              INTERSECT shift  168 */
-  {  34,   0, 169}, /*  5:                 EXCEPT shift  169 */
-/* State 303 */
-  {  49,   0, 304}, /*  1:                  INDEX shift  304 */
-/* State 304 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 305}, /* 20:                    ids shift  305 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 305 */
-  {  69,   0, 306}, /*  1:                     ON shift  306 */
-/* State 306 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 307}, /* 20:                    ids shift  307 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 307 */
-  {  60,   0, 308}, /*  1:                     LP shift  308 */
-/* State 308 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  73,   6,  26}, /*  3:                 PRAGMA shift  26 */
-  {  26,   0,  21}, /*  4:             DELIMITERS shift  21 */
-  {  96,   3,  23}, /*  5:                 VACUUM shift  23 */
-  {  27,   0,  19}, /*  6:                   DESC shift  19 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {  76,  16,  34}, /*  8:                REPLACE shift  34 */
-  { 123,  17,  37}, /*  9:                     id shift  37 */
-  { 124,   0, 279}, /* 10:                    ids shift  279 */
-  { 125,  19, 280}, /* 11:                idxitem shift  280 */
-  { 126,   0, 309}, /* 12:                idxlist shift  309 */
-  {  35,   0,  22}, /* 13:                EXPLAIN shift  22 */
-  {  36,   0,  35}, /* 14:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {   7,   0,  24}, /* 16:                  BEGIN shift  24 */
-  {  31,   0,  25}, /* 17:                    END shift  25 */
-  {  86,   0,  38}, /* 18:                 STRING shift  38 */
-  {  56,   0,  31}, /* 19:                    KEY shift  31 */
-  {  88,   0,  29}, /* 20:                   TEMP shift  29 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  45,   0,  28}, /* 22:                     ID shift  28 */
-  {  68,  22,  30}, /* 23:                 OFFSET shift  30 */
-/* State 309 */
-  {  78,   2, 310}, /*  1:                     RP shift  310 */
-  {  16,   0, 277}, /*  2:                  COMMA shift  277 */
-/* State 310 */
-  {  81,   2, 472}, /*  1:                   SEMI reduce 79 */
-  {  69,   0,   9}, /*  2:                     ON shift  9 */
-  { 137,   0, 311}, /*  3:                 onconf shift  311 */
-/* State 311 */
-  {  81,   0, 593}, /*  1:                   SEMI reduce 200 */
-/* State 312 */
-  {  49,   0, 594}, /*  1:                  INDEX reduce 201 */
-/* State 313 */
-  {  87,   0, 314}, /*  1:                  TABLE shift  314 */
-  {  49,   0, 318}, /*  2:                  INDEX shift  318 */
-  {  98,   0, 316}, /*  3:                   VIEW shift  316 */
-/* State 314 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 315}, /* 20:                    ids shift  315 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 315 */
-  {  81,   0, 481}, /*  1:                   SEMI reduce 88 */
-/* State 316 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 317}, /* 20:                    ids shift  317 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 317 */
-  {  81,   0, 483}, /*  1:                   SEMI reduce 90 */
-/* State 318 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 319}, /* 20:                    ids shift  319 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 319 */
-  {  81,   0, 599}, /*  1:                   SEMI reduce 206 */
-/* State 320 */
-  { 135,   0,  80}, /*  1:         multiselect_op shift  80 */
-  {  81,   0, 484}, /*  2:                   SEMI reduce 91 */
-  {  92,   4, 166}, /*  3:                  UNION shift  166 */
-  {  52,   0, 168}, /*  4:              INTERSECT shift  168 */
-  {  34,   0, 169}, /*  5:                 EXCEPT shift  169 */
-/* State 321 */
-  {  38,   0, 322}, /*  1:                   FROM shift  322 */
-/* State 322 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 323}, /* 20:                    ids shift  323 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 323 */
-  {  99,   3, 205}, /*  1:                  WHERE shift  205 */
-  { 160,   0, 324}, /*  2:              where_opt shift  324 */
-  {  81,   0, 527}, /*  3:                   SEMI reduce 134 */
-/* State 324 */
-  {  81,   0, 526}, /*  1:                   SEMI reduce 133 */
-/* State 325 */
-  {  70,   0, 326}, /*  1:                     OR shift  326 */
-  { 139,   0, 328}, /*  2:                 orconf shift  328 */
-/* State 326 */
-  {  36,   0,  14}, /*  1:                   FAIL shift  14 */
-  {   1,   0,  13}, /*  2:                  ABORT shift  13 */
-  {  46,   0,  15}, /*  3:                 IGNORE shift  15 */
-  {  77,   0,  12}, /*  4:               ROLLBACK shift  12 */
-  {  76,   3,  16}, /*  5:                REPLACE shift  16 */
-  { 143,   4, 327}, /*  6:            resolvetype shift  327 */
-/* State 328 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 329}, /* 20:                    ids shift  329 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 329 */
-  {  82,   0, 330}, /*  1:                    SET shift  330 */
-/* State 330 */
-  {  88,   0,  29}, /*  1:                   TEMP shift  29 */
-  {  45,   4,  28}, /*  2:                     ID shift  28 */
-  {  68,  12,  30}, /*  3:                 OFFSET shift  30 */
-  {   1,   0,  32}, /*  4:                  ABORT shift  32 */
-  {  26,   0,  21}, /*  5:             DELIMITERS shift  21 */
-  {  27,   0,  19}, /*  6:                   DESC shift  19 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {  73,  16,  26}, /*  8:                 PRAGMA shift  26 */
-  {  96,   0,  23}, /*  9:                 VACUUM shift  23 */
-  {  31,   0,  25}, /* 10:                    END shift  25 */
-  {  76,   0,  34}, /* 11:                REPLACE shift  34 */
-  {  46,   0,  33}, /* 12:                 IGNORE shift  33 */
-  {  56,   0,  31}, /* 13:                    KEY shift  31 */
-  { 123,  18,  37}, /* 14:                     id shift  37 */
-  { 124,  19, 337}, /* 15:                    ids shift  337 */
-  {   7,   0,  24}, /* 16:                  BEGIN shift  24 */
-  { 148,   0, 331}, /* 17:                setlist shift  331 */
-  {  35,   0,  22}, /* 18:                EXPLAIN shift  22 */
-  {  36,  20,  35}, /* 19:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 20:                CLUSTER shift  27 */
-  {  86,  22,  38}, /* 21:                 STRING shift  38 */
-  {  20,   0,  36}, /* 22:               CONFLICT shift  36 */
-/* State 331 */
-  { 160,   3, 332}, /*  1:              where_opt shift  332 */
-  {  81,   0, 527}, /*  2:                   SEMI reduce 134 */
-  {  16,   0, 333}, /*  3:                  COMMA shift  333 */
-  {  99,   0, 205}, /*  4:                  WHERE shift  205 */
-/* State 332 */
-  {  81,   0, 529}, /*  1:                   SEMI reduce 136 */
-/* State 333 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 334}, /* 20:                    ids shift  334 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 334 */
-  {  33,   0, 335}, /*  1:                     EQ shift  335 */
-/* State 335 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 336}, /* 28:                   expr shift  336 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 336 */
-  {  57,   0, 118}, /*  1:                     LE shift  118 */
-  {  79,   0, 132}, /*  2:                 RSHIFT shift  132 */
-  {  54,   0, 154}, /*  3:                     IS shift  154 */
-  {  55,   0, 153}, /*  4:                 ISNULL shift  153 */
-  {   4,   0, 104}, /*  5:                    AND shift  104 */
-  {  83,   1, 147}, /*  6:                  SLASH shift  147 */
-  {  58,   0, 134}, /*  7:                   LIKE shift  134 */
-  {  85,  17, 145}, /*  8:                   STAR shift  145 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  61,  22, 130}, /* 10:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /* 11:                     LT shift  114 */
-  {  63,  25, 143}, /* 12:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 13:                     NE shift  122 */
-  {  65,   0, 136}, /* 14:                    NOT shift  136 */
-  {  66,  26, 158}, /* 15:                NOTNULL shift  158 */
-  {  41,   0, 139}, /* 16:                   GLOB shift  139 */
-  {  33,   0, 124}, /* 17:                     EQ shift  124 */
-  {  43,   0, 116}, /* 18:                     GT shift  116 */
-  {  70,   0, 112}, /* 19:                     OR shift  112 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {  72,   0, 141}, /* 21:                   PLUS shift  141 */
-  {   9,   0, 126}, /* 22:                 BITAND shift  126 */
-  {  48,   0, 163}, /* 23:                     IN shift  163 */
-  {  75,   0, 149}, /* 24:                    REM shift  149 */
-  {  11,   0, 128}, /* 25:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 26:                     GE shift  120 */
-/* State 337 */
-  {  33,   0, 338}, /*  1:                     EQ shift  338 */
-/* State 338 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 339}, /* 28:                   expr shift  339 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
-/* State 339 */
-  {  57,   0, 118}, /*  1:                     LE shift  118 */
-  {  79,   0, 132}, /*  2:                 RSHIFT shift  132 */
-  {  54,   0, 154}, /*  3:                     IS shift  154 */
-  {  55,   0, 153}, /*  4:                 ISNULL shift  153 */
-  {   4,   0, 104}, /*  5:                    AND shift  104 */
-  {  83,   1, 147}, /*  6:                  SLASH shift  147 */
-  {  58,   0, 134}, /*  7:                   LIKE shift  134 */
-  {  85,  17, 145}, /*  8:                   STAR shift  145 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  61,  22, 130}, /* 10:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /* 11:                     LT shift  114 */
-  {  63,  25, 143}, /* 12:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 13:                     NE shift  122 */
-  {  65,   0, 136}, /* 14:                    NOT shift  136 */
-  {  66,  26, 158}, /* 15:                NOTNULL shift  158 */
-  {  41,   0, 139}, /* 16:                   GLOB shift  139 */
-  {  33,   0, 124}, /* 17:                     EQ shift  124 */
-  {  43,   0, 116}, /* 18:                     GT shift  116 */
-  {  70,   0, 112}, /* 19:                     OR shift  112 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {  72,   0, 141}, /* 21:                   PLUS shift  141 */
-  {   9,   0, 126}, /* 22:                 BITAND shift  126 */
-  {  48,   0, 163}, /* 23:                     IN shift  163 */
-  {  75,   0, 149}, /* 24:                    REM shift  149 */
-  {  11,   0, 128}, /* 25:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 26:                     GE shift  120 */
-/* State 340 */
-  {  53,   0, 341}, /*  1:                   INTO shift  341 */
-/* State 341 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 342}, /* 20:                    ids shift  342 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 342 */
-  {  60,   0, 352}, /*  1:                     LP shift  352 */
-  { 129,   0, 343}, /*  2:         inscollist_opt shift  343 */
-/* State 343 */
-  {  80,   0,  82}, /*  1:                 SELECT shift  82 */
-  {  97,   0, 345}, /*  2:                 VALUES shift  345 */
-  { 146,   4, 344}, /*  3:                 select shift  344 */
-  { 138,   0,  78}, /*  4:              oneselect shift  78 */
-/* State 344 */
-  { 135,   0,  80}, /*  1:         multiselect_op shift  80 */
-  {  81,   0, 533}, /*  2:                   SEMI reduce 140 */
-  {  92,   4, 166}, /*  3:                  UNION shift  166 */
-  {  52,   0, 168}, /*  4:              INTERSECT shift  168 */
-  {  34,   0, 169}, /*  5:                 EXCEPT shift  169 */
-/* State 345 */
-  {  60,   0, 346}, /*  1:                     LP shift  346 */
-/* State 346 */
-  { 124,   3, 106}, /*  1:                    ids shift  106 */
-  {  63,   9, 176}, /*  2:                  MINUS shift  176 */
-  {  31,   0,  25}, /*  3:                    END shift  25 */
-  {  96,  10,  23}, /*  4:                 VACUUM shift  23 */
-  {  35,   0,  22}, /*  5:                EXPLAIN shift  22 */
-  {  67,  13, 105}, /*  6:                   NULL shift  105 */
-  {  68,  14,  30}, /*  7:                 OFFSET shift  30 */
-  { 131,  17, 347}, /*  8:               itemlist shift  347 */
-  {   1,   0,  32}, /*  9:                  ABORT shift  32 */
-  {  65,   0, 172}, /* 10:                    NOT shift  172 */
-  {  72,  18, 178}, /* 11:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 12:                 PRAGMA shift  26 */
-  {  36,   0,  35}, /* 13:                   FAIL shift  35 */
-  {  37,  19, 110}, /* 14:                  FLOAT shift  110 */
-  {  76,  20,  34}, /* 15:                REPLACE shift  34 */
-  {  46,   0,  33}, /* 16:                 IGNORE shift  33 */
-  {   7,   0,  24}, /* 17:                  BEGIN shift  24 */
-  {  10,   0, 174}, /* 18:                 BITNOT shift  174 */
+  {  38,  13,  29}, /* 11:                   FAIL shift  29 */
+  {  70,   0,  33}, /* 12:                 OFFSET shift  33 */
+  {   7,   0,  21}, /* 13:                  BEGIN shift  21 */
+  {  75,   0,  34}, /* 14:                 PRAGMA shift  34 */
+  {  76,  19, 289}, /* 15:                PRIMARY shift  289 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  78,  20,  35}, /* 17:                REPLACE shift  35 */
+  {  48,   0,  31}, /* 18:                 IGNORE shift  31 */
+  {  14,   0, 304}, /* 19:                  CHECK shift  304 */
+  {  47,   0,  30}, /* 20:                     ID shift  30 */
+  { 113,   0,  54}, /* 21:                 column shift  54 */
+  { 114,  25,  55}, /* 22:               columnid shift  55 */
+  {  22,   0, 287}, /* 23:             CONSTRAINT shift  287 */
+  { 116,  26, 284}, /* 24:               conslist shift  284 */
+  {  21,   0,  23}, /* 25:               CONFLICT shift  23 */
+  {  23,   0,  24}, /* 26:                   COPY shift  24 */
+  {  88,   0,  40}, /* 27:                 STRING shift  40 */
+  {  58,  30,  32}, /* 28:                    KEY shift  32 */
+  {  90,  31,  36}, /* 29:                   TEMP shift  36 */
+  {  27,   0,  25}, /* 30:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 31:                   DESC shift  26 */
+/* State 55 */
+  {  75,   0,  34}, /*  1:                 PRAGMA shift  34 */
+  { 101,   5,  38}, /*  2:                   VIEW shift  38 */
+  {  27,   0,  25}, /*  3:             DELIMITERS shift  25 */
+  {  78,  10,  35}, /*  4:                REPLACE shift  35 */
+  {   1,   0,  19}, /*  5:                  ABORT shift  19 */
+  { 130,   0,  39}, /*  6:                     id shift  39 */
+  { 131,  11, 282}, /*  7:                    ids shift  282 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  58,  12,  32}, /*  9:                    KEY shift  32 */
+  {  28,   0,  26}, /* 10:                   DESC shift  26 */
+  {   6,   0,  20}, /* 11:                    ASC shift  20 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  37,   0,  28}, /* 13:                EXPLAIN shift  28 */
+  {  88,  17,  40}, /* 14:                 STRING shift  40 */
+  { 164,   0,  56}, /* 15:                   type shift  56 */
+  { 165,  18, 269}, /* 16:               typename shift  269 */
+  {  38,   0,  29}, /* 17:                   FAIL shift  29 */
+  {  90,  19,  36}, /* 18:                   TEMP shift  36 */
+  {  15,   0,  22}, /* 19:                CLUSTER shift  22 */
+  {  23,   0,  24}, /* 20:                   COPY shift  24 */
+  {  70,   0,  33}, /* 21:                 OFFSET shift  33 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  47,   0,  30}, /* 23:                     ID shift  30 */
+  {  48,  20,  31}, /* 24:                 IGNORE shift  31 */
+  {  99,   0,  37}, /* 25:                 VACUUM shift  37 */
+/* State 56 */
+  { 106,   0,  57}, /*  1:               carglist shift  57 */
+/* State 57 */
+  {  96,   0,  71}, /*  1:                 UNIQUE shift  71 */
+  { 105,   3,  58}, /*  2:                   carg shift  58 */
+  {  25,   0, 257}, /*  3:                DEFAULT shift  257 */
+  {  67,   0,  62}, /*  4:                    NOT shift  62 */
+  {  76,   0,  65}, /*  5:                PRIMARY shift  65 */
+  {  22,   8,  59}, /*  6:             CONSTRAINT shift  59 */
+  { 110,   6, 256}, /*  7:                  ccons shift  256 */
+  {  14,   0,  73}, /*  8:                  CHECK shift  73 */
+/* State 59 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0,  60}, /* 17:                    ids shift  60 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 60 */
+  { 110,   0,  61}, /*  1:                  ccons shift  61 */
+  {  96,   4,  71}, /*  2:                 UNIQUE shift  71 */
+  {  67,   0,  62}, /*  3:                    NOT shift  62 */
+  {  76,   0,  65}, /*  4:                PRIMARY shift  65 */
+  {  14,   0,  73}, /*  5:                  CHECK shift  73 */
+/* State 62 */
+  {  69,   0,  63}, /*  1:                   NULL shift  63 */
+/* State 63 */
+  { 144,   0,  64}, /*  1:                 onconf shift  64 */
+  {  71,   0,   9}, /*  2:                     ON shift  9 */
+/* State 65 */
+  {  58,   0,  66}, /*  1:                    KEY shift  66 */
+/* State 66 */
+  { 159,   3,  67}, /*  1:              sortorder shift  67 */
+  {  28,   0,  70}, /*  2:                   DESC shift  70 */
+  {   6,   0,  69}, /*  3:                    ASC shift  69 */
+/* State 67 */
+  { 144,   0,  68}, /*  1:                 onconf shift  68 */
+  {  71,   0,   9}, /*  2:                     ON shift  9 */
+/* State 71 */
+  { 144,   0,  72}, /*  1:                 onconf shift  72 */
+  {  71,   0,   9}, /*  2:                     ON shift  9 */
+/* State 73 */
+  {  62,   0,  74}, /*  1:                     LP shift  74 */
+/* State 74 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
   {   6,   0,  20}, /* 19:                    ASC shift  20 */
-  {  45,  22,  73}, /* 20:                     ID shift  73 */
-  {  51,  23, 109}, /* 21:                INTEGER shift  109 */
-  {  14,   0,  27}, /* 22:                CLUSTER shift  27 */
-  {  20,   0,  36}, /* 23:               CONFLICT shift  36 */
-  {  86,   0,  76}, /* 24:                 STRING shift  76 */
-  { 117,  24, 351}, /* 25:                   expr shift  351 */
-  {  56,   0,  31}, /* 26:                    KEY shift  31 */
-  {  88,  29,  29}, /* 27:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 28:                   DESC shift  19 */
-  {  26,   0,  21}, /* 29:             DELIMITERS shift  21 */
-  {  60,   0,  77}, /* 30:                     LP shift  77 */
-  { 123,   0,  75}, /* 31:                     id shift  75 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 253}, /* 26:                   expr shift  253 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 75 */
+  {  62,   0,  76}, /*  1:                     LP shift  76 */
+/* State 76 */
+  {   1,   0,  19}, /*  1:                  ABORT shift  19 */
+  {  37,   1,  28}, /*  2:                EXPLAIN shift  28 */
+  {  74,   5, 180}, /*  3:                   PLUS shift  180 */
+  {  75,   6,  34}, /*  4:                 PRAGMA shift  34 */
+  {  38,   0,  29}, /*  5:                   FAIL shift  29 */
+  {  39,   0, 112}, /*  6:                  FLOAT shift  112 */
+  {  78,   9,  35}, /*  7:                REPLACE shift  35 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {   6,   0,  20}, /*  9:                    ASC shift  20 */
+  {  15,   0,  22}, /* 10:                CLUSTER shift  22 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  47,   0,  75}, /* 12:                     ID shift  75 */
+  {  48,   0,  31}, /* 13:                 IGNORE shift  31 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  88,   0,  78}, /* 15:                 STRING shift  78 */
+  {  87,  10, 251}, /* 16:                   STAR shift  251 */
+  { 124,  15, 173}, /* 17:                   expr shift  173 */
+  { 125,  20, 202}, /* 18:               expritem shift  202 */
+  { 126,  21, 249}, /* 19:               exprlist shift  249 */
+  {  53,   0, 111}, /* 20:                INTEGER shift  111 */
+  {  90,   0,  36}, /* 21:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  { 130,  25,  77}, /* 23:                     id shift  77 */
+  { 131,  26, 108}, /* 24:                    ids shift  108 */
+  {  58,   0,  32}, /* 25:                    KEY shift  32 */
+  {  23,   0,  24}, /* 26:                   COPY shift  24 */
+  {  62,   0,  79}, /* 27:                     LP shift  79 */
+  {  99,  31,  37}, /* 28:                 VACUUM shift  37 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  { 101,  33,  38}, /* 30:                   VIEW shift  38 */
+  {  27,   0,  25}, /* 31:             DELIMITERS shift  25 */
+  {  67,   0, 174}, /* 32:                    NOT shift  174 */
+  {  65,   0, 178}, /* 33:                  MINUS shift  178 */
+  {  69,  36, 107}, /* 34:                   NULL shift  107 */
+  {  70,   0,  33}, /* 35:                 OFFSET shift  33 */
+  {  33,   0,  27}, /* 36:                    END shift  27 */
+/* State 77 */
+  {  30,   0, 455}, /*  1:                    DOT reduce 44 */
+/* State 78 */
+  {  30,   0, 456}, /*  1:                    DOT reduce 45 */
+/* State 79 */
+  {  37,   5,  28}, /*  1:                EXPLAIN shift  28 */
+  { 145,   1,  80}, /*  2:              oneselect shift  80 */
+  {  74,   6, 180}, /*  3:                   PLUS shift  180 */
+  {  75,   9,  34}, /*  4:                 PRAGMA shift  34 */
+  {   1,   0,  19}, /*  5:                  ABORT shift  19 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  78,  15,  35}, /*  7:                REPLACE shift  35 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  39,   0, 112}, /*  9:                  FLOAT shift  112 */
+  { 153,   0,  81}, /* 10:                 select shift  81 */
+  {  82,  20,  84}, /* 11:                 SELECT shift  84 */
+  {  47,   0,  75}, /* 12:                     ID shift  75 */
+  {  48,   0,  31}, /* 13:                 IGNORE shift  31 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {   6,   0,  20}, /* 15:                    ASC shift  20 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  { 124,  21, 247}, /* 17:                   expr shift  247 */
+  {  53,   0, 111}, /* 18:                INTEGER shift  111 */
+  {  90,   0,  36}, /* 19:                   TEMP shift  36 */
+  {  10,   0, 176}, /* 20:                 BITNOT shift  176 */
+  {  88,   0,  78}, /* 21:                 STRING shift  78 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  { 130,  25,  77}, /* 23:                     id shift  77 */
+  { 131,  26, 108}, /* 24:                    ids shift  108 */
+  {  58,   0,  32}, /* 25:                    KEY shift  32 */
+  {  23,   0,  24}, /* 26:                   COPY shift  24 */
+  {  62,   0,  79}, /* 27:                     LP shift  79 */
+  {  99,  31,  37}, /* 28:                 VACUUM shift  37 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  { 101,  33,  38}, /* 30:                   VIEW shift  38 */
+  {  27,   0,  25}, /* 31:             DELIMITERS shift  25 */
+  {  67,   0, 174}, /* 32:                    NOT shift  174 */
+  {  65,   0, 178}, /* 33:                  MINUS shift  178 */
+  {  69,  36, 107}, /* 34:                   NULL shift  107 */
+  {  70,   0,  33}, /* 35:                 OFFSET shift  33 */
+  {  33,   0,  27}, /* 36:                    END shift  27 */
+/* State 81 */
+  {  95,   4, 168}, /*  1:                  UNION shift  168 */
+  {  36,   0, 171}, /*  2:                 EXCEPT shift  171 */
+  { 142,   0,  82}, /*  3:         multiselect_op shift  82 */
+  {  80,   0, 246}, /*  4:                     RP shift  246 */
+  {  54,   0, 170}, /*  5:              INTERSECT shift  170 */
+/* State 82 */
+  {  82,   0,  84}, /*  1:                 SELECT shift  84 */
+  { 145,   0,  83}, /*  2:              oneselect shift  83 */
+/* State 84 */
+  { 120,   2,  85}, /*  1:               distinct shift  85 */
+  {   3,   0, 245}, /*  2:                    ALL shift  245 */
+  {  29,   0, 244}, /*  3:               DISTINCT shift  244 */
+/* State 85 */
+  { 152,   0,  86}, /*  1:             selcollist shift  86 */
+  { 151,   0, 239}, /*  2:                   sclp shift  239 */
+/* State 86 */
+  {  40,   0, 226}, /*  1:                   FROM shift  226 */
+  { 127,   1,  87}, /*  2:                   from shift  87 */
+  {  17,   0, 225}, /*  3:                  COMMA shift  225 */
+/* State 87 */
+  { 103,   0, 223}, /*  1:                  WHERE shift  223 */
+  { 167,   1,  88}, /*  2:              where_opt shift  88 */
+/* State 88 */
+  { 128,   2,  89}, /*  1:            groupby_opt shift  89 */
+  {  44,   0, 220}, /*  2:                  GROUP shift  220 */
+/* State 89 */
+  {  46,   0, 218}, /*  1:                 HAVING shift  218 */
+  { 129,   0,  90}, /*  2:             having_opt shift  90 */
+/* State 90 */
+  {  73,   0,  99}, /*  1:                  ORDER shift  99 */
+  { 147,   1,  91}, /*  2:            orderby_opt shift  91 */
+/* State 91 */
+  {  61,   0,  93}, /*  1:                  LIMIT shift  93 */
+  { 139,   1,  92}, /*  2:              limit_opt shift  92 */
+/* State 93 */
+  {  53,   0,  94}, /*  1:                INTEGER shift  94 */
+/* State 94 */
+  {  17,   0,  98}, /*  1:                  COMMA shift  98 */
+  {  70,   0,  97}, /*  2:                 OFFSET shift  97 */
+  { 140,   1,  95}, /*  3:              limit_sep shift  95 */
+/* State 95 */
+  {  53,   0,  96}, /*  1:                INTEGER shift  96 */
+/* State 97 */
+  {  53,   0, 544}, /*  1:                INTEGER reduce 133 */
+/* State 98 */
+  {  53,   0, 545}, /*  1:                INTEGER reduce 134 */
+/* State 99 */
+  {  12,   0, 100}, /*  1:                     BY shift  100 */
+/* State 100 */
+  {  70,   0,  33}, /*  1:                 OFFSET shift  33 */
+  {   1,   0,  19}, /*  2:                  ABORT shift  19 */
+  {  37,   0,  28}, /*  3:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /*  4:                   FAIL shift  29 */
+  {  74,  10, 180}, /*  5:                   PLUS shift  180 */
+  {  75,   0,  34}, /*  6:                 PRAGMA shift  34 */
+  {   6,   0,  20}, /*  7:                    ASC shift  20 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  78,   0,  35}, /*  9:                REPLACE shift  35 */
+  {  39,   0, 112}, /* 10:                  FLOAT shift  112 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  13,   0, 182}, /* 12:                   CASE shift  182 */
+  {  47,   0,  75}, /* 13:                     ID shift  75 */
+  {  48,  12,  31}, /* 14:                 IGNORE shift  31 */
+  {  88,  17,  78}, /* 15:                 STRING shift  78 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 17:                INTEGER shift  111 */
+  { 157,   0, 216}, /* 18:               sortitem shift  216 */
+  { 158,  15, 101}, /* 19:               sortlist shift  101 */
+  { 124,   0, 105}, /* 20:                   expr shift  105 */
+  {  90,   0,  36}, /* 21:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  23,   0,  24}, /* 23:                   COPY shift  24 */
+  {  58,  23,  32}, /* 24:                    KEY shift  32 */
+  {  27,   0,  25}, /* 25:             DELIMITERS shift  25 */
+  { 130,   0,  77}, /* 26:                     id shift  77 */
+  { 131,   0, 108}, /* 27:                    ids shift  108 */
+  {  62,  25,  79}, /* 28:                     LP shift  79 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  99,   0,  37}, /* 30:                 VACUUM shift  37 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 101,   0,  38}, /* 32:                   VIEW shift  38 */
+  {  67,   0, 174}, /* 33:                    NOT shift  174 */
+  {  33,   0,  27}, /* 34:                    END shift  27 */
+  {  69,   0, 107}, /* 35:                   NULL shift  107 */
+/* State 101 */
+  {  17,   0, 102}, /*  1:                  COMMA shift  102 */
+/* State 102 */
+  {   1,   0,  19}, /*  1:                  ABORT shift  19 */
+  {  69,   1, 107}, /*  2:                   NULL shift  107 */
+  {  70,   0,  33}, /*  3:                 OFFSET shift  33 */
+  {  37,   0,  28}, /*  4:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /*  5:                   FAIL shift  29 */
+  {  39,   0, 112}, /*  6:                  FLOAT shift  112 */
+  {  74,   9, 180}, /*  7:                   PLUS shift  180 */
+  {  75,  10,  34}, /*  8:                 PRAGMA shift  34 */
+  {   6,   0,  20}, /*  9:                    ASC shift  20 */
+  {   7,   0,  21}, /* 10:                  BEGIN shift  21 */
+  {  78,  12,  35}, /* 11:                REPLACE shift  35 */
+  {  10,   0, 176}, /* 12:                 BITNOT shift  176 */
+  {  13,   0, 182}, /* 13:                   CASE shift  182 */
+  {  47,  13,  75}, /* 14:                     ID shift  75 */
+  {  48,   0,  31}, /* 15:                 IGNORE shift  31 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  21,   0,  23}, /* 17:               CONFLICT shift  23 */
+  {  90,   0,  36}, /* 18:                   TEMP shift  36 */
+  {  62,  26,  79}, /* 19:                     LP shift  79 */
+  {  53,   0, 111}, /* 20:                INTEGER shift  111 */
+  {  88,   0,  78}, /* 21:                 STRING shift  78 */
+  { 157,  17, 103}, /* 22:               sortitem shift  103 */
+  { 124,  18, 105}, /* 23:                   expr shift  105 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  58,   0,  32}, /* 25:                    KEY shift  32 */
+  {  28,   0,  26}, /* 26:                   DESC shift  26 */
+  {  65,   0, 178}, /* 27:                  MINUS shift  178 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  { 130,  19,  77}, /* 29:                     id shift  77 */
+  { 131,   0, 108}, /* 30:                    ids shift  108 */
+  {  67,  33, 174}, /* 31:                    NOT shift  174 */
+  {  99,  27,  37}, /* 32:                 VACUUM shift  37 */
+  {  33,   0,  27}, /* 33:                    END shift  27 */
+  { 101,  31,  38}, /* 34:                   VIEW shift  38 */
+/* State 103 */
+  { 159,   3, 104}, /*  1:              sortorder shift  104 */
+  {  28,   0,  70}, /*  2:                   DESC shift  70 */
+  {   6,   0,  69}, /*  3:                    ASC shift  69 */
+/* State 105 */
+  {   4,   0, 106}, /*  1:                    AND shift  106 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
+/* State 106 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 113}, /* 26:                   expr shift  113 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 108 */
+  {  30,   0, 109}, /*  1:                    DOT shift  109 */
+/* State 109 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 110}, /* 17:                    ids shift  110 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 113 */
+  {  50,   0, 165}, /*  1:                     IN shift  165 */
+  {   8,   0, 161}, /*  2:                BETWEEN shift  161 */
+  {  74,   1, 143}, /*  3:                   PLUS shift  143 */
+  {  57,   5, 155}, /*  4:                 ISNULL shift  155 */
+  {   9,   0, 128}, /*  5:                 BITAND shift  128 */
+  {  77,   0, 151}, /*  6:                    REM shift  151 */
+  {  35,   8, 126}, /*  7:                     EQ shift  126 */
+  {  11,   0, 130}, /*  8:                  BITOR shift  130 */
+  {  56,   2, 156}, /*  9:                     IS shift  156 */
+  {  81,   4, 134}, /* 10:                 RSHIFT shift  134 */
+  {  63,   0, 132}, /* 11:                 LSHIFT shift  132 */
+  {  59,   7, 120}, /* 12:                     LE shift  120 */
+  {  60,   0, 136}, /* 13:                   LIKE shift  136 */
+  {  85,   0, 149}, /* 14:                  SLASH shift  149 */
+  {  42,   0, 122}, /* 15:                     GE shift  122 */
+  {  87,  11, 147}, /* 16:                   STAR shift  147 */
+  {  64,   0, 116}, /* 17:                     LT shift  116 */
+  {  65,   0, 145}, /* 18:                  MINUS shift  145 */
+  {  66,  15, 124}, /* 19:                     NE shift  124 */
+  {  67,  23, 138}, /* 20:                    NOT shift  138 */
+  {  68,  24, 160}, /* 21:                NOTNULL shift  160 */
+  {  45,   0, 118}, /* 22:                     GT shift  118 */
+  {  43,   0, 141}, /* 23:                   GLOB shift  141 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+/* State 114 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 115}, /* 26:                   expr shift  115 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 115 */
+  {  50,   0, 165}, /*  1:                     IN shift  165 */
+  {  56,   0, 156}, /*  2:                     IS shift  156 */
+  {  77,   0, 151}, /*  3:                    REM shift  151 */
+  {   9,   0, 128}, /*  4:                 BITAND shift  128 */
+  {   4,   0, 106}, /*  5:                    AND shift  106 */
+  {  60,  20, 136}, /*  6:                   LIKE shift  136 */
+  {  81,   2, 134}, /*  7:                 RSHIFT shift  134 */
+  {  57,   0, 155}, /*  8:                 ISNULL shift  155 */
+  {   8,   0, 161}, /*  9:                BETWEEN shift  161 */
+  {  59,   4, 120}, /* 10:                     LE shift  120 */
+  {  85,   6, 149}, /* 11:                  SLASH shift  149 */
+  {  11,   0, 130}, /* 12:                  BITOR shift  130 */
+  {  87,   0, 147}, /* 13:                   STAR shift  147 */
+  {  63,   0, 132}, /* 14:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 15:                     LT shift  116 */
+  {  65,   0, 145}, /* 16:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 17:                     NE shift  124 */
+  {  67,  22, 138}, /* 18:                    NOT shift  138 */
+  {  68,  23, 160}, /* 19:                NOTNULL shift  160 */
+  {  35,   0, 126}, /* 20:                     EQ shift  126 */
+  {  45,  24, 118}, /* 21:                     GT shift  118 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  43,   0, 141}, /* 23:                   GLOB shift  141 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  74,   0, 143}, /* 25:                   PLUS shift  143 */
+/* State 116 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 117}, /* 26:                   expr shift  117 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 117 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+  {  81,   3, 134}, /*  2:                 RSHIFT shift  134 */
+  {  11,   0, 130}, /*  3:                  BITOR shift  130 */
+  {  63,   0, 132}, /*  4:                 LSHIFT shift  132 */
+  {  74,   0, 143}, /*  5:                   PLUS shift  143 */
+  {  85,   7, 149}, /*  6:                  SLASH shift  149 */
+  {  65,   0, 145}, /*  7:                  MINUS shift  145 */
+  {  87,   9, 147}, /*  8:                   STAR shift  147 */
+  {  77,   0, 151}, /*  9:                    REM shift  151 */
+  {   9,   0, 128}, /* 10:                 BITAND shift  128 */
+/* State 118 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 119}, /* 26:                   expr shift  119 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 119 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+  {  81,   3, 134}, /*  2:                 RSHIFT shift  134 */
+  {  11,   0, 130}, /*  3:                  BITOR shift  130 */
+  {  63,   0, 132}, /*  4:                 LSHIFT shift  132 */
+  {  74,   0, 143}, /*  5:                   PLUS shift  143 */
+  {  85,   7, 149}, /*  6:                  SLASH shift  149 */
+  {  65,   0, 145}, /*  7:                  MINUS shift  145 */
+  {  87,   9, 147}, /*  8:                   STAR shift  147 */
+  {  77,   0, 151}, /*  9:                    REM shift  151 */
+  {   9,   0, 128}, /* 10:                 BITAND shift  128 */
+/* State 120 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 121}, /* 26:                   expr shift  121 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 121 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+  {  81,   3, 134}, /*  2:                 RSHIFT shift  134 */
+  {  11,   0, 130}, /*  3:                  BITOR shift  130 */
+  {  63,   0, 132}, /*  4:                 LSHIFT shift  132 */
+  {  74,   0, 143}, /*  5:                   PLUS shift  143 */
+  {  85,   7, 149}, /*  6:                  SLASH shift  149 */
+  {  65,   0, 145}, /*  7:                  MINUS shift  145 */
+  {  87,   9, 147}, /*  8:                   STAR shift  147 */
+  {  77,   0, 151}, /*  9:                    REM shift  151 */
+  {   9,   0, 128}, /* 10:                 BITAND shift  128 */
+/* State 122 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 123}, /* 26:                   expr shift  123 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 123 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+  {  81,   3, 134}, /*  2:                 RSHIFT shift  134 */
+  {  11,   0, 130}, /*  3:                  BITOR shift  130 */
+  {  63,   0, 132}, /*  4:                 LSHIFT shift  132 */
+  {  74,   0, 143}, /*  5:                   PLUS shift  143 */
+  {  85,   7, 149}, /*  6:                  SLASH shift  149 */
+  {  65,   0, 145}, /*  7:                  MINUS shift  145 */
+  {  87,   9, 147}, /*  8:                   STAR shift  147 */
+  {  77,   0, 151}, /*  9:                    REM shift  151 */
+  {   9,   0, 128}, /* 10:                 BITAND shift  128 */
+/* State 124 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 125}, /* 26:                   expr shift  125 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 125 */
+  {  42,   0, 122}, /*  1:                     GE shift  122 */
+  {  85,   0, 149}, /*  2:                  SLASH shift  149 */
+  {  59,   6, 120}, /*  3:                     LE shift  120 */
+  {  87,   3, 147}, /*  4:                   STAR shift  147 */
+  {  74,   0, 143}, /*  5:                   PLUS shift  143 */
+  {  45,   0, 118}, /*  6:                     GT shift  118 */
+  {  20,   0, 153}, /*  7:                 CONCAT shift  153 */
+  {  77,  11, 151}, /*  8:                    REM shift  151 */
+  {  64,   0, 116}, /*  9:                     LT shift  116 */
+  {  65,  13, 145}, /* 10:                  MINUS shift  145 */
+  {  63,   0, 132}, /* 11:                 LSHIFT shift  132 */
+  {  81,  14, 134}, /* 12:                 RSHIFT shift  134 */
+  {   9,   0, 128}, /* 13:                 BITAND shift  128 */
+  {  11,   0, 130}, /* 14:                  BITOR shift  130 */
+/* State 126 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 127}, /* 26:                   expr shift  127 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 127 */
+  {  42,   0, 122}, /*  1:                     GE shift  122 */
+  {  85,   0, 149}, /*  2:                  SLASH shift  149 */
+  {  59,   6, 120}, /*  3:                     LE shift  120 */
+  {  87,   3, 147}, /*  4:                   STAR shift  147 */
+  {  74,   0, 143}, /*  5:                   PLUS shift  143 */
+  {  45,   0, 118}, /*  6:                     GT shift  118 */
+  {  20,   0, 153}, /*  7:                 CONCAT shift  153 */
+  {  77,  11, 151}, /*  8:                    REM shift  151 */
+  {  64,   0, 116}, /*  9:                     LT shift  116 */
+  {  65,  13, 145}, /* 10:                  MINUS shift  145 */
+  {  63,   0, 132}, /* 11:                 LSHIFT shift  132 */
+  {  81,  14, 134}, /* 12:                 RSHIFT shift  134 */
+  {   9,   0, 128}, /* 13:                 BITAND shift  128 */
+  {  11,   0, 130}, /* 14:                  BITOR shift  130 */
+/* State 128 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 129}, /* 26:                   expr shift  129 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 129 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+  {  85,   0, 149}, /*  2:                  SLASH shift  149 */
+  {  74,   1, 143}, /*  3:                   PLUS shift  143 */
+  {  87,   0, 147}, /*  4:                   STAR shift  147 */
+  {  65,   0, 145}, /*  5:                  MINUS shift  145 */
+  {  77,   5, 151}, /*  6:                    REM shift  151 */
+/* State 130 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 131}, /* 26:                   expr shift  131 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 131 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+  {  85,   0, 149}, /*  2:                  SLASH shift  149 */
+  {  74,   1, 143}, /*  3:                   PLUS shift  143 */
+  {  87,   0, 147}, /*  4:                   STAR shift  147 */
+  {  65,   0, 145}, /*  5:                  MINUS shift  145 */
+  {  77,   5, 151}, /*  6:                    REM shift  151 */
+/* State 132 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 133}, /* 26:                   expr shift  133 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 133 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+  {  85,   0, 149}, /*  2:                  SLASH shift  149 */
+  {  74,   1, 143}, /*  3:                   PLUS shift  143 */
+  {  87,   0, 147}, /*  4:                   STAR shift  147 */
+  {  65,   0, 145}, /*  5:                  MINUS shift  145 */
+  {  77,   5, 151}, /*  6:                    REM shift  151 */
+/* State 134 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 135}, /* 26:                   expr shift  135 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 135 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+  {  85,   0, 149}, /*  2:                  SLASH shift  149 */
+  {  74,   1, 143}, /*  3:                   PLUS shift  143 */
+  {  87,   0, 147}, /*  4:                   STAR shift  147 */
+  {  65,   0, 145}, /*  5:                  MINUS shift  145 */
+  {  77,   5, 151}, /*  6:                    REM shift  151 */
+/* State 136 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 137}, /* 26:                   expr shift  137 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 137 */
+  {  42,   0, 122}, /*  1:                     GE shift  122 */
+  {  85,   0, 149}, /*  2:                  SLASH shift  149 */
+  {  59,   6, 120}, /*  3:                     LE shift  120 */
+  {  87,   3, 147}, /*  4:                   STAR shift  147 */
+  {  74,   0, 143}, /*  5:                   PLUS shift  143 */
+  {  45,   0, 118}, /*  6:                     GT shift  118 */
+  {  20,   0, 153}, /*  7:                 CONCAT shift  153 */
+  {  77,  11, 151}, /*  8:                    REM shift  151 */
+  {  64,   0, 116}, /*  9:                     LT shift  116 */
+  {  65,  13, 145}, /* 10:                  MINUS shift  145 */
+  {  63,   0, 132}, /* 11:                 LSHIFT shift  132 */
+  {  81,  14, 134}, /* 12:                 RSHIFT shift  134 */
+  {   9,   0, 128}, /* 13:                 BITAND shift  128 */
+  {  11,   0, 130}, /* 14:                  BITOR shift  130 */
+/* State 138 */
+  {  60,   2, 139}, /*  1:                   LIKE shift  139 */
+  {  50,   0, 210}, /*  2:                     IN shift  210 */
+  {   8,   0, 206}, /*  3:                BETWEEN shift  206 */
+  {  43,   3, 203}, /*  4:                   GLOB shift  203 */
+  {  69,   0, 205}, /*  5:                   NULL shift  205 */
+/* State 139 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 140}, /* 26:                   expr shift  140 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 140 */
+  {  50,   0, 165}, /*  1:                     IN shift  165 */
+  {   8,   0, 161}, /*  2:                BETWEEN shift  161 */
+  {  74,   1, 143}, /*  3:                   PLUS shift  143 */
+  {  57,   5, 155}, /*  4:                 ISNULL shift  155 */
+  {   9,   0, 128}, /*  5:                 BITAND shift  128 */
+  {  77,   0, 151}, /*  6:                    REM shift  151 */
+  {  35,   8, 126}, /*  7:                     EQ shift  126 */
+  {  11,   0, 130}, /*  8:                  BITOR shift  130 */
+  {  56,   2, 156}, /*  9:                     IS shift  156 */
+  {  81,   4, 134}, /* 10:                 RSHIFT shift  134 */
+  {  63,   0, 132}, /* 11:                 LSHIFT shift  132 */
+  {  59,   7, 120}, /* 12:                     LE shift  120 */
+  {  60,   0, 136}, /* 13:                   LIKE shift  136 */
+  {  85,   0, 149}, /* 14:                  SLASH shift  149 */
+  {  42,   0, 122}, /* 15:                     GE shift  122 */
+  {  87,  11, 147}, /* 16:                   STAR shift  147 */
+  {  64,   0, 116}, /* 17:                     LT shift  116 */
+  {  65,   0, 145}, /* 18:                  MINUS shift  145 */
+  {  66,  15, 124}, /* 19:                     NE shift  124 */
+  {  67,  23, 138}, /* 20:                    NOT shift  138 */
+  {  68,  24, 160}, /* 21:                NOTNULL shift  160 */
+  {  45,   0, 118}, /* 22:                     GT shift  118 */
+  {  43,   0, 141}, /* 23:                   GLOB shift  141 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+/* State 141 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 142}, /* 26:                   expr shift  142 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 142 */
+  {  42,   0, 122}, /*  1:                     GE shift  122 */
+  {  85,   0, 149}, /*  2:                  SLASH shift  149 */
+  {  59,   6, 120}, /*  3:                     LE shift  120 */
+  {  87,   3, 147}, /*  4:                   STAR shift  147 */
+  {  74,   0, 143}, /*  5:                   PLUS shift  143 */
+  {  45,   0, 118}, /*  6:                     GT shift  118 */
+  {  20,   0, 153}, /*  7:                 CONCAT shift  153 */
+  {  77,  11, 151}, /*  8:                    REM shift  151 */
+  {  64,   0, 116}, /*  9:                     LT shift  116 */
+  {  65,  13, 145}, /* 10:                  MINUS shift  145 */
+  {  63,   0, 132}, /* 11:                 LSHIFT shift  132 */
+  {  81,  14, 134}, /* 12:                 RSHIFT shift  134 */
+  {   9,   0, 128}, /* 13:                 BITAND shift  128 */
+  {  11,   0, 130}, /* 14:                  BITOR shift  130 */
+/* State 143 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 144}, /* 26:                   expr shift  144 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 144 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+  {  85,   3, 149}, /*  2:                  SLASH shift  149 */
+  {  77,   0, 151}, /*  3:                    REM shift  151 */
+  {  87,   0, 147}, /*  4:                   STAR shift  147 */
+/* State 145 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 146}, /* 26:                   expr shift  146 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 146 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+  {  85,   3, 149}, /*  2:                  SLASH shift  149 */
+  {  77,   0, 151}, /*  3:                    REM shift  151 */
+  {  87,   0, 147}, /*  4:                   STAR shift  147 */
+/* State 147 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 148}, /* 26:                   expr shift  148 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 148 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+/* State 149 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 150}, /* 26:                   expr shift  150 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 150 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+/* State 151 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 152}, /* 26:                   expr shift  152 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 152 */
+  {  20,   0, 153}, /*  1:                 CONCAT shift  153 */
+/* State 153 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 154}, /* 26:                   expr shift  154 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 156 */
+  {  67,   0, 158}, /*  1:                    NOT shift  158 */
+  {  69,   1, 157}, /*  2:                   NULL shift  157 */
+/* State 158 */
+  {  69,   0, 159}, /*  1:                   NULL shift  159 */
+/* State 161 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 162}, /* 26:                   expr shift  162 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 162 */
+  {   4,   0, 163}, /*  1:                    AND shift  163 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
+/* State 163 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 164}, /* 26:                   expr shift  164 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 164 */
+  {  42,   0, 122}, /*  1:                     GE shift  122 */
+  {  85,   0, 149}, /*  2:                  SLASH shift  149 */
+  {  59,   6, 120}, /*  3:                     LE shift  120 */
+  {  87,   3, 147}, /*  4:                   STAR shift  147 */
+  {  74,   0, 143}, /*  5:                   PLUS shift  143 */
+  {  45,   0, 118}, /*  6:                     GT shift  118 */
+  {  20,   0, 153}, /*  7:                 CONCAT shift  153 */
+  {  77,  11, 151}, /*  8:                    REM shift  151 */
+  {  64,   0, 116}, /*  9:                     LT shift  116 */
+  {  65,  13, 145}, /* 10:                  MINUS shift  145 */
+  {  63,   0, 132}, /* 11:                 LSHIFT shift  132 */
+  {  81,  14, 134}, /* 12:                 RSHIFT shift  134 */
+  {   9,   0, 128}, /* 13:                 BITAND shift  128 */
+  {  11,   0, 130}, /* 14:                  BITOR shift  130 */
+/* State 165 */
+  {  62,   0, 166}, /*  1:                     LP shift  166 */
+/* State 166 */
+  {  38,   0,  29}, /*  1:                   FAIL shift  29 */
+  { 153,   4, 167}, /*  2:                 select shift  167 */
+  {  78,   0,  35}, /*  3:                REPLACE shift  35 */
+  {  39,   5, 112}, /*  4:                  FLOAT shift  112 */
+  {   1,   0,  19}, /*  5:                  ABORT shift  19 */
+  {   6,   0,  20}, /*  6:                    ASC shift  20 */
+  {  82,   6,  84}, /*  7:                 SELECT shift  84 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  48,  19,  31}, /*  9:                 IGNORE shift  31 */
+  {  47,   0,  75}, /* 10:                     ID shift  75 */
+  { 124,   9, 173}, /* 11:                   expr shift  173 */
+  { 125,   0, 202}, /* 12:               expritem shift  202 */
+  { 126,  20, 198}, /* 13:               exprlist shift  198 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  90,   0,  36}, /* 15:                   TEMP shift  36 */
+  {  53,  23, 111}, /* 16:                INTEGER shift  111 */
+  { 130,   0,  77}, /* 17:                     id shift  77 */
+  { 131,   0, 108}, /* 18:                    ids shift  108 */
+  {  10,   0, 176}, /* 19:                 BITNOT shift  176 */
+  {  88,   0,  78}, /* 20:                 STRING shift  78 */
+  {  58,   0,  32}, /* 21:                    KEY shift  32 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  15,   0,  22}, /* 23:                CLUSTER shift  22 */
+  {  99,  27,  37}, /* 24:                 VACUUM shift  37 */
+  {  62,   0,  79}, /* 25:                     LP shift  79 */
+  { 101,   0,  38}, /* 26:                   VIEW shift  38 */
+  {  23,   0,  24}, /* 27:                   COPY shift  24 */
+  {  65,  31, 178}, /* 28:                  MINUS shift  178 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  67,   0, 174}, /* 30:                    NOT shift  174 */
+  {  27,   0,  25}, /* 31:             DELIMITERS shift  25 */
+  { 145,  35,  80}, /* 32:              oneselect shift  80 */
+  {  70,   0,  33}, /* 33:                 OFFSET shift  33 */
+  {  33,   0,  27}, /* 34:                    END shift  27 */
+  {  69,   0, 107}, /* 35:                   NULL shift  107 */
+  {  37,   0,  28}, /* 36:                EXPLAIN shift  28 */
+  {  74,   0, 180}, /* 37:                   PLUS shift  180 */
+  {  75,  36,  34}, /* 38:                 PRAGMA shift  34 */
+/* State 167 */
+  {  95,   4, 168}, /*  1:                  UNION shift  168 */
+  {  36,   0, 171}, /*  2:                 EXCEPT shift  171 */
+  { 142,   0,  82}, /*  3:         multiselect_op shift  82 */
+  {  80,   0, 172}, /*  4:                     RP shift  172 */
+  {  54,   0, 170}, /*  5:              INTERSECT shift  170 */
+/* State 168 */
+  {  82,   0, 507}, /*  1:                 SELECT reduce 96 */
+  {   3,   0, 169}, /*  2:                    ALL shift  169 */
+/* State 169 */
+  {  82,   0, 508}, /*  1:                 SELECT reduce 97 */
+/* State 170 */
+  {  82,   0, 509}, /*  1:                 SELECT reduce 98 */
+/* State 171 */
+  {  82,   0, 510}, /*  1:                 SELECT reduce 99 */
+/* State 173 */
+  {   4,   0, 106}, /*  1:                    AND shift  106 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
+/* State 174 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 175}, /* 26:                   expr shift  175 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 175 */
+  {  50,   0, 165}, /*  1:                     IN shift  165 */
+  {   8,   0, 161}, /*  2:                BETWEEN shift  161 */
+  {  74,   1, 143}, /*  3:                   PLUS shift  143 */
+  {  57,   5, 155}, /*  4:                 ISNULL shift  155 */
+  {   9,   0, 128}, /*  5:                 BITAND shift  128 */
+  {  77,   0, 151}, /*  6:                    REM shift  151 */
+  {  35,   8, 126}, /*  7:                     EQ shift  126 */
+  {  11,   0, 130}, /*  8:                  BITOR shift  130 */
+  {  56,   2, 156}, /*  9:                     IS shift  156 */
+  {  81,   4, 134}, /* 10:                 RSHIFT shift  134 */
+  {  63,   0, 132}, /* 11:                 LSHIFT shift  132 */
+  {  59,   7, 120}, /* 12:                     LE shift  120 */
+  {  60,   0, 136}, /* 13:                   LIKE shift  136 */
+  {  85,   0, 149}, /* 14:                  SLASH shift  149 */
+  {  42,   0, 122}, /* 15:                     GE shift  122 */
+  {  87,  11, 147}, /* 16:                   STAR shift  147 */
+  {  64,   0, 116}, /* 17:                     LT shift  116 */
+  {  65,   0, 145}, /* 18:                  MINUS shift  145 */
+  {  66,  15, 124}, /* 19:                     NE shift  124 */
+  {  67,  23, 138}, /* 20:                    NOT shift  138 */
+  {  68,  24, 160}, /* 21:                NOTNULL shift  160 */
+  {  45,   0, 118}, /* 22:                     GT shift  118 */
+  {  43,   0, 141}, /* 23:                   GLOB shift  141 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+/* State 176 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 177}, /* 26:                   expr shift  177 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 178 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 179}, /* 26:                   expr shift  179 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 180 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 181}, /* 26:                   expr shift  181 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 182 */
+  {  70,   0,  33}, /*  1:                 OFFSET shift  33 */
+  {   1,   0,  19}, /*  2:                  ABORT shift  19 */
+  {  37,   0,  28}, /*  3:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /*  4:                   FAIL shift  29 */
+  { 109,  10, 184}, /*  5:           case_operand shift  184 */
+  {  75,   0,  34}, /*  6:                 PRAGMA shift  34 */
+  {   6,   0,  20}, /*  7:                    ASC shift  20 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  78,   0,  35}, /*  9:                REPLACE shift  35 */
+  {  74,  12, 180}, /* 10:                   PLUS shift  180 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  39,   0, 112}, /* 12:                  FLOAT shift  112 */
+  {  47,   0,  75}, /* 13:                     ID shift  75 */
+  {  48,  15,  31}, /* 14:                 IGNORE shift  31 */
+  {  13,   0, 182}, /* 15:                   CASE shift  182 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 17:                INTEGER shift  111 */
+  {  23,   0,  24}, /* 18:                   COPY shift  24 */
+  {  88,  17,  78}, /* 19:                 STRING shift  78 */
+  { 124,   0, 183}, /* 20:                   expr shift  183 */
+  {  90,   0,  36}, /* 21:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  27,   0,  25}, /* 23:             DELIMITERS shift  25 */
+  {  58,  18,  32}, /* 24:                    KEY shift  32 */
+  {  67,   0, 174}, /* 25:                    NOT shift  174 */
+  { 130,   0,  77}, /* 26:                     id shift  77 */
+  { 131,   0, 108}, /* 27:                    ids shift  108 */
+  {  62,  23,  79}, /* 28:                     LP shift  79 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  99,   0,  37}, /* 30:                 VACUUM shift  37 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 101,   0,  38}, /* 32:                   VIEW shift  38 */
+  { 102,  25, 615}, /* 33:                   WHEN reduce 204 */
+  {  33,   0,  27}, /* 34:                    END shift  27 */
+  {  69,   0, 107}, /* 35:                   NULL shift  107 */
+/* State 183 */
+  {  81,   0, 134}, /*  1:                 RSHIFT shift  134 */
+  {   4,   0, 106}, /*  2:                    AND shift  106 */
+  {  56,   0, 156}, /*  3:                     IS shift  156 */
+  {  57,   0, 155}, /*  4:                 ISNULL shift  155 */
+  {  85,   2, 149}, /*  5:                  SLASH shift  149 */
+  {  59,   0, 120}, /*  6:                     LE shift  120 */
+  {  87,   8, 147}, /*  7:                   STAR shift  147 */
+  {  60,   0, 136}, /*  8:                   LIKE shift  136 */
+  {  35,  18, 126}, /*  9:                     EQ shift  126 */
+  {  63,  20, 132}, /* 10:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 11:                     LT shift  116 */
+  {  65,  23, 145}, /* 12:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 13:                     NE shift  124 */
+  {  67,   0, 138}, /* 14:                    NOT shift  138 */
+  {  68,   0, 160}, /* 15:                NOTNULL shift  160 */
+  {  42,   0, 122}, /* 16:                     GE shift  122 */
+  {  43,   0, 141}, /* 17:                   GLOB shift  141 */
+  {   8,   0, 161}, /* 18:                BETWEEN shift  161 */
+  {  72,  25, 114}, /* 19:                     OR shift  114 */
+  {   9,   0, 128}, /* 20:                 BITAND shift  128 */
+  {  74,  26, 143}, /* 21:                   PLUS shift  143 */
+  { 102,   0, 614}, /* 22:                   WHEN reduce 203 */
+  {  11,   0, 130}, /* 23:                  BITOR shift  130 */
+  {  77,  27, 151}, /* 24:                    REM shift  151 */
+  {  45,   0, 118}, /* 25:                     GT shift  118 */
+  {  20,   0, 153}, /* 26:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 27:                     IN shift  165 */
+/* State 184 */
+  { 108,   2, 185}, /*  1:          case_exprlist shift  185 */
+  { 102,   0, 194}, /*  2:                   WHEN shift  194 */
+/* State 185 */
+  {  32,   0, 192}, /*  1:                   ELSE shift  192 */
+  {  33,   0, 613}, /*  2:                    END reduce 202 */
+  { 102,   0, 188}, /*  3:                   WHEN shift  188 */
+  { 107,   0, 186}, /*  4:              case_else shift  186 */
+/* State 186 */
+  {  33,   0, 187}, /*  1:                    END shift  187 */
+/* State 188 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 189}, /* 26:                   expr shift  189 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 189 */
+  {  81,   0, 134}, /*  1:                 RSHIFT shift  134 */
+  {   4,   0, 106}, /*  2:                    AND shift  106 */
+  {  56,   0, 156}, /*  3:                     IS shift  156 */
+  {  57,   0, 155}, /*  4:                 ISNULL shift  155 */
+  {  85,   2, 149}, /*  5:                  SLASH shift  149 */
+  {  59,   0, 120}, /*  6:                     LE shift  120 */
+  {  87,   8, 147}, /*  7:                   STAR shift  147 */
+  {  60,   0, 136}, /*  8:                   LIKE shift  136 */
+  {  35,  18, 126}, /*  9:                     EQ shift  126 */
+  {  63,  20, 132}, /* 10:                 LSHIFT shift  132 */
+  {  91,  22, 190}, /* 11:                   THEN shift  190 */
+  {  65,  23, 145}, /* 12:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 13:                     NE shift  124 */
+  {  67,   0, 138}, /* 14:                    NOT shift  138 */
+  {  68,   0, 160}, /* 15:                NOTNULL shift  160 */
+  {  42,   0, 122}, /* 16:                     GE shift  122 */
+  {  43,   0, 141}, /* 17:                   GLOB shift  141 */
+  {   8,   0, 161}, /* 18:                BETWEEN shift  161 */
+  {  72,  25, 114}, /* 19:                     OR shift  114 */
+  {   9,   0, 128}, /* 20:                 BITAND shift  128 */
+  {  74,  26, 143}, /* 21:                   PLUS shift  143 */
+  {  64,   0, 116}, /* 22:                     LT shift  116 */
+  {  11,   0, 130}, /* 23:                  BITOR shift  130 */
+  {  77,  27, 151}, /* 24:                    REM shift  151 */
+  {  45,   0, 118}, /* 25:                     GT shift  118 */
+  {  20,   0, 153}, /* 26:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 27:                     IN shift  165 */
+/* State 190 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 191}, /* 26:                   expr shift  191 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 191 */
+  {   4,   0, 106}, /*  1:                    AND shift  106 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
+/* State 192 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 193}, /* 26:                   expr shift  193 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 193 */
+  {  81,   0, 134}, /*  1:                 RSHIFT shift  134 */
+  {   4,   0, 106}, /*  2:                    AND shift  106 */
+  {  56,   0, 156}, /*  3:                     IS shift  156 */
+  {  57,   0, 155}, /*  4:                 ISNULL shift  155 */
+  {  85,   2, 149}, /*  5:                  SLASH shift  149 */
+  {  59,   0, 120}, /*  6:                     LE shift  120 */
+  {  87,   8, 147}, /*  7:                   STAR shift  147 */
+  {  60,  18, 136}, /*  8:                   LIKE shift  136 */
+  {  35,  20, 126}, /*  9:                     EQ shift  126 */
+  {  63,  22, 132}, /* 10:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 11:                     LT shift  116 */
+  {  65,  23, 145}, /* 12:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 13:                     NE shift  124 */
+  {  67,   0, 138}, /* 14:                    NOT shift  138 */
+  {  68,   0, 160}, /* 15:                NOTNULL shift  160 */
+  {  42,   0, 122}, /* 16:                     GE shift  122 */
+  {  43,   0, 141}, /* 17:                   GLOB shift  141 */
+  {  33,   0, 612}, /* 18:                    END reduce 201 */
+  {  72,  25, 114}, /* 19:                     OR shift  114 */
+  {   8,   0, 161}, /* 20:                BETWEEN shift  161 */
+  {  74,  26, 143}, /* 21:                   PLUS shift  143 */
+  {   9,   0, 128}, /* 22:                 BITAND shift  128 */
+  {  11,   0, 130}, /* 23:                  BITOR shift  130 */
+  {  77,  27, 151}, /* 24:                    REM shift  151 */
+  {  45,   0, 118}, /* 25:                     GT shift  118 */
+  {  20,   0, 153}, /* 26:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 27:                     IN shift  165 */
+/* State 194 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 195}, /* 26:                   expr shift  195 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 195 */
+  {  81,   0, 134}, /*  1:                 RSHIFT shift  134 */
+  {   4,   0, 106}, /*  2:                    AND shift  106 */
+  {  56,   0, 156}, /*  3:                     IS shift  156 */
+  {  57,   0, 155}, /*  4:                 ISNULL shift  155 */
+  {  85,   2, 149}, /*  5:                  SLASH shift  149 */
+  {  59,   0, 120}, /*  6:                     LE shift  120 */
+  {  87,   8, 147}, /*  7:                   STAR shift  147 */
+  {  60,   0, 136}, /*  8:                   LIKE shift  136 */
+  {  35,  18, 126}, /*  9:                     EQ shift  126 */
+  {  63,  20, 132}, /* 10:                 LSHIFT shift  132 */
+  {  91,  22, 196}, /* 11:                   THEN shift  196 */
+  {  65,  23, 145}, /* 12:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 13:                     NE shift  124 */
+  {  67,   0, 138}, /* 14:                    NOT shift  138 */
+  {  68,   0, 160}, /* 15:                NOTNULL shift  160 */
+  {  42,   0, 122}, /* 16:                     GE shift  122 */
+  {  43,   0, 141}, /* 17:                   GLOB shift  141 */
+  {   8,   0, 161}, /* 18:                BETWEEN shift  161 */
+  {  72,  25, 114}, /* 19:                     OR shift  114 */
+  {   9,   0, 128}, /* 20:                 BITAND shift  128 */
+  {  74,  26, 143}, /* 21:                   PLUS shift  143 */
+  {  64,   0, 116}, /* 22:                     LT shift  116 */
+  {  11,   0, 130}, /* 23:                  BITOR shift  130 */
+  {  77,  27, 151}, /* 24:                    REM shift  151 */
+  {  45,   0, 118}, /* 25:                     GT shift  118 */
+  {  20,   0, 153}, /* 26:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 27:                     IN shift  165 */
+/* State 196 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 197}, /* 26:                   expr shift  197 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 197 */
+  {   4,   0, 106}, /*  1:                    AND shift  106 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
+/* State 198 */
+  {  80,   0, 199}, /*  1:                     RP shift  199 */
+  {  17,   0, 200}, /*  2:                  COMMA shift  200 */
+/* State 200 */
+  {   1,   0,  19}, /*  1:                  ABORT shift  19 */
+  {  69,   1, 107}, /*  2:                   NULL shift  107 */
+  {  70,   0,  33}, /*  3:                 OFFSET shift  33 */
+  {  37,   0,  28}, /*  4:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /*  5:                   FAIL shift  29 */
+  {  39,   0, 112}, /*  6:                  FLOAT shift  112 */
+  {  74,   9, 180}, /*  7:                   PLUS shift  180 */
+  {  75,  10,  34}, /*  8:                 PRAGMA shift  34 */
+  {   6,   0,  20}, /*  9:                    ASC shift  20 */
+  {   7,   0,  21}, /* 10:                  BEGIN shift  21 */
+  {  78,  12,  35}, /* 11:                REPLACE shift  35 */
+  {  10,   0, 176}, /* 12:                 BITNOT shift  176 */
+  {  13,   0, 182}, /* 13:                   CASE shift  182 */
+  {  47,  13,  75}, /* 14:                     ID shift  75 */
+  {  48,   0,  31}, /* 15:                 IGNORE shift  31 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  90,   0,  36}, /* 17:                   TEMP shift  36 */
+  {  23,   0,  24}, /* 18:                   COPY shift  24 */
+  {  62,  26,  79}, /* 19:                     LP shift  79 */
+  {  53,   0, 111}, /* 20:                INTEGER shift  111 */
+  {  88,   0,  78}, /* 21:                 STRING shift  78 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  { 124,  17, 173}, /* 23:                   expr shift  173 */
+  { 125,  18, 201}, /* 24:               expritem shift  201 */
+  {  58,   0,  32}, /* 25:                    KEY shift  32 */
+  {  28,   0,  26}, /* 26:                   DESC shift  26 */
+  {  65,   0, 178}, /* 27:                  MINUS shift  178 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  { 130,  19,  77}, /* 29:                     id shift  77 */
+  { 131,   0, 108}, /* 30:                    ids shift  108 */
+  {  67,  33, 174}, /* 31:                    NOT shift  174 */
+  {  99,  27,  37}, /* 32:                 VACUUM shift  37 */
+  {  33,   0,  27}, /* 33:                    END shift  27 */
+  { 101,  31,  38}, /* 34:                   VIEW shift  38 */
+/* State 203 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 204}, /* 26:                   expr shift  204 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 204 */
+  {  50,   0, 165}, /*  1:                     IN shift  165 */
+  {   8,   0, 161}, /*  2:                BETWEEN shift  161 */
+  {  74,   1, 143}, /*  3:                   PLUS shift  143 */
+  {  57,   5, 155}, /*  4:                 ISNULL shift  155 */
+  {   9,   0, 128}, /*  5:                 BITAND shift  128 */
+  {  77,   0, 151}, /*  6:                    REM shift  151 */
+  {  35,   8, 126}, /*  7:                     EQ shift  126 */
+  {  11,   0, 130}, /*  8:                  BITOR shift  130 */
+  {  56,   2, 156}, /*  9:                     IS shift  156 */
+  {  81,   4, 134}, /* 10:                 RSHIFT shift  134 */
+  {  63,   0, 132}, /* 11:                 LSHIFT shift  132 */
+  {  59,   7, 120}, /* 12:                     LE shift  120 */
+  {  60,   0, 136}, /* 13:                   LIKE shift  136 */
+  {  85,   0, 149}, /* 14:                  SLASH shift  149 */
+  {  42,   0, 122}, /* 15:                     GE shift  122 */
+  {  87,  11, 147}, /* 16:                   STAR shift  147 */
+  {  64,   0, 116}, /* 17:                     LT shift  116 */
+  {  65,   0, 145}, /* 18:                  MINUS shift  145 */
+  {  66,  15, 124}, /* 19:                     NE shift  124 */
+  {  67,  23, 138}, /* 20:                    NOT shift  138 */
+  {  68,  24, 160}, /* 21:                NOTNULL shift  160 */
+  {  45,   0, 118}, /* 22:                     GT shift  118 */
+  {  43,   0, 141}, /* 23:                   GLOB shift  141 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+/* State 206 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 207}, /* 26:                   expr shift  207 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 207 */
+  {   4,   0, 208}, /*  1:                    AND shift  208 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
+/* State 208 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 209}, /* 26:                   expr shift  209 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 209 */
+  {  50,   0, 165}, /*  1:                     IN shift  165 */
+  {   8,   0, 161}, /*  2:                BETWEEN shift  161 */
+  {  74,   1, 143}, /*  3:                   PLUS shift  143 */
+  {  57,   5, 155}, /*  4:                 ISNULL shift  155 */
+  {   9,   0, 128}, /*  5:                 BITAND shift  128 */
+  {  77,   0, 151}, /*  6:                    REM shift  151 */
+  {  35,   8, 126}, /*  7:                     EQ shift  126 */
+  {  11,   0, 130}, /*  8:                  BITOR shift  130 */
+  {  56,   2, 156}, /*  9:                     IS shift  156 */
+  {  81,   4, 134}, /* 10:                 RSHIFT shift  134 */
+  {  63,   0, 132}, /* 11:                 LSHIFT shift  132 */
+  {  59,   7, 120}, /* 12:                     LE shift  120 */
+  {  60,   0, 136}, /* 13:                   LIKE shift  136 */
+  {  85,   0, 149}, /* 14:                  SLASH shift  149 */
+  {  42,   0, 122}, /* 15:                     GE shift  122 */
+  {  87,  11, 147}, /* 16:                   STAR shift  147 */
+  {  64,   0, 116}, /* 17:                     LT shift  116 */
+  {  65,   0, 145}, /* 18:                  MINUS shift  145 */
+  {  66,  15, 124}, /* 19:                     NE shift  124 */
+  {  67,  23, 138}, /* 20:                    NOT shift  138 */
+  {  68,  24, 160}, /* 21:                NOTNULL shift  160 */
+  {  45,   0, 118}, /* 22:                     GT shift  118 */
+  {  43,   0, 141}, /* 23:                   GLOB shift  141 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+/* State 210 */
+  {  62,   0, 211}, /*  1:                     LP shift  211 */
+/* State 211 */
+  {  38,   0,  29}, /*  1:                   FAIL shift  29 */
+  { 153,   4, 212}, /*  2:                 select shift  212 */
+  {  78,   0,  35}, /*  3:                REPLACE shift  35 */
+  {  39,   5, 112}, /*  4:                  FLOAT shift  112 */
+  {   1,   0,  19}, /*  5:                  ABORT shift  19 */
+  {   6,   0,  20}, /*  6:                    ASC shift  20 */
+  {  82,   6,  84}, /*  7:                 SELECT shift  84 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  48,  19,  31}, /*  9:                 IGNORE shift  31 */
+  {  47,   0,  75}, /* 10:                     ID shift  75 */
+  { 124,   9, 173}, /* 11:                   expr shift  173 */
+  { 125,   0, 202}, /* 12:               expritem shift  202 */
+  { 126,  20, 214}, /* 13:               exprlist shift  214 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  90,   0,  36}, /* 15:                   TEMP shift  36 */
+  {  53,  23, 111}, /* 16:                INTEGER shift  111 */
+  { 130,   0,  77}, /* 17:                     id shift  77 */
+  { 131,   0, 108}, /* 18:                    ids shift  108 */
+  {  10,   0, 176}, /* 19:                 BITNOT shift  176 */
+  {  88,   0,  78}, /* 20:                 STRING shift  78 */
+  {  58,   0,  32}, /* 21:                    KEY shift  32 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  15,   0,  22}, /* 23:                CLUSTER shift  22 */
+  {  99,  27,  37}, /* 24:                 VACUUM shift  37 */
+  {  62,   0,  79}, /* 25:                     LP shift  79 */
+  { 101,   0,  38}, /* 26:                   VIEW shift  38 */
+  {  23,   0,  24}, /* 27:                   COPY shift  24 */
+  {  65,  31, 178}, /* 28:                  MINUS shift  178 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  67,   0, 174}, /* 30:                    NOT shift  174 */
+  {  27,   0,  25}, /* 31:             DELIMITERS shift  25 */
+  { 145,  35,  80}, /* 32:              oneselect shift  80 */
+  {  70,   0,  33}, /* 33:                 OFFSET shift  33 */
+  {  33,   0,  27}, /* 34:                    END shift  27 */
+  {  69,   0, 107}, /* 35:                   NULL shift  107 */
+  {  37,   0,  28}, /* 36:                EXPLAIN shift  28 */
+  {  74,   0, 180}, /* 37:                   PLUS shift  180 */
+  {  75,  36,  34}, /* 38:                 PRAGMA shift  34 */
+/* State 212 */
+  {  95,   4, 168}, /*  1:                  UNION shift  168 */
+  {  36,   0, 171}, /*  2:                 EXCEPT shift  171 */
+  { 142,   0,  82}, /*  3:         multiselect_op shift  82 */
+  {  80,   0, 213}, /*  4:                     RP shift  213 */
+  {  54,   0, 170}, /*  5:              INTERSECT shift  170 */
+/* State 214 */
+  {  80,   0, 215}, /*  1:                     RP shift  215 */
+  {  17,   0, 200}, /*  2:                  COMMA shift  200 */
+/* State 216 */
+  { 159,   3, 217}, /*  1:              sortorder shift  217 */
+  {  28,   0,  70}, /*  2:                   DESC shift  70 */
+  {   6,   0,  69}, /*  3:                    ASC shift  69 */
+/* State 218 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 219}, /* 26:                   expr shift  219 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 219 */
+  {   4,   0, 106}, /*  1:                    AND shift  106 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
+/* State 220 */
+  {  12,   0, 221}, /*  1:                     BY shift  221 */
+/* State 221 */
+  {  70,   0,  33}, /*  1:                 OFFSET shift  33 */
+  {   1,   0,  19}, /*  2:                  ABORT shift  19 */
+  {  37,   0,  28}, /*  3:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /*  4:                   FAIL shift  29 */
+  {  74,  10, 180}, /*  5:                   PLUS shift  180 */
+  {  75,   0,  34}, /*  6:                 PRAGMA shift  34 */
+  {   6,   0,  20}, /*  7:                    ASC shift  20 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  78,   0,  35}, /*  9:                REPLACE shift  35 */
+  {  39,   0, 112}, /* 10:                  FLOAT shift  112 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  13,   0, 182}, /* 12:                   CASE shift  182 */
+  {  47,   0,  75}, /* 13:                     ID shift  75 */
+  {  48,  12,  31}, /* 14:                 IGNORE shift  31 */
+  {  53,   0, 111}, /* 15:                INTEGER shift  111 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  90,   0,  36}, /* 17:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 18:               CONFLICT shift  23 */
+  {  88,  15,  78}, /* 19:                 STRING shift  78 */
+  { 124,   0, 173}, /* 20:                   expr shift  173 */
+  { 125,  17, 202}, /* 21:               expritem shift  202 */
+  { 126,  18, 222}, /* 22:               exprlist shift  222 */
+  {  23,   0,  24}, /* 23:                   COPY shift  24 */
+  {  58,  23,  32}, /* 24:                    KEY shift  32 */
+  {  27,   0,  25}, /* 25:             DELIMITERS shift  25 */
+  { 130,   0,  77}, /* 26:                     id shift  77 */
+  { 131,   0, 108}, /* 27:                    ids shift  108 */
+  {  62,  25,  79}, /* 28:                     LP shift  79 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  99,   0,  37}, /* 30:                 VACUUM shift  37 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 101,   0,  38}, /* 32:                   VIEW shift  38 */
+  {  67,   0, 174}, /* 33:                    NOT shift  174 */
+  {  33,   0,  27}, /* 34:                    END shift  27 */
+  {  69,   0, 107}, /* 35:                   NULL shift  107 */
+/* State 222 */
+  {  17,   0, 200}, /*  1:                  COMMA shift  200 */
+/* State 223 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 224}, /* 26:                   expr shift  224 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 224 */
+  {   4,   0, 106}, /*  1:                    AND shift  106 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
+/* State 226 */
+  { 160,   2, 229}, /*  1:             stl_prefix shift  229 */
+  { 154,   0, 227}, /*  2:             seltablist shift  227 */
+/* State 227 */
+  {  17,   0, 228}, /*  1:                  COMMA shift  228 */
+/* State 229 */
+  {  48,   0,  31}, /*  1:                 IGNORE shift  31 */
+  {   1,   0,  19}, /*  2:                  ABORT shift  19 */
+  {  75,   9,  34}, /*  3:                 PRAGMA shift  34 */
+  {  99,   3,  37}, /*  4:                 VACUUM shift  37 */
+  {  28,   0,  26}, /*  5:                   DESC shift  26 */
+  { 101,   0,  38}, /*  6:                   VIEW shift  38 */
+  {  78,  13,  35}, /*  7:                REPLACE shift  35 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  27,   0,  25}, /*  9:             DELIMITERS shift  25 */
+  {  33,   0,  27}, /* 10:                    END shift  27 */
+  { 130,  18,  39}, /* 11:                     id shift  39 */
+  { 131,   0, 230}, /* 12:                    ids shift  230 */
+  {   6,   0,  20}, /* 13:                    ASC shift  20 */
+  {  37,   0,  28}, /* 14:                EXPLAIN shift  28 */
+  {  62,  20, 234}, /* 15:                     LP shift  234 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  88,   0,  40}, /* 17:                 STRING shift  40 */
+  {  58,   0,  32}, /* 18:                    KEY shift  32 */
+  {  90,   0,  36}, /* 19:                   TEMP shift  36 */
+  {  38,   0,  29}, /* 20:                   FAIL shift  29 */
+  {  23,   0,  24}, /* 21:                   COPY shift  24 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  70,   0,  33}, /* 23:                 OFFSET shift  33 */
+  {  47,  21,  30}, /* 24:                     ID shift  30 */
+/* State 230 */
+  { 104,   0, 232}, /*  1:                     as shift  232 */
+  {  54,   0, 525}, /*  2:              INTERSECT reduce 114 */
+  {  80,   2, 525}, /*  3:                     RP reduce 114 */
+  {  17,   0, 525}, /*  4:                  COMMA reduce 114 */
+  {  95,   4, 525}, /*  5:                  UNION reduce 114 */
+  {  83,   7, 525}, /*  6:                   SEMI reduce 114 */
+  {  44,  12, 525}, /*  7:                  GROUP reduce 114 */
+  {  46,   0, 525}, /*  8:                 HAVING reduce 114 */
+  {  73,   0, 525}, /*  9:                  ORDER reduce 114 */
+  {  61,   0, 525}, /* 10:                  LIMIT reduce 114 */
+  {  36,   0, 525}, /* 11:                 EXCEPT reduce 114 */
+  {   5,   0, 231}, /* 12:                     AS shift  231 */
+  { 103,   0, 525}, /* 13:                  WHERE reduce 114 */
+/* State 232 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 233}, /* 17:                    ids shift  233 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 234 */
+  { 153,   0, 235}, /*  1:                 select shift  235 */
+  { 145,   3,  80}, /*  2:              oneselect shift  80 */
+  {  82,   0,  84}, /*  3:                 SELECT shift  84 */
+/* State 235 */
+  {  95,   4, 168}, /*  1:                  UNION shift  168 */
+  {  36,   0, 171}, /*  2:                 EXCEPT shift  171 */
+  { 142,   0,  82}, /*  3:         multiselect_op shift  82 */
+  {  80,   0, 236}, /*  4:                     RP shift  236 */
+  {  54,   0, 170}, /*  5:              INTERSECT shift  170 */
+/* State 236 */
+  { 104,   0, 237}, /*  1:                     as shift  237 */
+  {  54,   0, 527}, /*  2:              INTERSECT reduce 116 */
+  {  80,   2, 527}, /*  3:                     RP reduce 116 */
+  {  17,   0, 527}, /*  4:                  COMMA reduce 116 */
+  {  95,   4, 527}, /*  5:                  UNION reduce 116 */
+  {  83,   7, 527}, /*  6:                   SEMI reduce 116 */
+  {  44,  12, 527}, /*  7:                  GROUP reduce 116 */
+  {  46,   0, 527}, /*  8:                 HAVING reduce 116 */
+  {  73,   0, 527}, /*  9:                  ORDER reduce 116 */
+  {  61,   0, 527}, /* 10:                  LIMIT reduce 116 */
+  {  36,   0, 527}, /* 11:                 EXCEPT reduce 116 */
+  {   5,   0, 231}, /* 12:                     AS shift  231 */
+  { 103,   0, 527}, /* 13:                  WHERE reduce 116 */
+/* State 237 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 238}, /* 17:                    ids shift  238 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 239 */
+  {   1,   0,  19}, /*  1:                  ABORT shift  19 */
+  {  69,   1, 107}, /*  2:                   NULL shift  107 */
+  {  70,   0,  33}, /*  3:                 OFFSET shift  33 */
+  {  37,   0,  28}, /*  4:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /*  5:                   FAIL shift  29 */
+  {  39,   0, 112}, /*  6:                  FLOAT shift  112 */
+  {  74,   9, 180}, /*  7:                   PLUS shift  180 */
+  {  75,  10,  34}, /*  8:                 PRAGMA shift  34 */
+  {   6,   0,  20}, /*  9:                    ASC shift  20 */
+  {   7,   0,  21}, /* 10:                  BEGIN shift  21 */
+  {  78,  12,  35}, /* 11:                REPLACE shift  35 */
+  {  10,   0, 176}, /* 12:                 BITNOT shift  176 */
+  {  13,   0, 182}, /* 13:                   CASE shift  182 */
+  {  47,  13,  75}, /* 14:                     ID shift  75 */
+  {  48,   0,  31}, /* 15:                 IGNORE shift  31 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 17:                INTEGER shift  111 */
+  {  90,   0,  36}, /* 18:                   TEMP shift  36 */
+  {  62,  26,  79}, /* 19:                     LP shift  79 */
+  {  87,  17, 243}, /* 20:                   STAR shift  243 */
+  {  88,   0,  78}, /* 21:                 STRING shift  78 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  { 124,  18, 240}, /* 23:                   expr shift  240 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  58,   0,  32}, /* 25:                    KEY shift  32 */
+  {  28,   0,  26}, /* 26:                   DESC shift  26 */
+  {  65,   0, 178}, /* 27:                  MINUS shift  178 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  { 130,  19,  77}, /* 29:                     id shift  77 */
+  { 131,   0, 108}, /* 30:                    ids shift  108 */
+  {  67,  33, 174}, /* 31:                    NOT shift  174 */
+  {  99,  27,  37}, /* 32:                 VACUUM shift  37 */
+  {  33,   0,  27}, /* 33:                    END shift  27 */
+  { 101,  31,  38}, /* 34:                   VIEW shift  38 */
+/* State 240 */
+  {  60,   0, 136}, /*  1:                   LIKE shift  136 */
+  {   4,   0, 106}, /*  2:                    AND shift  106 */
+  {  35,  17, 126}, /*  3:                     EQ shift  126 */
+  {  63,   0, 132}, /*  4:                 LSHIFT shift  132 */
+  {  64,   2, 116}, /*  5:                     LT shift  116 */
+  {  65,   3, 145}, /*  6:                  MINUS shift  145 */
+  {  66,   0, 124}, /*  7:                     NE shift  124 */
+  {  67,   0, 138}, /*  8:                    NOT shift  138 */
+  {  68,  19, 160}, /*  9:                NOTNULL shift  160 */
+  {   9,   0, 128}, /* 10:                 BITAND shift  128 */
+  {  40,   0, 517}, /* 11:                   FROM reduce 106 */
+  {  11,   0, 130}, /* 12:                  BITOR shift  130 */
+  {  72,  20, 114}, /* 13:                     OR shift  114 */
+  {  43,   0, 141}, /* 14:                   GLOB shift  141 */
+  { 104,  23, 241}, /* 15:                     as shift  241 */
+  {  45,   0, 118}, /* 16:                     GT shift  118 */
+  {   5,   0, 231}, /* 17:                     AS shift  231 */
+  {  77,  24, 151}, /* 18:                    REM shift  151 */
+  {   8,   0, 161}, /* 19:                BETWEEN shift  161 */
+  {  42,   0, 122}, /* 20:                     GE shift  122 */
+  {  50,  25, 165}, /* 21:                     IN shift  165 */
+  {  81,   0, 134}, /* 22:                 RSHIFT shift  134 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  17,   0, 517}, /* 24:                  COMMA reduce 106 */
+  {  20,   0, 153}, /* 25:                 CONCAT shift  153 */
+  {  85,   0, 149}, /* 26:                  SLASH shift  149 */
+  {  56,   0, 156}, /* 27:                     IS shift  156 */
+  {  87,  29, 147}, /* 28:                   STAR shift  147 */
+  {  57,   0, 155}, /* 29:                 ISNULL shift  155 */
+  {  59,   0, 120}, /* 30:                     LE shift  120 */
+/* State 241 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 242}, /* 17:                    ids shift  242 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 247 */
+  {  81,   0, 134}, /*  1:                 RSHIFT shift  134 */
+  {   4,   0, 106}, /*  2:                    AND shift  106 */
+  {  56,   0, 156}, /*  3:                     IS shift  156 */
+  {  57,   0, 155}, /*  4:                 ISNULL shift  155 */
+  {  85,   2, 149}, /*  5:                  SLASH shift  149 */
+  {  59,   0, 120}, /*  6:                     LE shift  120 */
+  {  87,   8, 147}, /*  7:                   STAR shift  147 */
+  {  60,   0, 136}, /*  8:                   LIKE shift  136 */
+  {  35,  18, 126}, /*  9:                     EQ shift  126 */
+  {  63,  20, 132}, /* 10:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 11:                     LT shift  116 */
+  {  65,  22, 145}, /* 12:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 13:                     NE shift  124 */
+  {  67,   0, 138}, /* 14:                    NOT shift  138 */
+  {  68,   0, 160}, /* 15:                NOTNULL shift  160 */
+  {  42,   0, 122}, /* 16:                     GE shift  122 */
+  {  43,   0, 141}, /* 17:                   GLOB shift  141 */
+  {   8,   0, 161}, /* 18:                BETWEEN shift  161 */
+  {  72,  23, 114}, /* 19:                     OR shift  114 */
+  {   9,   0, 128}, /* 20:                 BITAND shift  128 */
+  {  74,  25, 143}, /* 21:                   PLUS shift  143 */
+  {  11,   0, 130}, /* 22:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 23:                     GT shift  118 */
+  {  77,  26, 151}, /* 24:                    REM shift  151 */
+  {  20,   0, 153}, /* 25:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 26:                     IN shift  165 */
+  {  80,   0, 248}, /* 27:                     RP shift  248 */
+/* State 249 */
+  {  80,   0, 250}, /*  1:                     RP shift  250 */
+  {  17,   0, 200}, /*  2:                  COMMA shift  200 */
+/* State 251 */
+  {  80,   0, 252}, /*  1:                     RP shift  252 */
+/* State 253 */
+  {  81,   0, 134}, /*  1:                 RSHIFT shift  134 */
+  {   4,   0, 106}, /*  2:                    AND shift  106 */
+  {  56,   0, 156}, /*  3:                     IS shift  156 */
+  {  57,   0, 155}, /*  4:                 ISNULL shift  155 */
+  {  85,   2, 149}, /*  5:                  SLASH shift  149 */
+  {  59,   0, 120}, /*  6:                     LE shift  120 */
+  {  87,   8, 147}, /*  7:                   STAR shift  147 */
+  {  60,   0, 136}, /*  8:                   LIKE shift  136 */
+  {  35,  18, 126}, /*  9:                     EQ shift  126 */
+  {  63,  20, 132}, /* 10:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 11:                     LT shift  116 */
+  {  65,  22, 145}, /* 12:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 13:                     NE shift  124 */
+  {  67,   0, 138}, /* 14:                    NOT shift  138 */
+  {  68,   0, 160}, /* 15:                NOTNULL shift  160 */
+  {  42,   0, 122}, /* 16:                     GE shift  122 */
+  {  43,   0, 141}, /* 17:                   GLOB shift  141 */
+  {   8,   0, 161}, /* 18:                BETWEEN shift  161 */
+  {  72,  23, 114}, /* 19:                     OR shift  114 */
+  {   9,   0, 128}, /* 20:                 BITAND shift  128 */
+  {  74,  25, 143}, /* 21:                   PLUS shift  143 */
+  {  11,   0, 130}, /* 22:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 23:                     GT shift  118 */
+  {  77,  26, 151}, /* 24:                    REM shift  151 */
+  {  20,   0, 153}, /* 25:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 26:                     IN shift  165 */
+  {  80,   0, 254}, /* 27:                     RP shift  254 */
+/* State 254 */
+  { 144,   0, 255}, /*  1:                 onconf shift  255 */
+  {  71,   0,   9}, /*  2:                     ON shift  9 */
+/* State 257 */
+  {  74,   2, 261}, /*  1:                   PLUS shift  261 */
+  {  53,   4, 260}, /*  2:                INTEGER shift  260 */
+  {  65,   0, 264}, /*  3:                  MINUS shift  264 */
+  {  39,   0, 267}, /*  4:                  FLOAT shift  267 */
+  {  88,   1, 258}, /*  5:                 STRING shift  258 */
+  {  47,   0, 259}, /*  6:                     ID shift  259 */
+  {  69,   0, 268}, /*  7:                   NULL shift  268 */
+/* State 261 */
+  {  39,   0, 263}, /*  1:                  FLOAT shift  263 */
+  {  53,   1, 262}, /*  2:                INTEGER shift  262 */
+/* State 264 */
+  {  39,   0, 266}, /*  1:                  FLOAT shift  266 */
+  {  53,   1, 265}, /*  2:                INTEGER shift  265 */
+/* State 269 */
+  {  48,   0,  31}, /*  1:                 IGNORE shift  31 */
+  {   1,   0,  19}, /*  2:                  ABORT shift  19 */
+  {  75,   9,  34}, /*  3:                 PRAGMA shift  34 */
+  {  99,   3,  37}, /*  4:                 VACUUM shift  37 */
+  {  28,   0,  26}, /*  5:                   DESC shift  26 */
+  { 101,   0,  38}, /*  6:                   VIEW shift  38 */
+  {  78,  13,  35}, /*  7:                REPLACE shift  35 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  27,   0,  25}, /*  9:             DELIMITERS shift  25 */
+  {  33,   0,  27}, /* 10:                    END shift  27 */
+  { 130,  18,  39}, /* 11:                     id shift  39 */
+  { 131,   0, 281}, /* 12:                    ids shift  281 */
+  {   6,   0,  20}, /* 13:                    ASC shift  20 */
+  {  37,   0,  28}, /* 14:                EXPLAIN shift  28 */
+  {  62,  20, 270}, /* 15:                     LP shift  270 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  88,   0,  40}, /* 17:                 STRING shift  40 */
+  {  58,   0,  32}, /* 18:                    KEY shift  32 */
+  {  90,   0,  36}, /* 19:                   TEMP shift  36 */
+  {  38,   0,  29}, /* 20:                   FAIL shift  29 */
+  {  23,   0,  24}, /* 21:                   COPY shift  24 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  70,   0,  33}, /* 23:                 OFFSET shift  33 */
+  {  47,  21,  30}, /* 24:                     ID shift  30 */
+/* State 270 */
+  { 156,   0, 271}, /*  1:                 signed shift  271 */
+  {  65,   4, 279}, /*  2:                  MINUS shift  279 */
+  {  74,   0, 277}, /*  3:                   PLUS shift  277 */
+  {  53,   0, 276}, /*  4:                INTEGER shift  276 */
+/* State 271 */
+  {  80,   0, 272}, /*  1:                     RP shift  272 */
+  {  17,   0, 273}, /*  2:                  COMMA shift  273 */
+/* State 273 */
+  { 156,   0, 274}, /*  1:                 signed shift  274 */
+  {  65,   4, 279}, /*  2:                  MINUS shift  279 */
+  {  74,   0, 277}, /*  3:                   PLUS shift  277 */
+  {  53,   0, 276}, /*  4:                INTEGER shift  276 */
+/* State 274 */
+  {  80,   0, 275}, /*  1:                     RP shift  275 */
+/* State 277 */
+  {  53,   0, 278}, /*  1:                INTEGER shift  278 */
+/* State 279 */
+  {  53,   0, 280}, /*  1:                INTEGER shift  280 */
+/* State 284 */
+  { 161,   3, 307}, /*  1:                  tcons shift  307 */
+  {  22,   0, 287}, /*  2:             CONSTRAINT shift  287 */
+  {  14,   0, 304}, /*  3:                  CHECK shift  304 */
+  {  80,   5, 484}, /*  4:                     RP reduce 73 */
+  {  17,   0, 285}, /*  5:                  COMMA shift  285 */
+  {  96,   0, 299}, /*  6:                 UNIQUE shift  299 */
+  {  76,   0, 289}, /*  7:                PRIMARY shift  289 */
+/* State 285 */
+  {  96,   4, 299}, /*  1:                 UNIQUE shift  299 */
+  { 161,   1, 286}, /*  2:                  tcons shift  286 */
+  {  22,   0, 287}, /*  3:             CONSTRAINT shift  287 */
+  {  76,   0, 289}, /*  4:                PRIMARY shift  289 */
+  {  14,   0, 304}, /*  5:                  CHECK shift  304 */
+/* State 287 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 288}, /* 17:                    ids shift  288 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 289 */
+  {  58,   0, 290}, /*  1:                    KEY shift  290 */
+/* State 290 */
+  {  62,   0, 291}, /*  1:                     LP shift  291 */
+/* State 291 */
+  {  75,   0,  34}, /*  1:                 PRAGMA shift  34 */
+  { 101,   5,  38}, /*  2:                   VIEW shift  38 */
+  {  27,   0,  25}, /*  3:             DELIMITERS shift  25 */
+  {  78,  10,  35}, /*  4:                REPLACE shift  35 */
+  {   1,   0,  19}, /*  5:                  ABORT shift  19 */
+  { 130,   0,  39}, /*  6:                     id shift  39 */
+  { 131,  11, 297}, /*  7:                    ids shift  297 */
+  { 132,  12, 298}, /*  8:                idxitem shift  298 */
+  { 133,  15, 292}, /*  9:                idxlist shift  292 */
+  {  28,   0,  26}, /* 10:                   DESC shift  26 */
+  {   6,   0,  20}, /* 11:                    ASC shift  20 */
+  {   7,   0,  21}, /* 12:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 13:                EXPLAIN shift  28 */
+  {  88,  17,  40}, /* 14:                 STRING shift  40 */
+  {  58,  18,  32}, /* 15:                    KEY shift  32 */
+  {  90,  19,  36}, /* 16:                   TEMP shift  36 */
+  {  38,   0,  29}, /* 17:                   FAIL shift  29 */
+  {  33,   0,  27}, /* 18:                    END shift  27 */
+  {  15,   0,  22}, /* 19:                CLUSTER shift  22 */
+  {  23,   0,  24}, /* 20:                   COPY shift  24 */
+  {  70,   0,  33}, /* 21:                 OFFSET shift  33 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  47,   0,  30}, /* 23:                     ID shift  30 */
+  {  48,  20,  31}, /* 24:                 IGNORE shift  31 */
+  {  99,   0,  37}, /* 25:                 VACUUM shift  37 */
+/* State 292 */
+  {  80,   0, 293}, /*  1:                     RP shift  293 */
+  {  17,   0, 295}, /*  2:                  COMMA shift  295 */
+/* State 293 */
+  { 144,   0, 294}, /*  1:                 onconf shift  294 */
+  {  71,   0,   9}, /*  2:                     ON shift  9 */
+/* State 295 */
+  {  48,   0,  31}, /*  1:                 IGNORE shift  31 */
+  {   1,   0,  19}, /*  2:                  ABORT shift  19 */
+  {  75,   9,  34}, /*  3:                 PRAGMA shift  34 */
+  {  99,   3,  37}, /*  4:                 VACUUM shift  37 */
+  {  28,   0,  26}, /*  5:                   DESC shift  26 */
+  { 101,   0,  38}, /*  6:                   VIEW shift  38 */
+  {  78,  18,  35}, /*  7:                REPLACE shift  35 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  27,   0,  25}, /*  9:             DELIMITERS shift  25 */
+  {  33,   0,  27}, /* 10:                    END shift  27 */
+  { 130,  20,  39}, /* 11:                     id shift  39 */
+  { 131,   0, 297}, /* 12:                    ids shift  297 */
+  { 132,   0, 296}, /* 13:                idxitem shift  296 */
+  {  37,   0,  28}, /* 14:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /* 15:                   FAIL shift  29 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  88,   0,  40}, /* 17:                 STRING shift  40 */
+  {   6,   0,  20}, /* 18:                    ASC shift  20 */
+  {  90,   0,  36}, /* 19:                   TEMP shift  36 */
+  {  58,   0,  32}, /* 20:                    KEY shift  32 */
+  {  23,   0,  24}, /* 21:                   COPY shift  24 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  70,   0,  33}, /* 23:                 OFFSET shift  33 */
+  {  47,  21,  30}, /* 24:                     ID shift  30 */
+/* State 299 */
+  {  62,   0, 300}, /*  1:                     LP shift  300 */
+/* State 300 */
+  {  75,   0,  34}, /*  1:                 PRAGMA shift  34 */
+  { 101,   5,  38}, /*  2:                   VIEW shift  38 */
+  {  27,   0,  25}, /*  3:             DELIMITERS shift  25 */
+  {  78,  10,  35}, /*  4:                REPLACE shift  35 */
+  {   1,   0,  19}, /*  5:                  ABORT shift  19 */
+  { 130,   0,  39}, /*  6:                     id shift  39 */
+  { 131,  11, 297}, /*  7:                    ids shift  297 */
+  { 132,  12, 298}, /*  8:                idxitem shift  298 */
+  { 133,  15, 301}, /*  9:                idxlist shift  301 */
+  {  28,   0,  26}, /* 10:                   DESC shift  26 */
+  {   6,   0,  20}, /* 11:                    ASC shift  20 */
+  {   7,   0,  21}, /* 12:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 13:                EXPLAIN shift  28 */
+  {  88,  17,  40}, /* 14:                 STRING shift  40 */
+  {  58,  18,  32}, /* 15:                    KEY shift  32 */
+  {  90,  19,  36}, /* 16:                   TEMP shift  36 */
+  {  38,   0,  29}, /* 17:                   FAIL shift  29 */
+  {  33,   0,  27}, /* 18:                    END shift  27 */
+  {  15,   0,  22}, /* 19:                CLUSTER shift  22 */
+  {  23,   0,  24}, /* 20:                   COPY shift  24 */
+  {  70,   0,  33}, /* 21:                 OFFSET shift  33 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  47,   0,  30}, /* 23:                     ID shift  30 */
+  {  48,  20,  31}, /* 24:                 IGNORE shift  31 */
+  {  99,   0,  37}, /* 25:                 VACUUM shift  37 */
+/* State 301 */
+  {  80,   0, 302}, /*  1:                     RP shift  302 */
+  {  17,   0, 295}, /*  2:                  COMMA shift  295 */
+/* State 302 */
+  { 144,   0, 303}, /*  1:                 onconf shift  303 */
+  {  71,   0,   9}, /*  2:                     ON shift  9 */
+/* State 304 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 305}, /* 26:                   expr shift  305 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 305 */
+  {  56,   0, 156}, /*  1:                     IS shift  156 */
+  {  85,   3, 149}, /*  2:                  SLASH shift  149 */
+  {  57,   0, 155}, /*  3:                 ISNULL shift  155 */
+  {  87,   6, 147}, /*  4:                   STAR shift  147 */
+  { 144,   7, 306}, /*  5:                 onconf shift  306 */
+  {  59,   0, 120}, /*  6:                     LE shift  120 */
+  {  60,  14, 136}, /*  7:                   LIKE shift  136 */
+  {  63,  20, 132}, /*  8:                 LSHIFT shift  132 */
+  {  64,  24, 116}, /*  9:                     LT shift  116 */
+  {  65,  25, 145}, /* 10:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 11:                     NE shift  124 */
+  {  67,  27, 138}, /* 12:                    NOT shift  138 */
+  {  68,   0, 160}, /* 13:                NOTNULL shift  160 */
+  {   4,   0, 106}, /* 14:                    AND shift  106 */
+  {  42,   0, 122}, /* 15:                     GE shift  122 */
+  {  71,  28,   9}, /* 16:                     ON shift  9 */
+  {  72,   0, 114}, /* 17:                     OR shift  114 */
+  {  45,   0, 118}, /* 18:                     GT shift  118 */
+  {  74,   0, 143}, /* 19:                   PLUS shift  143 */
+  {  35,   0, 126}, /* 20:                     EQ shift  126 */
+  {  20,   0, 153}, /* 21:                 CONCAT shift  153 */
+  {  77,   0, 151}, /* 22:                    REM shift  151 */
+  {  50,   0, 165}, /* 23:                     IN shift  165 */
+  {   8,   0, 161}, /* 24:                BETWEEN shift  161 */
+  {   9,   0, 128}, /* 25:                 BITAND shift  128 */
+  {  81,   0, 134}, /* 26:                 RSHIFT shift  134 */
+  {  11,   0, 130}, /* 27:                  BITOR shift  130 */
+  {  43,   0, 141}, /* 28:                   GLOB shift  141 */
+/* State 310 */
+  { 153,   0, 311}, /*  1:                 select shift  311 */
+  { 145,   3,  80}, /*  2:              oneselect shift  80 */
+  {  82,   0,  84}, /*  3:                 SELECT shift  84 */
+/* State 311 */
+  {  95,   0, 168}, /*  1:                  UNION shift  168 */
+  {  36,   0, 171}, /*  2:                 EXCEPT shift  171 */
+  { 142,   0,  82}, /*  3:         multiselect_op shift  82 */
+  {  83,   0, 430}, /*  4:                   SEMI reduce 19 */
+  {  54,   0, 170}, /*  5:              INTERSECT shift  170 */
+/* State 312 */
+  {  96,   5, 330}, /*  1:                 UNIQUE shift  330 */
+  { 162,   0, 313}, /*  2:                   temp shift  313 */
+  {  51,   0, 622}, /*  3:                  INDEX reduce 211 */
+  { 101,   0, 317}, /*  4:                   VIEW shift  317 */
+  {  89,   0, 428}, /*  5:                  TABLE reduce 17 */
+  { 166,   1, 321}, /*  6:             uniqueflag shift  321 */
+  {  90,   0, 316}, /*  7:                   TEMP shift  316 */
+/* State 313 */
+  {  89,   0, 314}, /*  1:                  TABLE shift  314 */
+/* State 314 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 315}, /* 17:                    ids shift  315 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 316 */
+  {  89,   0, 427}, /*  1:                  TABLE reduce 16 */
+/* State 317 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 318}, /* 17:                    ids shift  318 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 318 */
+  {   5,   0, 319}, /*  1:                     AS shift  319 */
+/* State 319 */
+  { 153,   0, 320}, /*  1:                 select shift  320 */
+  { 145,   3,  80}, /*  2:              oneselect shift  80 */
+  {  82,   0,  84}, /*  3:                 SELECT shift  84 */
+/* State 320 */
+  {  95,   0, 168}, /*  1:                  UNION shift  168 */
+  {  36,   0, 171}, /*  2:                 EXCEPT shift  171 */
+  { 142,   0,  82}, /*  3:         multiselect_op shift  82 */
+  {  83,   0, 502}, /*  4:                   SEMI reduce 91 */
+  {  54,   0, 170}, /*  5:              INTERSECT shift  170 */
+/* State 321 */
+  {  51,   0, 322}, /*  1:                  INDEX shift  322 */
+/* State 322 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 323}, /* 17:                    ids shift  323 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 323 */
+  {  71,   0, 324}, /*  1:                     ON shift  324 */
+/* State 324 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 325}, /* 17:                    ids shift  325 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 325 */
+  {  62,   0, 326}, /*  1:                     LP shift  326 */
+/* State 326 */
+  {  75,   0,  34}, /*  1:                 PRAGMA shift  34 */
+  { 101,   5,  38}, /*  2:                   VIEW shift  38 */
+  {  27,   0,  25}, /*  3:             DELIMITERS shift  25 */
+  {  78,  10,  35}, /*  4:                REPLACE shift  35 */
+  {   1,   0,  19}, /*  5:                  ABORT shift  19 */
+  { 130,   0,  39}, /*  6:                     id shift  39 */
+  { 131,  11, 297}, /*  7:                    ids shift  297 */
+  { 132,  12, 298}, /*  8:                idxitem shift  298 */
+  { 133,  15, 327}, /*  9:                idxlist shift  327 */
+  {  28,   0,  26}, /* 10:                   DESC shift  26 */
+  {   6,   0,  20}, /* 11:                    ASC shift  20 */
+  {   7,   0,  21}, /* 12:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 13:                EXPLAIN shift  28 */
+  {  88,  17,  40}, /* 14:                 STRING shift  40 */
+  {  58,  18,  32}, /* 15:                    KEY shift  32 */
+  {  90,  19,  36}, /* 16:                   TEMP shift  36 */
+  {  38,   0,  29}, /* 17:                   FAIL shift  29 */
+  {  33,   0,  27}, /* 18:                    END shift  27 */
+  {  15,   0,  22}, /* 19:                CLUSTER shift  22 */
+  {  23,   0,  24}, /* 20:                   COPY shift  24 */
+  {  70,   0,  33}, /* 21:                 OFFSET shift  33 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  47,   0,  30}, /* 23:                     ID shift  30 */
+  {  48,  20,  31}, /* 24:                 IGNORE shift  31 */
+  {  99,   0,  37}, /* 25:                 VACUUM shift  37 */
+/* State 327 */
+  {  80,   0, 328}, /*  1:                     RP shift  328 */
+  {  17,   0, 295}, /*  2:                  COMMA shift  295 */
+/* State 328 */
+  { 144,   0, 329}, /*  1:                 onconf shift  329 */
+  {  71,   0,   9}, /*  2:                     ON shift  9 */
+  {  83,   2, 492}, /*  3:                   SEMI reduce 81 */
+/* State 329 */
+  {  83,   0, 620}, /*  1:                   SEMI reduce 209 */
+/* State 330 */
+  {  51,   0, 621}, /*  1:                  INDEX reduce 210 */
+/* State 331 */
+  {  51,   0, 336}, /*  1:                  INDEX shift  336 */
+  {  89,   0, 332}, /*  2:                  TABLE shift  332 */
+  { 101,   2, 334}, /*  3:                   VIEW shift  334 */
+/* State 332 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 333}, /* 17:                    ids shift  333 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 333 */
+  {  83,   0, 501}, /*  1:                   SEMI reduce 90 */
+/* State 334 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 335}, /* 17:                    ids shift  335 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 335 */
+  {  83,   0, 503}, /*  1:                   SEMI reduce 92 */
+/* State 336 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 337}, /* 17:                    ids shift  337 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 337 */
+  {  83,   0, 626}, /*  1:                   SEMI reduce 215 */
+/* State 338 */
+  {  95,   0, 168}, /*  1:                  UNION shift  168 */
+  {  36,   0, 171}, /*  2:                 EXCEPT shift  171 */
+  { 142,   0,  82}, /*  3:         multiselect_op shift  82 */
+  {  83,   0, 504}, /*  4:                   SEMI reduce 93 */
+  {  54,   0, 170}, /*  5:              INTERSECT shift  170 */
+/* State 339 */
+  {  40,   0, 340}, /*  1:                   FROM shift  340 */
+/* State 340 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 341}, /* 17:                    ids shift  341 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 341 */
+  {  83,   0, 547}, /*  1:                   SEMI reduce 136 */
+  { 103,   0, 223}, /*  2:                  WHERE shift  223 */
+  { 167,   1, 342}, /*  3:              where_opt shift  342 */
+/* State 342 */
+  {  83,   0, 546}, /*  1:                   SEMI reduce 135 */
+/* State 343 */
+  { 146,   2, 346}, /*  1:                 orconf shift  346 */
+  {  72,   0, 344}, /*  2:                     OR shift  344 */
+/* State 344 */
+  { 150,   4, 345}, /*  1:            resolvetype shift  345 */
+  {  79,   5,  12}, /*  2:               ROLLBACK shift  12 */
+  {  38,   0,  14}, /*  3:                   FAIL shift  14 */
+  {  78,   6,  16}, /*  4:                REPLACE shift  16 */
+  {   1,   0,  13}, /*  5:                  ABORT shift  13 */
+  {  48,   0,  15}, /*  6:                 IGNORE shift  15 */
+/* State 346 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 347}, /* 17:                    ids shift  347 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
 /* State 347 */
-  {  78,   2, 348}, /*  1:                     RP shift  348 */
-  {  16,   0, 349}, /*  2:                  COMMA shift  349 */
+  {  84,   0, 348}, /*  1:                    SET shift  348 */
 /* State 348 */
-  {  81,   0, 532}, /*  1:                   SEMI reduce 139 */
+  {  48,   0,  31}, /*  1:                 IGNORE shift  31 */
+  {   1,   0,  19}, /*  2:                  ABORT shift  19 */
+  {  75,   9,  34}, /*  3:                 PRAGMA shift  34 */
+  {  99,   3,  37}, /*  4:                 VACUUM shift  37 */
+  {  28,   0,  26}, /*  5:                   DESC shift  26 */
+  { 101,   0,  38}, /*  6:                   VIEW shift  38 */
+  {  78,  13,  35}, /*  7:                REPLACE shift  35 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  27,   0,  25}, /*  9:             DELIMITERS shift  25 */
+  {  33,   0,  27}, /* 10:                    END shift  27 */
+  { 130,  18,  39}, /* 11:                     id shift  39 */
+  { 155,  20, 349}, /* 12:                setlist shift  349 */
+  {   6,   0,  20}, /* 13:                    ASC shift  20 */
+  {  37,   0,  28}, /* 14:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /* 15:                   FAIL shift  29 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  88,   0,  40}, /* 17:                 STRING shift  40 */
+  {  58,   0,  32}, /* 18:                    KEY shift  32 */
+  {  90,   0,  36}, /* 19:                   TEMP shift  36 */
+  { 131,   0, 355}, /* 20:                    ids shift  355 */
+  {  23,   0,  24}, /* 21:                   COPY shift  24 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  70,   0,  33}, /* 23:                 OFFSET shift  33 */
+  {  47,  21,  30}, /* 24:                     ID shift  30 */
 /* State 349 */
-  {  60,   0,  77}, /*  1:                     LP shift  77 */
-  {  31,   3,  25}, /*  2:                    END shift  25 */
-  {   1,   0,  32}, /*  3:                  ABORT shift  32 */
-  { 123,  10,  75}, /*  4:                     id shift  75 */
-  { 124,   0, 106}, /*  5:                    ids shift  106 */
-  {  65,  12, 172}, /*  6:                    NOT shift  172 */
-  {  96,  18,  23}, /*  7:                 VACUUM shift  23 */
-  {  67,  19, 105}, /*  8:                   NULL shift  105 */
-  {  68,   0,  30}, /*  9:                 OFFSET shift  30 */
-  {  63,   0, 176}, /* 10:                  MINUS shift  176 */
-  {  10,   0, 174}, /* 11:                 BITNOT shift  174 */
-  {  35,   0,  22}, /* 12:                EXPLAIN shift  22 */
-  {  72,   0, 178}, /* 13:                   PLUS shift  178 */
-  {  73,   0,  26}, /* 14:                 PRAGMA shift  26 */
-  {  14,   0,  27}, /* 15:                CLUSTER shift  27 */
-  {  45,   0,  73}, /* 16:                     ID shift  73 */
-  {  76,  20,  34}, /* 17:                REPLACE shift  34 */
-  {  36,  23,  35}, /* 18:                   FAIL shift  35 */
-  {  37,  24, 110}, /* 19:                  FLOAT shift  110 */
-  {  46,   0,  33}, /* 20:                 IGNORE shift  33 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  51,   0, 109}, /* 22:                INTEGER shift  109 */
-  {   6,   0,  20}, /* 23:                    ASC shift  20 */
-  {   7,   0,  24}, /* 24:                  BEGIN shift  24 */
-  {  56,  26,  31}, /* 25:                    KEY shift  31 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  {  86,  25,  76}, /* 27:                 STRING shift  76 */
-  { 117,  30, 350}, /* 28:                   expr shift  350 */
-  {  88,   0,  29}, /* 29:                   TEMP shift  29 */
-  {  27,   0,  19}, /* 30:                   DESC shift  19 */
+  { 103,   3, 223}, /*  1:                  WHERE shift  223 */
+  {  17,   0, 351}, /*  2:                  COMMA shift  351 */
+  {  83,   0, 547}, /*  3:                   SEMI reduce 136 */
+  { 167,   1, 350}, /*  4:              where_opt shift  350 */
 /* State 350 */
-  {  57,   0, 118}, /*  1:                     LE shift  118 */
-  {  79,   0, 132}, /*  2:                 RSHIFT shift  132 */
-  {  54,   0, 154}, /*  3:                     IS shift  154 */
-  {  55,   0, 153}, /*  4:                 ISNULL shift  153 */
-  {   4,   0, 104}, /*  5:                    AND shift  104 */
-  {  83,   1, 147}, /*  6:                  SLASH shift  147 */
-  {  58,   0, 134}, /*  7:                   LIKE shift  134 */
-  {  85,  17, 145}, /*  8:                   STAR shift  145 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  61,  22, 130}, /* 10:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /* 11:                     LT shift  114 */
-  {  63,  25, 143}, /* 12:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 13:                     NE shift  122 */
-  {  65,   0, 136}, /* 14:                    NOT shift  136 */
-  {  66,  26, 158}, /* 15:                NOTNULL shift  158 */
-  {  41,   0, 139}, /* 16:                   GLOB shift  139 */
-  {  33,   0, 124}, /* 17:                     EQ shift  124 */
-  {  43,   0, 116}, /* 18:                     GT shift  116 */
-  {  70,   0, 112}, /* 19:                     OR shift  112 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {  72,   0, 141}, /* 21:                   PLUS shift  141 */
-  {   9,   0, 126}, /* 22:                 BITAND shift  126 */
-  {  48,   0, 163}, /* 23:                     IN shift  163 */
-  {  75,   0, 149}, /* 24:                    REM shift  149 */
-  {  11,   0, 128}, /* 25:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 26:                     GE shift  120 */
+  {  83,   0, 549}, /*  1:                   SEMI reduce 138 */
 /* State 351 */
-  {  57,   0, 118}, /*  1:                     LE shift  118 */
-  {  79,   0, 132}, /*  2:                 RSHIFT shift  132 */
-  {  54,   0, 154}, /*  3:                     IS shift  154 */
-  {  55,   0, 153}, /*  4:                 ISNULL shift  153 */
-  {   4,   0, 104}, /*  5:                    AND shift  104 */
-  {  83,   1, 147}, /*  6:                  SLASH shift  147 */
-  {  58,   0, 134}, /*  7:                   LIKE shift  134 */
-  {  85,  17, 145}, /*  8:                   STAR shift  145 */
-  {   8,   0, 159}, /*  9:                BETWEEN shift  159 */
-  {  61,  22, 130}, /* 10:                 LSHIFT shift  130 */
-  {  62,   0, 114}, /* 11:                     LT shift  114 */
-  {  63,  25, 143}, /* 12:                  MINUS shift  143 */
-  {  64,   0, 122}, /* 13:                     NE shift  122 */
-  {  65,   0, 136}, /* 14:                    NOT shift  136 */
-  {  66,  26, 158}, /* 15:                NOTNULL shift  158 */
-  {  41,   0, 139}, /* 16:                   GLOB shift  139 */
-  {  33,   0, 124}, /* 17:                     EQ shift  124 */
-  {  43,   0, 116}, /* 18:                     GT shift  116 */
-  {  70,   0, 112}, /* 19:                     OR shift  112 */
-  {  19,   0, 151}, /* 20:                 CONCAT shift  151 */
-  {  72,   0, 141}, /* 21:                   PLUS shift  141 */
-  {   9,   0, 126}, /* 22:                 BITAND shift  126 */
-  {  48,   0, 163}, /* 23:                     IN shift  163 */
-  {  75,   0, 149}, /* 24:                    REM shift  149 */
-  {  11,   0, 128}, /* 25:                  BITOR shift  128 */
-  {  40,   0, 120}, /* 26:                     GE shift  120 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 352}, /* 17:                    ids shift  352 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
 /* State 352 */
-  {  88,   0,  29}, /*  1:                   TEMP shift  29 */
-  {  45,   4,  28}, /*  2:                     ID shift  28 */
-  {  68,  12,  30}, /*  3:                 OFFSET shift  30 */
-  {   1,   0,  32}, /*  4:                  ABORT shift  32 */
-  {  26,   0,  21}, /*  5:             DELIMITERS shift  21 */
-  {  27,   0,  19}, /*  6:                   DESC shift  19 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {  73,  16,  26}, /*  8:                 PRAGMA shift  26 */
-  {  96,   0,  23}, /*  9:                 VACUUM shift  23 */
-  {  31,   0,  25}, /* 10:                    END shift  25 */
-  {  76,   0,  34}, /* 11:                REPLACE shift  34 */
-  {  46,   0,  33}, /* 12:                 IGNORE shift  33 */
-  {  56,   0,  31}, /* 13:                    KEY shift  31 */
-  { 123,  17,  37}, /* 14:                     id shift  37 */
-  { 124,  18, 357}, /* 15:                    ids shift  357 */
-  {   7,   0,  24}, /* 16:                  BEGIN shift  24 */
-  {  35,   0,  22}, /* 17:                EXPLAIN shift  22 */
-  {  36,  20,  35}, /* 18:                   FAIL shift  35 */
-  { 128,   0, 353}, /* 19:             inscollist shift  353 */
-  {  14,   0,  27}, /* 20:                CLUSTER shift  27 */
-  {  86,  22,  38}, /* 21:                 STRING shift  38 */
-  {  20,   0,  36}, /* 22:               CONFLICT shift  36 */
+  {  35,   0, 353}, /*  1:                     EQ shift  353 */
 /* State 353 */
-  {  78,   2, 354}, /*  1:                     RP shift  354 */
-  {  16,   0, 355}, /*  2:                  COMMA shift  355 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 354}, /* 26:                   expr shift  354 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 354 */
+  {   4,   0, 106}, /*  1:                    AND shift  106 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
 /* State 355 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 356}, /* 20:                    ids shift  356 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
+  {  35,   0, 356}, /*  1:                     EQ shift  356 */
+/* State 356 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 357}, /* 26:                   expr shift  357 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
+/* State 357 */
+  {   4,   0, 106}, /*  1:                    AND shift  106 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
 /* State 358 */
-  {  70,   0, 326}, /*  1:                     OR shift  326 */
-  { 139,   1, 359}, /*  2:                 orconf shift  359 */
-  {  53,   0, 474}, /*  3:                   INTO reduce 81 */
+  {  55,   0, 359}, /*  1:                   INTO shift  359 */
 /* State 359 */
-  {  53,   0, 534}, /*  1:                   INTO reduce 141 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 360}, /* 17:                    ids shift  360 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
 /* State 360 */
-  {  53,   0, 535}, /*  1:                   INTO reduce 142 */
+  { 136,   2, 361}, /*  1:         inscollist_opt shift  361 */
+  {  62,   0, 370}, /*  2:                     LP shift  370 */
 /* State 361 */
-  {  70,   0, 326}, /*  1:                     OR shift  326 */
-  { 139,   0, 362}, /*  2:                 orconf shift  362 */
+  { 100,   0, 363}, /*  1:                 VALUES shift  363 */
+  { 153,   4, 362}, /*  2:                 select shift  362 */
+  {  82,   0,  84}, /*  3:                 SELECT shift  84 */
+  { 145,   0,  80}, /*  4:              oneselect shift  80 */
 /* State 362 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 363}, /* 20:                    ids shift  363 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
+  {  95,   0, 168}, /*  1:                  UNION shift  168 */
+  {  36,   0, 171}, /*  2:                 EXCEPT shift  171 */
+  { 142,   0,  82}, /*  3:         multiselect_op shift  82 */
+  {  83,   0, 553}, /*  4:                   SEMI reduce 142 */
+  {  54,   0, 170}, /*  5:              INTERSECT shift  170 */
 /* State 363 */
-  {  38,   0, 364}, /*  1:                   FROM shift  364 */
+  {  62,   0, 364}, /*  1:                     LP shift  364 */
 /* State 364 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
+  {   1,   0,  19}, /*  1:                  ABORT shift  19 */
+  {  69,   1, 107}, /*  2:                   NULL shift  107 */
+  { 138,   9, 365}, /*  3:               itemlist shift  365 */
+  {  37,   0,  28}, /*  4:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /*  5:                   FAIL shift  29 */
+  {  39,   0, 112}, /*  6:                  FLOAT shift  112 */
+  {  74,  10, 180}, /*  7:                   PLUS shift  180 */
+  {  75,  12,  34}, /*  8:                 PRAGMA shift  34 */
+  {  70,   0,  33}, /*  9:                 OFFSET shift  33 */
   {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 365}, /* 20:                    ids shift  365 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
+  {  78,  13,  35}, /* 11:                REPLACE shift  35 */
+  {   7,   0,  21}, /* 12:                  BEGIN shift  21 */
+  {  10,   0, 176}, /* 13:                 BITNOT shift  176 */
+  {  47,  17,  75}, /* 14:                     ID shift  75 */
+  {  48,   0,  31}, /* 15:                 IGNORE shift  31 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  13,   0, 182}, /* 17:                   CASE shift  182 */
+  {  90,   0,  36}, /* 18:                   TEMP shift  36 */
+  {  62,  26,  79}, /* 19:                     LP shift  79 */
+  {  53,   0, 111}, /* 20:                INTEGER shift  111 */
+  {  88,   0,  78}, /* 21:                 STRING shift  78 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  { 124,  18, 369}, /* 23:                   expr shift  369 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  58,   0,  32}, /* 25:                    KEY shift  32 */
+  {  28,   0,  26}, /* 26:                   DESC shift  26 */
+  {  65,   0, 178}, /* 27:                  MINUS shift  178 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  { 130,  19,  77}, /* 29:                     id shift  77 */
+  { 131,   0, 108}, /* 30:                    ids shift  108 */
+  {  67,  33, 174}, /* 31:                    NOT shift  174 */
+  {  99,  27,  37}, /* 32:                 VACUUM shift  37 */
+  {  33,   0,  27}, /* 33:                    END shift  27 */
+  { 101,  31,  38}, /* 34:                   VIEW shift  38 */
 /* State 365 */
-  {  81,   0, 601}, /*  1:                   SEMI reduce 208 */
-  {  95,   1, 366}, /*  2:                  USING shift  366 */
+  {  80,   0, 366}, /*  1:                     RP shift  366 */
+  {  17,   0, 367}, /*  2:                  COMMA shift  367 */
 /* State 366 */
-  {  26,   0, 367}, /*  1:             DELIMITERS shift  367 */
+  {  83,   0, 552}, /*  1:                   SEMI reduce 141 */
 /* State 367 */
-  {  86,   0, 368}, /*  1:                 STRING shift  368 */
+  {  99,  12,  37}, /*  1:                 VACUUM shift  37 */
+  {  67,  17, 174}, /*  2:                    NOT shift  174 */
+  { 101,   0,  38}, /*  3:                   VIEW shift  38 */
+  {  69,   0, 107}, /*  4:                   NULL shift  107 */
+  {  70,  18,  33}, /*  5:                 OFFSET shift  33 */
+  {  38,   0,  29}, /*  6:                   FAIL shift  29 */
+  {  39,  19, 112}, /*  7:                  FLOAT shift  112 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  74,   0, 180}, /*  9:                   PLUS shift  180 */
+  {  75,   0,  34}, /* 10:                 PRAGMA shift  34 */
+  {  10,   0, 176}, /* 11:                 BITNOT shift  176 */
+  {  33,   0,  27}, /* 12:                    END shift  27 */
+  {  78,   0,  35}, /* 13:                REPLACE shift  35 */
+  {  13,   0, 182}, /* 14:                   CASE shift  182 */
+  {  47,   0,  75}, /* 15:                     ID shift  75 */
+  {  48,  20,  31}, /* 16:                 IGNORE shift  31 */
+  {   1,   0,  19}, /* 17:                  ABORT shift  19 */
+  {  37,   0,  28}, /* 18:                EXPLAIN shift  28 */
+  {   6,   0,  20}, /* 19:                    ASC shift  20 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  53,   0, 111}, /* 21:                INTEGER shift  111 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  88,   0,  78}, /* 23:                 STRING shift  78 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  {  90,   0,  36}, /* 25:                   TEMP shift  36 */
+  { 124,  27, 368}, /* 26:                   expr shift  368 */
+  {  58,   0,  32}, /* 27:                    KEY shift  32 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+  {  62,   0,  79}, /* 30:                     LP shift  79 */
+  {  65,   0, 178}, /* 31:                  MINUS shift  178 */
+  { 130,   0,  77}, /* 32:                     id shift  77 */
+  { 131,  31, 108}, /* 33:                    ids shift  108 */
 /* State 368 */
-  {  81,   0, 600}, /*  1:                   SEMI reduce 207 */
+  {   4,   0, 106}, /*  1:                    AND shift  106 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
 /* State 369 */
-  {  88,   0,  29}, /*  1:                   TEMP shift  29 */
-  {  45,   4,  28}, /*  2:                     ID shift  28 */
-  {  68,  12,  30}, /*  3:                 OFFSET shift  30 */
-  {   1,   0,  32}, /*  4:                  ABORT shift  32 */
-  {  26,   0,  21}, /*  5:             DELIMITERS shift  21 */
-  {  27,   0,  19}, /*  6:                   DESC shift  19 */
-  {   6,   0,  20}, /*  7:                    ASC shift  20 */
-  {  73,  17,  26}, /*  8:                 PRAGMA shift  26 */
-  {  96,   0,  23}, /*  9:                 VACUUM shift  23 */
-  {  31,   0,  25}, /* 10:                    END shift  25 */
-  {  76,   0,  34}, /* 11:                REPLACE shift  34 */
-  {  46,   0,  33}, /* 12:                 IGNORE shift  33 */
-  {  56,   0,  31}, /* 13:                    KEY shift  31 */
-  { 123,  18,  37}, /* 14:                     id shift  37 */
-  { 124,  19, 370}, /* 15:                    ids shift  370 */
-  {  81,   0, 602}, /* 16:                   SEMI reduce 209 */
-  {   7,   0,  24}, /* 17:                  BEGIN shift  24 */
-  {  35,   0,  22}, /* 18:                EXPLAIN shift  22 */
-  {  36,  20,  35}, /* 19:                   FAIL shift  35 */
-  {  14,   0,  27}, /* 20:                CLUSTER shift  27 */
-  {  86,  22,  38}, /* 21:                 STRING shift  38 */
-  {  20,   0,  36}, /* 22:               CONFLICT shift  36 */
+  {   4,   0, 106}, /*  1:                    AND shift  106 */
+  {  59,   0, 120}, /*  2:                     LE shift  120 */
+  {   8,   0, 161}, /*  3:                BETWEEN shift  161 */
+  {  81,   0, 134}, /*  4:                 RSHIFT shift  134 */
+  {  56,   1, 156}, /*  5:                     IS shift  156 */
+  {  57,   0, 155}, /*  6:                 ISNULL shift  155 */
+  {  35,  11, 126}, /*  7:                     EQ shift  126 */
+  {  85,   2, 149}, /*  8:                  SLASH shift  149 */
+  {  60,   3, 136}, /*  9:                   LIKE shift  136 */
+  {  87,   7, 147}, /* 10:                   STAR shift  147 */
+  {   9,   0, 128}, /* 11:                 BITAND shift  128 */
+  {  63,  19, 132}, /* 12:                 LSHIFT shift  132 */
+  {  64,   0, 116}, /* 13:                     LT shift  116 */
+  {  65,   0, 145}, /* 14:                  MINUS shift  145 */
+  {  66,   0, 124}, /* 15:                     NE shift  124 */
+  {  67,   0, 138}, /* 16:                    NOT shift  138 */
+  {  68,  22, 160}, /* 17:                NOTNULL shift  160 */
+  {  43,   0, 141}, /* 18:                   GLOB shift  141 */
+  {  11,   0, 130}, /* 19:                  BITOR shift  130 */
+  {  45,   0, 118}, /* 20:                     GT shift  118 */
+  {  72,  24, 114}, /* 21:                     OR shift  114 */
+  {  42,   0, 122}, /* 22:                     GE shift  122 */
+  {  74,   0, 143}, /* 23:                   PLUS shift  143 */
+  {  20,   0, 153}, /* 24:                 CONCAT shift  153 */
+  {  50,   0, 165}, /* 25:                     IN shift  165 */
+  {  77,   0, 151}, /* 26:                    REM shift  151 */
 /* State 370 */
-  {  81,   0, 603}, /*  1:                   SEMI reduce 210 */
+  {  48,   0,  31}, /*  1:                 IGNORE shift  31 */
+  {   1,   0,  19}, /*  2:                  ABORT shift  19 */
+  {  75,   9,  34}, /*  3:                 PRAGMA shift  34 */
+  {  99,   3,  37}, /*  4:                 VACUUM shift  37 */
+  {  28,   0,  26}, /*  5:                   DESC shift  26 */
+  { 101,   0,  38}, /*  6:                   VIEW shift  38 */
+  {  78,  13,  35}, /*  7:                REPLACE shift  35 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  27,   0,  25}, /*  9:             DELIMITERS shift  25 */
+  {  33,   0,  27}, /* 10:                    END shift  27 */
+  { 130,  18,  39}, /* 11:                     id shift  39 */
+  { 131,   0, 375}, /* 12:                    ids shift  375 */
+  {   6,   0,  20}, /* 13:                    ASC shift  20 */
+  {  37,   0,  28}, /* 14:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /* 15:                   FAIL shift  29 */
+  { 135,  20, 371}, /* 16:             inscollist shift  371 */
+  {  88,   0,  40}, /* 17:                 STRING shift  40 */
+  {  58,   0,  32}, /* 18:                    KEY shift  32 */
+  {  90,   0,  36}, /* 19:                   TEMP shift  36 */
+  {  15,   0,  22}, /* 20:                CLUSTER shift  22 */
+  {  23,   0,  24}, /* 21:                   COPY shift  24 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  70,   0,  33}, /* 23:                 OFFSET shift  33 */
+  {  47,  21,  30}, /* 24:                     ID shift  30 */
 /* State 371 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 372}, /* 20:                    ids shift  372 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-/* State 372 */
-  {  81,   2, 609}, /*  1:                   SEMI reduce 216 */
-  {  60,   3, 385}, /*  2:                     LP shift  385 */
-  {  33,   0, 373}, /*  3:                     EQ shift  373 */
+  {  80,   0, 372}, /*  1:                     RP shift  372 */
+  {  17,   0, 373}, /*  2:                  COMMA shift  373 */
 /* State 373 */
-  {  27,   0,  19}, /*  1:                   DESC shift  19 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  56,   0,  31}, /*  3:                    KEY shift  31 */
-  {   6,   0,  20}, /*  4:                    ASC shift  20 */
-  {  31,   0,  25}, /*  5:                    END shift  25 */
-  {  86,   0,  38}, /*  6:                 STRING shift  38 */
-  { 141,   4, 376}, /*  7:               plus_num shift  376 */
-  { 142,  11, 378}, /*  8:               plus_opt shift  378 */
-  {  35,   0,  22}, /*  9:                EXPLAIN shift  22 */
-  {  63,  12, 382}, /* 10:                  MINUS shift  382 */
-  {  88,  13,  29}, /* 11:                   TEMP shift  29 */
-  {  36,   0,  35}, /* 12:                   FAIL shift  35 */
-  {   7,   0,  24}, /* 13:                  BEGIN shift  24 */
-  {  14,   0,  27}, /* 14:                CLUSTER shift  27 */
-  {  68,  14,  30}, /* 15:                 OFFSET shift  30 */
-  { 123,  18,  37}, /* 16:                     id shift  37 */
-  { 124,   0, 374}, /* 17:                    ids shift  374 */
-  {  96,  22,  23}, /* 18:                 VACUUM shift  23 */
-  {  72,  24, 384}, /* 19:                   PLUS shift  384 */
-  {  73,  25,  26}, /* 20:                 PRAGMA shift  26 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
-  {  69,   0, 375}, /* 22:                     ON shift  375 */
-  {  76,   0,  34}, /* 23:                REPLACE shift  34 */
-  {  45,   0,  28}, /* 24:                     ID shift  28 */
-  {  46,   0,  33}, /* 25:                 IGNORE shift  33 */
-  {  26,   0,  21}, /* 26:             DELIMITERS shift  21 */
-  { 134,  26, 377}, /* 27:              minus_num shift  377 */
-/* State 374 */
-  {  81,   0, 604}, /*  1:                   SEMI reduce 211 */
-/* State 375 */
-  {  81,   0, 605}, /*  1:                   SEMI reduce 212 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 374}, /* 17:                    ids shift  374 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
 /* State 376 */
-  {  81,   0, 606}, /*  1:                   SEMI reduce 213 */
+  {  72,   0, 344}, /*  1:                     OR shift  344 */
+  {  55,   0, 494}, /*  2:                   INTO reduce 83 */
+  { 146,   0, 377}, /*  3:                 orconf shift  377 */
 /* State 377 */
-  {  81,   0, 607}, /*  1:                   SEMI reduce 214 */
+  {  55,   0, 554}, /*  1:                   INTO reduce 143 */
 /* State 378 */
-  {  51,   0, 380}, /*  1:                INTEGER shift  380 */
-  { 136,   3, 379}, /*  2:                 number shift  379 */
-  {  37,   0, 381}, /*  3:                  FLOAT shift  381 */
+  {  55,   0, 555}, /*  1:                   INTO reduce 144 */
 /* State 379 */
-  {  81,   0, 610}, /*  1:                   SEMI reduce 217 */
+  { 146,   2, 380}, /*  1:                 orconf shift  380 */
+  {  72,   0, 344}, /*  2:                     OR shift  344 */
 /* State 380 */
-  {  81,   0, 612}, /*  1:                   SEMI reduce 219 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 381}, /* 17:                    ids shift  381 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
 /* State 381 */
-  {  81,   0, 613}, /*  1:                   SEMI reduce 220 */
+  {  40,   0, 382}, /*  1:                   FROM shift  382 */
 /* State 382 */
-  {  51,   0, 380}, /*  1:                INTEGER shift  380 */
-  { 136,   3, 383}, /*  2:                 number shift  383 */
-  {  37,   0, 381}, /*  3:                  FLOAT shift  381 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 383}, /* 17:                    ids shift  383 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
 /* State 383 */
-  {  81,   0, 611}, /*  1:                   SEMI reduce 218 */
+  {  98,   0, 384}, /*  1:                  USING shift  384 */
+  {  83,   0, 628}, /*  2:                   SEMI reduce 217 */
+/* State 384 */
+  {  27,   0, 385}, /*  1:             DELIMITERS shift  385 */
 /* State 385 */
-  {  46,   0,  33}, /*  1:                 IGNORE shift  33 */
-  {   1,   0,  32}, /*  2:                  ABORT shift  32 */
-  {  86,   0,  38}, /*  3:                 STRING shift  38 */
-  {  45,   0,  28}, /*  4:                     ID shift  28 */
-  {  88,   1,  29}, /*  5:                   TEMP shift  29 */
-  {  68,   9,  30}, /*  6:                 OFFSET shift  30 */
-  {  27,  10,  19}, /*  7:                   DESC shift  19 */
-  {   7,   0,  24}, /*  8:                  BEGIN shift  24 */
-  {  26,   0,  21}, /*  9:             DELIMITERS shift  21 */
-  {   6,   0,  20}, /* 10:                    ASC shift  20 */
-  {  73,  12,  26}, /* 11:                 PRAGMA shift  26 */
-  {  31,   0,  25}, /* 12:                    END shift  25 */
-  {  96,   0,  23}, /* 13:                 VACUUM shift  23 */
-  {  76,   0,  34}, /* 14:                REPLACE shift  34 */
-  {  56,  17,  31}, /* 15:                    KEY shift  31 */
-  {  36,   0,  35}, /* 16:                   FAIL shift  35 */
-  {  35,  18,  22}, /* 17:                EXPLAIN shift  22 */
-  {  14,   0,  27}, /* 18:                CLUSTER shift  27 */
-  { 123,   0,  37}, /* 19:                     id shift  37 */
-  { 124,   0, 386}, /* 20:                    ids shift  386 */
-  {  20,   0,  36}, /* 21:               CONFLICT shift  36 */
+  {  88,   0, 386}, /*  1:                 STRING shift  386 */
 /* State 386 */
-  {  78,   0, 387}, /*  1:                     RP shift  387 */
+  {  83,   0, 627}, /*  1:                   SEMI reduce 216 */
 /* State 387 */
-  {  81,   0, 608}, /*  1:                   SEMI reduce 215 */
+  {  48,   0,  31}, /*  1:                 IGNORE shift  31 */
+  {   1,   0,  19}, /*  2:                  ABORT shift  19 */
+  {  75,   9,  34}, /*  3:                 PRAGMA shift  34 */
+  {  99,   3,  37}, /*  4:                 VACUUM shift  37 */
+  {  28,   0,  26}, /*  5:                   DESC shift  26 */
+  { 101,   0,  38}, /*  6:                   VIEW shift  38 */
+  {  78,  13,  35}, /*  7:                REPLACE shift  35 */
+  {   7,   0,  21}, /*  8:                  BEGIN shift  21 */
+  {  27,   0,  25}, /*  9:             DELIMITERS shift  25 */
+  {  33,   0,  27}, /* 10:                    END shift  27 */
+  { 130,  18,  39}, /* 11:                     id shift  39 */
+  { 131,  20, 388}, /* 12:                    ids shift  388 */
+  {   6,   0,  20}, /* 13:                    ASC shift  20 */
+  {  37,   0,  28}, /* 14:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /* 15:                   FAIL shift  29 */
+  {  15,   0,  22}, /* 16:                CLUSTER shift  22 */
+  {  88,   0,  40}, /* 17:                 STRING shift  40 */
+  {  58,   0,  32}, /* 18:                    KEY shift  32 */
+  {  90,   0,  36}, /* 19:                   TEMP shift  36 */
+  {  83,   0, 629}, /* 20:                   SEMI reduce 218 */
+  {  23,   0,  24}, /* 21:                   COPY shift  24 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  70,   0,  33}, /* 23:                 OFFSET shift  33 */
+  {  47,  21,  30}, /* 24:                     ID shift  30 */
 /* State 388 */
-  {  81,   0, 389}, /*  1:                   SEMI shift  389 */
+  {  83,   0, 630}, /*  1:                   SEMI reduce 219 */
+/* State 389 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 390}, /* 17:                    ids shift  390 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 390 */
+  {  62,   2, 403}, /*  1:                     LP shift  403 */
+  {  35,   0, 391}, /*  2:                     EQ shift  391 */
+  {  83,   1, 636}, /*  3:                   SEMI reduce 225 */
+/* State 391 */
+  {  58,   0,  32}, /*  1:                    KEY shift  32 */
+  {  88,   3,  40}, /*  2:                 STRING shift  40 */
+  {   1,   0,  19}, /*  3:                  ABORT shift  19 */
+  { 148,   6, 394}, /*  4:               plus_num shift  394 */
+  { 149,  11, 396}, /*  5:               plus_opt shift  396 */
+  {  90,   0,  36}, /*  6:                   TEMP shift  36 */
+  {   6,   0,  20}, /*  7:                    ASC shift  20 */
+  {  65,  12, 400}, /*  8:                  MINUS shift  400 */
+  {  37,   0,  28}, /*  9:                EXPLAIN shift  28 */
+  {  38,   0,  29}, /* 10:                   FAIL shift  29 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   7,   0,  21}, /* 12:                  BEGIN shift  21 */
+  {  99,  23,  37}, /* 13:                 VACUUM shift  37 */
+  {  71,   0, 393}, /* 14:                     ON shift  393 */
+  { 130,  25,  39}, /* 15:                     id shift  39 */
+  { 131,  27, 392}, /* 16:                    ids shift  392 */
+  {  74,   0, 402}, /* 17:                   PLUS shift  402 */
+  {  75,   0,  34}, /* 18:                 PRAGMA shift  34 */
+  {  47,   0,  30}, /* 19:                     ID shift  30 */
+  {  48,   0,  31}, /* 20:                 IGNORE shift  31 */
+  {  78,   0,  35}, /* 21:                REPLACE shift  35 */
+  {  21,   0,  23}, /* 22:               CONFLICT shift  23 */
+  {  70,   0,  33}, /* 23:                 OFFSET shift  33 */
+  {  23,   0,  24}, /* 24:                   COPY shift  24 */
+  { 101,   0,  38}, /* 25:                   VIEW shift  38 */
+  { 141,   0, 395}, /* 26:              minus_num shift  395 */
+  {  15,   0,  22}, /* 27:                CLUSTER shift  22 */
+  {  27,   0,  25}, /* 28:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /* 29:                   DESC shift  26 */
+/* State 392 */
+  {  83,   0, 631}, /*  1:                   SEMI reduce 220 */
+/* State 393 */
+  {  83,   0, 632}, /*  1:                   SEMI reduce 221 */
+/* State 394 */
+  {  83,   0, 633}, /*  1:                   SEMI reduce 222 */
+/* State 395 */
+  {  83,   0, 634}, /*  1:                   SEMI reduce 223 */
+/* State 396 */
+  {  39,   0, 399}, /*  1:                  FLOAT shift  399 */
+  {  53,   0, 398}, /*  2:                INTEGER shift  398 */
+  { 143,   2, 397}, /*  3:                 number shift  397 */
+/* State 397 */
+  {  83,   0, 637}, /*  1:                   SEMI reduce 226 */
+/* State 398 */
+  {  83,   0, 639}, /*  1:                   SEMI reduce 228 */
+/* State 399 */
+  {  83,   0, 640}, /*  1:                   SEMI reduce 229 */
+/* State 400 */
+  {  39,   0, 399}, /*  1:                  FLOAT shift  399 */
+  {  53,   0, 398}, /*  2:                INTEGER shift  398 */
+  { 143,   2, 401}, /*  3:                 number shift  401 */
+/* State 401 */
+  {  83,   0, 638}, /*  1:                   SEMI reduce 227 */
+/* State 403 */
+  {  23,   0,  24}, /*  1:                   COPY shift  24 */
+  {  70,   4,  33}, /*  2:                 OFFSET shift  33 */
+  {  48,   0,  31}, /*  3:                 IGNORE shift  31 */
+  {  47,   9,  30}, /*  4:                     ID shift  30 */
+  {  27,   0,  25}, /*  5:             DELIMITERS shift  25 */
+  {  28,   0,  26}, /*  6:                   DESC shift  26 */
+  {  75,  12,  34}, /*  7:                 PRAGMA shift  34 */
+  {  99,  14,  37}, /*  8:                 VACUUM shift  37 */
+  {   1,   0,  19}, /*  9:                  ABORT shift  19 */
+  { 101,  18,  38}, /* 10:                   VIEW shift  38 */
+  {  33,   0,  27}, /* 11:                    END shift  27 */
+  {   6,   0,  20}, /* 12:                    ASC shift  20 */
+  {  58,   0,  32}, /* 13:                    KEY shift  32 */
+  {   7,   0,  21}, /* 14:                  BEGIN shift  21 */
+  {  37,   0,  28}, /* 15:                EXPLAIN shift  28 */
+  { 130,  19,  39}, /* 16:                     id shift  39 */
+  { 131,   0, 404}, /* 17:                    ids shift  404 */
+  {  78,   0,  35}, /* 18:                REPLACE shift  35 */
+  {  38,  21,  29}, /* 19:                   FAIL shift  29 */
+  {  88,   0,  40}, /* 20:                 STRING shift  40 */
+  {  15,   0,  22}, /* 21:                CLUSTER shift  22 */
+  {  90,  23,  36}, /* 22:                   TEMP shift  36 */
+  {  21,   0,  23}, /* 23:               CONFLICT shift  23 */
+/* State 404 */
+  {  80,   0, 405}, /*  1:                     RP shift  405 */
+/* State 405 */
+  {  83,   0, 635}, /*  1:                   SEMI reduce 224 */
+/* State 406 */
+  {  83,   0, 407}, /*  1:                   SEMI shift  407 */
 };
 
 /* The state table contains information needed to look up the correct
@@ -3708,399 +4303,417 @@ struct yyStateEntry {
 };
 typedef struct yyStateEntry yyStateEntry;
 static const yyStateEntry yyStateTable[] = {
-  { &yyActionTable[0],  25, 616 },
-  { &yyActionTable[25],  24, 616 },
-  { &yyActionTable[49],   0, 395 },
-  { &yyActionTable[49],  19, 616 },
-  { &yyActionTable[68],   1, 616 },
-  { &yyActionTable[69],   0, 396 },
-  { &yyActionTable[69],   2, 401 },
-  { &yyActionTable[71],   3, 616 },
-  { &yyActionTable[74],   1, 616 },
-  { &yyActionTable[75],   1, 616 },
-  { &yyActionTable[76],   6, 616 },
-  { &yyActionTable[82],   0, 473 },
-  { &yyActionTable[82],   0, 476 },
-  { &yyActionTable[82],   0, 477 },
-  { &yyActionTable[82],   0, 478 },
-  { &yyActionTable[82],   0, 479 },
-  { &yyActionTable[82],   0, 480 },
-  { &yyActionTable[82],  21, 402 },
-  { &yyActionTable[103],   0, 403 },
-  { &yyActionTable[103],   0, 417 },
-  { &yyActionTable[103],   0, 418 },
-  { &yyActionTable[103],   0, 419 },
-  { &yyActionTable[103],   0, 420 },
-  { &yyActionTable[103],   0, 421 },
-  { &yyActionTable[103],   0, 422 },
-  { &yyActionTable[103],   0, 423 },
-  { &yyActionTable[103],   0, 424 },
-  { &yyActionTable[103],   0, 425 },
-  { &yyActionTable[103],   0, 426 },
-  { &yyActionTable[103],   0, 427 },
-  { &yyActionTable[103],   0, 428 },
-  { &yyActionTable[103],   0, 429 },
-  { &yyActionTable[103],   0, 430 },
-  { &yyActionTable[103],   0, 431 },
-  { &yyActionTable[103],   0, 432 },
-  { &yyActionTable[103],   0, 433 },
-  { &yyActionTable[103],   0, 434 },
-  { &yyActionTable[103],   0, 435 },
-  { &yyActionTable[103],   0, 436 },
-  { &yyActionTable[103],   3, 616 },
-  { &yyActionTable[106],   1, 616 },
-  { &yyActionTable[107],   3, 616 },
-  { &yyActionTable[110],   1, 616 },
-  { &yyActionTable[111],   3, 616 },
-  { &yyActionTable[114],   1, 616 },
-  { &yyActionTable[115],   3, 616 },
-  { &yyActionTable[118],   1, 616 },
-  { &yyActionTable[119],  24, 616 },
-  { &yyActionTable[143],   3, 616 },
-  { &yyActionTable[146],   1, 616 },
-  { &yyActionTable[147],   1, 616 },
-  { &yyActionTable[148],  29, 616 },
-  { &yyActionTable[177],   0, 413 },
-  { &yyActionTable[177],  23, 437 },
-  { &yyActionTable[200],   1, 447 },
-  { &yyActionTable[201],   8, 415 },
-  { &yyActionTable[209],   0, 446 },
-  { &yyActionTable[209],  21, 616 },
-  { &yyActionTable[230],   5, 616 },
-  { &yyActionTable[235],   0, 448 },
-  { &yyActionTable[235],   1, 616 },
-  { &yyActionTable[236],   2, 472 },
-  { &yyActionTable[238],   0, 459 },
-  { &yyActionTable[238],   1, 616 },
-  { &yyActionTable[239],   3, 516 },
-  { &yyActionTable[242],   2, 472 },
-  { &yyActionTable[244],   0, 460 },
-  { &yyActionTable[244],   0, 514 },
-  { &yyActionTable[244],   0, 515 },
-  { &yyActionTable[244],   2, 472 },
-  { &yyActionTable[246],   0, 461 },
-  { &yyActionTable[246],   1, 616 },
-  { &yyActionTable[247],  30, 616 },
-  { &yyActionTable[277],   1, 426 },
-  { &yyActionTable[278],  33, 592 },
-  { &yyActionTable[311],   1, 544 },
-  { &yyActionTable[312],   1, 548 },
-  { &yyActionTable[313],  33, 616 },
-  { &yyActionTable[346],   0, 485 },
-  { &yyActionTable[346],   5, 616 },
-  { &yyActionTable[351],   2, 616 },
-  { &yyActionTable[353],   0, 486 },
-  { &yyActionTable[353],   3, 494 },
-  { &yyActionTable[356],   2, 496 },
-  { &yyActionTable[358],   3, 616 },
-  { &yyActionTable[361],   2, 527 },
-  { &yyActionTable[363],   2, 517 },
-  { &yyActionTable[365],   2, 519 },
-  { &yyActionTable[367],   2, 509 },
-  { &yyActionTable[369],   2, 521 },
-  { &yyActionTable[371],   0, 491 },
-  { &yyActionTable[371],   1, 616 },
-  { &yyActionTable[372],   3, 522 },
-  { &yyActionTable[375],   1, 616 },
-  { &yyActionTable[376],   0, 523 },
-  { &yyActionTable[376],   1, 616 },
-  { &yyActionTable[377],   1, 616 },
-  { &yyActionTable[378],   1, 616 },
-  { &yyActionTable[379],  32, 616 },
-  { &yyActionTable[411],   1, 510 },
-  { &yyActionTable[412],  31, 616 },
-  { &yyActionTable[443],   3, 516 },
-  { &yyActionTable[446],   0, 511 },
-  { &yyActionTable[446],  26, 513 },
-  { &yyActionTable[472],  30, 616 },
-  { &yyActionTable[502],   0, 543 },
-  { &yyActionTable[502],   1, 616 },
-  { &yyActionTable[503],  21, 616 },
-  { &yyActionTable[524],   0, 545 },
-  { &yyActionTable[524],   0, 546 },
-  { &yyActionTable[524],   0, 547 },
-  { &yyActionTable[524],  24, 551 },
-  { &yyActionTable[548],  30, 616 },
-  { &yyActionTable[578],  25, 552 },
-  { &yyActionTable[603],  30, 616 },
-  { &yyActionTable[633],  10, 553 },
-  { &yyActionTable[643],  30, 616 },
-  { &yyActionTable[673],  10, 554 },
-  { &yyActionTable[683],  30, 616 },
-  { &yyActionTable[713],  10, 555 },
-  { &yyActionTable[723],  30, 616 },
-  { &yyActionTable[753],  10, 556 },
-  { &yyActionTable[763],  30, 616 },
-  { &yyActionTable[793],  14, 557 },
-  { &yyActionTable[807],  30, 616 },
-  { &yyActionTable[837],  14, 558 },
-  { &yyActionTable[851],  30, 616 },
-  { &yyActionTable[881],   6, 559 },
-  { &yyActionTable[887],  30, 616 },
-  { &yyActionTable[917],   6, 560 },
-  { &yyActionTable[923],  30, 616 },
-  { &yyActionTable[953],   6, 561 },
-  { &yyActionTable[959],  30, 616 },
-  { &yyActionTable[989],   6, 562 },
-  { &yyActionTable[995],  30, 616 },
-  { &yyActionTable[1025],  14, 563 },
-  { &yyActionTable[1039],   5, 616 },
-  { &yyActionTable[1044],  30, 616 },
-  { &yyActionTable[1074],  24, 564 },
-  { &yyActionTable[1098],  30, 616 },
-  { &yyActionTable[1128],  14, 565 },
-  { &yyActionTable[1142],  30, 616 },
-  { &yyActionTable[1172],   4, 567 },
-  { &yyActionTable[1176],  30, 616 },
-  { &yyActionTable[1206],   4, 568 },
-  { &yyActionTable[1210],  30, 616 },
-  { &yyActionTable[1240],   1, 569 },
-  { &yyActionTable[1241],  30, 616 },
-  { &yyActionTable[1271],   1, 570 },
-  { &yyActionTable[1272],  30, 616 },
-  { &yyActionTable[1302],   1, 571 },
-  { &yyActionTable[1303],  30, 616 },
-  { &yyActionTable[1333],   0, 572 },
-  { &yyActionTable[1333],   0, 573 },
-  { &yyActionTable[1333],   2, 616 },
-  { &yyActionTable[1335],   0, 574 },
-  { &yyActionTable[1335],   1, 616 },
-  { &yyActionTable[1336],   0, 577 },
-  { &yyActionTable[1336],   0, 575 },
-  { &yyActionTable[1336],  30, 616 },
-  { &yyActionTable[1366],  26, 616 },
-  { &yyActionTable[1392],  30, 616 },
-  { &yyActionTable[1422],  14, 583 },
-  { &yyActionTable[1436],   1, 616 },
-  { &yyActionTable[1437],  35, 592 },
-  { &yyActionTable[1472],   5, 616 },
-  { &yyActionTable[1477],   2, 616 },
-  { &yyActionTable[1479],   1, 616 },
-  { &yyActionTable[1480],   1, 616 },
-  { &yyActionTable[1481],   1, 616 },
-  { &yyActionTable[1482],   0, 586 },
-  { &yyActionTable[1482],  26, 591 },
-  { &yyActionTable[1508],  30, 616 },
-  { &yyActionTable[1538],  24, 578 },
-  { &yyActionTable[1562],  30, 616 },
-  { &yyActionTable[1592],   0, 579 },
-  { &yyActionTable[1592],  30, 616 },
-  { &yyActionTable[1622],   0, 580 },
-  { &yyActionTable[1622],  30, 616 },
-  { &yyActionTable[1652],   0, 581 },
-  { &yyActionTable[1652],   2, 616 },
-  { &yyActionTable[1654],   0, 585 },
-  { &yyActionTable[1654],  31, 592 },
-  { &yyActionTable[1685],   0, 589 },
-  { &yyActionTable[1685],   0, 590 },
-  { &yyActionTable[1685],  30, 616 },
-  { &yyActionTable[1715],  24, 566 },
-  { &yyActionTable[1739],   0, 576 },
-  { &yyActionTable[1739],  30, 616 },
-  { &yyActionTable[1769],  26, 616 },
-  { &yyActionTable[1795],  30, 616 },
-  { &yyActionTable[1825],  24, 584 },
-  { &yyActionTable[1849],   1, 616 },
-  { &yyActionTable[1850],  35, 592 },
-  { &yyActionTable[1885],   5, 616 },
-  { &yyActionTable[1890],   0, 588 },
-  { &yyActionTable[1890],   2, 616 },
-  { &yyActionTable[1892],   0, 587 },
-  { &yyActionTable[1892],   3, 516 },
-  { &yyActionTable[1895],   0, 512 },
-  { &yyActionTable[1895],  30, 616 },
-  { &yyActionTable[1925],  26, 520 },
-  { &yyActionTable[1951],   1, 616 },
-  { &yyActionTable[1952],  32, 592 },
-  { &yyActionTable[1984],   1, 518 },
-  { &yyActionTable[1985],  30, 616 },
-  { &yyActionTable[2015],  26, 528 },
-  { &yyActionTable[2041],   0, 495 },
-  { &yyActionTable[2041],   2, 504 },
-  { &yyActionTable[2043],   1, 502 },
-  { &yyActionTable[2044],   0, 503 },
-  { &yyActionTable[2044],  22, 616 },
-  { &yyActionTable[2066],  13, 500 },
-  { &yyActionTable[2079],   0, 501 },
-  { &yyActionTable[2079],  21, 616 },
-  { &yyActionTable[2100],   0, 506 },
-  { &yyActionTable[2100],   3, 616 },
-  { &yyActionTable[2103],   5, 616 },
-  { &yyActionTable[2108],  13, 500 },
-  { &yyActionTable[2121],  21, 616 },
-  { &yyActionTable[2142],   0, 508 },
-  { &yyActionTable[2142],  31, 616 },
-  { &yyActionTable[2173],  30, 500 },
-  { &yyActionTable[2203],  21, 616 },
-  { &yyActionTable[2224],   0, 498 },
-  { &yyActionTable[2224],   0, 499 },
-  { &yyActionTable[2224],   0, 492 },
-  { &yyActionTable[2224],   0, 493 },
-  { &yyActionTable[2224],   0, 582 },
-  { &yyActionTable[2224],  27, 616 },
-  { &yyActionTable[2251],   0, 542 },
-  { &yyActionTable[2251],   2, 616 },
-  { &yyActionTable[2253],   0, 549 },
-  { &yyActionTable[2253],   1, 616 },
-  { &yyActionTable[2254],   0, 550 },
-  { &yyActionTable[2254],  27, 616 },
-  { &yyActionTable[2281],   2, 472 },
-  { &yyActionTable[2283],   0, 462 },
-  { &yyActionTable[2283],   0, 449 },
-  { &yyActionTable[2283],   7, 616 },
-  { &yyActionTable[2290],   0, 450 },
-  { &yyActionTable[2290],   0, 451 },
-  { &yyActionTable[2290],   0, 452 },
-  { &yyActionTable[2290],   2, 616 },
-  { &yyActionTable[2292],   0, 453 },
-  { &yyActionTable[2292],   0, 456 },
-  { &yyActionTable[2292],   2, 616 },
-  { &yyActionTable[2294],   0, 454 },
-  { &yyActionTable[2294],   0, 457 },
-  { &yyActionTable[2294],   0, 455 },
-  { &yyActionTable[2294],   0, 458 },
-  { &yyActionTable[2294],  22, 438 },
-  { &yyActionTable[2316],   4, 616 },
-  { &yyActionTable[2320],   2, 616 },
-  { &yyActionTable[2322],   0, 439 },
-  { &yyActionTable[2322],   4, 616 },
-  { &yyActionTable[2326],   1, 616 },
-  { &yyActionTable[2327],   0, 440 },
-  { &yyActionTable[2327],   0, 443 },
-  { &yyActionTable[2327],   1, 616 },
-  { &yyActionTable[2328],   0, 444 },
-  { &yyActionTable[2328],   1, 616 },
-  { &yyActionTable[2329],   0, 445 },
-  { &yyActionTable[2329],   0, 442 },
-  { &yyActionTable[2329],   0, 441 },
-  { &yyActionTable[2329],   0, 416 },
-  { &yyActionTable[2329],   7, 616 },
-  { &yyActionTable[2336],   5, 616 },
-  { &yyActionTable[2341],   0, 465 },
-  { &yyActionTable[2341],  21, 616 },
-  { &yyActionTable[2362],   0, 468 },
-  { &yyActionTable[2362],   1, 616 },
-  { &yyActionTable[2363],   1, 616 },
-  { &yyActionTable[2364],  23, 616 },
-  { &yyActionTable[2387],   2, 616 },
-  { &yyActionTable[2389],   2, 472 },
-  { &yyActionTable[2391],   0, 469 },
-  { &yyActionTable[2391],  22, 616 },
-  { &yyActionTable[2413],   0, 596 },
-  { &yyActionTable[2413],   0, 598 },
-  { &yyActionTable[2413],   0, 597 },
-  { &yyActionTable[2413],   1, 616 },
-  { &yyActionTable[2414],  23, 616 },
-  { &yyActionTable[2437],   2, 616 },
-  { &yyActionTable[2439],   2, 472 },
-  { &yyActionTable[2441],   0, 470 },
-  { &yyActionTable[2441],  30, 616 },
-  { &yyActionTable[2471],  28, 472 },
-  { &yyActionTable[2499],   0, 471 },
-  { &yyActionTable[2499],   0, 466 },
-  { &yyActionTable[2499],   0, 467 },
-  { &yyActionTable[2499],   0, 414 },
-  { &yyActionTable[2499],   3, 616 },
-  { &yyActionTable[2502],   5, 616 },
-  { &yyActionTable[2507],   7, 616 },
-  { &yyActionTable[2514],   1, 616 },
-  { &yyActionTable[2515],  21, 616 },
-  { &yyActionTable[2536],   0, 408 },
-  { &yyActionTable[2536],   1, 616 },
-  { &yyActionTable[2537],  21, 616 },
-  { &yyActionTable[2558],   1, 616 },
-  { &yyActionTable[2559],   3, 616 },
-  { &yyActionTable[2562],   5, 616 },
-  { &yyActionTable[2567],   1, 616 },
-  { &yyActionTable[2568],  21, 616 },
-  { &yyActionTable[2589],   1, 616 },
-  { &yyActionTable[2590],  21, 616 },
-  { &yyActionTable[2611],   1, 616 },
-  { &yyActionTable[2612],  23, 616 },
-  { &yyActionTable[2635],   2, 616 },
-  { &yyActionTable[2637],   3, 616 },
-  { &yyActionTable[2640],   1, 616 },
-  { &yyActionTable[2641],   1, 616 },
-  { &yyActionTable[2642],   3, 616 },
-  { &yyActionTable[2645],  21, 616 },
-  { &yyActionTable[2666],   1, 616 },
-  { &yyActionTable[2667],  21, 616 },
-  { &yyActionTable[2688],   1, 616 },
-  { &yyActionTable[2689],  21, 616 },
-  { &yyActionTable[2710],   1, 616 },
-  { &yyActionTable[2711],   5, 616 },
-  { &yyActionTable[2716],   1, 616 },
-  { &yyActionTable[2717],  21, 616 },
-  { &yyActionTable[2738],   3, 616 },
-  { &yyActionTable[2741],   1, 616 },
-  { &yyActionTable[2742],   2, 474 },
-  { &yyActionTable[2744],   6, 616 },
-  { &yyActionTable[2750],   0, 475 },
-  { &yyActionTable[2750],  21, 616 },
-  { &yyActionTable[2771],   1, 616 },
-  { &yyActionTable[2772],  22, 616 },
-  { &yyActionTable[2794],   4, 616 },
-  { &yyActionTable[2798],   1, 616 },
-  { &yyActionTable[2799],  21, 616 },
-  { &yyActionTable[2820],   1, 616 },
-  { &yyActionTable[2821],  30, 616 },
-  { &yyActionTable[2851],  26, 530 },
-  { &yyActionTable[2877],   1, 616 },
-  { &yyActionTable[2878],  30, 616 },
-  { &yyActionTable[2908],  26, 531 },
-  { &yyActionTable[2934],   1, 616 },
-  { &yyActionTable[2935],  21, 616 },
-  { &yyActionTable[2956],   2, 538 },
-  { &yyActionTable[2958],   4, 616 },
-  { &yyActionTable[2962],   5, 616 },
-  { &yyActionTable[2967],   1, 616 },
-  { &yyActionTable[2968],  31, 616 },
-  { &yyActionTable[2999],   2, 616 },
-  { &yyActionTable[3001],   1, 616 },
-  { &yyActionTable[3002],  30, 616 },
-  { &yyActionTable[3032],  26, 536 },
-  { &yyActionTable[3058],  26, 537 },
-  { &yyActionTable[3084],  22, 616 },
-  { &yyActionTable[3106],   2, 616 },
-  { &yyActionTable[3108],   0, 539 },
-  { &yyActionTable[3108],  21, 616 },
-  { &yyActionTable[3129],   0, 540 },
-  { &yyActionTable[3129],   0, 541 },
-  { &yyActionTable[3129],   3, 616 },
-  { &yyActionTable[3132],   1, 616 },
-  { &yyActionTable[3133],   1, 616 },
-  { &yyActionTable[3134],   2, 474 },
-  { &yyActionTable[3136],  21, 616 },
-  { &yyActionTable[3157],   1, 616 },
-  { &yyActionTable[3158],  21, 616 },
-  { &yyActionTable[3179],   2, 616 },
-  { &yyActionTable[3181],   1, 616 },
-  { &yyActionTable[3182],   1, 616 },
-  { &yyActionTable[3183],   1, 616 },
-  { &yyActionTable[3184],  22, 616 },
-  { &yyActionTable[3206],   1, 616 },
-  { &yyActionTable[3207],  21, 616 },
-  { &yyActionTable[3228],   3, 616 },
-  { &yyActionTable[3231],  27, 615 },
-  { &yyActionTable[3258],   1, 616 },
-  { &yyActionTable[3259],   1, 616 },
-  { &yyActionTable[3260],   1, 616 },
-  { &yyActionTable[3261],   1, 616 },
-  { &yyActionTable[3262],   3, 616 },
-  { &yyActionTable[3265],   1, 616 },
-  { &yyActionTable[3266],   1, 616 },
-  { &yyActionTable[3267],   1, 616 },
-  { &yyActionTable[3268],   3, 616 },
-  { &yyActionTable[3271],   1, 616 },
-  { &yyActionTable[3272],   0, 614 },
-  { &yyActionTable[3272],  21, 616 },
-  { &yyActionTable[3293],   1, 616 },
-  { &yyActionTable[3294],   1, 616 },
-  { &yyActionTable[3295],   1, 616 },
-  { &yyActionTable[3296],   0, 397 },
-  { &yyActionTable[3296],   0, 398 },
-  { &yyActionTable[3296],   0, 399 },
-  { &yyActionTable[3296],   0, 394 },
+  { &yyActionTable[0],  25, 643 },
+  { &yyActionTable[25],  24, 643 },
+  { &yyActionTable[49],   0, 413 },
+  { &yyActionTable[49],  19, 643 },
+  { &yyActionTable[68],   1, 643 },
+  { &yyActionTable[69],   0, 414 },
+  { &yyActionTable[69],   2, 419 },
+  { &yyActionTable[71],   3, 643 },
+  { &yyActionTable[74],   1, 643 },
+  { &yyActionTable[75],   1, 643 },
+  { &yyActionTable[76],   6, 643 },
+  { &yyActionTable[82],   0, 493 },
+  { &yyActionTable[82],   0, 496 },
+  { &yyActionTable[82],   0, 497 },
+  { &yyActionTable[82],   0, 498 },
+  { &yyActionTable[82],   0, 499 },
+  { &yyActionTable[82],   0, 500 },
+  { &yyActionTable[82],  23, 420 },
+  { &yyActionTable[105],   0, 421 },
+  { &yyActionTable[105],   0, 435 },
+  { &yyActionTable[105],   0, 436 },
+  { &yyActionTable[105],   0, 437 },
+  { &yyActionTable[105],   0, 438 },
+  { &yyActionTable[105],   0, 439 },
+  { &yyActionTable[105],   0, 440 },
+  { &yyActionTable[105],   0, 441 },
+  { &yyActionTable[105],   0, 442 },
+  { &yyActionTable[105],   0, 443 },
+  { &yyActionTable[105],   0, 444 },
+  { &yyActionTable[105],   0, 445 },
+  { &yyActionTable[105],   0, 446 },
+  { &yyActionTable[105],   0, 447 },
+  { &yyActionTable[105],   0, 448 },
+  { &yyActionTable[105],   0, 449 },
+  { &yyActionTable[105],   0, 450 },
+  { &yyActionTable[105],   0, 451 },
+  { &yyActionTable[105],   0, 452 },
+  { &yyActionTable[105],   0, 453 },
+  { &yyActionTable[105],   0, 454 },
+  { &yyActionTable[105],   0, 455 },
+  { &yyActionTable[105],   0, 456 },
+  { &yyActionTable[105],   3, 643 },
+  { &yyActionTable[108],   1, 643 },
+  { &yyActionTable[109],   3, 643 },
+  { &yyActionTable[112],   1, 643 },
+  { &yyActionTable[113],   3, 643 },
+  { &yyActionTable[116],   1, 643 },
+  { &yyActionTable[117],   3, 643 },
+  { &yyActionTable[120],   1, 643 },
+  { &yyActionTable[121],  26, 643 },
+  { &yyActionTable[147],   3, 643 },
+  { &yyActionTable[150],   1, 643 },
+  { &yyActionTable[151],   1, 643 },
+  { &yyActionTable[152],  31, 643 },
+  { &yyActionTable[183],   0, 431 },
+  { &yyActionTable[183],  25, 457 },
+  { &yyActionTable[208],   1, 467 },
+  { &yyActionTable[209],   8, 433 },
+  { &yyActionTable[217],   0, 466 },
+  { &yyActionTable[217],  23, 643 },
+  { &yyActionTable[240],   5, 643 },
+  { &yyActionTable[245],   0, 468 },
+  { &yyActionTable[245],   1, 643 },
+  { &yyActionTable[246],   2, 492 },
+  { &yyActionTable[248],   0, 479 },
+  { &yyActionTable[248],   1, 643 },
+  { &yyActionTable[249],   3, 536 },
+  { &yyActionTable[252],   2, 492 },
+  { &yyActionTable[254],   0, 480 },
+  { &yyActionTable[254],   0, 534 },
+  { &yyActionTable[254],   0, 535 },
+  { &yyActionTable[254],   2, 492 },
+  { &yyActionTable[256],   0, 481 },
+  { &yyActionTable[256],   1, 643 },
+  { &yyActionTable[257],  33, 643 },
+  { &yyActionTable[290],   1, 446 },
+  { &yyActionTable[291],  36, 619 },
+  { &yyActionTable[327],   1, 564 },
+  { &yyActionTable[328],   1, 568 },
+  { &yyActionTable[329],  36, 643 },
+  { &yyActionTable[365],   0, 505 },
+  { &yyActionTable[365],   5, 643 },
+  { &yyActionTable[370],   2, 643 },
+  { &yyActionTable[372],   0, 506 },
+  { &yyActionTable[372],   3, 514 },
+  { &yyActionTable[375],   2, 516 },
+  { &yyActionTable[377],   3, 643 },
+  { &yyActionTable[380],   2, 547 },
+  { &yyActionTable[382],   2, 537 },
+  { &yyActionTable[384],   2, 539 },
+  { &yyActionTable[386],   2, 529 },
+  { &yyActionTable[388],   2, 541 },
+  { &yyActionTable[390],   0, 511 },
+  { &yyActionTable[390],   1, 643 },
+  { &yyActionTable[391],   3, 542 },
+  { &yyActionTable[394],   1, 643 },
+  { &yyActionTable[395],   0, 543 },
+  { &yyActionTable[395],   1, 643 },
+  { &yyActionTable[396],   1, 643 },
+  { &yyActionTable[397],   1, 643 },
+  { &yyActionTable[398],  35, 643 },
+  { &yyActionTable[433],   1, 530 },
+  { &yyActionTable[434],  34, 643 },
+  { &yyActionTable[468],   3, 536 },
+  { &yyActionTable[471],   0, 531 },
+  { &yyActionTable[471],  26, 533 },
+  { &yyActionTable[497],  33, 643 },
+  { &yyActionTable[530],   0, 563 },
+  { &yyActionTable[530],   1, 643 },
+  { &yyActionTable[531],  23, 643 },
+  { &yyActionTable[554],   0, 565 },
+  { &yyActionTable[554],   0, 566 },
+  { &yyActionTable[554],   0, 567 },
+  { &yyActionTable[554],  24, 571 },
+  { &yyActionTable[578],  33, 643 },
+  { &yyActionTable[611],  25, 572 },
+  { &yyActionTable[636],  33, 643 },
+  { &yyActionTable[669],  10, 573 },
+  { &yyActionTable[679],  33, 643 },
+  { &yyActionTable[712],  10, 574 },
+  { &yyActionTable[722],  33, 643 },
+  { &yyActionTable[755],  10, 575 },
+  { &yyActionTable[765],  33, 643 },
+  { &yyActionTable[798],  10, 576 },
+  { &yyActionTable[808],  33, 643 },
+  { &yyActionTable[841],  14, 577 },
+  { &yyActionTable[855],  33, 643 },
+  { &yyActionTable[888],  14, 578 },
+  { &yyActionTable[902],  33, 643 },
+  { &yyActionTable[935],   6, 579 },
+  { &yyActionTable[941],  33, 643 },
+  { &yyActionTable[974],   6, 580 },
+  { &yyActionTable[980],  33, 643 },
+  { &yyActionTable[1013],   6, 581 },
+  { &yyActionTable[1019],  33, 643 },
+  { &yyActionTable[1052],   6, 582 },
+  { &yyActionTable[1058],  33, 643 },
+  { &yyActionTable[1091],  14, 583 },
+  { &yyActionTable[1105],   5, 643 },
+  { &yyActionTable[1110],  33, 643 },
+  { &yyActionTable[1143],  24, 584 },
+  { &yyActionTable[1167],  33, 643 },
+  { &yyActionTable[1200],  14, 585 },
+  { &yyActionTable[1214],  33, 643 },
+  { &yyActionTable[1247],   4, 587 },
+  { &yyActionTable[1251],  33, 643 },
+  { &yyActionTable[1284],   4, 588 },
+  { &yyActionTable[1288],  33, 643 },
+  { &yyActionTable[1321],   1, 589 },
+  { &yyActionTable[1322],  33, 643 },
+  { &yyActionTable[1355],   1, 590 },
+  { &yyActionTable[1356],  33, 643 },
+  { &yyActionTable[1389],   1, 591 },
+  { &yyActionTable[1390],  33, 643 },
+  { &yyActionTable[1423],   0, 592 },
+  { &yyActionTable[1423],   0, 593 },
+  { &yyActionTable[1423],   2, 643 },
+  { &yyActionTable[1425],   0, 594 },
+  { &yyActionTable[1425],   1, 643 },
+  { &yyActionTable[1426],   0, 597 },
+  { &yyActionTable[1426],   0, 595 },
+  { &yyActionTable[1426],  33, 643 },
+  { &yyActionTable[1459],  26, 643 },
+  { &yyActionTable[1485],  33, 643 },
+  { &yyActionTable[1518],  14, 603 },
+  { &yyActionTable[1532],   1, 643 },
+  { &yyActionTable[1533],  38, 619 },
+  { &yyActionTable[1571],   5, 643 },
+  { &yyActionTable[1576],   2, 643 },
+  { &yyActionTable[1578],   1, 643 },
+  { &yyActionTable[1579],   1, 643 },
+  { &yyActionTable[1580],   1, 643 },
+  { &yyActionTable[1581],   0, 606 },
+  { &yyActionTable[1581],  26, 618 },
+  { &yyActionTable[1607],  33, 643 },
+  { &yyActionTable[1640],  24, 598 },
+  { &yyActionTable[1664],  33, 643 },
+  { &yyActionTable[1697],   0, 599 },
+  { &yyActionTable[1697],  33, 643 },
+  { &yyActionTable[1730],   0, 600 },
+  { &yyActionTable[1730],  33, 643 },
+  { &yyActionTable[1763],   0, 601 },
+  { &yyActionTable[1763],  35, 643 },
+  { &yyActionTable[1798],  27, 643 },
+  { &yyActionTable[1825],   2, 643 },
+  { &yyActionTable[1827],   4, 643 },
+  { &yyActionTable[1831],   1, 643 },
+  { &yyActionTable[1832],   0, 609 },
+  { &yyActionTable[1832],  33, 643 },
+  { &yyActionTable[1865],  27, 643 },
+  { &yyActionTable[1892],  33, 643 },
+  { &yyActionTable[1925],  26, 610 },
+  { &yyActionTable[1951],  33, 643 },
+  { &yyActionTable[1984],  27, 643 },
+  { &yyActionTable[2011],  33, 643 },
+  { &yyActionTable[2044],  27, 643 },
+  { &yyActionTable[2071],  33, 643 },
+  { &yyActionTable[2104],  26, 611 },
+  { &yyActionTable[2130],   2, 643 },
+  { &yyActionTable[2132],   0, 605 },
+  { &yyActionTable[2132],  34, 619 },
+  { &yyActionTable[2166],   0, 616 },
+  { &yyActionTable[2166],   0, 617 },
+  { &yyActionTable[2166],  33, 643 },
+  { &yyActionTable[2199],  24, 586 },
+  { &yyActionTable[2223],   0, 596 },
+  { &yyActionTable[2223],  33, 643 },
+  { &yyActionTable[2256],  26, 643 },
+  { &yyActionTable[2282],  33, 643 },
+  { &yyActionTable[2315],  24, 604 },
+  { &yyActionTable[2339],   1, 643 },
+  { &yyActionTable[2340],  38, 619 },
+  { &yyActionTable[2378],   5, 643 },
+  { &yyActionTable[2383],   0, 608 },
+  { &yyActionTable[2383],   2, 643 },
+  { &yyActionTable[2385],   0, 607 },
+  { &yyActionTable[2385],   3, 536 },
+  { &yyActionTable[2388],   0, 532 },
+  { &yyActionTable[2388],  33, 643 },
+  { &yyActionTable[2421],  26, 540 },
+  { &yyActionTable[2447],   1, 643 },
+  { &yyActionTable[2448],  35, 619 },
+  { &yyActionTable[2483],   1, 538 },
+  { &yyActionTable[2484],  33, 643 },
+  { &yyActionTable[2517],  26, 548 },
+  { &yyActionTable[2543],   0, 515 },
+  { &yyActionTable[2543],   2, 524 },
+  { &yyActionTable[2545],   1, 522 },
+  { &yyActionTable[2546],   0, 523 },
+  { &yyActionTable[2546],  24, 643 },
+  { &yyActionTable[2570],  13, 520 },
+  { &yyActionTable[2583],   0, 521 },
+  { &yyActionTable[2583],  23, 643 },
+  { &yyActionTable[2606],   0, 526 },
+  { &yyActionTable[2606],   3, 643 },
+  { &yyActionTable[2609],   5, 643 },
+  { &yyActionTable[2614],  13, 520 },
+  { &yyActionTable[2627],  23, 643 },
+  { &yyActionTable[2650],   0, 528 },
+  { &yyActionTable[2650],  34, 643 },
+  { &yyActionTable[2684],  30, 520 },
+  { &yyActionTable[2714],  23, 643 },
+  { &yyActionTable[2737],   0, 518 },
+  { &yyActionTable[2737],   0, 519 },
+  { &yyActionTable[2737],   0, 512 },
+  { &yyActionTable[2737],   0, 513 },
+  { &yyActionTable[2737],   0, 602 },
+  { &yyActionTable[2737],  27, 643 },
+  { &yyActionTable[2764],   0, 562 },
+  { &yyActionTable[2764],   2, 643 },
+  { &yyActionTable[2766],   0, 569 },
+  { &yyActionTable[2766],   1, 643 },
+  { &yyActionTable[2767],   0, 570 },
+  { &yyActionTable[2767],  27, 643 },
+  { &yyActionTable[2794],   2, 492 },
+  { &yyActionTable[2796],   0, 482 },
+  { &yyActionTable[2796],   0, 469 },
+  { &yyActionTable[2796],   7, 643 },
+  { &yyActionTable[2803],   0, 470 },
+  { &yyActionTable[2803],   0, 471 },
+  { &yyActionTable[2803],   0, 472 },
+  { &yyActionTable[2803],   2, 643 },
+  { &yyActionTable[2805],   0, 473 },
+  { &yyActionTable[2805],   0, 476 },
+  { &yyActionTable[2805],   2, 643 },
+  { &yyActionTable[2807],   0, 474 },
+  { &yyActionTable[2807],   0, 477 },
+  { &yyActionTable[2807],   0, 475 },
+  { &yyActionTable[2807],   0, 478 },
+  { &yyActionTable[2807],  24, 458 },
+  { &yyActionTable[2831],   4, 643 },
+  { &yyActionTable[2835],   2, 643 },
+  { &yyActionTable[2837],   0, 459 },
+  { &yyActionTable[2837],   4, 643 },
+  { &yyActionTable[2841],   1, 643 },
+  { &yyActionTable[2842],   0, 460 },
+  { &yyActionTable[2842],   0, 463 },
+  { &yyActionTable[2842],   1, 643 },
+  { &yyActionTable[2843],   0, 464 },
+  { &yyActionTable[2843],   1, 643 },
+  { &yyActionTable[2844],   0, 465 },
+  { &yyActionTable[2844],   0, 462 },
+  { &yyActionTable[2844],   0, 461 },
+  { &yyActionTable[2844],   0, 434 },
+  { &yyActionTable[2844],   7, 643 },
+  { &yyActionTable[2851],   5, 643 },
+  { &yyActionTable[2856],   0, 485 },
+  { &yyActionTable[2856],  23, 643 },
+  { &yyActionTable[2879],   0, 488 },
+  { &yyActionTable[2879],   1, 643 },
+  { &yyActionTable[2880],   1, 643 },
+  { &yyActionTable[2881],  25, 643 },
+  { &yyActionTable[2906],   2, 643 },
+  { &yyActionTable[2908],   2, 492 },
+  { &yyActionTable[2910],   0, 489 },
+  { &yyActionTable[2910],  24, 643 },
+  { &yyActionTable[2934],   0, 623 },
+  { &yyActionTable[2934],   0, 625 },
+  { &yyActionTable[2934],   0, 624 },
+  { &yyActionTable[2934],   1, 643 },
+  { &yyActionTable[2935],  25, 643 },
+  { &yyActionTable[2960],   2, 643 },
+  { &yyActionTable[2962],   2, 492 },
+  { &yyActionTable[2964],   0, 490 },
+  { &yyActionTable[2964],  33, 643 },
+  { &yyActionTable[2997],  28, 492 },
+  { &yyActionTable[3025],   0, 491 },
+  { &yyActionTable[3025],   0, 486 },
+  { &yyActionTable[3025],   0, 487 },
+  { &yyActionTable[3025],   0, 432 },
+  { &yyActionTable[3025],   3, 643 },
+  { &yyActionTable[3028],   5, 643 },
+  { &yyActionTable[3033],   7, 643 },
+  { &yyActionTable[3040],   1, 643 },
+  { &yyActionTable[3041],  23, 643 },
+  { &yyActionTable[3064],   0, 426 },
+  { &yyActionTable[3064],   1, 643 },
+  { &yyActionTable[3065],  23, 643 },
+  { &yyActionTable[3088],   1, 643 },
+  { &yyActionTable[3089],   3, 643 },
+  { &yyActionTable[3092],   5, 643 },
+  { &yyActionTable[3097],   1, 643 },
+  { &yyActionTable[3098],  23, 643 },
+  { &yyActionTable[3121],   1, 643 },
+  { &yyActionTable[3122],  23, 643 },
+  { &yyActionTable[3145],   1, 643 },
+  { &yyActionTable[3146],  25, 643 },
+  { &yyActionTable[3171],   2, 643 },
+  { &yyActionTable[3173],   3, 643 },
+  { &yyActionTable[3176],   1, 643 },
+  { &yyActionTable[3177],   1, 643 },
+  { &yyActionTable[3178],   3, 643 },
+  { &yyActionTable[3181],  23, 643 },
+  { &yyActionTable[3204],   1, 643 },
+  { &yyActionTable[3205],  23, 643 },
+  { &yyActionTable[3228],   1, 643 },
+  { &yyActionTable[3229],  23, 643 },
+  { &yyActionTable[3252],   1, 643 },
+  { &yyActionTable[3253],   5, 643 },
+  { &yyActionTable[3258],   1, 643 },
+  { &yyActionTable[3259],  23, 643 },
+  { &yyActionTable[3282],   3, 643 },
+  { &yyActionTable[3285],   1, 643 },
+  { &yyActionTable[3286],   2, 494 },
+  { &yyActionTable[3288],   6, 643 },
+  { &yyActionTable[3294],   0, 495 },
+  { &yyActionTable[3294],  23, 643 },
+  { &yyActionTable[3317],   1, 643 },
+  { &yyActionTable[3318],  24, 643 },
+  { &yyActionTable[3342],   4, 643 },
+  { &yyActionTable[3346],   1, 643 },
+  { &yyActionTable[3347],  23, 643 },
+  { &yyActionTable[3370],   1, 643 },
+  { &yyActionTable[3371],  33, 643 },
+  { &yyActionTable[3404],  26, 550 },
+  { &yyActionTable[3430],   1, 643 },
+  { &yyActionTable[3431],  33, 643 },
+  { &yyActionTable[3464],  26, 551 },
+  { &yyActionTable[3490],   1, 643 },
+  { &yyActionTable[3491],  23, 643 },
+  { &yyActionTable[3514],   2, 558 },
+  { &yyActionTable[3516],   4, 643 },
+  { &yyActionTable[3520],   5, 643 },
+  { &yyActionTable[3525],   1, 643 },
+  { &yyActionTable[3526],  34, 643 },
+  { &yyActionTable[3560],   2, 643 },
+  { &yyActionTable[3562],   1, 643 },
+  { &yyActionTable[3563],  33, 643 },
+  { &yyActionTable[3596],  26, 556 },
+  { &yyActionTable[3622],  26, 557 },
+  { &yyActionTable[3648],  24, 643 },
+  { &yyActionTable[3672],   2, 643 },
+  { &yyActionTable[3674],   0, 559 },
+  { &yyActionTable[3674],  23, 643 },
+  { &yyActionTable[3697],   0, 560 },
+  { &yyActionTable[3697],   0, 561 },
+  { &yyActionTable[3697],   3, 643 },
+  { &yyActionTable[3700],   1, 643 },
+  { &yyActionTable[3701],   1, 643 },
+  { &yyActionTable[3702],   2, 494 },
+  { &yyActionTable[3704],  23, 643 },
+  { &yyActionTable[3727],   1, 643 },
+  { &yyActionTable[3728],  23, 643 },
+  { &yyActionTable[3751],   2, 643 },
+  { &yyActionTable[3753],   1, 643 },
+  { &yyActionTable[3754],   1, 643 },
+  { &yyActionTable[3755],   1, 643 },
+  { &yyActionTable[3756],  24, 643 },
+  { &yyActionTable[3780],   1, 643 },
+  { &yyActionTable[3781],  23, 643 },
+  { &yyActionTable[3804],   3, 643 },
+  { &yyActionTable[3807],  29, 642 },
+  { &yyActionTable[3836],   1, 643 },
+  { &yyActionTable[3837],   1, 643 },
+  { &yyActionTable[3838],   1, 643 },
+  { &yyActionTable[3839],   1, 643 },
+  { &yyActionTable[3840],   3, 643 },
+  { &yyActionTable[3843],   1, 643 },
+  { &yyActionTable[3844],   1, 643 },
+  { &yyActionTable[3845],   1, 643 },
+  { &yyActionTable[3846],   3, 643 },
+  { &yyActionTable[3849],   1, 643 },
+  { &yyActionTable[3850],   0, 641 },
+  { &yyActionTable[3850],  23, 643 },
+  { &yyActionTable[3873],   1, 643 },
+  { &yyActionTable[3874],   1, 643 },
+  { &yyActionTable[3875],   1, 643 },
+  { &yyActionTable[3876],   0, 415 },
+  { &yyActionTable[3876],   0, 416 },
+  { &yyActionTable[3876],   0, 417 },
+  { &yyActionTable[3876],   0, 412 },
 };
 
 /* The following structure represents a single element of the
@@ -4170,44 +4783,45 @@ static const char *yyTokenName[] = {
   "$",             "ABORT",         "AGG_FUNCTION",  "ALL",         
   "AND",           "AS",            "ASC",           "BEGIN",       
   "BETWEEN",       "BITAND",        "BITNOT",        "BITOR",       
-  "BY",            "CHECK",         "CLUSTER",       "COLUMN",      
-  "COMMA",         "COMMENT",       "COMMIT",        "CONCAT",      
-  "CONFLICT",      "CONSTRAINT",    "COPY",          "CREATE",      
-  "DEFAULT",       "DELETE",        "DELIMITERS",    "DESC",        
-  "DISTINCT",      "DOT",           "DROP",          "END",         
-  "END_OF_FILE",   "EQ",            "EXCEPT",        "EXPLAIN",     
-  "FAIL",          "FLOAT",         "FROM",          "FUNCTION",    
-  "GE",            "GLOB",          "GROUP",         "GT",          
-  "HAVING",        "ID",            "IGNORE",        "ILLEGAL",     
-  "IN",            "INDEX",         "INSERT",        "INTEGER",     
-  "INTERSECT",     "INTO",          "IS",            "ISNULL",      
-  "KEY",           "LE",            "LIKE",          "LIMIT",       
-  "LP",            "LSHIFT",        "LT",            "MINUS",       
-  "NE",            "NOT",           "NOTNULL",       "NULL",        
-  "OFFSET",        "ON",            "OR",            "ORDER",       
-  "PLUS",          "PRAGMA",        "PRIMARY",       "REM",         
-  "REPLACE",       "ROLLBACK",      "RP",            "RSHIFT",      
-  "SELECT",        "SEMI",          "SET",           "SLASH",       
-  "SPACE",         "STAR",          "STRING",        "TABLE",       
-  "TEMP",          "TRANSACTION",   "UMINUS",        "UNCLOSED_STRING",
-  "UNION",         "UNIQUE",        "UPDATE",        "USING",       
-  "VACUUM",        "VALUES",        "VIEW",          "WHERE",       
-  "as",            "carg",          "carglist",      "ccons",       
-  "cmd",           "cmdlist",       "column",        "columnid",    
-  "columnlist",    "conslist",      "conslist_opt",  "create_table",
-  "create_table_args",  "distinct",      "ecmd",          "error",       
-  "explain",       "expr",          "expritem",      "exprlist",    
-  "from",          "groupby_opt",   "having_opt",    "id",          
-  "ids",           "idxitem",       "idxlist",       "input",       
-  "inscollist",    "inscollist_opt",  "insert_cmd",    "itemlist",    
-  "limit_opt",     "limit_sep",     "minus_num",     "multiselect_op",
-  "number",        "onconf",        "oneselect",     "orconf",      
-  "orderby_opt",   "plus_num",      "plus_opt",      "resolvetype", 
-  "sclp",          "selcollist",    "select",        "seltablist",  
-  "setlist",       "signed",        "sortitem",      "sortlist",    
-  "sortorder",     "stl_prefix",    "tcons",         "temp",        
-  "trans_opt",     "type",          "typename",      "uniqueflag",  
-  "where_opt",   
+  "BY",            "CASE",          "CHECK",         "CLUSTER",     
+  "COLUMN",        "COMMA",         "COMMENT",       "COMMIT",      
+  "CONCAT",        "CONFLICT",      "CONSTRAINT",    "COPY",        
+  "CREATE",        "DEFAULT",       "DELETE",        "DELIMITERS",  
+  "DESC",          "DISTINCT",      "DOT",           "DROP",        
+  "ELSE",          "END",           "END_OF_FILE",   "EQ",          
+  "EXCEPT",        "EXPLAIN",       "FAIL",          "FLOAT",       
+  "FROM",          "FUNCTION",      "GE",            "GLOB",        
+  "GROUP",         "GT",            "HAVING",        "ID",          
+  "IGNORE",        "ILLEGAL",       "IN",            "INDEX",       
+  "INSERT",        "INTEGER",       "INTERSECT",     "INTO",        
+  "IS",            "ISNULL",        "KEY",           "LE",          
+  "LIKE",          "LIMIT",         "LP",            "LSHIFT",      
+  "LT",            "MINUS",         "NE",            "NOT",         
+  "NOTNULL",       "NULL",          "OFFSET",        "ON",          
+  "OR",            "ORDER",         "PLUS",          "PRAGMA",      
+  "PRIMARY",       "REM",           "REPLACE",       "ROLLBACK",    
+  "RP",            "RSHIFT",        "SELECT",        "SEMI",        
+  "SET",           "SLASH",         "SPACE",         "STAR",        
+  "STRING",        "TABLE",         "TEMP",          "THEN",        
+  "TRANSACTION",   "UMINUS",        "UNCLOSED_STRING",  "UNION",       
+  "UNIQUE",        "UPDATE",        "USING",         "VACUUM",      
+  "VALUES",        "VIEW",          "WHEN",          "WHERE",       
+  "as",            "carg",          "carglist",      "case_else",   
+  "case_exprlist",  "case_operand",  "ccons",         "cmd",         
+  "cmdlist",       "column",        "columnid",      "columnlist",  
+  "conslist",      "conslist_opt",  "create_table",  "create_table_args",
+  "distinct",      "ecmd",          "error",         "explain",     
+  "expr",          "expritem",      "exprlist",      "from",        
+  "groupby_opt",   "having_opt",    "id",            "ids",         
+  "idxitem",       "idxlist",       "input",         "inscollist",  
+  "inscollist_opt",  "insert_cmd",    "itemlist",      "limit_opt",   
+  "limit_sep",     "minus_num",     "multiselect_op",  "number",      
+  "onconf",        "oneselect",     "orconf",        "orderby_opt", 
+  "plus_num",      "plus_opt",      "resolvetype",   "sclp",        
+  "selcollist",    "select",        "seltablist",    "setlist",     
+  "signed",        "sortitem",      "sortlist",      "sortorder",   
+  "stl_prefix",    "tcons",         "temp",          "trans_opt",   
+  "type",          "typename",      "uniqueflag",    "where_opt",   
 };
 #define YYTRACE(X) if( yyTraceFILE ) fprintf(yyTraceFILE,"%sReduce [%s].\n",yyTracePrompt,X);
 #else
@@ -4269,110 +4883,115 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     ** which appear on the RHS of the rule, but which are not used
     ** inside the C code.
     */
-    case 117:
-#line 393 "parse.y"
-{sqliteExprDelete((yypminor->yy132));}
-#line 4275 "parse.c"
+    case 108:
+#line 532 "parse.y"
+{sqliteExprListDelete((yypminor->yy144));}
+#line 4889 "parse.c"
       break;
-    case 118:
-#line 528 "parse.y"
-{sqliteExprDelete((yypminor->yy132));}
-#line 4280 "parse.c"
+    case 124:
+#line 395 "parse.y"
+{sqliteExprDelete((yypminor->yy146));}
+#line 4894 "parse.c"
       break;
-    case 119:
-#line 526 "parse.y"
-{sqliteExprListDelete((yypminor->yy270));}
-#line 4285 "parse.c"
-      break;
-    case 120:
-#line 265 "parse.y"
-{sqliteIdListDelete((yypminor->yy152));}
-#line 4290 "parse.c"
-      break;
-    case 121:
-#line 311 "parse.y"
-{sqliteExprListDelete((yypminor->yy270));}
-#line 4295 "parse.c"
-      break;
-    case 122:
-#line 316 "parse.y"
-{sqliteExprDelete((yypminor->yy132));}
-#line 4300 "parse.c"
+    case 125:
+#line 551 "parse.y"
+{sqliteExprDelete((yypminor->yy146));}
+#line 4899 "parse.c"
       break;
     case 126:
-#line 550 "parse.y"
-{sqliteIdListDelete((yypminor->yy152));}
-#line 4305 "parse.c"
+#line 549 "parse.y"
+{sqliteExprListDelete((yypminor->yy144));}
+#line 4904 "parse.c"
+      break;
+    case 127:
+#line 267 "parse.y"
+{sqliteIdListDelete((yypminor->yy82));}
+#line 4909 "parse.c"
       break;
     case 128:
-#line 372 "parse.y"
-{sqliteIdListDelete((yypminor->yy152));}
-#line 4310 "parse.c"
+#line 313 "parse.y"
+{sqliteExprListDelete((yypminor->yy144));}
+#line 4914 "parse.c"
       break;
     case 129:
-#line 370 "parse.y"
-{sqliteIdListDelete((yypminor->yy152));}
-#line 4315 "parse.c"
+#line 318 "parse.y"
+{sqliteExprDelete((yypminor->yy146));}
+#line 4919 "parse.c"
       break;
-    case 131:
-#line 364 "parse.y"
-{sqliteExprListDelete((yypminor->yy270));}
-#line 4320 "parse.c"
+    case 133:
+#line 573 "parse.y"
+{sqliteIdListDelete((yypminor->yy82));}
+#line 4924 "parse.c"
+      break;
+    case 135:
+#line 374 "parse.y"
+{sqliteIdListDelete((yypminor->yy82));}
+#line 4929 "parse.c"
+      break;
+    case 136:
+#line 372 "parse.y"
+{sqliteIdListDelete((yypminor->yy82));}
+#line 4934 "parse.c"
       break;
     case 138:
-#line 212 "parse.y"
-{sqliteSelectDelete((yypminor->yy233));}
-#line 4325 "parse.c"
-      break;
-    case 140:
-#line 286 "parse.y"
-{sqliteExprListDelete((yypminor->yy270));}
-#line 4330 "parse.c"
-      break;
-    case 144:
-#line 248 "parse.y"
-{sqliteExprListDelete((yypminor->yy270));}
-#line 4335 "parse.c"
+#line 366 "parse.y"
+{sqliteExprListDelete((yypminor->yy144));}
+#line 4939 "parse.c"
       break;
     case 145:
-#line 246 "parse.y"
-{sqliteExprListDelete((yypminor->yy270));}
-#line 4340 "parse.c"
-      break;
-    case 146:
-#line 210 "parse.y"
-{sqliteSelectDelete((yypminor->yy233));}
-#line 4345 "parse.c"
+#line 214 "parse.y"
+{sqliteSelectDelete((yypminor->yy219));}
+#line 4944 "parse.c"
       break;
     case 147:
-#line 261 "parse.y"
-{sqliteIdListDelete((yypminor->yy152));}
-#line 4350 "parse.c"
-      break;
-    case 148:
-#line 340 "parse.y"
-{sqliteExprListDelete((yypminor->yy270));}
-#line 4355 "parse.c"
-      break;
-    case 150:
-#line 290 "parse.y"
-{sqliteExprDelete((yypminor->yy132));}
-#line 4360 "parse.c"
+#line 288 "parse.y"
+{sqliteExprListDelete((yypminor->yy144));}
+#line 4949 "parse.c"
       break;
     case 151:
-#line 288 "parse.y"
-{sqliteExprListDelete((yypminor->yy270));}
-#line 4365 "parse.c"
+#line 250 "parse.y"
+{sqliteExprListDelete((yypminor->yy144));}
+#line 4954 "parse.c"
+      break;
+    case 152:
+#line 248 "parse.y"
+{sqliteExprListDelete((yypminor->yy144));}
+#line 4959 "parse.c"
       break;
     case 153:
+#line 212 "parse.y"
+{sqliteSelectDelete((yypminor->yy219));}
+#line 4964 "parse.c"
+      break;
+    case 154:
 #line 263 "parse.y"
-{sqliteIdListDelete((yypminor->yy152));}
-#line 4370 "parse.c"
+{sqliteIdListDelete((yypminor->yy82));}
+#line 4969 "parse.c"
+      break;
+    case 155:
+#line 342 "parse.y"
+{sqliteExprListDelete((yypminor->yy144));}
+#line 4974 "parse.c"
+      break;
+    case 157:
+#line 292 "parse.y"
+{sqliteExprDelete((yypminor->yy146));}
+#line 4979 "parse.c"
+      break;
+    case 158:
+#line 290 "parse.y"
+{sqliteExprListDelete((yypminor->yy144));}
+#line 4984 "parse.c"
       break;
     case 160:
-#line 334 "parse.y"
-{sqliteExprDelete((yypminor->yy132));}
-#line 4375 "parse.c"
+#line 265 "parse.y"
+{sqliteIdListDelete((yypminor->yy82));}
+#line 4989 "parse.c"
+      break;
+    case 167:
+#line 336 "parse.y"
+{sqliteExprDelete((yypminor->yy146));}
+#line 4994 "parse.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -4505,229 +5124,238 @@ static struct {
   YYCODETYPE lhs;         /* Symbol on the left-hand side of the rule */
   unsigned char nrhs;     /* Number of right-hand side symbols in the rule */
 } yyRuleInfo[] = {
-  { 127, 1 },
-  { 105, 1 },
-  { 105, 2 },
-  { 114, 3 },
-  { 114, 2 },
+  { 134, 1 },
+  { 112, 1 },
+  { 112, 2 },
+  { 121, 3 },
+  { 121, 2 },
+  { 121, 1 },
+  { 123, 1 },
+  { 111, 3 },
+  { 163, 0 },
+  { 163, 1 },
+  { 163, 2 },
+  { 111, 2 },
+  { 111, 2 },
+  { 111, 2 },
+  { 111, 2 },
+  { 118, 4 },
+  { 162, 1 },
+  { 162, 0 },
+  { 119, 4 },
+  { 119, 2 },
+  { 115, 3 },
+  { 115, 1 },
+  { 113, 3 },
   { 114, 1 },
-  { 116, 1 },
-  { 104, 3 },
-  { 156, 0 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 130, 1 },
+  { 131, 1 },
+  { 131, 1 },
+  { 164, 0 },
+  { 164, 1 },
+  { 164, 4 },
+  { 164, 6 },
+  { 165, 1 },
+  { 165, 2 },
   { 156, 1 },
   { 156, 2 },
-  { 104, 2 },
-  { 104, 2 },
-  { 104, 2 },
-  { 104, 2 },
-  { 111, 4 },
-  { 155, 1 },
-  { 155, 0 },
-  { 112, 4 },
-  { 112, 2 },
-  { 108, 3 },
-  { 108, 1 },
-  { 106, 3 },
-  { 107, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 123, 1 },
-  { 124, 1 },
-  { 124, 1 },
-  { 157, 0 },
-  { 157, 1 },
-  { 157, 4 },
-  { 157, 6 },
-  { 158, 1 },
-  { 158, 2 },
-  { 149, 1 },
-  { 149, 2 },
-  { 149, 2 },
-  { 102, 2 },
-  { 102, 0 },
-  { 101, 3 },
-  { 101, 1 },
-  { 101, 2 },
-  { 101, 2 },
-  { 101, 2 },
-  { 101, 3 },
-  { 101, 3 },
-  { 101, 2 },
-  { 101, 3 },
-  { 101, 3 },
-  { 101, 2 },
-  { 103, 3 },
-  { 103, 4 },
-  { 103, 2 },
-  { 103, 5 },
-  { 110, 0 },
+  { 156, 2 },
+  { 106, 2 },
+  { 106, 0 },
+  { 105, 3 },
+  { 105, 1 },
+  { 105, 2 },
+  { 105, 2 },
+  { 105, 2 },
+  { 105, 3 },
+  { 105, 3 },
+  { 105, 2 },
+  { 105, 3 },
+  { 105, 3 },
+  { 105, 2 },
+  { 110, 3 },
+  { 110, 4 },
   { 110, 2 },
-  { 109, 3 },
-  { 109, 2 },
-  { 109, 1 },
-  { 154, 2 },
-  { 154, 6 },
-  { 154, 5 },
-  { 154, 3 },
-  { 137, 0 },
-  { 137, 3 },
-  { 139, 0 },
-  { 139, 2 },
-  { 143, 1 },
-  { 143, 1 },
-  { 143, 1 },
-  { 143, 1 },
-  { 143, 1 },
-  { 104, 3 },
-  { 104, 5 },
-  { 104, 3 },
-  { 104, 1 },
-  { 146, 1 },
-  { 146, 3 },
-  { 135, 1 },
-  { 135, 2 },
-  { 135, 1 },
-  { 135, 1 },
-  { 138, 9 },
-  { 113, 1 },
-  { 113, 1 },
-  { 113, 0 },
-  { 144, 2 },
+  { 110, 5 },
+  { 117, 0 },
+  { 117, 2 },
+  { 116, 3 },
+  { 116, 2 },
+  { 116, 1 },
+  { 161, 2 },
+  { 161, 6 },
+  { 161, 5 },
+  { 161, 3 },
   { 144, 0 },
-  { 145, 2 },
-  { 145, 4 },
-  { 145, 2 },
-  { 100, 0 },
-  { 100, 1 },
-  { 120, 2 },
-  { 153, 2 },
-  { 153, 0 },
-  { 147, 2 },
-  { 147, 4 },
-  { 147, 4 },
-  { 147, 6 },
-  { 140, 0 },
-  { 140, 3 },
-  { 151, 4 },
-  { 151, 2 },
+  { 144, 3 },
+  { 146, 0 },
+  { 146, 2 },
   { 150, 1 },
-  { 152, 1 },
-  { 152, 1 },
-  { 152, 0 },
-  { 121, 0 },
-  { 121, 3 },
-  { 122, 0 },
-  { 122, 2 },
-  { 132, 0 },
-  { 132, 2 },
-  { 132, 4 },
-  { 133, 1 },
-  { 133, 1 },
-  { 104, 4 },
-  { 160, 0 },
+  { 150, 1 },
+  { 150, 1 },
+  { 150, 1 },
+  { 150, 1 },
+  { 111, 3 },
+  { 111, 5 },
+  { 111, 3 },
+  { 111, 1 },
+  { 153, 1 },
+  { 153, 3 },
+  { 142, 1 },
+  { 142, 2 },
+  { 142, 1 },
+  { 142, 1 },
+  { 145, 9 },
+  { 120, 1 },
+  { 120, 1 },
+  { 120, 0 },
+  { 151, 2 },
+  { 151, 0 },
+  { 152, 2 },
+  { 152, 4 },
+  { 152, 2 },
+  { 104, 0 },
+  { 104, 1 },
+  { 127, 2 },
   { 160, 2 },
-  { 104, 6 },
-  { 148, 5 },
-  { 148, 3 },
-  { 104, 8 },
-  { 104, 5 },
-  { 130, 2 },
-  { 130, 1 },
-  { 131, 3 },
-  { 131, 1 },
-  { 129, 0 },
-  { 129, 3 },
-  { 128, 3 },
-  { 128, 1 },
-  { 117, 3 },
-  { 117, 1 },
-  { 117, 1 },
-  { 117, 3 },
-  { 117, 1 },
-  { 117, 1 },
-  { 117, 1 },
-  { 117, 4 },
-  { 117, 4 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 4 },
-  { 117, 3 },
-  { 117, 4 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 3 },
-  { 117, 2 },
-  { 117, 3 },
-  { 117, 2 },
-  { 117, 3 },
-  { 117, 4 },
-  { 117, 2 },
-  { 117, 2 },
-  { 117, 2 },
-  { 117, 2 },
-  { 117, 3 },
-  { 117, 5 },
-  { 117, 6 },
-  { 117, 5 },
-  { 117, 5 },
-  { 117, 6 },
-  { 117, 6 },
-  { 119, 3 },
-  { 119, 1 },
-  { 118, 1 },
-  { 118, 0 },
-  { 104, 10 },
+  { 160, 0 },
+  { 154, 2 },
+  { 154, 4 },
+  { 154, 4 },
+  { 154, 6 },
+  { 147, 0 },
+  { 147, 3 },
+  { 158, 4 },
+  { 158, 2 },
+  { 157, 1 },
+  { 159, 1 },
   { 159, 1 },
   { 159, 0 },
+  { 128, 0 },
+  { 128, 3 },
+  { 129, 0 },
+  { 129, 2 },
+  { 139, 0 },
+  { 139, 2 },
+  { 139, 4 },
+  { 140, 1 },
+  { 140, 1 },
+  { 111, 4 },
+  { 167, 0 },
+  { 167, 2 },
+  { 111, 6 },
+  { 155, 5 },
+  { 155, 3 },
+  { 111, 8 },
+  { 111, 5 },
+  { 137, 2 },
+  { 137, 1 },
+  { 138, 3 },
+  { 138, 1 },
+  { 136, 0 },
+  { 136, 3 },
+  { 135, 3 },
+  { 135, 1 },
+  { 124, 3 },
+  { 124, 1 },
+  { 124, 1 },
+  { 124, 3 },
+  { 124, 1 },
+  { 124, 1 },
+  { 124, 1 },
+  { 124, 4 },
+  { 124, 4 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 4 },
+  { 124, 3 },
+  { 124, 4 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 3 },
+  { 124, 2 },
+  { 124, 3 },
+  { 124, 2 },
+  { 124, 3 },
+  { 124, 4 },
+  { 124, 2 },
+  { 124, 2 },
+  { 124, 2 },
+  { 124, 2 },
+  { 124, 3 },
+  { 124, 5 },
+  { 124, 6 },
+  { 124, 5 },
+  { 124, 5 },
+  { 124, 6 },
+  { 124, 6 },
+  { 124, 5 },
+  { 108, 5 },
+  { 108, 4 },
+  { 107, 2 },
+  { 107, 0 },
+  { 109, 1 },
+  { 109, 0 },
   { 126, 3 },
   { 126, 1 },
   { 125, 1 },
-  { 104, 3 },
-  { 104, 8 },
-  { 104, 5 },
-  { 104, 1 },
-  { 104, 2 },
-  { 104, 4 },
-  { 104, 4 },
-  { 104, 4 },
-  { 104, 4 },
-  { 104, 5 },
-  { 104, 2 },
+  { 125, 0 },
+  { 111, 10 },
+  { 166, 1 },
+  { 166, 0 },
+  { 133, 3 },
+  { 133, 1 },
+  { 132, 1 },
+  { 111, 3 },
+  { 111, 8 },
+  { 111, 5 },
+  { 111, 1 },
+  { 111, 2 },
+  { 111, 4 },
+  { 111, 4 },
+  { 111, 4 },
+  { 111, 4 },
+  { 111, 5 },
+  { 111, 2 },
+  { 148, 2 },
   { 141, 2 },
-  { 134, 2 },
-  { 136, 1 },
-  { 136, 1 },
-  { 142, 1 },
-  { 142, 0 },
+  { 143, 1 },
+  { 143, 1 },
+  { 149, 1 },
+  { 149, 0 },
 };
 
 static void yy_accept(yyParser*);  /* Forward Declaration */
@@ -4774,7 +5402,7 @@ static void yy_reduce(
         YYTRACE("ecmd ::= explain cmd SEMI")
 #line 52 "parse.y"
 {sqliteExec(pParse);}
-#line 4777 "parse.c"
+#line 5405 "parse.c"
         /* No destructor defined for explain */
         /* No destructor defined for cmd */
         /* No destructor defined for SEMI */
@@ -4783,7 +5411,7 @@ static void yy_reduce(
         YYTRACE("ecmd ::= cmd SEMI")
 #line 53 "parse.y"
 {sqliteExec(pParse);}
-#line 4786 "parse.c"
+#line 5414 "parse.c"
         /* No destructor defined for cmd */
         /* No destructor defined for SEMI */
         break;
@@ -4795,14 +5423,14 @@ static void yy_reduce(
         YYTRACE("explain ::= EXPLAIN")
 #line 55 "parse.y"
 {pParse->explain = 1;}
-#line 4798 "parse.c"
+#line 5426 "parse.c"
         /* No destructor defined for EXPLAIN */
         break;
       case 7:
         YYTRACE("cmd ::= BEGIN trans_opt onconf")
 #line 60 "parse.y"
-{sqliteBeginTransaction(pParse,yymsp[0].minor.yy144);}
-#line 4805 "parse.c"
+{sqliteBeginTransaction(pParse,yymsp[0].minor.yy172);}
+#line 5433 "parse.c"
         /* No destructor defined for BEGIN */
         /* No destructor defined for trans_opt */
         break;
@@ -4822,7 +5450,7 @@ static void yy_reduce(
         YYTRACE("cmd ::= COMMIT trans_opt")
 #line 64 "parse.y"
 {sqliteCommitTransaction(pParse);}
-#line 4825 "parse.c"
+#line 5453 "parse.c"
         /* No destructor defined for COMMIT */
         /* No destructor defined for trans_opt */
         break;
@@ -4830,7 +5458,7 @@ static void yy_reduce(
         YYTRACE("cmd ::= END trans_opt")
 #line 65 "parse.y"
 {sqliteCommitTransaction(pParse);}
-#line 4833 "parse.c"
+#line 5461 "parse.c"
         /* No destructor defined for END */
         /* No destructor defined for trans_opt */
         break;
@@ -4838,7 +5466,7 @@ static void yy_reduce(
         YYTRACE("cmd ::= ROLLBACK trans_opt")
 #line 66 "parse.y"
 {sqliteRollbackTransaction(pParse);}
-#line 4841 "parse.c"
+#line 5469 "parse.c"
         /* No destructor defined for ROLLBACK */
         /* No destructor defined for trans_opt */
         break;
@@ -4851,23 +5479,23 @@ static void yy_reduce(
         YYTRACE("create_table ::= CREATE temp TABLE ids")
 #line 71 "parse.y"
 {
-   sqliteStartTable(pParse,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy224,yymsp[-2].minor.yy144);
+   sqliteStartTable(pParse,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy210,yymsp[-2].minor.yy172);
 }
-#line 4856 "parse.c"
+#line 5484 "parse.c"
         /* No destructor defined for TABLE */
         break;
       case 16:
         YYTRACE("temp ::= TEMP")
 #line 75 "parse.y"
-{yygotominor.yy144 = 1;}
-#line 4863 "parse.c"
+{yygotominor.yy172 = 1;}
+#line 5491 "parse.c"
         /* No destructor defined for TEMP */
         break;
       case 17:
         YYTRACE("temp ::=")
 #line 76 "parse.y"
-{yygotominor.yy144 = 0;}
-#line 4870 "parse.c"
+{yygotominor.yy172 = 0;}
+#line 5498 "parse.c"
         break;
       case 18:
         YYTRACE("create_table_args ::= LP columnlist conslist_opt RP")
@@ -4875,7 +5503,7 @@ static void yy_reduce(
 {
   sqliteEndTable(pParse,&yymsp[0].minor.yy0,0);
 }
-#line 4878 "parse.c"
+#line 5506 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for columnlist */
         /* No destructor defined for conslist_opt */
@@ -4884,10 +5512,10 @@ static void yy_reduce(
         YYTRACE("create_table_args ::= AS select")
 #line 80 "parse.y"
 {
-  sqliteEndTable(pParse,0,yymsp[0].minor.yy233);
-  sqliteSelectDelete(yymsp[0].minor.yy233);
+  sqliteEndTable(pParse,0,yymsp[0].minor.yy219);
+  sqliteSelectDelete(yymsp[0].minor.yy219);
 }
-#line 4890 "parse.c"
+#line 5518 "parse.c"
         /* No destructor defined for AS */
         break;
       case 20:
@@ -4909,1456 +5537,1525 @@ static void yy_reduce(
       case 23:
         YYTRACE("columnid ::= ids")
 #line 92 "parse.y"
-{sqliteAddColumn(pParse,&yymsp[0].minor.yy224);}
-#line 4913 "parse.c"
+{sqliteAddColumn(pParse,&yymsp[0].minor.yy210);}
+#line 5541 "parse.c"
         break;
       case 24:
-        YYTRACE("id ::= DESC")
+        YYTRACE("id ::= ABORT")
 #line 100 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4919 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5547 "parse.c"
         break;
       case 25:
         YYTRACE("id ::= ASC")
 #line 101 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4925 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5553 "parse.c"
         break;
       case 26:
-        YYTRACE("id ::= DELIMITERS")
+        YYTRACE("id ::= BEGIN")
 #line 102 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4931 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5559 "parse.c"
         break;
       case 27:
-        YYTRACE("id ::= EXPLAIN")
+        YYTRACE("id ::= CLUSTER")
 #line 103 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4937 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5565 "parse.c"
         break;
       case 28:
-        YYTRACE("id ::= VACUUM")
+        YYTRACE("id ::= CONFLICT")
 #line 104 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4943 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5571 "parse.c"
         break;
       case 29:
-        YYTRACE("id ::= BEGIN")
+        YYTRACE("id ::= COPY")
 #line 105 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4949 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5577 "parse.c"
         break;
       case 30:
-        YYTRACE("id ::= END")
+        YYTRACE("id ::= DELIMITERS")
 #line 106 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4955 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5583 "parse.c"
         break;
       case 31:
-        YYTRACE("id ::= PRAGMA")
+        YYTRACE("id ::= DESC")
 #line 107 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4961 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5589 "parse.c"
         break;
       case 32:
-        YYTRACE("id ::= CLUSTER")
+        YYTRACE("id ::= END")
 #line 108 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4967 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5595 "parse.c"
         break;
       case 33:
-        YYTRACE("id ::= ID")
+        YYTRACE("id ::= EXPLAIN")
 #line 109 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4973 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5601 "parse.c"
         break;
       case 34:
-        YYTRACE("id ::= TEMP")
+        YYTRACE("id ::= FAIL")
 #line 110 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4979 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5607 "parse.c"
         break;
       case 35:
-        YYTRACE("id ::= OFFSET")
+        YYTRACE("id ::= ID")
 #line 111 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4985 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5613 "parse.c"
         break;
       case 36:
-        YYTRACE("id ::= KEY")
+        YYTRACE("id ::= IGNORE")
 #line 112 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4991 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5619 "parse.c"
         break;
       case 37:
-        YYTRACE("id ::= ABORT")
+        YYTRACE("id ::= KEY")
 #line 113 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 4997 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5625 "parse.c"
         break;
       case 38:
-        YYTRACE("id ::= IGNORE")
+        YYTRACE("id ::= OFFSET")
 #line 114 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 5003 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5631 "parse.c"
         break;
       case 39:
-        YYTRACE("id ::= REPLACE")
+        YYTRACE("id ::= PRAGMA")
 #line 115 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 5009 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5637 "parse.c"
         break;
       case 40:
-        YYTRACE("id ::= FAIL")
+        YYTRACE("id ::= REPLACE")
 #line 116 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 5015 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5643 "parse.c"
         break;
       case 41:
-        YYTRACE("id ::= CONFLICT")
+        YYTRACE("id ::= TEMP")
 #line 117 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 5021 "parse.c"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5649 "parse.c"
         break;
       case 42:
-        YYTRACE("ids ::= id")
-#line 122 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy224;}
-#line 5027 "parse.c"
+        YYTRACE("id ::= VACUUM")
+#line 118 "parse.y"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5655 "parse.c"
         break;
       case 43:
-        YYTRACE("ids ::= STRING")
-#line 123 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 5033 "parse.c"
+        YYTRACE("id ::= VIEW")
+#line 119 "parse.y"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5661 "parse.c"
         break;
       case 44:
-        YYTRACE("type ::=")
+        YYTRACE("ids ::= id")
+#line 124 "parse.y"
+{yygotominor.yy210 = yymsp[0].minor.yy210;}
+#line 5667 "parse.c"
         break;
       case 45:
-        YYTRACE("type ::= typename")
-#line 126 "parse.y"
-{sqliteAddColumnType(pParse,&yymsp[0].minor.yy224,&yymsp[0].minor.yy224);}
-#line 5042 "parse.c"
+        YYTRACE("ids ::= STRING")
+#line 125 "parse.y"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 5673 "parse.c"
         break;
       case 46:
+        YYTRACE("type ::=")
+        break;
+      case 47:
+        YYTRACE("type ::= typename")
+#line 128 "parse.y"
+{sqliteAddColumnType(pParse,&yymsp[0].minor.yy210,&yymsp[0].minor.yy210);}
+#line 5682 "parse.c"
+        break;
+      case 48:
         YYTRACE("type ::= typename LP signed RP")
-#line 127 "parse.y"
-{sqliteAddColumnType(pParse,&yymsp[-3].minor.yy224,&yymsp[0].minor.yy0);}
-#line 5048 "parse.c"
+#line 129 "parse.y"
+{sqliteAddColumnType(pParse,&yymsp[-3].minor.yy210,&yymsp[0].minor.yy0);}
+#line 5688 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for signed */
         break;
-      case 47:
+      case 49:
         YYTRACE("type ::= typename LP signed COMMA signed RP")
-#line 129 "parse.y"
-{sqliteAddColumnType(pParse,&yymsp[-5].minor.yy224,&yymsp[0].minor.yy0);}
-#line 5056 "parse.c"
+#line 131 "parse.y"
+{sqliteAddColumnType(pParse,&yymsp[-5].minor.yy210,&yymsp[0].minor.yy0);}
+#line 5696 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for signed */
         /* No destructor defined for COMMA */
         /* No destructor defined for signed */
         break;
-      case 48:
+      case 50:
         YYTRACE("typename ::= ids")
-#line 131 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy224;}
-#line 5066 "parse.c"
+#line 133 "parse.y"
+{yygotominor.yy210 = yymsp[0].minor.yy210;}
+#line 5706 "parse.c"
         break;
-      case 49:
+      case 51:
         YYTRACE("typename ::= typename ids")
-#line 132 "parse.y"
-{yygotominor.yy224 = yymsp[-1].minor.yy224;}
-#line 5072 "parse.c"
+#line 134 "parse.y"
+{yygotominor.yy210 = yymsp[-1].minor.yy210;}
+#line 5712 "parse.c"
         /* No destructor defined for ids */
         break;
-      case 50:
+      case 52:
         YYTRACE("signed ::= INTEGER")
         /* No destructor defined for INTEGER */
         break;
-      case 51:
+      case 53:
         YYTRACE("signed ::= PLUS INTEGER")
         /* No destructor defined for PLUS */
         /* No destructor defined for INTEGER */
         break;
-      case 52:
+      case 54:
         YYTRACE("signed ::= MINUS INTEGER")
         /* No destructor defined for MINUS */
         /* No destructor defined for INTEGER */
         break;
-      case 53:
+      case 55:
         YYTRACE("carglist ::= carglist carg")
         /* No destructor defined for carglist */
         /* No destructor defined for carg */
         break;
-      case 54:
+      case 56:
         YYTRACE("carglist ::=")
         break;
-      case 55:
+      case 57:
         YYTRACE("carg ::= CONSTRAINT ids ccons")
         /* No destructor defined for CONSTRAINT */
         /* No destructor defined for ids */
         /* No destructor defined for ccons */
         break;
-      case 56:
+      case 58:
         YYTRACE("carg ::= ccons")
         /* No destructor defined for ccons */
         break;
-      case 57:
-        YYTRACE("carg ::= DEFAULT STRING")
-#line 140 "parse.y"
-{sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5111 "parse.c"
-        /* No destructor defined for DEFAULT */
-        break;
-      case 58:
-        YYTRACE("carg ::= DEFAULT ID")
-#line 141 "parse.y"
-{sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5118 "parse.c"
-        /* No destructor defined for DEFAULT */
-        break;
       case 59:
-        YYTRACE("carg ::= DEFAULT INTEGER")
+        YYTRACE("carg ::= DEFAULT STRING")
 #line 142 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5125 "parse.c"
+#line 5751 "parse.c"
         /* No destructor defined for DEFAULT */
         break;
       case 60:
-        YYTRACE("carg ::= DEFAULT PLUS INTEGER")
+        YYTRACE("carg ::= DEFAULT ID")
 #line 143 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5132 "parse.c"
+#line 5758 "parse.c"
         /* No destructor defined for DEFAULT */
-        /* No destructor defined for PLUS */
         break;
       case 61:
-        YYTRACE("carg ::= DEFAULT MINUS INTEGER")
+        YYTRACE("carg ::= DEFAULT INTEGER")
 #line 144 "parse.y"
-{sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,1);}
-#line 5140 "parse.c"
+{sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
+#line 5765 "parse.c"
         /* No destructor defined for DEFAULT */
-        /* No destructor defined for MINUS */
         break;
       case 62:
-        YYTRACE("carg ::= DEFAULT FLOAT")
+        YYTRACE("carg ::= DEFAULT PLUS INTEGER")
 #line 145 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5148 "parse.c"
-        /* No destructor defined for DEFAULT */
-        break;
-      case 63:
-        YYTRACE("carg ::= DEFAULT PLUS FLOAT")
-#line 146 "parse.y"
-{sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
-#line 5155 "parse.c"
+#line 5772 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for PLUS */
         break;
-      case 64:
-        YYTRACE("carg ::= DEFAULT MINUS FLOAT")
-#line 147 "parse.y"
+      case 63:
+        YYTRACE("carg ::= DEFAULT MINUS INTEGER")
+#line 146 "parse.y"
 {sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,1);}
-#line 5163 "parse.c"
+#line 5780 "parse.c"
         /* No destructor defined for DEFAULT */
         /* No destructor defined for MINUS */
         break;
+      case 64:
+        YYTRACE("carg ::= DEFAULT FLOAT")
+#line 147 "parse.y"
+{sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
+#line 5788 "parse.c"
+        /* No destructor defined for DEFAULT */
+        break;
       case 65:
+        YYTRACE("carg ::= DEFAULT PLUS FLOAT")
+#line 148 "parse.y"
+{sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,0);}
+#line 5795 "parse.c"
+        /* No destructor defined for DEFAULT */
+        /* No destructor defined for PLUS */
+        break;
+      case 66:
+        YYTRACE("carg ::= DEFAULT MINUS FLOAT")
+#line 149 "parse.y"
+{sqliteAddDefaultValue(pParse,&yymsp[0].minor.yy0,1);}
+#line 5803 "parse.c"
+        /* No destructor defined for DEFAULT */
+        /* No destructor defined for MINUS */
+        break;
+      case 67:
         YYTRACE("carg ::= DEFAULT NULL")
         /* No destructor defined for DEFAULT */
         /* No destructor defined for NULL */
         break;
-      case 66:
+      case 68:
         YYTRACE("ccons ::= NOT NULL onconf")
-#line 153 "parse.y"
-{sqliteAddNotNull(pParse, yymsp[0].minor.yy144);}
-#line 5176 "parse.c"
+#line 155 "parse.y"
+{sqliteAddNotNull(pParse, yymsp[0].minor.yy172);}
+#line 5816 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for NULL */
         break;
-      case 67:
+      case 69:
         YYTRACE("ccons ::= PRIMARY KEY sortorder onconf")
-#line 154 "parse.y"
-{sqliteAddPrimaryKey(pParse,0,yymsp[0].minor.yy144);}
-#line 5184 "parse.c"
+#line 156 "parse.y"
+{sqliteAddPrimaryKey(pParse,0,yymsp[0].minor.yy172);}
+#line 5824 "parse.c"
         /* No destructor defined for PRIMARY */
         /* No destructor defined for KEY */
         /* No destructor defined for sortorder */
         break;
-      case 68:
+      case 70:
         YYTRACE("ccons ::= UNIQUE onconf")
-#line 155 "parse.y"
-{sqliteCreateIndex(pParse,0,0,0,yymsp[0].minor.yy144,0,0);}
-#line 5193 "parse.c"
+#line 157 "parse.y"
+{sqliteCreateIndex(pParse,0,0,0,yymsp[0].minor.yy172,0,0);}
+#line 5833 "parse.c"
         /* No destructor defined for UNIQUE */
         break;
-      case 69:
+      case 71:
         YYTRACE("ccons ::= CHECK LP expr RP onconf")
         /* No destructor defined for CHECK */
         /* No destructor defined for LP */
-  yy_destructor(117,&yymsp[-2].minor);
+  yy_destructor(124,&yymsp[-2].minor);
         /* No destructor defined for RP */
         /* No destructor defined for onconf */
         break;
-      case 70:
+      case 72:
         YYTRACE("conslist_opt ::=")
         break;
-      case 71:
+      case 73:
         YYTRACE("conslist_opt ::= COMMA conslist")
         /* No destructor defined for COMMA */
         /* No destructor defined for conslist */
         break;
-      case 72:
+      case 74:
         YYTRACE("conslist ::= conslist COMMA tcons")
         /* No destructor defined for conslist */
         /* No destructor defined for COMMA */
         /* No destructor defined for tcons */
         break;
-      case 73:
+      case 75:
         YYTRACE("conslist ::= conslist tcons")
         /* No destructor defined for conslist */
         /* No destructor defined for tcons */
         break;
-      case 74:
+      case 76:
         YYTRACE("conslist ::= tcons")
         /* No destructor defined for tcons */
         break;
-      case 75:
+      case 77:
         YYTRACE("tcons ::= CONSTRAINT ids")
         /* No destructor defined for CONSTRAINT */
         /* No destructor defined for ids */
         break;
-      case 76:
+      case 78:
         YYTRACE("tcons ::= PRIMARY KEY LP idxlist RP onconf")
-#line 168 "parse.y"
-{sqliteAddPrimaryKey(pParse,yymsp[-2].minor.yy152,yymsp[0].minor.yy144);}
-#line 5236 "parse.c"
+#line 170 "parse.y"
+{sqliteAddPrimaryKey(pParse,yymsp[-2].minor.yy82,yymsp[0].minor.yy172);}
+#line 5876 "parse.c"
         /* No destructor defined for PRIMARY */
         /* No destructor defined for KEY */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
-      case 77:
+      case 79:
         YYTRACE("tcons ::= UNIQUE LP idxlist RP onconf")
-#line 170 "parse.y"
-{sqliteCreateIndex(pParse,0,0,yymsp[-2].minor.yy152,yymsp[0].minor.yy144,0,0);}
-#line 5246 "parse.c"
+#line 172 "parse.y"
+{sqliteCreateIndex(pParse,0,0,yymsp[-2].minor.yy82,yymsp[0].minor.yy172,0,0);}
+#line 5886 "parse.c"
         /* No destructor defined for UNIQUE */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
-      case 78:
+      case 80:
         YYTRACE("tcons ::= CHECK expr onconf")
         /* No destructor defined for CHECK */
-  yy_destructor(117,&yymsp[-1].minor);
+  yy_destructor(124,&yymsp[-1].minor);
         /* No destructor defined for onconf */
         break;
-      case 79:
+      case 81:
         YYTRACE("onconf ::=")
-#line 179 "parse.y"
-{ yygotominor.yy144 = OE_Default; }
-#line 5261 "parse.c"
+#line 181 "parse.y"
+{ yygotominor.yy172 = OE_Default; }
+#line 5901 "parse.c"
         break;
-      case 80:
+      case 82:
         YYTRACE("onconf ::= ON CONFLICT resolvetype")
-#line 180 "parse.y"
-{ yygotominor.yy144 = yymsp[0].minor.yy144; }
-#line 5267 "parse.c"
+#line 182 "parse.y"
+{ yygotominor.yy172 = yymsp[0].minor.yy172; }
+#line 5907 "parse.c"
         /* No destructor defined for ON */
         /* No destructor defined for CONFLICT */
         break;
-      case 81:
-        YYTRACE("orconf ::=")
-#line 181 "parse.y"
-{ yygotominor.yy144 = OE_Default; }
-#line 5275 "parse.c"
-        break;
-      case 82:
-        YYTRACE("orconf ::= OR resolvetype")
-#line 182 "parse.y"
-{ yygotominor.yy144 = yymsp[0].minor.yy144; }
-#line 5281 "parse.c"
-        /* No destructor defined for OR */
-        break;
       case 83:
-        YYTRACE("resolvetype ::= ROLLBACK")
+        YYTRACE("orconf ::=")
 #line 183 "parse.y"
-{ yygotominor.yy144 = OE_Rollback; }
-#line 5288 "parse.c"
-        /* No destructor defined for ROLLBACK */
+{ yygotominor.yy172 = OE_Default; }
+#line 5915 "parse.c"
         break;
       case 84:
-        YYTRACE("resolvetype ::= ABORT")
+        YYTRACE("orconf ::= OR resolvetype")
 #line 184 "parse.y"
-{ yygotominor.yy144 = OE_Abort; }
-#line 5295 "parse.c"
-        /* No destructor defined for ABORT */
+{ yygotominor.yy172 = yymsp[0].minor.yy172; }
+#line 5921 "parse.c"
+        /* No destructor defined for OR */
         break;
       case 85:
-        YYTRACE("resolvetype ::= FAIL")
+        YYTRACE("resolvetype ::= ROLLBACK")
 #line 185 "parse.y"
-{ yygotominor.yy144 = OE_Fail; }
-#line 5302 "parse.c"
-        /* No destructor defined for FAIL */
+{ yygotominor.yy172 = OE_Rollback; }
+#line 5928 "parse.c"
+        /* No destructor defined for ROLLBACK */
         break;
       case 86:
-        YYTRACE("resolvetype ::= IGNORE")
+        YYTRACE("resolvetype ::= ABORT")
 #line 186 "parse.y"
-{ yygotominor.yy144 = OE_Ignore; }
-#line 5309 "parse.c"
-        /* No destructor defined for IGNORE */
+{ yygotominor.yy172 = OE_Abort; }
+#line 5935 "parse.c"
+        /* No destructor defined for ABORT */
         break;
       case 87:
-        YYTRACE("resolvetype ::= REPLACE")
+        YYTRACE("resolvetype ::= FAIL")
 #line 187 "parse.y"
-{ yygotominor.yy144 = OE_Replace; }
-#line 5316 "parse.c"
-        /* No destructor defined for REPLACE */
+{ yygotominor.yy172 = OE_Fail; }
+#line 5942 "parse.c"
+        /* No destructor defined for FAIL */
         break;
       case 88:
+        YYTRACE("resolvetype ::= IGNORE")
+#line 188 "parse.y"
+{ yygotominor.yy172 = OE_Ignore; }
+#line 5949 "parse.c"
+        /* No destructor defined for IGNORE */
+        break;
+      case 89:
+        YYTRACE("resolvetype ::= REPLACE")
+#line 189 "parse.y"
+{ yygotominor.yy172 = OE_Replace; }
+#line 5956 "parse.c"
+        /* No destructor defined for REPLACE */
+        break;
+      case 90:
         YYTRACE("cmd ::= DROP TABLE ids")
-#line 191 "parse.y"
-{sqliteDropTable(pParse,&yymsp[0].minor.yy224,0);}
-#line 5323 "parse.c"
+#line 193 "parse.y"
+{sqliteDropTable(pParse,&yymsp[0].minor.yy210,0);}
+#line 5963 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for TABLE */
         break;
-      case 89:
+      case 91:
         YYTRACE("cmd ::= CREATE VIEW ids AS select")
-#line 195 "parse.y"
+#line 197 "parse.y"
 {
-  sqliteCreateView(pParse, &yymsp[-4].minor.yy0, &yymsp[-2].minor.yy224, yymsp[0].minor.yy233);
+  sqliteCreateView(pParse, &yymsp[-4].minor.yy0, &yymsp[-2].minor.yy210, yymsp[0].minor.yy219);
 }
-#line 5333 "parse.c"
+#line 5973 "parse.c"
         /* No destructor defined for VIEW */
         /* No destructor defined for AS */
         break;
-      case 90:
+      case 92:
         YYTRACE("cmd ::= DROP VIEW ids")
-#line 198 "parse.y"
+#line 200 "parse.y"
 {
-  sqliteDropTable(pParse, &yymsp[0].minor.yy224, 1);
+  sqliteDropTable(pParse, &yymsp[0].minor.yy210, 1);
 }
-#line 5343 "parse.c"
+#line 5983 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for VIEW */
         break;
-      case 91:
-        YYTRACE("cmd ::= select")
-#line 204 "parse.y"
-{
-  sqliteSelect(pParse, yymsp[0].minor.yy233, SRT_Callback, 0, 0, 0, 0);
-  sqliteSelectDelete(yymsp[0].minor.yy233);
-}
-#line 5354 "parse.c"
-        break;
-      case 92:
-        YYTRACE("select ::= oneselect")
-#line 214 "parse.y"
-{yygotominor.yy233 = yymsp[0].minor.yy233;}
-#line 5360 "parse.c"
-        break;
       case 93:
-        YYTRACE("select ::= select multiselect_op oneselect")
-#line 215 "parse.y"
+        YYTRACE("cmd ::= select")
+#line 206 "parse.y"
 {
-  if( yymsp[0].minor.yy233 ){
-    yymsp[0].minor.yy233->op = yymsp[-1].minor.yy144;
-    yymsp[0].minor.yy233->pPrior = yymsp[-2].minor.yy233;
-  }
-  yygotominor.yy233 = yymsp[0].minor.yy233;
+  sqliteSelect(pParse, yymsp[0].minor.yy219, SRT_Callback, 0, 0, 0, 0);
+  sqliteSelectDelete(yymsp[0].minor.yy219);
 }
-#line 5372 "parse.c"
+#line 5994 "parse.c"
         break;
       case 94:
-        YYTRACE("multiselect_op ::= UNION")
-#line 223 "parse.y"
-{yygotominor.yy144 = TK_UNION;}
-#line 5378 "parse.c"
-        /* No destructor defined for UNION */
+        YYTRACE("select ::= oneselect")
+#line 216 "parse.y"
+{yygotominor.yy219 = yymsp[0].minor.yy219;}
+#line 6000 "parse.c"
         break;
       case 95:
+        YYTRACE("select ::= select multiselect_op oneselect")
+#line 217 "parse.y"
+{
+  if( yymsp[0].minor.yy219 ){
+    yymsp[0].minor.yy219->op = yymsp[-1].minor.yy172;
+    yymsp[0].minor.yy219->pPrior = yymsp[-2].minor.yy219;
+  }
+  yygotominor.yy219 = yymsp[0].minor.yy219;
+}
+#line 6012 "parse.c"
+        break;
+      case 96:
+        YYTRACE("multiselect_op ::= UNION")
+#line 225 "parse.y"
+{yygotominor.yy172 = TK_UNION;}
+#line 6018 "parse.c"
+        /* No destructor defined for UNION */
+        break;
+      case 97:
         YYTRACE("multiselect_op ::= UNION ALL")
-#line 224 "parse.y"
-{yygotominor.yy144 = TK_ALL;}
-#line 5385 "parse.c"
+#line 226 "parse.y"
+{yygotominor.yy172 = TK_ALL;}
+#line 6025 "parse.c"
         /* No destructor defined for UNION */
         /* No destructor defined for ALL */
         break;
-      case 96:
+      case 98:
         YYTRACE("multiselect_op ::= INTERSECT")
-#line 225 "parse.y"
-{yygotominor.yy144 = TK_INTERSECT;}
-#line 5393 "parse.c"
+#line 227 "parse.y"
+{yygotominor.yy172 = TK_INTERSECT;}
+#line 6033 "parse.c"
         /* No destructor defined for INTERSECT */
         break;
-      case 97:
+      case 99:
         YYTRACE("multiselect_op ::= EXCEPT")
-#line 226 "parse.y"
-{yygotominor.yy144 = TK_EXCEPT;}
-#line 5400 "parse.c"
+#line 228 "parse.y"
+{yygotominor.yy172 = TK_EXCEPT;}
+#line 6040 "parse.c"
         /* No destructor defined for EXCEPT */
         break;
-      case 98:
+      case 100:
         YYTRACE("oneselect ::= SELECT distinct selcollist from where_opt groupby_opt having_opt orderby_opt limit_opt")
-#line 228 "parse.y"
+#line 230 "parse.y"
 {
-  yygotominor.yy233 = sqliteSelectNew(yymsp[-6].minor.yy270,yymsp[-5].minor.yy152,yymsp[-4].minor.yy132,yymsp[-3].minor.yy270,yymsp[-2].minor.yy132,yymsp[-1].minor.yy270,yymsp[-7].minor.yy144,yymsp[0].minor.yy303.a,yymsp[0].minor.yy303.b);
+  yygotominor.yy219 = sqliteSelectNew(yymsp[-6].minor.yy144,yymsp[-5].minor.yy82,yymsp[-4].minor.yy146,yymsp[-3].minor.yy144,yymsp[-2].minor.yy146,yymsp[-1].minor.yy144,yymsp[-7].minor.yy172,yymsp[0].minor.yy191.a,yymsp[0].minor.yy191.b);
 }
-#line 5409 "parse.c"
+#line 6049 "parse.c"
         /* No destructor defined for SELECT */
         break;
-      case 99:
+      case 101:
         YYTRACE("distinct ::= DISTINCT")
-#line 236 "parse.y"
-{yygotominor.yy144 = 1;}
-#line 5416 "parse.c"
+#line 238 "parse.y"
+{yygotominor.yy172 = 1;}
+#line 6056 "parse.c"
         /* No destructor defined for DISTINCT */
         break;
-      case 100:
+      case 102:
         YYTRACE("distinct ::= ALL")
-#line 237 "parse.y"
-{yygotominor.yy144 = 0;}
-#line 5423 "parse.c"
+#line 239 "parse.y"
+{yygotominor.yy172 = 0;}
+#line 6063 "parse.c"
         /* No destructor defined for ALL */
         break;
-      case 101:
-        YYTRACE("distinct ::=")
-#line 238 "parse.y"
-{yygotominor.yy144 = 0;}
-#line 5430 "parse.c"
-        break;
-      case 102:
-        YYTRACE("sclp ::= selcollist COMMA")
-#line 249 "parse.y"
-{yygotominor.yy270 = yymsp[-1].minor.yy270;}
-#line 5436 "parse.c"
-        /* No destructor defined for COMMA */
-        break;
       case 103:
-        YYTRACE("sclp ::=")
-#line 250 "parse.y"
-{yygotominor.yy270 = 0;}
-#line 5443 "parse.c"
+        YYTRACE("distinct ::=")
+#line 240 "parse.y"
+{yygotominor.yy172 = 0;}
+#line 6070 "parse.c"
         break;
       case 104:
-        YYTRACE("selcollist ::= sclp expr")
+        YYTRACE("sclp ::= selcollist COMMA")
 #line 251 "parse.y"
-{yygotominor.yy270 = sqliteExprListAppend(yymsp[-1].minor.yy270,yymsp[0].minor.yy132,0);}
-#line 5449 "parse.c"
+{yygotominor.yy144 = yymsp[-1].minor.yy144;}
+#line 6076 "parse.c"
+        /* No destructor defined for COMMA */
         break;
       case 105:
-        YYTRACE("selcollist ::= sclp expr as ids")
+        YYTRACE("sclp ::=")
 #line 252 "parse.y"
-{yygotominor.yy270 = sqliteExprListAppend(yymsp[-3].minor.yy270,yymsp[-2].minor.yy132,&yymsp[0].minor.yy224);}
-#line 5455 "parse.c"
-        /* No destructor defined for as */
+{yygotominor.yy144 = 0;}
+#line 6083 "parse.c"
         break;
       case 106:
-        YYTRACE("selcollist ::= sclp STAR")
+        YYTRACE("selcollist ::= sclp expr")
 #line 253 "parse.y"
-{
-  yygotominor.yy270 = sqliteExprListAppend(yymsp[-1].minor.yy270, sqliteExpr(TK_ALL, 0, 0, 0), 0);
-}
-#line 5464 "parse.c"
-        /* No destructor defined for STAR */
+{yygotominor.yy144 = sqliteExprListAppend(yymsp[-1].minor.yy144,yymsp[0].minor.yy146,0);}
+#line 6089 "parse.c"
         break;
       case 107:
-        YYTRACE("as ::=")
+        YYTRACE("selcollist ::= sclp expr as ids")
+#line 254 "parse.y"
+{yygotominor.yy144 = sqliteExprListAppend(yymsp[-3].minor.yy144,yymsp[-2].minor.yy146,&yymsp[0].minor.yy210);}
+#line 6095 "parse.c"
+        /* No destructor defined for as */
         break;
       case 108:
+        YYTRACE("selcollist ::= sclp STAR")
+#line 255 "parse.y"
+{
+  yygotominor.yy144 = sqliteExprListAppend(yymsp[-1].minor.yy144, sqliteExpr(TK_ALL, 0, 0, 0), 0);
+}
+#line 6104 "parse.c"
+        /* No destructor defined for STAR */
+        break;
+      case 109:
+        YYTRACE("as ::=")
+        break;
+      case 110:
         YYTRACE("as ::= AS")
         /* No destructor defined for AS */
         break;
-      case 109:
+      case 111:
         YYTRACE("from ::= FROM seltablist")
-#line 267 "parse.y"
-{yygotominor.yy152 = yymsp[0].minor.yy152;}
-#line 5478 "parse.c"
+#line 269 "parse.y"
+{yygotominor.yy82 = yymsp[0].minor.yy82;}
+#line 6118 "parse.c"
         /* No destructor defined for FROM */
         break;
-      case 110:
+      case 112:
         YYTRACE("stl_prefix ::= seltablist COMMA")
-#line 268 "parse.y"
-{yygotominor.yy152 = yymsp[-1].minor.yy152;}
-#line 5485 "parse.c"
+#line 270 "parse.y"
+{yygotominor.yy82 = yymsp[-1].minor.yy82;}
+#line 6125 "parse.c"
         /* No destructor defined for COMMA */
         break;
-      case 111:
-        YYTRACE("stl_prefix ::=")
-#line 269 "parse.y"
-{yygotominor.yy152 = 0;}
-#line 5492 "parse.c"
-        break;
-      case 112:
-        YYTRACE("seltablist ::= stl_prefix ids")
-#line 270 "parse.y"
-{yygotominor.yy152 = sqliteIdListAppend(yymsp[-1].minor.yy152,&yymsp[0].minor.yy224);}
-#line 5498 "parse.c"
-        break;
       case 113:
-        YYTRACE("seltablist ::= stl_prefix ids as ids")
+        YYTRACE("stl_prefix ::=")
 #line 271 "parse.y"
-{
-  yygotominor.yy152 = sqliteIdListAppend(yymsp[-3].minor.yy152,&yymsp[-2].minor.yy224);
-  sqliteIdListAddAlias(yygotominor.yy152,&yymsp[0].minor.yy224);
-}
-#line 5507 "parse.c"
-        /* No destructor defined for as */
+{yygotominor.yy82 = 0;}
+#line 6132 "parse.c"
         break;
       case 114:
-        YYTRACE("seltablist ::= stl_prefix LP select RP")
-#line 275 "parse.y"
-{
-  yygotominor.yy152 = sqliteIdListAppend(yymsp[-3].minor.yy152,0);
-  yygotominor.yy152->a[yygotominor.yy152->nId-1].pSelect = yymsp[-1].minor.yy233;
-}
-#line 5517 "parse.c"
-        /* No destructor defined for LP */
-        /* No destructor defined for RP */
+        YYTRACE("seltablist ::= stl_prefix ids")
+#line 272 "parse.y"
+{yygotominor.yy82 = sqliteIdListAppend(yymsp[-1].minor.yy82,&yymsp[0].minor.yy210);}
+#line 6138 "parse.c"
         break;
       case 115:
-        YYTRACE("seltablist ::= stl_prefix LP select RP as ids")
-#line 279 "parse.y"
+        YYTRACE("seltablist ::= stl_prefix ids as ids")
+#line 273 "parse.y"
 {
-  yygotominor.yy152 = sqliteIdListAppend(yymsp[-5].minor.yy152,0);
-  yygotominor.yy152->a[yygotominor.yy152->nId-1].pSelect = yymsp[-3].minor.yy233;
-  sqliteIdListAddAlias(yygotominor.yy152,&yymsp[0].minor.yy224);
+  yygotominor.yy82 = sqliteIdListAppend(yymsp[-3].minor.yy82,&yymsp[-2].minor.yy210);
+  sqliteIdListAddAlias(yygotominor.yy82,&yymsp[0].minor.yy210);
 }
-#line 5529 "parse.c"
-        /* No destructor defined for LP */
-        /* No destructor defined for RP */
+#line 6147 "parse.c"
         /* No destructor defined for as */
         break;
       case 116:
-        YYTRACE("orderby_opt ::=")
-#line 292 "parse.y"
-{yygotominor.yy270 = 0;}
-#line 5538 "parse.c"
+        YYTRACE("seltablist ::= stl_prefix LP select RP")
+#line 277 "parse.y"
+{
+  yygotominor.yy82 = sqliteIdListAppend(yymsp[-3].minor.yy82,0);
+  yygotominor.yy82->a[yygotominor.yy82->nId-1].pSelect = yymsp[-1].minor.yy219;
+}
+#line 6157 "parse.c"
+        /* No destructor defined for LP */
+        /* No destructor defined for RP */
         break;
       case 117:
+        YYTRACE("seltablist ::= stl_prefix LP select RP as ids")
+#line 281 "parse.y"
+{
+  yygotominor.yy82 = sqliteIdListAppend(yymsp[-5].minor.yy82,0);
+  yygotominor.yy82->a[yygotominor.yy82->nId-1].pSelect = yymsp[-3].minor.yy219;
+  sqliteIdListAddAlias(yygotominor.yy82,&yymsp[0].minor.yy210);
+}
+#line 6169 "parse.c"
+        /* No destructor defined for LP */
+        /* No destructor defined for RP */
+        /* No destructor defined for as */
+        break;
+      case 118:
+        YYTRACE("orderby_opt ::=")
+#line 294 "parse.y"
+{yygotominor.yy144 = 0;}
+#line 6178 "parse.c"
+        break;
+      case 119:
         YYTRACE("orderby_opt ::= ORDER BY sortlist")
-#line 293 "parse.y"
-{yygotominor.yy270 = yymsp[0].minor.yy270;}
-#line 5544 "parse.c"
+#line 295 "parse.y"
+{yygotominor.yy144 = yymsp[0].minor.yy144;}
+#line 6184 "parse.c"
         /* No destructor defined for ORDER */
         /* No destructor defined for BY */
         break;
-      case 118:
+      case 120:
         YYTRACE("sortlist ::= sortlist COMMA sortitem sortorder")
-#line 294 "parse.y"
+#line 296 "parse.y"
 {
-  yygotominor.yy270 = sqliteExprListAppend(yymsp[-3].minor.yy270,yymsp[-1].minor.yy132,0);
-  if( yygotominor.yy270 ) yygotominor.yy270->a[yygotominor.yy270->nExpr-1].sortOrder = yymsp[0].minor.yy144;  /* 0=ascending, 1=decending */
+  yygotominor.yy144 = sqliteExprListAppend(yymsp[-3].minor.yy144,yymsp[-1].minor.yy146,0);
+  if( yygotominor.yy144 ) yygotominor.yy144->a[yygotominor.yy144->nExpr-1].sortOrder = yymsp[0].minor.yy172;  /* 0=ascending, 1=decending */
 }
-#line 5555 "parse.c"
+#line 6195 "parse.c"
         /* No destructor defined for COMMA */
         break;
-      case 119:
-        YYTRACE("sortlist ::= sortitem sortorder")
-#line 298 "parse.y"
-{
-  yygotominor.yy270 = sqliteExprListAppend(0,yymsp[-1].minor.yy132,0);
-  if( yygotominor.yy270 ) yygotominor.yy270->a[0].sortOrder = yymsp[0].minor.yy144;
-}
-#line 5565 "parse.c"
-        break;
-      case 120:
-        YYTRACE("sortitem ::= expr")
-#line 302 "parse.y"
-{yygotominor.yy132 = yymsp[0].minor.yy132;}
-#line 5571 "parse.c"
-        break;
       case 121:
-        YYTRACE("sortorder ::= ASC")
-#line 306 "parse.y"
-{yygotominor.yy144 = 0;}
-#line 5577 "parse.c"
-        /* No destructor defined for ASC */
+        YYTRACE("sortlist ::= sortitem sortorder")
+#line 300 "parse.y"
+{
+  yygotominor.yy144 = sqliteExprListAppend(0,yymsp[-1].minor.yy146,0);
+  if( yygotominor.yy144 ) yygotominor.yy144->a[0].sortOrder = yymsp[0].minor.yy172;
+}
+#line 6205 "parse.c"
         break;
       case 122:
-        YYTRACE("sortorder ::= DESC")
-#line 307 "parse.y"
-{yygotominor.yy144 = 1;}
-#line 5584 "parse.c"
-        /* No destructor defined for DESC */
+        YYTRACE("sortitem ::= expr")
+#line 304 "parse.y"
+{yygotominor.yy146 = yymsp[0].minor.yy146;}
+#line 6211 "parse.c"
         break;
       case 123:
-        YYTRACE("sortorder ::=")
+        YYTRACE("sortorder ::= ASC")
 #line 308 "parse.y"
-{yygotominor.yy144 = 0;}
-#line 5591 "parse.c"
+{yygotominor.yy172 = 0;}
+#line 6217 "parse.c"
+        /* No destructor defined for ASC */
         break;
       case 124:
-        YYTRACE("groupby_opt ::=")
-#line 312 "parse.y"
-{yygotominor.yy270 = 0;}
-#line 5597 "parse.c"
+        YYTRACE("sortorder ::= DESC")
+#line 309 "parse.y"
+{yygotominor.yy172 = 1;}
+#line 6224 "parse.c"
+        /* No destructor defined for DESC */
         break;
       case 125:
+        YYTRACE("sortorder ::=")
+#line 310 "parse.y"
+{yygotominor.yy172 = 0;}
+#line 6231 "parse.c"
+        break;
+      case 126:
+        YYTRACE("groupby_opt ::=")
+#line 314 "parse.y"
+{yygotominor.yy144 = 0;}
+#line 6237 "parse.c"
+        break;
+      case 127:
         YYTRACE("groupby_opt ::= GROUP BY exprlist")
-#line 313 "parse.y"
-{yygotominor.yy270 = yymsp[0].minor.yy270;}
-#line 5603 "parse.c"
+#line 315 "parse.y"
+{yygotominor.yy144 = yymsp[0].minor.yy144;}
+#line 6243 "parse.c"
         /* No destructor defined for GROUP */
         /* No destructor defined for BY */
         break;
-      case 126:
-        YYTRACE("having_opt ::=")
-#line 317 "parse.y"
-{yygotominor.yy132 = 0;}
-#line 5611 "parse.c"
-        break;
-      case 127:
-        YYTRACE("having_opt ::= HAVING expr")
-#line 318 "parse.y"
-{yygotominor.yy132 = yymsp[0].minor.yy132;}
-#line 5617 "parse.c"
-        /* No destructor defined for HAVING */
-        break;
       case 128:
-        YYTRACE("limit_opt ::=")
-#line 321 "parse.y"
-{yygotominor.yy303.a = -1; yygotominor.yy303.b = 0;}
-#line 5624 "parse.c"
+        YYTRACE("having_opt ::=")
+#line 319 "parse.y"
+{yygotominor.yy146 = 0;}
+#line 6251 "parse.c"
         break;
       case 129:
-        YYTRACE("limit_opt ::= LIMIT INTEGER")
-#line 322 "parse.y"
-{yygotominor.yy303.a = atoi(yymsp[0].minor.yy0.z); yygotominor.yy303.b = 0;}
-#line 5630 "parse.c"
-        /* No destructor defined for LIMIT */
+        YYTRACE("having_opt ::= HAVING expr")
+#line 320 "parse.y"
+{yygotominor.yy146 = yymsp[0].minor.yy146;}
+#line 6257 "parse.c"
+        /* No destructor defined for HAVING */
         break;
       case 130:
-        YYTRACE("limit_opt ::= LIMIT INTEGER limit_sep INTEGER")
+        YYTRACE("limit_opt ::=")
+#line 323 "parse.y"
+{yygotominor.yy191.a = -1; yygotominor.yy191.b = 0;}
+#line 6264 "parse.c"
+        break;
+      case 131:
+        YYTRACE("limit_opt ::= LIMIT INTEGER")
 #line 324 "parse.y"
-{yygotominor.yy303.a = atoi(yymsp[-2].minor.yy0.z); yygotominor.yy303.b = atoi(yymsp[0].minor.yy0.z);}
-#line 5637 "parse.c"
+{yygotominor.yy191.a = atoi(yymsp[0].minor.yy0.z); yygotominor.yy191.b = 0;}
+#line 6270 "parse.c"
+        /* No destructor defined for LIMIT */
+        break;
+      case 132:
+        YYTRACE("limit_opt ::= LIMIT INTEGER limit_sep INTEGER")
+#line 326 "parse.y"
+{yygotominor.yy191.a = atoi(yymsp[-2].minor.yy0.z); yygotominor.yy191.b = atoi(yymsp[0].minor.yy0.z);}
+#line 6277 "parse.c"
         /* No destructor defined for LIMIT */
         /* No destructor defined for limit_sep */
         break;
-      case 131:
+      case 133:
         YYTRACE("limit_sep ::= OFFSET")
         /* No destructor defined for OFFSET */
         break;
-      case 132:
+      case 134:
         YYTRACE("limit_sep ::= COMMA")
         /* No destructor defined for COMMA */
         break;
-      case 133:
+      case 135:
         YYTRACE("cmd ::= DELETE FROM ids where_opt")
-#line 331 "parse.y"
-{sqliteDeleteFrom(pParse, &yymsp[-1].minor.yy224, yymsp[0].minor.yy132);}
-#line 5653 "parse.c"
+#line 333 "parse.y"
+{sqliteDeleteFrom(pParse, &yymsp[-1].minor.yy210, yymsp[0].minor.yy146);}
+#line 6293 "parse.c"
         /* No destructor defined for DELETE */
         /* No destructor defined for FROM */
         break;
-      case 134:
+      case 136:
         YYTRACE("where_opt ::=")
-#line 336 "parse.y"
-{yygotominor.yy132 = 0;}
-#line 5661 "parse.c"
+#line 338 "parse.y"
+{yygotominor.yy146 = 0;}
+#line 6301 "parse.c"
         break;
-      case 135:
+      case 137:
         YYTRACE("where_opt ::= WHERE expr")
-#line 337 "parse.y"
-{yygotominor.yy132 = yymsp[0].minor.yy132;}
-#line 5667 "parse.c"
+#line 339 "parse.y"
+{yygotominor.yy146 = yymsp[0].minor.yy146;}
+#line 6307 "parse.c"
         /* No destructor defined for WHERE */
         break;
-      case 136:
+      case 138:
         YYTRACE("cmd ::= UPDATE orconf ids SET setlist where_opt")
-#line 345 "parse.y"
-{sqliteUpdate(pParse,&yymsp[-3].minor.yy224,yymsp[-1].minor.yy270,yymsp[0].minor.yy132,yymsp[-4].minor.yy144);}
-#line 5674 "parse.c"
+#line 347 "parse.y"
+{sqliteUpdate(pParse,&yymsp[-3].minor.yy210,yymsp[-1].minor.yy144,yymsp[0].minor.yy146,yymsp[-4].minor.yy172);}
+#line 6314 "parse.c"
         /* No destructor defined for UPDATE */
         /* No destructor defined for SET */
         break;
-      case 137:
+      case 139:
         YYTRACE("setlist ::= setlist COMMA ids EQ expr")
-#line 348 "parse.y"
-{yygotominor.yy270 = sqliteExprListAppend(yymsp[-4].minor.yy270,yymsp[0].minor.yy132,&yymsp[-2].minor.yy224);}
-#line 5682 "parse.c"
+#line 350 "parse.y"
+{yygotominor.yy144 = sqliteExprListAppend(yymsp[-4].minor.yy144,yymsp[0].minor.yy146,&yymsp[-2].minor.yy210);}
+#line 6322 "parse.c"
         /* No destructor defined for COMMA */
         /* No destructor defined for EQ */
         break;
-      case 138:
+      case 140:
         YYTRACE("setlist ::= ids EQ expr")
-#line 349 "parse.y"
-{yygotominor.yy270 = sqliteExprListAppend(0,yymsp[0].minor.yy132,&yymsp[-2].minor.yy224);}
-#line 5690 "parse.c"
+#line 351 "parse.y"
+{yygotominor.yy144 = sqliteExprListAppend(0,yymsp[0].minor.yy146,&yymsp[-2].minor.yy210);}
+#line 6330 "parse.c"
         /* No destructor defined for EQ */
         break;
-      case 139:
+      case 141:
         YYTRACE("cmd ::= insert_cmd INTO ids inscollist_opt VALUES LP itemlist RP")
-#line 354 "parse.y"
-{sqliteInsert(pParse, &yymsp[-5].minor.yy224, yymsp[-1].minor.yy270, 0, yymsp[-4].minor.yy152, yymsp[-7].minor.yy144);}
-#line 5697 "parse.c"
+#line 356 "parse.y"
+{sqliteInsert(pParse, &yymsp[-5].minor.yy210, yymsp[-1].minor.yy144, 0, yymsp[-4].minor.yy82, yymsp[-7].minor.yy172);}
+#line 6337 "parse.c"
         /* No destructor defined for INTO */
         /* No destructor defined for VALUES */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
-      case 140:
+      case 142:
         YYTRACE("cmd ::= insert_cmd INTO ids inscollist_opt select")
-#line 356 "parse.y"
-{sqliteInsert(pParse, &yymsp[-2].minor.yy224, 0, yymsp[0].minor.yy233, yymsp[-1].minor.yy152, yymsp[-4].minor.yy144);}
-#line 5707 "parse.c"
+#line 358 "parse.y"
+{sqliteInsert(pParse, &yymsp[-2].minor.yy210, 0, yymsp[0].minor.yy219, yymsp[-1].minor.yy82, yymsp[-4].minor.yy172);}
+#line 6347 "parse.c"
         /* No destructor defined for INTO */
         break;
-      case 141:
+      case 143:
         YYTRACE("insert_cmd ::= INSERT orconf")
-#line 359 "parse.y"
-{yygotominor.yy144 = yymsp[0].minor.yy144;}
-#line 5714 "parse.c"
+#line 361 "parse.y"
+{yygotominor.yy172 = yymsp[0].minor.yy172;}
+#line 6354 "parse.c"
         /* No destructor defined for INSERT */
         break;
-      case 142:
+      case 144:
         YYTRACE("insert_cmd ::= REPLACE")
-#line 360 "parse.y"
-{yygotominor.yy144 = OE_Replace;}
-#line 5721 "parse.c"
+#line 362 "parse.y"
+{yygotominor.yy172 = OE_Replace;}
+#line 6361 "parse.c"
         /* No destructor defined for REPLACE */
         break;
-      case 143:
+      case 145:
         YYTRACE("itemlist ::= itemlist COMMA expr")
-#line 366 "parse.y"
-{yygotominor.yy270 = sqliteExprListAppend(yymsp[-2].minor.yy270,yymsp[0].minor.yy132,0);}
-#line 5728 "parse.c"
+#line 368 "parse.y"
+{yygotominor.yy144 = sqliteExprListAppend(yymsp[-2].minor.yy144,yymsp[0].minor.yy146,0);}
+#line 6368 "parse.c"
         /* No destructor defined for COMMA */
         break;
-      case 144:
-        YYTRACE("itemlist ::= expr")
-#line 367 "parse.y"
-{yygotominor.yy270 = sqliteExprListAppend(0,yymsp[0].minor.yy132,0);}
-#line 5735 "parse.c"
-        break;
-      case 145:
-        YYTRACE("inscollist_opt ::=")
-#line 374 "parse.y"
-{yygotominor.yy152 = 0;}
-#line 5741 "parse.c"
-        break;
       case 146:
+        YYTRACE("itemlist ::= expr")
+#line 369 "parse.y"
+{yygotominor.yy144 = sqliteExprListAppend(0,yymsp[0].minor.yy146,0);}
+#line 6375 "parse.c"
+        break;
+      case 147:
+        YYTRACE("inscollist_opt ::=")
+#line 376 "parse.y"
+{yygotominor.yy82 = 0;}
+#line 6381 "parse.c"
+        break;
+      case 148:
         YYTRACE("inscollist_opt ::= LP inscollist RP")
-#line 375 "parse.y"
-{yygotominor.yy152 = yymsp[-1].minor.yy152;}
-#line 5747 "parse.c"
+#line 377 "parse.y"
+{yygotominor.yy82 = yymsp[-1].minor.yy82;}
+#line 6387 "parse.c"
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
-      case 147:
+      case 149:
         YYTRACE("inscollist ::= inscollist COMMA ids")
-#line 376 "parse.y"
-{yygotominor.yy152 = sqliteIdListAppend(yymsp[-2].minor.yy152,&yymsp[0].minor.yy224);}
-#line 5755 "parse.c"
+#line 378 "parse.y"
+{yygotominor.yy82 = sqliteIdListAppend(yymsp[-2].minor.yy82,&yymsp[0].minor.yy210);}
+#line 6395 "parse.c"
         /* No destructor defined for COMMA */
         break;
-      case 148:
-        YYTRACE("inscollist ::= ids")
-#line 377 "parse.y"
-{yygotominor.yy152 = sqliteIdListAppend(0,&yymsp[0].minor.yy224);}
-#line 5762 "parse.c"
-        break;
-      case 149:
-        YYTRACE("expr ::= LP expr RP")
-#line 395 "parse.y"
-{yygotominor.yy132 = yymsp[-1].minor.yy132; sqliteExprSpan(yygotominor.yy132,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0);}
-#line 5768 "parse.c"
-        break;
       case 150:
-        YYTRACE("expr ::= NULL")
-#line 396 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_NULL, 0, 0, &yymsp[0].minor.yy0);}
-#line 5774 "parse.c"
+        YYTRACE("inscollist ::= ids")
+#line 379 "parse.y"
+{yygotominor.yy82 = sqliteIdListAppend(0,&yymsp[0].minor.yy210);}
+#line 6402 "parse.c"
         break;
       case 151:
-        YYTRACE("expr ::= id")
+        YYTRACE("expr ::= LP expr RP")
 #line 397 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy224);}
-#line 5780 "parse.c"
+{yygotominor.yy146 = yymsp[-1].minor.yy146; sqliteExprSpan(yygotominor.yy146,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0);}
+#line 6408 "parse.c"
         break;
       case 152:
-        YYTRACE("expr ::= ids DOT ids")
+        YYTRACE("expr ::= NULL")
 #line 398 "parse.y"
-{
-  Expr *temp1 = sqliteExpr(TK_ID, 0, 0, &yymsp[-2].minor.yy224);
-  Expr *temp2 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy224);
-  yygotominor.yy132 = sqliteExpr(TK_DOT, temp1, temp2, 0);
-}
-#line 5790 "parse.c"
-        /* No destructor defined for DOT */
+{yygotominor.yy146 = sqliteExpr(TK_NULL, 0, 0, &yymsp[0].minor.yy0);}
+#line 6414 "parse.c"
         break;
       case 153:
-        YYTRACE("expr ::= INTEGER")
-#line 403 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_INTEGER, 0, 0, &yymsp[0].minor.yy0);}
-#line 5797 "parse.c"
+        YYTRACE("expr ::= id")
+#line 399 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy210);}
+#line 6420 "parse.c"
         break;
       case 154:
-        YYTRACE("expr ::= FLOAT")
-#line 404 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_FLOAT, 0, 0, &yymsp[0].minor.yy0);}
-#line 5803 "parse.c"
+        YYTRACE("expr ::= ids DOT ids")
+#line 400 "parse.y"
+{
+  Expr *temp1 = sqliteExpr(TK_ID, 0, 0, &yymsp[-2].minor.yy210);
+  Expr *temp2 = sqliteExpr(TK_ID, 0, 0, &yymsp[0].minor.yy210);
+  yygotominor.yy146 = sqliteExpr(TK_DOT, temp1, temp2, 0);
+}
+#line 6430 "parse.c"
+        /* No destructor defined for DOT */
         break;
       case 155:
-        YYTRACE("expr ::= STRING")
+        YYTRACE("expr ::= INTEGER")
 #line 405 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_STRING, 0, 0, &yymsp[0].minor.yy0);}
-#line 5809 "parse.c"
+{yygotominor.yy146 = sqliteExpr(TK_INTEGER, 0, 0, &yymsp[0].minor.yy0);}
+#line 6437 "parse.c"
         break;
       case 156:
-        YYTRACE("expr ::= ID LP exprlist RP")
+        YYTRACE("expr ::= FLOAT")
 #line 406 "parse.y"
-{
-  yygotominor.yy132 = sqliteExprFunction(yymsp[-1].minor.yy270, &yymsp[-3].minor.yy0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
-}
-#line 5818 "parse.c"
-        /* No destructor defined for LP */
+{yygotominor.yy146 = sqliteExpr(TK_FLOAT, 0, 0, &yymsp[0].minor.yy0);}
+#line 6443 "parse.c"
         break;
       case 157:
-        YYTRACE("expr ::= ID LP STAR RP")
-#line 410 "parse.y"
-{
-  yygotominor.yy132 = sqliteExprFunction(0, &yymsp[-3].minor.yy0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
-}
-#line 5828 "parse.c"
-        /* No destructor defined for LP */
-        /* No destructor defined for STAR */
+        YYTRACE("expr ::= STRING")
+#line 407 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_STRING, 0, 0, &yymsp[0].minor.yy0);}
+#line 6449 "parse.c"
         break;
       case 158:
-        YYTRACE("expr ::= expr AND expr")
-#line 414 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_AND, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5836 "parse.c"
-        /* No destructor defined for AND */
+        YYTRACE("expr ::= ID LP exprlist RP")
+#line 408 "parse.y"
+{
+  yygotominor.yy146 = sqliteExprFunction(yymsp[-1].minor.yy144, &yymsp[-3].minor.yy0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
+}
+#line 6458 "parse.c"
+        /* No destructor defined for LP */
         break;
       case 159:
-        YYTRACE("expr ::= expr OR expr")
-#line 415 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_OR, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5843 "parse.c"
-        /* No destructor defined for OR */
-        break;
-      case 160:
-        YYTRACE("expr ::= expr LT expr")
-#line 416 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_LT, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5850 "parse.c"
-        /* No destructor defined for LT */
-        break;
-      case 161:
-        YYTRACE("expr ::= expr GT expr")
-#line 417 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_GT, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5857 "parse.c"
-        /* No destructor defined for GT */
-        break;
-      case 162:
-        YYTRACE("expr ::= expr LE expr")
-#line 418 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_LE, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5864 "parse.c"
-        /* No destructor defined for LE */
-        break;
-      case 163:
-        YYTRACE("expr ::= expr GE expr")
-#line 419 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_GE, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5871 "parse.c"
-        /* No destructor defined for GE */
-        break;
-      case 164:
-        YYTRACE("expr ::= expr NE expr")
-#line 420 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_NE, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5878 "parse.c"
-        /* No destructor defined for NE */
-        break;
-      case 165:
-        YYTRACE("expr ::= expr EQ expr")
-#line 421 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_EQ, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5885 "parse.c"
-        /* No destructor defined for EQ */
-        break;
-      case 166:
-        YYTRACE("expr ::= expr BITAND expr")
-#line 422 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_BITAND, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5892 "parse.c"
-        /* No destructor defined for BITAND */
-        break;
-      case 167:
-        YYTRACE("expr ::= expr BITOR expr")
-#line 423 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_BITOR, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5899 "parse.c"
-        /* No destructor defined for BITOR */
-        break;
-      case 168:
-        YYTRACE("expr ::= expr LSHIFT expr")
-#line 424 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_LSHIFT, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5906 "parse.c"
-        /* No destructor defined for LSHIFT */
-        break;
-      case 169:
-        YYTRACE("expr ::= expr RSHIFT expr")
-#line 425 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_RSHIFT, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5913 "parse.c"
-        /* No destructor defined for RSHIFT */
-        break;
-      case 170:
-        YYTRACE("expr ::= expr LIKE expr")
-#line 426 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_LIKE, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5920 "parse.c"
-        /* No destructor defined for LIKE */
-        break;
-      case 171:
-        YYTRACE("expr ::= expr NOT LIKE expr")
-#line 427 "parse.y"
+        YYTRACE("expr ::= ID LP STAR RP")
+#line 412 "parse.y"
 {
-  yygotominor.yy132 = sqliteExpr(TK_LIKE, yymsp[-3].minor.yy132, yymsp[0].minor.yy132, 0);
-  yygotominor.yy132 = sqliteExpr(TK_NOT, yygotominor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-3].minor.yy132->span,&yymsp[0].minor.yy132->span);
+  yygotominor.yy146 = sqliteExprFunction(0, &yymsp[-3].minor.yy0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-3].minor.yy0,&yymsp[0].minor.yy0);
 }
-#line 5931 "parse.c"
-        /* No destructor defined for NOT */
-        /* No destructor defined for LIKE */
-        break;
-      case 172:
-        YYTRACE("expr ::= expr GLOB expr")
-#line 432 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_GLOB,yymsp[-2].minor.yy132,yymsp[0].minor.yy132,0);}
-#line 5939 "parse.c"
-        /* No destructor defined for GLOB */
-        break;
-      case 173:
-        YYTRACE("expr ::= expr NOT GLOB expr")
-#line 433 "parse.y"
-{
-  yygotominor.yy132 = sqliteExpr(TK_GLOB, yymsp[-3].minor.yy132, yymsp[0].minor.yy132, 0);
-  yygotominor.yy132 = sqliteExpr(TK_NOT, yygotominor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-3].minor.yy132->span,&yymsp[0].minor.yy132->span);
-}
-#line 5950 "parse.c"
-        /* No destructor defined for NOT */
-        /* No destructor defined for GLOB */
-        break;
-      case 174:
-        YYTRACE("expr ::= expr PLUS expr")
-#line 438 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_PLUS, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5958 "parse.c"
-        /* No destructor defined for PLUS */
-        break;
-      case 175:
-        YYTRACE("expr ::= expr MINUS expr")
-#line 439 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_MINUS, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5965 "parse.c"
-        /* No destructor defined for MINUS */
-        break;
-      case 176:
-        YYTRACE("expr ::= expr STAR expr")
-#line 440 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_STAR, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5972 "parse.c"
+#line 6468 "parse.c"
+        /* No destructor defined for LP */
         /* No destructor defined for STAR */
         break;
+      case 160:
+        YYTRACE("expr ::= expr AND expr")
+#line 416 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_AND, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6476 "parse.c"
+        /* No destructor defined for AND */
+        break;
+      case 161:
+        YYTRACE("expr ::= expr OR expr")
+#line 417 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_OR, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6483 "parse.c"
+        /* No destructor defined for OR */
+        break;
+      case 162:
+        YYTRACE("expr ::= expr LT expr")
+#line 418 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_LT, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6490 "parse.c"
+        /* No destructor defined for LT */
+        break;
+      case 163:
+        YYTRACE("expr ::= expr GT expr")
+#line 419 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_GT, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6497 "parse.c"
+        /* No destructor defined for GT */
+        break;
+      case 164:
+        YYTRACE("expr ::= expr LE expr")
+#line 420 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_LE, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6504 "parse.c"
+        /* No destructor defined for LE */
+        break;
+      case 165:
+        YYTRACE("expr ::= expr GE expr")
+#line 421 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_GE, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6511 "parse.c"
+        /* No destructor defined for GE */
+        break;
+      case 166:
+        YYTRACE("expr ::= expr NE expr")
+#line 422 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_NE, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6518 "parse.c"
+        /* No destructor defined for NE */
+        break;
+      case 167:
+        YYTRACE("expr ::= expr EQ expr")
+#line 423 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_EQ, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6525 "parse.c"
+        /* No destructor defined for EQ */
+        break;
+      case 168:
+        YYTRACE("expr ::= expr BITAND expr")
+#line 424 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_BITAND, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6532 "parse.c"
+        /* No destructor defined for BITAND */
+        break;
+      case 169:
+        YYTRACE("expr ::= expr BITOR expr")
+#line 425 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_BITOR, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6539 "parse.c"
+        /* No destructor defined for BITOR */
+        break;
+      case 170:
+        YYTRACE("expr ::= expr LSHIFT expr")
+#line 426 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_LSHIFT, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6546 "parse.c"
+        /* No destructor defined for LSHIFT */
+        break;
+      case 171:
+        YYTRACE("expr ::= expr RSHIFT expr")
+#line 427 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_RSHIFT, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6553 "parse.c"
+        /* No destructor defined for RSHIFT */
+        break;
+      case 172:
+        YYTRACE("expr ::= expr LIKE expr")
+#line 428 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_LIKE, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6560 "parse.c"
+        /* No destructor defined for LIKE */
+        break;
+      case 173:
+        YYTRACE("expr ::= expr NOT LIKE expr")
+#line 429 "parse.y"
+{
+  yygotominor.yy146 = sqliteExpr(TK_LIKE, yymsp[-3].minor.yy146, yymsp[0].minor.yy146, 0);
+  yygotominor.yy146 = sqliteExpr(TK_NOT, yygotominor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-3].minor.yy146->span,&yymsp[0].minor.yy146->span);
+}
+#line 6571 "parse.c"
+        /* No destructor defined for NOT */
+        /* No destructor defined for LIKE */
+        break;
+      case 174:
+        YYTRACE("expr ::= expr GLOB expr")
+#line 434 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_GLOB,yymsp[-2].minor.yy146,yymsp[0].minor.yy146,0);}
+#line 6579 "parse.c"
+        /* No destructor defined for GLOB */
+        break;
+      case 175:
+        YYTRACE("expr ::= expr NOT GLOB expr")
+#line 435 "parse.y"
+{
+  yygotominor.yy146 = sqliteExpr(TK_GLOB, yymsp[-3].minor.yy146, yymsp[0].minor.yy146, 0);
+  yygotominor.yy146 = sqliteExpr(TK_NOT, yygotominor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-3].minor.yy146->span,&yymsp[0].minor.yy146->span);
+}
+#line 6590 "parse.c"
+        /* No destructor defined for NOT */
+        /* No destructor defined for GLOB */
+        break;
+      case 176:
+        YYTRACE("expr ::= expr PLUS expr")
+#line 440 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_PLUS, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6598 "parse.c"
+        /* No destructor defined for PLUS */
+        break;
       case 177:
-        YYTRACE("expr ::= expr SLASH expr")
+        YYTRACE("expr ::= expr MINUS expr")
 #line 441 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_SLASH, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5979 "parse.c"
-        /* No destructor defined for SLASH */
+{yygotominor.yy146 = sqliteExpr(TK_MINUS, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6605 "parse.c"
+        /* No destructor defined for MINUS */
         break;
       case 178:
-        YYTRACE("expr ::= expr REM expr")
+        YYTRACE("expr ::= expr STAR expr")
 #line 442 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_REM, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5986 "parse.c"
-        /* No destructor defined for REM */
+{yygotominor.yy146 = sqliteExpr(TK_STAR, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6612 "parse.c"
+        /* No destructor defined for STAR */
         break;
       case 179:
-        YYTRACE("expr ::= expr CONCAT expr")
+        YYTRACE("expr ::= expr SLASH expr")
 #line 443 "parse.y"
-{yygotominor.yy132 = sqliteExpr(TK_CONCAT, yymsp[-2].minor.yy132, yymsp[0].minor.yy132, 0);}
-#line 5993 "parse.c"
-        /* No destructor defined for CONCAT */
+{yygotominor.yy146 = sqliteExpr(TK_SLASH, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6619 "parse.c"
+        /* No destructor defined for SLASH */
         break;
       case 180:
-        YYTRACE("expr ::= expr ISNULL")
+        YYTRACE("expr ::= expr REM expr")
 #line 444 "parse.y"
-{
-  yygotominor.yy132 = sqliteExpr(TK_ISNULL, yymsp[-1].minor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-1].minor.yy132->span,&yymsp[0].minor.yy0);
-}
-#line 6003 "parse.c"
+{yygotominor.yy146 = sqliteExpr(TK_REM, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6626 "parse.c"
+        /* No destructor defined for REM */
         break;
       case 181:
-        YYTRACE("expr ::= expr IS NULL")
-#line 448 "parse.y"
-{
-  yygotominor.yy132 = sqliteExpr(TK_ISNULL, yymsp[-2].minor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-2].minor.yy132->span,&yymsp[0].minor.yy0);
-}
-#line 6012 "parse.c"
-        /* No destructor defined for IS */
+        YYTRACE("expr ::= expr CONCAT expr")
+#line 445 "parse.y"
+{yygotominor.yy146 = sqliteExpr(TK_CONCAT, yymsp[-2].minor.yy146, yymsp[0].minor.yy146, 0);}
+#line 6633 "parse.c"
+        /* No destructor defined for CONCAT */
         break;
       case 182:
-        YYTRACE("expr ::= expr NOTNULL")
-#line 452 "parse.y"
+        YYTRACE("expr ::= expr ISNULL")
+#line 446 "parse.y"
 {
-  yygotominor.yy132 = sqliteExpr(TK_NOTNULL, yymsp[-1].minor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-1].minor.yy132->span,&yymsp[0].minor.yy0);
+  yygotominor.yy146 = sqliteExpr(TK_ISNULL, yymsp[-1].minor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-1].minor.yy146->span,&yymsp[0].minor.yy0);
 }
-#line 6022 "parse.c"
+#line 6643 "parse.c"
         break;
       case 183:
-        YYTRACE("expr ::= expr NOT NULL")
-#line 456 "parse.y"
+        YYTRACE("expr ::= expr IS NULL")
+#line 450 "parse.y"
 {
-  yygotominor.yy132 = sqliteExpr(TK_NOTNULL, yymsp[-2].minor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-2].minor.yy132->span,&yymsp[0].minor.yy0);
+  yygotominor.yy146 = sqliteExpr(TK_ISNULL, yymsp[-2].minor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-2].minor.yy146->span,&yymsp[0].minor.yy0);
 }
-#line 6031 "parse.c"
-        /* No destructor defined for NOT */
+#line 6652 "parse.c"
+        /* No destructor defined for IS */
         break;
       case 184:
-        YYTRACE("expr ::= expr IS NOT NULL")
-#line 460 "parse.y"
+        YYTRACE("expr ::= expr NOTNULL")
+#line 454 "parse.y"
 {
-  yygotominor.yy132 = sqliteExpr(TK_NOTNULL, yymsp[-3].minor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-3].minor.yy132->span,&yymsp[0].minor.yy0);
+  yygotominor.yy146 = sqliteExpr(TK_NOTNULL, yymsp[-1].minor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-1].minor.yy146->span,&yymsp[0].minor.yy0);
 }
-#line 6041 "parse.c"
+#line 6662 "parse.c"
+        break;
+      case 185:
+        YYTRACE("expr ::= expr NOT NULL")
+#line 458 "parse.y"
+{
+  yygotominor.yy146 = sqliteExpr(TK_NOTNULL, yymsp[-2].minor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-2].minor.yy146->span,&yymsp[0].minor.yy0);
+}
+#line 6671 "parse.c"
+        /* No destructor defined for NOT */
+        break;
+      case 186:
+        YYTRACE("expr ::= expr IS NOT NULL")
+#line 462 "parse.y"
+{
+  yygotominor.yy146 = sqliteExpr(TK_NOTNULL, yymsp[-3].minor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-3].minor.yy146->span,&yymsp[0].minor.yy0);
+}
+#line 6681 "parse.c"
         /* No destructor defined for IS */
         /* No destructor defined for NOT */
         break;
-      case 185:
-        YYTRACE("expr ::= NOT expr")
-#line 464 "parse.y"
-{
-  yygotominor.yy132 = sqliteExpr(TK_NOT, yymsp[0].minor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy132->span);
-}
-#line 6052 "parse.c"
-        break;
-      case 186:
-        YYTRACE("expr ::= BITNOT expr")
-#line 468 "parse.y"
-{
-  yygotominor.yy132 = sqliteExpr(TK_BITNOT, yymsp[0].minor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy132->span);
-}
-#line 6061 "parse.c"
-        break;
       case 187:
-        YYTRACE("expr ::= MINUS expr")
-#line 472 "parse.y"
+        YYTRACE("expr ::= NOT expr")
+#line 466 "parse.y"
 {
-  yygotominor.yy132 = sqliteExpr(TK_UMINUS, yymsp[0].minor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy132->span);
+  yygotominor.yy146 = sqliteExpr(TK_NOT, yymsp[0].minor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy146->span);
 }
-#line 6070 "parse.c"
+#line 6692 "parse.c"
         break;
       case 188:
-        YYTRACE("expr ::= PLUS expr")
-#line 476 "parse.y"
+        YYTRACE("expr ::= BITNOT expr")
+#line 470 "parse.y"
 {
-  yygotominor.yy132 = yymsp[0].minor.yy132;
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy132->span);
+  yygotominor.yy146 = sqliteExpr(TK_BITNOT, yymsp[0].minor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy146->span);
 }
-#line 6079 "parse.c"
+#line 6701 "parse.c"
         break;
       case 189:
-        YYTRACE("expr ::= LP select RP")
-#line 480 "parse.y"
+        YYTRACE("expr ::= MINUS expr")
+#line 474 "parse.y"
 {
-  yygotominor.yy132 = sqliteExpr(TK_SELECT, 0, 0, 0);
-  if( yygotominor.yy132 ) yygotominor.yy132->pSelect = yymsp[-1].minor.yy233;
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0);
+  yygotominor.yy146 = sqliteExpr(TK_UMINUS, yymsp[0].minor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy146->span);
 }
-#line 6089 "parse.c"
+#line 6710 "parse.c"
         break;
       case 190:
-        YYTRACE("expr ::= expr BETWEEN expr AND expr")
-#line 485 "parse.y"
+        YYTRACE("expr ::= PLUS expr")
+#line 478 "parse.y"
 {
-  ExprList *pList = sqliteExprListAppend(0, yymsp[-2].minor.yy132, 0);
-  pList = sqliteExprListAppend(pList, yymsp[0].minor.yy132, 0);
-  yygotominor.yy132 = sqliteExpr(TK_BETWEEN, yymsp[-4].minor.yy132, 0, 0);
-  if( yygotominor.yy132 ) yygotominor.yy132->pList = pList;
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-4].minor.yy132->span,&yymsp[0].minor.yy132->span);
+  yygotominor.yy146 = yymsp[0].minor.yy146;
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-1].minor.yy0,&yymsp[0].minor.yy146->span);
 }
-#line 6101 "parse.c"
-        /* No destructor defined for BETWEEN */
-        /* No destructor defined for AND */
+#line 6719 "parse.c"
         break;
       case 191:
-        YYTRACE("expr ::= expr NOT BETWEEN expr AND expr")
-#line 492 "parse.y"
+        YYTRACE("expr ::= LP select RP")
+#line 482 "parse.y"
 {
-  ExprList *pList = sqliteExprListAppend(0, yymsp[-2].minor.yy132, 0);
-  pList = sqliteExprListAppend(pList, yymsp[0].minor.yy132, 0);
-  yygotominor.yy132 = sqliteExpr(TK_BETWEEN, yymsp[-5].minor.yy132, 0, 0);
-  if( yygotominor.yy132 ) yygotominor.yy132->pList = pList;
-  yygotominor.yy132 = sqliteExpr(TK_NOT, yygotominor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-5].minor.yy132->span,&yymsp[0].minor.yy132->span);
+  yygotominor.yy146 = sqliteExpr(TK_SELECT, 0, 0, 0);
+  if( yygotominor.yy146 ) yygotominor.yy146->pSelect = yymsp[-1].minor.yy219;
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-2].minor.yy0,&yymsp[0].minor.yy0);
 }
-#line 6116 "parse.c"
+#line 6729 "parse.c"
+        break;
+      case 192:
+        YYTRACE("expr ::= expr BETWEEN expr AND expr")
+#line 487 "parse.y"
+{
+  ExprList *pList = sqliteExprListAppend(0, yymsp[-2].minor.yy146, 0);
+  pList = sqliteExprListAppend(pList, yymsp[0].minor.yy146, 0);
+  yygotominor.yy146 = sqliteExpr(TK_BETWEEN, yymsp[-4].minor.yy146, 0, 0);
+  if( yygotominor.yy146 ) yygotominor.yy146->pList = pList;
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-4].minor.yy146->span,&yymsp[0].minor.yy146->span);
+}
+#line 6741 "parse.c"
+        /* No destructor defined for BETWEEN */
+        /* No destructor defined for AND */
+        break;
+      case 193:
+        YYTRACE("expr ::= expr NOT BETWEEN expr AND expr")
+#line 494 "parse.y"
+{
+  ExprList *pList = sqliteExprListAppend(0, yymsp[-2].minor.yy146, 0);
+  pList = sqliteExprListAppend(pList, yymsp[0].minor.yy146, 0);
+  yygotominor.yy146 = sqliteExpr(TK_BETWEEN, yymsp[-5].minor.yy146, 0, 0);
+  if( yygotominor.yy146 ) yygotominor.yy146->pList = pList;
+  yygotominor.yy146 = sqliteExpr(TK_NOT, yygotominor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-5].minor.yy146->span,&yymsp[0].minor.yy146->span);
+}
+#line 6756 "parse.c"
         /* No destructor defined for NOT */
         /* No destructor defined for BETWEEN */
         /* No destructor defined for AND */
         break;
-      case 192:
-        YYTRACE("expr ::= expr IN LP exprlist RP")
-#line 500 "parse.y"
-{
-  yygotominor.yy132 = sqliteExpr(TK_IN, yymsp[-4].minor.yy132, 0, 0);
-  if( yygotominor.yy132 ) yygotominor.yy132->pList = yymsp[-1].minor.yy270;
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-4].minor.yy132->span,&yymsp[0].minor.yy0);
-}
-#line 6129 "parse.c"
-        /* No destructor defined for IN */
-        /* No destructor defined for LP */
-        break;
-      case 193:
-        YYTRACE("expr ::= expr IN LP select RP")
-#line 505 "parse.y"
-{
-  yygotominor.yy132 = sqliteExpr(TK_IN, yymsp[-4].minor.yy132, 0, 0);
-  if( yygotominor.yy132 ) yygotominor.yy132->pSelect = yymsp[-1].minor.yy233;
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-4].minor.yy132->span,&yymsp[0].minor.yy0);
-}
-#line 6141 "parse.c"
-        /* No destructor defined for IN */
-        /* No destructor defined for LP */
-        break;
       case 194:
-        YYTRACE("expr ::= expr NOT IN LP exprlist RP")
-#line 510 "parse.y"
+        YYTRACE("expr ::= expr IN LP exprlist RP")
+#line 502 "parse.y"
 {
-  yygotominor.yy132 = sqliteExpr(TK_IN, yymsp[-5].minor.yy132, 0, 0);
-  if( yygotominor.yy132 ) yygotominor.yy132->pList = yymsp[-1].minor.yy270;
-  yygotominor.yy132 = sqliteExpr(TK_NOT, yygotominor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-5].minor.yy132->span,&yymsp[0].minor.yy0);
+  yygotominor.yy146 = sqliteExpr(TK_IN, yymsp[-4].minor.yy146, 0, 0);
+  if( yygotominor.yy146 ) yygotominor.yy146->pList = yymsp[-1].minor.yy144;
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-4].minor.yy146->span,&yymsp[0].minor.yy0);
 }
-#line 6154 "parse.c"
-        /* No destructor defined for NOT */
+#line 6769 "parse.c"
         /* No destructor defined for IN */
         /* No destructor defined for LP */
         break;
       case 195:
-        YYTRACE("expr ::= expr NOT IN LP select RP")
-#line 516 "parse.y"
+        YYTRACE("expr ::= expr IN LP select RP")
+#line 507 "parse.y"
 {
-  yygotominor.yy132 = sqliteExpr(TK_IN, yymsp[-5].minor.yy132, 0, 0);
-  if( yygotominor.yy132 ) yygotominor.yy132->pSelect = yymsp[-1].minor.yy233;
-  yygotominor.yy132 = sqliteExpr(TK_NOT, yygotominor.yy132, 0, 0);
-  sqliteExprSpan(yygotominor.yy132,&yymsp[-5].minor.yy132->span,&yymsp[0].minor.yy0);
+  yygotominor.yy146 = sqliteExpr(TK_IN, yymsp[-4].minor.yy146, 0, 0);
+  if( yygotominor.yy146 ) yygotominor.yy146->pSelect = yymsp[-1].minor.yy219;
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-4].minor.yy146->span,&yymsp[0].minor.yy0);
 }
-#line 6168 "parse.c"
-        /* No destructor defined for NOT */
+#line 6781 "parse.c"
         /* No destructor defined for IN */
         /* No destructor defined for LP */
         break;
       case 196:
-        YYTRACE("exprlist ::= exprlist COMMA expritem")
-#line 531 "parse.y"
-{yygotominor.yy270 = sqliteExprListAppend(yymsp[-2].minor.yy270,yymsp[0].minor.yy132,0);}
-#line 6177 "parse.c"
-        /* No destructor defined for COMMA */
+        YYTRACE("expr ::= expr NOT IN LP exprlist RP")
+#line 512 "parse.y"
+{
+  yygotominor.yy146 = sqliteExpr(TK_IN, yymsp[-5].minor.yy146, 0, 0);
+  if( yygotominor.yy146 ) yygotominor.yy146->pList = yymsp[-1].minor.yy144;
+  yygotominor.yy146 = sqliteExpr(TK_NOT, yygotominor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-5].minor.yy146->span,&yymsp[0].minor.yy0);
+}
+#line 6794 "parse.c"
+        /* No destructor defined for NOT */
+        /* No destructor defined for IN */
+        /* No destructor defined for LP */
         break;
       case 197:
-        YYTRACE("exprlist ::= expritem")
-#line 532 "parse.y"
-{yygotominor.yy270 = sqliteExprListAppend(0,yymsp[0].minor.yy132,0);}
-#line 6184 "parse.c"
+        YYTRACE("expr ::= expr NOT IN LP select RP")
+#line 518 "parse.y"
+{
+  yygotominor.yy146 = sqliteExpr(TK_IN, yymsp[-5].minor.yy146, 0, 0);
+  if( yygotominor.yy146 ) yygotominor.yy146->pSelect = yymsp[-1].minor.yy219;
+  yygotominor.yy146 = sqliteExpr(TK_NOT, yygotominor.yy146, 0, 0);
+  sqliteExprSpan(yygotominor.yy146,&yymsp[-5].minor.yy146->span,&yymsp[0].minor.yy0);
+}
+#line 6808 "parse.c"
+        /* No destructor defined for NOT */
+        /* No destructor defined for IN */
+        /* No destructor defined for LP */
         break;
       case 198:
-        YYTRACE("expritem ::= expr")
-#line 533 "parse.y"
-{yygotominor.yy132 = yymsp[0].minor.yy132;}
-#line 6190 "parse.c"
+        YYTRACE("expr ::= CASE case_operand case_exprlist case_else END")
+#line 526 "parse.y"
+{
+  yygotominor.yy146 = sqliteExpr(TK_CASE, yymsp[-3].minor.yy146, yymsp[-1].minor.yy146, 0);
+  if( yygotominor.yy146 ) yygotominor.yy146->pList = yymsp[-2].minor.yy144;
+  sqliteExprSpan(yygotominor.yy146, &yymsp[-4].minor.yy0, &yymsp[0].minor.yy0);
+}
+#line 6821 "parse.c"
         break;
       case 199:
-        YYTRACE("expritem ::=")
-#line 534 "parse.y"
-{yygotominor.yy132 = 0;}
-#line 6196 "parse.c"
+        YYTRACE("case_exprlist ::= case_exprlist WHEN expr THEN expr")
+#line 533 "parse.y"
+{
+  yygotominor.yy144 = sqliteExprListAppend(yymsp[-4].minor.yy144, yymsp[-2].minor.yy146, 0);
+  yygotominor.yy144 = sqliteExprListAppend(yygotominor.yy144, yymsp[0].minor.yy146, 0);
+}
+#line 6830 "parse.c"
+        /* No destructor defined for WHEN */
+        /* No destructor defined for THEN */
         break;
       case 200:
-        YYTRACE("cmd ::= CREATE uniqueflag INDEX ids ON ids LP idxlist RP onconf")
-#line 539 "parse.y"
+        YYTRACE("case_exprlist ::= WHEN expr THEN expr")
+#line 537 "parse.y"
 {
-  if( yymsp[-8].minor.yy144!=OE_None ) yymsp[-8].minor.yy144 = yymsp[0].minor.yy144;
-  if( yymsp[-8].minor.yy144==OE_Default) yymsp[-8].minor.yy144 = OE_Abort;
-  sqliteCreateIndex(pParse, &yymsp[-6].minor.yy224, &yymsp[-4].minor.yy224, yymsp[-2].minor.yy152, yymsp[-8].minor.yy144, &yymsp[-9].minor.yy0, &yymsp[-1].minor.yy0);
+  yygotominor.yy144 = sqliteExprListAppend(0, yymsp[-2].minor.yy146, 0);
+  yygotominor.yy144 = sqliteExprListAppend(yygotominor.yy144, yymsp[0].minor.yy146, 0);
 }
-#line 6206 "parse.c"
+#line 6841 "parse.c"
+        /* No destructor defined for WHEN */
+        /* No destructor defined for THEN */
+        break;
+      case 201:
+        YYTRACE("case_else ::= ELSE expr")
+#line 542 "parse.y"
+{yygotominor.yy146 = yymsp[0].minor.yy146;}
+#line 6849 "parse.c"
+        /* No destructor defined for ELSE */
+        break;
+      case 202:
+        YYTRACE("case_else ::=")
+#line 543 "parse.y"
+{yygotominor.yy146 = 0;}
+#line 6856 "parse.c"
+        break;
+      case 203:
+        YYTRACE("case_operand ::= expr")
+#line 545 "parse.y"
+{yygotominor.yy146 = yymsp[0].minor.yy146;}
+#line 6862 "parse.c"
+        break;
+      case 204:
+        YYTRACE("case_operand ::=")
+#line 546 "parse.y"
+{yygotominor.yy146 = 0;}
+#line 6868 "parse.c"
+        break;
+      case 205:
+        YYTRACE("exprlist ::= exprlist COMMA expritem")
+#line 554 "parse.y"
+{yygotominor.yy144 = sqliteExprListAppend(yymsp[-2].minor.yy144,yymsp[0].minor.yy146,0);}
+#line 6874 "parse.c"
+        /* No destructor defined for COMMA */
+        break;
+      case 206:
+        YYTRACE("exprlist ::= expritem")
+#line 555 "parse.y"
+{yygotominor.yy144 = sqliteExprListAppend(0,yymsp[0].minor.yy146,0);}
+#line 6881 "parse.c"
+        break;
+      case 207:
+        YYTRACE("expritem ::= expr")
+#line 556 "parse.y"
+{yygotominor.yy146 = yymsp[0].minor.yy146;}
+#line 6887 "parse.c"
+        break;
+      case 208:
+        YYTRACE("expritem ::=")
+#line 557 "parse.y"
+{yygotominor.yy146 = 0;}
+#line 6893 "parse.c"
+        break;
+      case 209:
+        YYTRACE("cmd ::= CREATE uniqueflag INDEX ids ON ids LP idxlist RP onconf")
+#line 562 "parse.y"
+{
+  if( yymsp[-8].minor.yy172!=OE_None ) yymsp[-8].minor.yy172 = yymsp[0].minor.yy172;
+  if( yymsp[-8].minor.yy172==OE_Default) yymsp[-8].minor.yy172 = OE_Abort;
+  sqliteCreateIndex(pParse, &yymsp[-6].minor.yy210, &yymsp[-4].minor.yy210, yymsp[-2].minor.yy82, yymsp[-8].minor.yy172, &yymsp[-9].minor.yy0, &yymsp[-1].minor.yy0);
+}
+#line 6903 "parse.c"
         /* No destructor defined for INDEX */
         /* No destructor defined for ON */
         /* No destructor defined for LP */
         break;
-      case 201:
+      case 210:
         YYTRACE("uniqueflag ::= UNIQUE")
-#line 546 "parse.y"
-{ yygotominor.yy144 = OE_Abort; }
-#line 6215 "parse.c"
+#line 569 "parse.y"
+{ yygotominor.yy172 = OE_Abort; }
+#line 6912 "parse.c"
         /* No destructor defined for UNIQUE */
         break;
-      case 202:
+      case 211:
         YYTRACE("uniqueflag ::=")
-#line 547 "parse.y"
-{ yygotominor.yy144 = OE_None; }
-#line 6222 "parse.c"
+#line 570 "parse.y"
+{ yygotominor.yy172 = OE_None; }
+#line 6919 "parse.c"
         break;
-      case 203:
+      case 212:
         YYTRACE("idxlist ::= idxlist COMMA idxitem")
-#line 554 "parse.y"
-{yygotominor.yy152 = sqliteIdListAppend(yymsp[-2].minor.yy152,&yymsp[0].minor.yy224);}
-#line 6228 "parse.c"
+#line 577 "parse.y"
+{yygotominor.yy82 = sqliteIdListAppend(yymsp[-2].minor.yy82,&yymsp[0].minor.yy210);}
+#line 6925 "parse.c"
         /* No destructor defined for COMMA */
         break;
-      case 204:
+      case 213:
         YYTRACE("idxlist ::= idxitem")
-#line 556 "parse.y"
-{yygotominor.yy152 = sqliteIdListAppend(0,&yymsp[0].minor.yy224);}
-#line 6235 "parse.c"
+#line 579 "parse.y"
+{yygotominor.yy82 = sqliteIdListAppend(0,&yymsp[0].minor.yy210);}
+#line 6932 "parse.c"
         break;
-      case 205:
+      case 214:
         YYTRACE("idxitem ::= ids")
-#line 557 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy224;}
-#line 6241 "parse.c"
+#line 580 "parse.y"
+{yygotominor.yy210 = yymsp[0].minor.yy210;}
+#line 6938 "parse.c"
         break;
-      case 206:
+      case 215:
         YYTRACE("cmd ::= DROP INDEX ids")
-#line 562 "parse.y"
-{sqliteDropIndex(pParse, &yymsp[0].minor.yy224);}
-#line 6247 "parse.c"
+#line 585 "parse.y"
+{sqliteDropIndex(pParse, &yymsp[0].minor.yy210);}
+#line 6944 "parse.c"
         /* No destructor defined for DROP */
         /* No destructor defined for INDEX */
         break;
-      case 207:
+      case 216:
         YYTRACE("cmd ::= COPY orconf ids FROM ids USING DELIMITERS STRING")
-#line 568 "parse.y"
-{sqliteCopy(pParse,&yymsp[-5].minor.yy224,&yymsp[-3].minor.yy224,&yymsp[0].minor.yy0,yymsp[-6].minor.yy144);}
-#line 6255 "parse.c"
+#line 591 "parse.y"
+{sqliteCopy(pParse,&yymsp[-5].minor.yy210,&yymsp[-3].minor.yy210,&yymsp[0].minor.yy0,yymsp[-6].minor.yy172);}
+#line 6952 "parse.c"
         /* No destructor defined for COPY */
         /* No destructor defined for FROM */
         /* No destructor defined for USING */
         /* No destructor defined for DELIMITERS */
         break;
-      case 208:
+      case 217:
         YYTRACE("cmd ::= COPY orconf ids FROM ids")
-#line 570 "parse.y"
-{sqliteCopy(pParse,&yymsp[-2].minor.yy224,&yymsp[0].minor.yy224,0,yymsp[-3].minor.yy144);}
-#line 6265 "parse.c"
+#line 593 "parse.y"
+{sqliteCopy(pParse,&yymsp[-2].minor.yy210,&yymsp[0].minor.yy210,0,yymsp[-3].minor.yy172);}
+#line 6962 "parse.c"
         /* No destructor defined for COPY */
         /* No destructor defined for FROM */
         break;
-      case 209:
+      case 218:
         YYTRACE("cmd ::= VACUUM")
-#line 574 "parse.y"
+#line 597 "parse.y"
 {sqliteVacuum(pParse,0);}
-#line 6273 "parse.c"
+#line 6970 "parse.c"
         /* No destructor defined for VACUUM */
         break;
-      case 210:
+      case 219:
         YYTRACE("cmd ::= VACUUM ids")
-#line 575 "parse.y"
-{sqliteVacuum(pParse,&yymsp[0].minor.yy224);}
-#line 6280 "parse.c"
+#line 598 "parse.y"
+{sqliteVacuum(pParse,&yymsp[0].minor.yy210);}
+#line 6977 "parse.c"
         /* No destructor defined for VACUUM */
         break;
-      case 211:
+      case 220:
         YYTRACE("cmd ::= PRAGMA ids EQ ids")
-#line 579 "parse.y"
-{sqlitePragma(pParse,&yymsp[-2].minor.yy224,&yymsp[0].minor.yy224,0);}
-#line 6287 "parse.c"
+#line 602 "parse.y"
+{sqlitePragma(pParse,&yymsp[-2].minor.yy210,&yymsp[0].minor.yy210,0);}
+#line 6984 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
-      case 212:
+      case 221:
         YYTRACE("cmd ::= PRAGMA ids EQ ON")
-#line 580 "parse.y"
-{sqlitePragma(pParse,&yymsp[-2].minor.yy224,&yymsp[0].minor.yy0,0);}
-#line 6295 "parse.c"
+#line 603 "parse.y"
+{sqlitePragma(pParse,&yymsp[-2].minor.yy210,&yymsp[0].minor.yy0,0);}
+#line 6992 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
-      case 213:
+      case 222:
         YYTRACE("cmd ::= PRAGMA ids EQ plus_num")
-#line 581 "parse.y"
-{sqlitePragma(pParse,&yymsp[-2].minor.yy224,&yymsp[0].minor.yy224,0);}
-#line 6303 "parse.c"
+#line 604 "parse.y"
+{sqlitePragma(pParse,&yymsp[-2].minor.yy210,&yymsp[0].minor.yy210,0);}
+#line 7000 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
-      case 214:
+      case 223:
         YYTRACE("cmd ::= PRAGMA ids EQ minus_num")
-#line 582 "parse.y"
-{sqlitePragma(pParse,&yymsp[-2].minor.yy224,&yymsp[0].minor.yy224,1);}
-#line 6311 "parse.c"
+#line 605 "parse.y"
+{sqlitePragma(pParse,&yymsp[-2].minor.yy210,&yymsp[0].minor.yy210,1);}
+#line 7008 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for EQ */
         break;
-      case 215:
+      case 224:
         YYTRACE("cmd ::= PRAGMA ids LP ids RP")
-#line 583 "parse.y"
-{sqlitePragma(pParse,&yymsp[-3].minor.yy224,&yymsp[-1].minor.yy224,0);}
-#line 6319 "parse.c"
+#line 606 "parse.y"
+{sqlitePragma(pParse,&yymsp[-3].minor.yy210,&yymsp[-1].minor.yy210,0);}
+#line 7016 "parse.c"
         /* No destructor defined for PRAGMA */
         /* No destructor defined for LP */
         /* No destructor defined for RP */
         break;
-      case 216:
+      case 225:
         YYTRACE("cmd ::= PRAGMA ids")
-#line 584 "parse.y"
-{sqlitePragma(pParse,&yymsp[0].minor.yy224,&yymsp[0].minor.yy224,0);}
-#line 6328 "parse.c"
+#line 607 "parse.y"
+{sqlitePragma(pParse,&yymsp[0].minor.yy210,&yymsp[0].minor.yy210,0);}
+#line 7025 "parse.c"
         /* No destructor defined for PRAGMA */
         break;
-      case 217:
+      case 226:
         YYTRACE("plus_num ::= plus_opt number")
-#line 585 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy224;}
-#line 6335 "parse.c"
+#line 608 "parse.y"
+{yygotominor.yy210 = yymsp[0].minor.yy210;}
+#line 7032 "parse.c"
         /* No destructor defined for plus_opt */
         break;
-      case 218:
+      case 227:
         YYTRACE("minus_num ::= MINUS number")
-#line 586 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy224;}
-#line 6342 "parse.c"
+#line 609 "parse.y"
+{yygotominor.yy210 = yymsp[0].minor.yy210;}
+#line 7039 "parse.c"
         /* No destructor defined for MINUS */
         break;
-      case 219:
+      case 228:
         YYTRACE("number ::= INTEGER")
-#line 587 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 6349 "parse.c"
+#line 610 "parse.y"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 7046 "parse.c"
         break;
-      case 220:
+      case 229:
         YYTRACE("number ::= FLOAT")
-#line 588 "parse.y"
-{yygotominor.yy224 = yymsp[0].minor.yy0;}
-#line 6355 "parse.c"
+#line 611 "parse.y"
+{yygotominor.yy210 = yymsp[0].minor.yy0;}
+#line 7052 "parse.c"
         break;
-      case 221:
+      case 230:
         YYTRACE("plus_opt ::= PLUS")
         /* No destructor defined for PLUS */
         break;
-      case 222:
+      case 231:
         YYTRACE("plus_opt ::=")
         break;
   };
@@ -6407,7 +7104,7 @@ static void yy_syntax_error(
   sqliteSetString(&pParse->zErrMsg,"syntax error",0);
   pParse->sErrToken = TOKEN;
 
-#line 6410 "parse.c"
+#line 7107 "parse.c"
   sqliteParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 

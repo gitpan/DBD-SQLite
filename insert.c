@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle INSERT statements in SQLite.
 **
-** $Id: insert.c,v 1.6 2002/03/26 14:17:52 matt Exp $
+** $Id: insert.c,v 1.7 2002/04/02 10:43:03 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -206,7 +206,16 @@ void sqliteInsert(
     if( srcTab>=0 ){
       sqliteVdbeAddOp(v, OP_Column, srcTab, keyColumn);
     }else{
+      int addr;
       sqliteExprCode(pParse, pList->a[keyColumn].pExpr);
+
+      /* If the PRIMARY KEY expression is NULL, then use OP_NewRecno
+      ** to generate a unique primary key value.
+      */
+      addr = sqliteVdbeAddOp(v, OP_Dup, 0, 1);
+      sqliteVdbeAddOp(v, OP_NotNull, 0, addr+4);
+      sqliteVdbeAddOp(v, OP_Pop, 1, 0);
+      sqliteVdbeAddOp(v, OP_NewRecno, base, 0);
     }
     sqliteVdbeAddOp(v, OP_MustBeInt, 0, 0);
   }else{

@@ -1,4 +1,4 @@
-# $Id: SQLite.pm,v 1.15 2002/03/28 15:55:03 matt Exp $
+# $Id: SQLite.pm,v 1.16 2002/04/02 10:43:11 matt Exp $
 
 package DBD::SQLite;
 use strict;
@@ -6,7 +6,7 @@ use strict;
 use DBI;
 
 use vars qw($err $errstr $state $drh $VERSION @ISA);
-$VERSION = '0.14';
+$VERSION = '0.15';
 
 use DynaLoader();
 @ISA = ('DynaLoader');
@@ -137,6 +137,18 @@ This method returns the last inserted rowid. If you specify an INTEGER PRIMARY
 KEY as the first column in your table, that is the column that is returned.
 Otherwise, it is the hidden ROWID column. See the sqlite docs for details.
 
+=head1 NOTES
+
+To access the database from the command line, try using dbish which comes with
+the DBI module. Just type:
+
+  dbish dbi:SQLite:foo.db
+
+On the command line to access the file F<foo.db>.
+
+Alternatively you can install SQLite from the link above without conflicting
+with DBD::SQLite and use the supplied C<sqlite> command line tool.
+
 =head1 PERFORMANCE
 
 SQLite is fast, very fast. I recently processed my 72MB log file with it,
@@ -157,6 +169,15 @@ returned within 2 seconds. I'm seriously considering switching my log
 analysis code to use this little speed demon!
 
 Oh yeah, and that was with no indexes on the table, on a 400MHz PIII.
+
+For best performance be sure to tune your hdparm settings if you are
+using linux. Also you might want to set:
+
+  PRAGMA default_synchronous = OFF
+
+Which will prevent sqlite from doing fsync's when writing, which will
+slow down non-transactional writes significantly, at the expense of some
+piece of mind. Also try playing with the cache_size pragma.
 
 =head1 BUGS
 
