@@ -12,7 +12,7 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite.h,v 1.12 2002/10/16 22:36:04 matt Exp $
+** @(#) $Id: sqlite.h,v 1.13 2002/12/18 17:59:18 matt Exp $
 */
 #ifndef _SQLITE_H_
 #define _SQLITE_H_
@@ -21,7 +21,7 @@
 /*
 ** The version of the SQLite library.
 */
-#define SQLITE_VERSION         "2.7.2"
+#define SQLITE_VERSION         "2.7.4"
 
 /*
 ** Make sure we can call this stuff from C++.
@@ -162,6 +162,7 @@ int sqlite_exec(
 #define SQLITE_CONSTRAINT  19   /* Abort due to contraint violation */
 #define SQLITE_MISMATCH    20   /* Data type mismatch */
 #define SQLITE_MISUSE      21   /* Library used incorrectly */
+#define SQLITE_NOLFS       22   /* Uses OS features not supported on host */
 
 /*
 ** Each entry in an SQLite table has a unique integer key.  (The key is

@@ -14,7 +14,7 @@
 ** This file contains functions for allocating memory, comparing
 ** strings, and stuff like that.
 **
-** $Id: util.c,v 1.12 2002/10/16 22:36:04 matt Exp $
+** $Id: util.c,v 1.13 2002/12/18 17:59:18 matt Exp $
 */
 #include "sqliteInt.h"
 #include <stdarg.h>
@@ -217,7 +217,9 @@ char *sqliteStrNDup_(const char *z, int n, char *zFile, int line){
 ** no memory is available.
 */
 void *sqliteMalloc(int n){
-  void *p = malloc(n);
+  void *p;
+  if( n==0 ) return 0;
+  p = malloc(n);
   if( p==0 ){
     sqlite_malloc_failed++;
     return 0;
@@ -748,7 +750,7 @@ int sqliteSortCompare(const char *a, const char *b){
   int len;
   int res = 0;
   int isNumA, isNumB;
-  int dir;
+  int dir = 0;
 
   while( res==0 && *a && *b ){
     if( a[0]=='N' || b[0]=='N' ){
@@ -1118,16 +1120,22 @@ sqliteLikeCompare(const unsigned char *zPattern, const unsigned char *zString){
 ** But usually the problem will be seen.  The result will be an
 ** error which can be used to debug the application that is
 ** using SQLite incorrectly.
+**
+** Ticket #202:  If db->magic is not a valid open value, take care not
+** to modify the db structure at all.  It could be that db is a stale
+** pointer.  In other words, it could be that there has been a prior
+** call to sqlite_close(db) and db has been deallocated.  And we do
+** not want to write into deallocated memory.
 */
 int sqliteSafetyOn(sqlite *db){
   if( db->magic==SQLITE_MAGIC_OPEN ){
     db->magic = SQLITE_MAGIC_BUSY;
     return 0;
-  }else{
+  }else if( db->magic==SQLITE_MAGIC_BUSY || db->magic==SQLITE_MAGIC_ERROR ){
     db->magic = SQLITE_MAGIC_ERROR;
     db->flags |= SQLITE_Interrupt;
-    return 1;
   }
+  return 1;
 }
 
 /*
@@ -1139,11 +1147,11 @@ int sqliteSafetyOff(sqlite *db){
   if( db->magic==SQLITE_MAGIC_BUSY ){
     db->magic = SQLITE_MAGIC_OPEN;
     return 0;
-  }else{
+  }else if( db->magic==SQLITE_MAGIC_OPEN || db->magic==SQLITE_MAGIC_ERROR ){
     db->magic = SQLITE_MAGIC_ERROR;
     db->flags |= SQLITE_Interrupt;
-    return 1;
   }
+  return 1;
 }
 
 /*

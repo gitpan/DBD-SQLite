@@ -14,15 +14,25 @@
 ** systems.  The purpose of this file is to provide a uniform abstraction
 ** on which the rest of SQLite can operate.
 */
+#include "os.h"          /* Must be first to enable large file support */
 #include "sqliteInt.h"
-#include "os.h"
 
 #if OS_UNIX
-# include <unistd.h>
-# include <fcntl.h>
-# include <sys/stat.h>
 # include <time.h>
+# include <errno.h>
+# include <unistd.h>
+# ifndef O_LARGEFILE
+#  define O_LARGEFILE 0
+# endif
+# ifdef SQLITE_DISABLE_LFS
+#  undef O_LARGEFILE
+#  define O_LARGEFILE 0
+# endif
+# ifndef O_NOFOLLOW
+#  define O_NOFOLLOW 0
+# endif
 #endif
+
 #if OS_WIN
 # include <winbase.h>
 #endif
@@ -32,13 +42,15 @@
 */
 #if 0
 static int last_page = 0;
-#define SEEK(X)     last_page=(X)
-#define TRACE1(X)   fprintf(stderr,X)
-#define TRACE2(X,Y) fprintf(stderr,X,Y)
+#define SEEK(X)       last_page=(X)
+#define TRACE1(X)     fprintf(stderr,X)
+#define TRACE2(X,Y)   fprintf(stderr,X,Y)
+#define TRACE3(X,Y,Z) fprintf(stderr,X,Y,Z)
 #else
 #define SEEK(X)
 #define TRACE1(X)
 #define TRACE2(X,Y)
+#define TRACE3(X,Y,Z)
 #endif
 
 
@@ -224,7 +236,7 @@ int sqliteOsFileExists(const char *zFilename){
 ** SQLITE_OK.
 **
 ** On failure, the function returns SQLITE_CANTOPEN and leaves
-** *pResulst and *pReadonly unchanged.
+** *id and *pReadonly unchanged.
 */
 int sqliteOsOpenReadWrite(
   const char *zFilename,
@@ -232,9 +244,9 @@ int sqliteOsOpenReadWrite(
   int *pReadonly
 ){
 #if OS_UNIX
-  id->fd = open(zFilename, O_RDWR|O_CREAT, 0644);
+  id->fd = open(zFilename, O_RDWR|O_CREAT|O_LARGEFILE, 0644);
   if( id->fd<0 ){
-    id->fd = open(zFilename, O_RDONLY);
+    id->fd = open(zFilename, O_RDONLY|O_LARGEFILE);
     if( id->fd<0 ){
       return SQLITE_CANTOPEN; 
     }
@@ -250,6 +262,7 @@ int sqliteOsOpenReadWrite(
     return SQLITE_NOMEM;
   }
   id->locked = 0;
+  TRACE3("OPEN    %-3d %s\n", id->fd, zFilename);
   return SQLITE_OK;
 #endif
 #if OS_WIN
@@ -303,10 +316,7 @@ int sqliteOsOpenExclusive(const char *zFilename, OsFile *id, int delFlag){
   if( access(zFilename, 0)==0 ){
     return SQLITE_CANTOPEN;
   }
-#ifndef O_NOFOLLOW
-# define O_NOFOLLOW 0
-#endif
-  id->fd = open(zFilename, O_RDWR|O_CREAT|O_EXCL|O_NOFOLLOW, 0600);
+  id->fd = open(zFilename, O_RDWR|O_CREAT|O_EXCL|O_NOFOLLOW|O_LARGEFILE, 0600);
   if( id->fd<0 ){
     return SQLITE_CANTOPEN;
   }
@@ -322,6 +332,7 @@ int sqliteOsOpenExclusive(const char *zFilename, OsFile *id, int delFlag){
   if( delFlag ){
     unlink(zFilename);
   }
+  TRACE3("OPEN-EX %-3d %s\n", id->fd, zFilename);
   return SQLITE_OK;
 #endif
 #if OS_WIN
@@ -359,7 +370,7 @@ int sqliteOsOpenExclusive(const char *zFilename, OsFile *id, int delFlag){
 */
 int sqliteOsOpenReadOnly(const char *zFilename, OsFile *id){
 #if OS_UNIX
-  id->fd = open(zFilename, O_RDONLY);
+  id->fd = open(zFilename, O_RDONLY|O_LARGEFILE);
   if( id->fd<0 ){
     return SQLITE_CANTOPEN;
   }
@@ -371,6 +382,7 @@ int sqliteOsOpenReadOnly(const char *zFilename, OsFile *id){
     return SQLITE_NOMEM;
   }
   id->locked = 0;
+  TRACE3("OPEN-RO %-3d %s\n", id->fd, zFilename);
   return SQLITE_OK;
 #endif
 #if OS_WIN
@@ -460,6 +472,7 @@ int sqliteOsClose(OsFile *id){
   sqliteOsEnterMutex();
   releaseLockInfo(id->pLock);
   sqliteOsLeaveMutex();
+  TRACE2("CLOSE   %-3d\n", id->fd);
   return SQLITE_OK;
 #endif
 #if OS_WIN
@@ -477,7 +490,7 @@ int sqliteOsRead(OsFile *id, void *pBuf, int amt){
 #if OS_UNIX
   int got;
   SimulateIOError(SQLITE_IOERR);
-  TRACE2("READ %d\n", last_page);
+  TRACE3("READ    %-3d %d\n", id->fd, last_page);
   got = read(id->fd, pBuf, amt);
   /* if( got<0 ) got = 0; */
   if( got==amt ){
@@ -489,10 +502,11 @@ int sqliteOsRead(OsFile *id, void *pBuf, int amt){
 #if OS_WIN
   DWORD got;
   SimulateIOError(SQLITE_IOERR);
+  TRACE2("READ %d\n", last_page);
   if( !ReadFile(id->h, pBuf, amt, &got, 0) ){
     got = 0;
   }
-  if( got==amt ){
+  if( got==(DWORD)amt ){
     return SQLITE_OK;
   }else{
     return SQLITE_IOERR;
@@ -508,7 +522,7 @@ int sqliteOsWrite(OsFile *id, const void *pBuf, int amt){
 #if OS_UNIX
   int wrote = 0;
   SimulateIOError(SQLITE_IOERR);
-  TRACE2("WRITE %d\n", last_page);
+  TRACE3("WRITE   %-3d %d\n", id->fd, last_page);
   while( amt>0 && (wrote = write(id->fd, pBuf, amt))>0 ){
     amt -= wrote;
     pBuf = &((char*)pBuf)[wrote];
@@ -522,6 +536,7 @@ int sqliteOsWrite(OsFile *id, const void *pBuf, int amt){
   int rc;
   DWORD wrote;
   SimulateIOError(SQLITE_IOERR);
+  TRACE2("WRITE %d\n", last_page);
   while( amt>0 && (rc = WriteFile(id->h, pBuf, amt, &wrote, 0))!=0 && wrote>0 ){
     amt -= wrote;
     pBuf = &((char*)pBuf)[wrote];
@@ -536,14 +551,20 @@ int sqliteOsWrite(OsFile *id, const void *pBuf, int amt){
 /*
 ** Move the read/write pointer in a file.
 */
-int sqliteOsSeek(OsFile *id, int offset){
+int sqliteOsSeek(OsFile *id, off_t offset){
   SEEK(offset/1024 + 1);
 #if OS_UNIX
   lseek(id->fd, offset, SEEK_SET);
   return SQLITE_OK;
 #endif
 #if OS_WIN
-  SetFilePointer(id->h, offset, 0, FILE_BEGIN);
+  {
+    LONG upperBits = offset>>32;
+    LONG lowerBits = offset & 0xffffffff;
+    DWORD rc;
+    rc = SetFilePointer(id->h, lowerBits, &upperBits, FILE_BEGIN);
+    /* TRACE3("SEEK rc=0x%x upper=0x%x\n", rc, upperBits); */
+  }
   return SQLITE_OK;
 #endif
 }
@@ -553,7 +574,7 @@ int sqliteOsSeek(OsFile *id, int offset){
 */
 int sqliteOsSync(OsFile *id){
   SimulateIOError(SQLITE_IOERR);
-  TRACE1("SYNC\n");
+  TRACE2("SYNC    %-3d\n", id->fd);
 #if OS_UNIX
   if( fsync(id->fd) ){
     return SQLITE_IOERR;
@@ -573,14 +594,17 @@ int sqliteOsSync(OsFile *id){
 /*
 ** Truncate an open file to a specified size
 */
-int sqliteOsTruncate(OsFile *id, int nByte){
+int sqliteOsTruncate(OsFile *id, off_t nByte){
   SimulateIOError(SQLITE_IOERR);
 #if OS_UNIX
   return ftruncate(id->fd, nByte)==0 ? SQLITE_OK : SQLITE_IOERR;
 #endif
 #if OS_WIN
-  SetFilePointer(id->h, nByte, 0, FILE_BEGIN);
-  SetEndOfFile(id->h);
+  {
+    LONG upperBits = nByte>>32;
+    SetFilePointer(id->h, nByte, &upperBits, FILE_BEGIN);
+    SetEndOfFile(id->h);
+  }
   return SQLITE_OK;
 #endif
 }
@@ -588,7 +612,7 @@ int sqliteOsTruncate(OsFile *id, int nByte){
 /*
 ** Determine the current size of a file in bytes
 */
-int sqliteOsFileSize(OsFile *id, int *pSize){
+int sqliteOsFileSize(OsFile *id, off_t *pSize){
 #if OS_UNIX
   struct stat buf;
   SimulateIOError(SQLITE_IOERR);
@@ -599,11 +623,30 @@ int sqliteOsFileSize(OsFile *id, int *pSize){
   return SQLITE_OK;
 #endif
 #if OS_WIN
+  DWORD upperBits, lowerBits;
   SimulateIOError(SQLITE_IOERR);
-  *pSize = GetFileSize(id->h, 0);
+  lowerBits = GetFileSize(id->h, &upperBits);
+  *pSize = (((off_t)upperBits)<<32) + lowerBits;
   return SQLITE_OK;
 #endif
 }
+
+#if OS_WIN
+/*
+** Return true (non-zero) if we are running under WinNT, Win2K or WinXP.
+** Return false (zero) for Win95, Win98, or WinME.
+*/
+int isNT(void){
+  static osType = 0;   /* 0=unknown 1=win95 2=winNT */
+  if( osType==0 ){
+    OSVERSIONINFO sInfo;
+    sInfo.dwOSVersionInfoSize = sizeof(sInfo);
+    GetVersionEx(&sInfo);
+    osType = sInfo.dwPlatformId==VER_PLATFORM_WIN32_NT ? 2 : 1;
+  }
+  return osType==2;
+}
+#endif
 
 /*
 ** Windows file locking notes:
@@ -612,32 +655,45 @@ int sqliteOsFileSize(OsFile *id, int *pSize){
 ** are not available under Win95/98/ME.  So we use only LockFile() and
 ** UnlockFile().
 **
-** A read lock is obtained by locking a single random byte in the
-** range of 1 to MX_LOCKBYTE.  The lock byte is obtained at random so
-** two separate readers can probably access the file at the same time,
-** unless they are unlucky and choose the same lock byte.  A write lock
-** is obtained by locking all bytes in the range of 1 to MX_LOCKBYTE.
+** LockFile() prevents not just writing but also reading by other processes.
+** (This is a design error on the part of Windows, but there is nothing
+** we can do about that.)  So the region used for locking is at the
+** end of the file where it is unlikely to ever interfere with an
+** actual read attempt.
+**
+** A database read lock is obtained by locking a single randomly-chosen 
+** byte out of a specific range of bytes. The lock byte is obtained at 
+** random so two separate readers can probably access the file at the 
+** same time, unless they are unlucky and choose the same lock byte.
+** A database write lock is obtained by locking all bytes in the range.
 ** There can only be one writer.
 **
-** A lock is obtained on byte 0 before acquiring either a read lock or
-** a write lock.  This prevents two processes from attempting to get a
-** lock at a same time.  The semantics of sqliteOsReadLock() require that
-** if there is already a write lock, that lock is converted into a read
-** lock atomically.  The lock on byte 0 allows us to drop the old write
-** lock and get the read lock without another process jumping into the
-** middle and messing us up.  The same argument applies to sqliteOsWriteLock().
+** A lock is obtained on the first byte of the lock range before acquiring
+** either a read lock or a write lock.  This prevents two processes from
+** attempting to get a lock at a same time.  The semantics of 
+** sqliteOsReadLock() require that if there is already a write lock, that
+** lock is converted into a read lock atomically.  The lock on the first
+** byte allows us to drop the old write lock and get the read lock without
+** another process jumping into the middle and messing us up.  The same
+** argument applies to sqliteOsWriteLock().
 **
-** There are a finite number of read locks under windows.  That number
-** is determined by the following variable:
+** The following #defines specify the range of bytes used for locking.
+** N_LOCKBYTE is the number of bytes available for doing the locking.
+** The first byte used to hold the lock while the lock is changing does
+** not count toward this number.  FIRST_LOCKBYTE is the address of
+** the first byte in the range of bytes used for locking.
 */
-#define MX_LOCKBYTE 10240
+#define N_LOCKBYTE       10239
+#define FIRST_LOCKBYTE   (0xffffffff - N_LOCKBYTE)
 
 /*
 ** Change the status of the lock on the file "id" to be a readlock.
 ** If the file was write locked, then this reduces the lock to a read.
 ** If the file was read locked, then this acquires a new read lock.
 **
-** Return SQLITE_OK on success and SQLITE_BUSY on failure.
+** Return SQLITE_OK on success and SQLITE_BUSY on failure.  If this
+** library was compiled with large file support (LFS) but LFS is not
+** available on the host, then an SQLITE_NOLFS is returned.
 */
 int sqliteOsReadLock(OsFile *id){
 #if OS_UNIX
@@ -651,11 +707,13 @@ int sqliteOsReadLock(OsFile *id){
     rc = SQLITE_OK;
   }else if( id->locked || id->pLock->cnt==0 ){
     struct flock lock;
+    int s;
     lock.l_type = F_RDLCK;
     lock.l_whence = SEEK_SET;
     lock.l_start = lock.l_len = 0L;
-    if( fcntl(id->fd, F_SETLK, &lock)!=0 ){
-      rc = SQLITE_BUSY;
+    s = fcntl(id->fd, F_SETLK, &lock);
+    if( s!=0 ){
+      rc = (s==EINVAL) ? SQLITE_NOLFS : SQLITE_BUSY;
     }else{
       rc = SQLITE_OK;
       id->pLock->cnt = 1;
@@ -672,12 +730,17 @@ int sqliteOsReadLock(OsFile *id){
   if( id->locked>0 ){
     rc = SQLITE_OK;
   }else{
-    int lk = (sqliteRandomInteger() & 0x7ffffff)%MX_LOCKBYTE + 1;
+    int lk = (sqliteRandomInteger() & 0x7ffffff)%N_LOCKBYTE+1;
     int res;
-    if( (res = LockFile(id->h, 0, 0, 1, 0))!=0 ){
-      UnlockFile(id->h, 1, 0, MX_LOCKBYTE, 0);
-      res = LockFile(id->h, lk, 0, 1, 0);
-      UnlockFile(id->h, 0, 0, 1, 0);
+    int cnt = 100;
+    int page = isNT() ? 0xffffffff : 0;
+    while( cnt-->0 && (res = LockFile(id->h, FIRST_LOCKBYTE, page, 1, 0))==0 ){
+      Sleep(1);
+    }
+    if( res ){
+      UnlockFile(id->h, FIRST_LOCKBYTE+1, page, N_LOCKBYTE, 0);
+      res = LockFile(id->h, FIRST_LOCKBYTE+lk, page, 1, 0);
+      UnlockFile(id->h, FIRST_LOCKBYTE, page, 1, 0);
     }
     if( res ){
       id->locked = lk;
@@ -692,7 +755,9 @@ int sqliteOsReadLock(OsFile *id){
 
 /*
 ** Change the lock status to be an exclusive or write lock.  Return
-** SQLITE_OK on success and SQLITE_BUSY on a failure.
+** SQLITE_OK on success and SQLITE_BUSY on a failure.  If this
+** library was compiled with large file support (LFS) but LFS is not
+** available on the host, then an SQLITE_NOLFS is returned.
 */
 int sqliteOsWriteLock(OsFile *id){
 #if OS_UNIX
@@ -700,11 +765,13 @@ int sqliteOsWriteLock(OsFile *id){
   sqliteOsEnterMutex();
   if( id->pLock->cnt==0 || (id->pLock->cnt==1 && id->locked==1) ){
     struct flock lock;
+    int s;
     lock.l_type = F_WRLCK;
     lock.l_whence = SEEK_SET;
     lock.l_start = lock.l_len = 0L;
-    if( fcntl(id->fd, F_SETLK, &lock)!=0 ){
-      rc = SQLITE_BUSY;
+    s = fcntl(id->fd, F_SETLK, &lock);
+    if( s!=0 ){
+      rc = (s==EINVAL) ? SQLITE_NOLFS : SQLITE_BUSY;
     }else{
       rc = SQLITE_OK;
       id->pLock->cnt = -1;
@@ -722,13 +789,19 @@ int sqliteOsWriteLock(OsFile *id){
     rc = SQLITE_OK;
   }else{
     int res;
-    if( (res = LockFile(id->h, 0, 0, 1, 0))!=0 ){
-      if( id->locked==0 || UnlockFile(id->h, id->locked, 0, 1, 0) ){
-        res = LockFile(id->h, 1, 0, MX_LOCKBYTE, 0);
+    int cnt = 100;
+    int page = isNT() ? 0xffffffff : 0;
+    while( cnt-->0 && (res = LockFile(id->h, FIRST_LOCKBYTE, page, 1, 0))==0 ){
+      Sleep(1);
+    }
+    if( res ){
+      if( id->locked==0 
+            || UnlockFile(id->h, FIRST_LOCKBYTE + id->locked, page, 1, 0) ){
+        res = LockFile(id->h, FIRST_LOCKBYTE+1, page, N_LOCKBYTE, 0);
       }else{
         res = 0;
       }
-      UnlockFile(id->h, 0, 0, 1, 0);
+      UnlockFile(id->h, FIRST_LOCKBYTE, page, 1, 0);
     }
     if( res ){
       id->locked = -1;
@@ -743,7 +816,9 @@ int sqliteOsWriteLock(OsFile *id){
 
 /*
 ** Unlock the given file descriptor.  If the file descriptor was
-** not previously locked, then this routine is a no-op.
+** not previously locked, then this routine is a no-op.  If this
+** library was compiled with large file support (LFS) but LFS is not
+** available on the host, then an SQLITE_NOLFS is returned.
 */
 int sqliteOsUnlock(OsFile *id){
 #if OS_UNIX
@@ -756,11 +831,13 @@ int sqliteOsUnlock(OsFile *id){
     rc = SQLITE_OK;
   }else{
     struct flock lock;
+    int s;
     lock.l_type = F_UNLCK;
     lock.l_whence = SEEK_SET;
     lock.l_start = lock.l_len = 0L;
-    if( fcntl(id->fd, F_SETLK, &lock)!=0 ){
-      rc = SQLITE_BUSY;
+    s = fcntl(id->fd, F_SETLK, &lock);
+    if( s!=0 ){
+      rc = (s==EINVAL) ? SQLITE_NOLFS : SQLITE_BUSY;
     }else{
       rc = SQLITE_OK;
       id->pLock->cnt = 0;
@@ -772,14 +849,15 @@ int sqliteOsUnlock(OsFile *id){
 #endif
 #if OS_WIN
   int rc;
+  int page = isNT() ? 0xffffffff : 0;
   if( id->locked==0 ){
     rc = SQLITE_OK;
   }else if( id->locked<0 ){
-    UnlockFile(id->h, 1, 0, MX_LOCKBYTE, 0);
+    UnlockFile(id->h, FIRST_LOCKBYTE+1, page, N_LOCKBYTE, 0);
     rc = SQLITE_OK;
     id->locked = 0;
   }else{
-    UnlockFile(id->h, id->locked, 0, 1, 0);
+    UnlockFile(id->h, FIRST_LOCKBYTE+id->locked, page, 1, 0);
     rc = SQLITE_OK;
     id->locked = 0;
   }
@@ -788,10 +866,11 @@ int sqliteOsUnlock(OsFile *id){
 }
 
 /*
-** Get information to seed the random number generator.
+** Get information to seed the random number generator.  The seed
+** is written into the buffer zBuf[256].  The calling function must
+** supply a sufficiently large buffer.
 */
 int sqliteOsRandomSeed(char *zBuf){
-  static int once = 1;
 #ifdef SQLITE_TEST
   /* When testing, always use the same random number sequence.
   ** This makes the tests repeatable.
@@ -807,12 +886,6 @@ int sqliteOsRandomSeed(char *zBuf){
 #if OS_WIN && !defined(SQLITE_TEST)
   GetSystemTime((LPSYSTEMTIME)zBuf);
 #endif
-  if( once ){
-    int seed;
-    memcpy(&seed, zBuf, sizeof(seed));
-    srand(seed);
-    once = 0;
-  }
   return SQLITE_OK;
 }
 
@@ -896,5 +969,34 @@ void sqliteOsLeaveMutex(){
 #endif
 #ifdef SQLITE_W32_THREADS
   LeaveCriticalSection(&cs);
+#endif
+}
+
+/*
+** Turn a relative pathname into a full pathname.  Return a pointer
+** to the full pathname stored in space obtained from sqliteMalloc().
+** The calling function is responsible for freeing this space once it
+** is no longer needed.
+*/
+char *sqliteOsFullPathname(const char *zRelative){
+#if OS_UNIX
+  char *zFull = 0;
+  if( zRelative[0]=='/' ){
+    sqliteSetString(&zFull, zRelative, 0);
+  }else{
+    char zBuf[5000];
+    sqliteSetString(&zFull, getcwd(zBuf, sizeof(zBuf)), "/", zRelative, 0);
+  }
+  return zFull;
+#endif
+#if OS_WIN
+  char *zNotUsed;
+  char *zFull;
+  int nByte;
+  nByte = GetFullPathName(zRelative, 0, 0, &zNotUsed);
+  zFull = sqliteMalloc( nByte );
+  if( zFull==0 ) return 0;
+  GetFullPathName(zRelative, nByte, zFull, &zNotUsed);
+  return zFull;
 #endif
 }

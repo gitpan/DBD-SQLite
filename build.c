@@ -25,7 +25,7 @@
 **     ROLLBACK
 **     PRAGMA
 **
-** $Id: build.c,v 1.12 2002/10/16 22:36:02 matt Exp $
+** $Id: build.c,v 1.13 2002/12/18 17:59:15 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -898,11 +898,7 @@ void sqliteCreateView(
     sqliteSelectDelete(pSelect);
     return;
   }
-  /* Ignore ORDER BY clauses on a SELECT */
-  if( pSelect->pOrderBy ){
-    sqliteExprListDelete(pSelect->pOrderBy);
-    pSelect->pOrderBy = 0;
-  }
+
   /* Make a copy of the entire SELECT statement that defines the view.
   ** This will force all the Expr.token.z values to be dynamically
   ** allocated rather than point to the input string - which means that
@@ -2310,7 +2306,7 @@ void sqlitePragma(Parse *pParse, Token *pLeft, Token *pRight, int minusFlag){
         sqliteVdbeChangeP3(v, -1, pTab->aCol[i].zName, P3_STATIC);
         sqliteVdbeAddOp(v, OP_String, 0, 0);
         sqliteVdbeChangeP3(v, -1, 
-           pTab->aCol[i].zType ? pTab->aCol[i].zType : "text", P3_STATIC);
+           pTab->aCol[i].zType ? pTab->aCol[i].zType : "numeric", P3_STATIC);
         sqliteVdbeAddOp(v, OP_Integer, pTab->aCol[i].notNull, 0);
         sqliteVdbeAddOp(v, OP_String, 0, 0);
         sqliteVdbeChangeP3(v, -1, pTab->aCol[i].zDflt, P3_STATIC);

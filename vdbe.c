@@ -36,7 +36,7 @@
 ** in this file for details.  If in doubt, do not deviate from existing
 ** commenting and indentation practices when changing or adding code.
 **
-** $Id: vdbe.c,v 1.13 2002/10/16 22:36:04 matt Exp $
+** $Id: vdbe.c,v 1.14 2002/12/18 17:59:18 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -83,11 +83,13 @@ typedef unsigned char Bool;
 struct Cursor {
   BtCursor *pCursor;    /* The cursor structure of the backend */
   int lastRecno;        /* Last recno from a Next or NextIdx operation */
+  int nextRowid;        /* Next rowid returned by OP_NewRowid */
   Bool recnoIsValid;    /* True if lastRecno is valid */
   Bool keyAsData;       /* The OP_Column command works on key instead of data */
   Bool atFirst;         /* True if pointing to first entry */
   Bool useRandomRowid;  /* Generate new record numbers semi-randomly */
   Bool nullRow;         /* True if pointing to a row with no data */
+  Bool nextRowidValid;  /* True if the nextRowid field is valid */
   Btree *pBt;           /* Separate file holding temporary table */
 };
 typedef struct Cursor Cursor;
@@ -150,8 +152,9 @@ typedef struct Mem Mem;
 #define STK_Str       0x0002   /* Value is a string */
 #define STK_Int       0x0004   /* Value is an integer */
 #define STK_Real      0x0008   /* Value is a real number */
-#define STK_Dyn       0x0010   /* Need to call sqliteFree() on zStack[*] */
+#define STK_Dyn       0x0010   /* Need to call sqliteFree() on zStack[] */
 #define STK_Static    0x0020   /* zStack[] points to a static string */
+#define STK_Ephem     0x0040   /* zStack[] points to an ephemeral string */
 
 /* The following STK_ value appears only in AggElem.aMem.s.flag fields.
 ** It indicates that the corresponding AggElem.aMem.z points to a
@@ -797,13 +800,65 @@ static int hardStringify(Vdbe *p, int i){
 }
 
 /*
+** An ephemeral string value (signified by the STK_Ephem flag) contains
+** a pointer to a dynamically allocated string where some other entity
+** is responsible for deallocating that string.  Because the stack entry
+** does not control the string, it might be deleted without the stack
+** entry knowing it.
+**
+** This routine converts an ephemeral string into a dynamically allocated
+** string that the stack entry itself controls.  In other words, it
+** converts an STK_Ephem string into an STK_Dyn string.
+*/
+#define Deephemeralize(P,I) \
+   if( ((P)->aStack[I].flags&STK_Ephem)!=0 && hardDeephem(P,I) ){ goto no_mem;}
+static int hardDeephem(Vdbe *p, int i){
+  Stack *pStack = &p->aStack[i];
+  char **pzStack = &p->zStack[i];
+  char *z;
+  assert( (pStack->flags & STK_Ephem)!=0 );
+  z = sqliteMalloc( pStack->n );
+  if( z==0 ) return 1;
+  memcpy(z, *pzStack, pStack->n);
+  *pzStack = z;
+  return 0;
+}
+
+/*
 ** Release the memory associated with the given stack level
 */
 #define Release(P,I)  if((P)->aStack[I].flags&STK_Dyn){ hardRelease(P,I); }
 static void hardRelease(Vdbe *p, int i){
   sqliteFree(p->zStack[i]);
   p->zStack[i] = 0;
-  p->aStack[i].flags &= ~(STK_Str|STK_Dyn|STK_Static);
+  p->aStack[i].flags &= ~(STK_Str|STK_Dyn|STK_Static|STK_Ephem);
+}
+
+/*
+** Return TRUE if zNum is an integer and write
+** the value of the integer into *pNum.
+**
+** Under Linux (RedHat 7.2) this routine is much faster than atoi()
+** for converting strings into integers.
+*/
+static int toInt(const char *zNum, int *pNum){
+  int v = 0;
+  int neg;
+  if( *zNum=='-' ){
+    neg = 1;
+    zNum++;
+  }else if( *zNum=='+' ){
+    neg = 0;
+    zNum++;
+  }else{
+    neg = 0;
+  }
+  while( isdigit(*zNum) ){
+    v = v*10 + *zNum - '0';
+    zNum++;
+  }
+  *pNum = neg ? -v : v;
+  return *zNum==0;
 }
 
 /*
@@ -820,7 +875,7 @@ static void hardIntegerify(Vdbe *p, int i){
     p->aStack[i].i = (int)p->aStack[i].r;
     Release(p, i);
   }else if( p->aStack[i].flags & STK_Str ){
-    p->aStack[i].i = atoi(p->zStack[i]);
+    toInt(p->zStack[i], &p->aStack[i].i);
     Release(p, i);
   }else{
     p->aStack[i].i = 0;
@@ -935,15 +990,6 @@ static int isNumber(const char *zNum){
   zNum++;
   if( *zNum=='-' || *zNum=='+' ) zNum++;
   if( !isdigit(*zNum) ) return 0;
-  while( isdigit(*zNum) ) zNum++;
-  return *zNum==0;
-}
-
-/*
-** Return TRUE if zNum is an integer.
-*/
-static int isInteger(const char *zNum){
-  if( *zNum=='-' || *zNum=='+' ) zNum++;
   while( isdigit(*zNum) ) zNum++;
   return *zNum==0;
 }
@@ -1575,18 +1621,21 @@ case OP_Dup: {
   VERIFY( if( NeedStack(p, p->tos) ) goto no_mem; )
   memcpy(&aStack[j], &aStack[i], sizeof(aStack[i])-NBFS);
   if( aStack[j].flags & STK_Str ){
-    if( pOp->p2 || (aStack[j].flags & STK_Static)!=0 ){
+    int isStatic = (aStack[j].flags & STK_Static)!=0;
+    if( pOp->p2 || isStatic ){
       zStack[j] = zStack[i];
       aStack[j].flags &= ~STK_Dyn;
+      if( !isStatic ) aStack[j].flags |= STK_Ephem;
     }else if( aStack[i].n<=NBFS ){
       memcpy(aStack[j].z, zStack[i], aStack[j].n);
       zStack[j] = aStack[j].z;
-      aStack[j].flags &= ~(STK_Static|STK_Dyn);
+      aStack[j].flags &= ~(STK_Static|STK_Dyn|STK_Ephem);
     }else{
       zStack[j] = sqliteMalloc( aStack[j].n );
       if( zStack[j]==0 ) goto no_mem;
       memcpy(zStack[j], zStack[i], aStack[j].n);
-      aStack[j].flags &= ~STK_Static;
+      aStack[j].flags &= ~(STK_Static|STK_Ephem);
+      aStack[j].flags |= STK_Dyn;
     }
   }
   break;
@@ -1611,8 +1660,11 @@ case OP_Pull: {
   VERIFY( if( from<0 ) goto not_enough_stack; )
   ts = aStack[from];
   tz = zStack[from];
+  Deephemeralize(p, to);
   for(i=from; i<to; i++){
+    Deephemeralize(p, i);
     aStack[i] = aStack[i+1];
+    assert( (aStack[i].flags & STK_Ephem)==0 );
     if( aStack[i].flags & (STK_Dyn|STK_Static) ){
       zStack[i] = zStack[i+1];
     }else{
@@ -1620,6 +1672,7 @@ case OP_Pull: {
     }
   }
   aStack[to] = ts;
+  assert( (aStack[to].flags & STK_Ephem)==0 );
   if( aStack[to].flags & (STK_Dyn|STK_Static) ){
     zStack[to] = tz;
   }else{
@@ -1642,13 +1695,14 @@ case OP_Push: {
   if( aStack[to].flags & STK_Dyn ){
     sqliteFree(zStack[to]);
   }
+  Deephemeralize(p, from);
   aStack[to] = aStack[from];
-  if( aStack[to].flags & (STK_Dyn|STK_Static) ){
+  if( aStack[to].flags & (STK_Dyn|STK_Static|STK_Ephem) ){
     zStack[to] = zStack[from];
   }else{
     zStack[to] = aStack[to].z;
   }
-  aStack[from].flags &= ~STK_Dyn;
+  aStack[from].flags = 0;
   p->tos--;
   break;
 }
@@ -2073,10 +2127,11 @@ case OP_MustBeInt: {
     }
     aStack[tos].i = i;
   }else if( aStack[tos].flags & STK_Str ){
-    if( !isInteger(zStack[tos]) ){
+    int v;
+    if( !toInt(zStack[tos], &v) ){
       goto mismatch;
     }
-    p->aStack[tos].i = atoi(p->zStack[tos]);
+    p->aStack[tos].i = v;
   }else{
     goto mismatch;
   }
@@ -2214,7 +2269,7 @@ case OP_Gt:
 case OP_Ge: {
   int tos = p->tos;
   int nos = tos - 1;
-  int c;
+  int c, v;
   int ft, fn;
   VERIFY( if( nos<0 ) goto not_enough_stack; )
   ft = aStack[tos].flags;
@@ -2231,11 +2286,15 @@ case OP_Ge: {
     break;
   }else if( (ft & fn & STK_Int)==STK_Int ){
     c = aStack[nos].i - aStack[tos].i;
-  }else if( (ft & STK_Int)!=0 && (fn & STK_Str)!=0 && isInteger(zStack[nos]) ){
-    Integerify(p, nos);
+  }else if( (ft & STK_Int)!=0 && (fn & STK_Str)!=0 && toInt(zStack[nos],&v) ){
+    Release(p, nos);
+    aStack[nos].i = v;
+    aStack[nos].flags = STK_Int;
     c = aStack[nos].i - aStack[tos].i;
-  }else if( (fn & STK_Int)!=0 && (ft & STK_Str)!=0 && isInteger(zStack[tos]) ){
-    Integerify(p, tos);
+  }else if( (fn & STK_Int)!=0 && (ft & STK_Str)!=0 && toInt(zStack[tos],&v) ){
+    Release(p, tos);
+    aStack[tos].i = v;
+    aStack[tos].flags = STK_Int;
     c = aStack[nos].i - aStack[tos].i;
   }else{
     if( Stringify(p, tos) || Stringify(p, nos) ) goto no_mem;
@@ -2894,7 +2953,7 @@ case OP_IncrKey: {
 
   VERIFY( if( tos<0 ) goto bad_instruction );
   if( Stringify(p, tos) ) goto no_mem;
-  if( aStack[tos].flags & STK_Static ){
+  if( aStack[tos].flags & (STK_Static|STK_Ephem) ){
     /* CANT HAPPEN.  The IncrKey opcode is only applied to keys
     ** generated by MakeKey or MakeIdxKey and the results of those
     ** operands are always dynamic strings.
@@ -3234,7 +3293,7 @@ case OP_OpenTemp: {
   cleanupCursor(pCx);
   memset(pCx, 0, sizeof(*pCx));
   pCx->nullRow = 1;
-  rc = sqliteBtreeOpen(0, 0, TEMP_PAGES, &pCx->pBt);
+  rc = sqliteBtreeOpen(0, 1, TEMP_PAGES, &pCx->pBt);
   if( rc==SQLITE_OK ){
     rc = sqliteBtreeBeginTrans(pCx->pBt);
   }
@@ -3295,8 +3354,19 @@ case OP_Close: {
 ** If there are no records greater than the key and P2 is not zero,
 ** then an immediate jump to P2 is made.
 **
-** See also: Found, NotFound, Distinct
+** See also: Found, NotFound, Distinct, MoveLt
 */
+/* Opcode: MoveLt P1 P2 *
+**
+** Pop the top of the stack and use its value as a key.  Reposition
+** cursor P1 so that it points to the entry with the largest key that is
+** less than the key popped from the stack.
+** If there are no records less than than the key and P2
+** is not zero then an immediate jump to P2 is made.
+**
+** See also: MoveTo
+*/
+case OP_MoveLt:
 case OP_MoveTo: {
   int i = pOp->p1;
   int tos = p->tos;
@@ -3304,7 +3374,7 @@ case OP_MoveTo: {
 
   VERIFY( if( tos<0 ) goto not_enough_stack; )
   if( i>=0 && i<p->nCursor && (pC = &p->aCsr[i])->pCursor!=0 ){
-    int res;
+    int res, oc;
     if( aStack[tos].flags & STK_Int ){
       int iKey = intToKey(aStack[tos].i);
       sqliteBtreeMoveto(pC->pCursor, (char*)&iKey, sizeof(int), &res);
@@ -3317,9 +3387,24 @@ case OP_MoveTo: {
     }
     pC->nullRow = 0;
     sqlite_search_count++;
-    if( res<0 ){
+    oc = pOp->opcode;
+    if( oc==OP_MoveTo && res<0 ){
       sqliteBtreeNext(pC->pCursor, &res);
       pC->recnoIsValid = 0;
+      if( res && pOp->p2>0 ){
+        pc = pOp->p2 - 1;
+      }
+    }else if( oc==OP_MoveLt ){
+      if( res>=0 ){
+        sqliteBtreePrevious(pC->pCursor, &res);
+        pC->recnoIsValid = 0;
+      }else{
+        /* res might be negative because the table is empty.  Check to
+        ** see if this is the case.
+        */
+        int keysize;
+        res = sqliteBtreeKeySize(pC->pCursor,&keysize)!=0 || keysize==0;
+      }
       if( res && pOp->p2>0 ){
         pc = pOp->p2 - 1;
       }
@@ -3560,17 +3645,27 @@ case OP_NewRecno: {
     int res, rx, cnt, x;
     cnt = 0;
     if( !pC->useRandomRowid ){
-      rx = sqliteBtreeLast(pC->pCursor, &res);
-      if( res ){
-        v = 1;
+      if( pC->nextRowidValid ){
+        v = pC->nextRowid;
       }else{
-        sqliteBtreeKey(pC->pCursor, 0, sizeof(v), (void*)&v);
-        v = keyToInt(v);
-        if( v==0x7fffffff ){
-          pC->useRandomRowid = 1;
+        rx = sqliteBtreeLast(pC->pCursor, &res);
+        if( res ){
+          v = 1;
         }else{
-          v++;
+          sqliteBtreeKey(pC->pCursor, 0, sizeof(v), (void*)&v);
+          v = keyToInt(v);
+          if( v==0x7fffffff ){
+            pC->useRandomRowid = 1;
+          }else{
+            v++;
+          }
         }
+      }
+      if( v<0x7fffffff ){
+        pC->nextRowidValid = 1;
+        pC->nextRowid = v+1;
+      }else{
+        pC->nextRowidValid = 0;
       }
     }
     if( pC->useRandomRowid ){
@@ -3627,8 +3722,9 @@ case OP_PutStrKey: {
   int tos = p->tos;
   int nos = p->tos-1;
   int i = pOp->p1;
+  Cursor *pC;
   VERIFY( if( nos<0 ) goto not_enough_stack; )
-  if( VERIFY( i>=0 && i<p->nCursor && ) p->aCsr[i].pCursor!=0 ){
+  if( VERIFY( i>=0 && i<p->nCursor && ) (pC = &p->aCsr[i])->pCursor!=0 ){
     char *zKey;
     int nKey, iKey;
     if( pOp->opcode==OP_PutStrKey ){
@@ -3642,10 +3738,13 @@ case OP_PutStrKey: {
       zKey = (char*)&iKey;
       db->lastRowid = aStack[nos].i;
       if( pOp->p2 ) db->nChange++;
+      if( pC->nextRowidValid && aStack[nos].i>=pC->nextRowid ){
+        pC->nextRowidValid = 0;
+      }
     }
-    rc = sqliteBtreeInsert(p->aCsr[i].pCursor, zKey, nKey,
+    rc = sqliteBtreeInsert(pC->pCursor, zKey, nKey,
                         zStack[tos], aStack[tos].n);
-    p->aCsr[i].recnoIsValid = 0;
+    pC->recnoIsValid = 0;
   }
   POPSTACK;
   POPSTACK;
@@ -3666,8 +3765,10 @@ case OP_PutStrKey: {
 */
 case OP_Delete: {
   int i = pOp->p1;
-  if( VERIFY( i>=0 && i<p->nCursor && ) p->aCsr[i].pCursor!=0 ){
-    rc = sqliteBtreeDelete(p->aCsr[i].pCursor);
+  Cursor *pC;
+  if( VERIFY( i>=0 && i<p->nCursor && ) (pC = &p->aCsr[i])->pCursor!=0 ){
+    rc = sqliteBtreeDelete(pC->pCursor);
+    pC->nextRowidValid = 0;
   }
   if( pOp->p2 ) db->nChange++;
   break;
@@ -3788,7 +3889,7 @@ case OP_Column: {
   if( amt==0 ){
     aStack[tos].flags = STK_Null;
   }else if( zRec ){
-    aStack[tos].flags = STK_Str | STK_Static;
+    aStack[tos].flags = STK_Str | STK_Ephem;
     aStack[tos].n = amt;
     zStack[tos] = &zRec[offset];
   }else{
@@ -3951,7 +4052,17 @@ case OP_Rewind: {
 ** table or index.  If there are no more key/value pairs then fall through
 ** to the following instruction.  But if the cursor advance was successful,
 ** jump immediately to P2.
+**
+** See also: Prev
 */
+/* Opcode: Prev P1 P2 *
+**
+** Back up cursor P1 so that it points to the previous key/data pair in its
+** table or index.  If there is no previous key/value pairs then fall through
+** to the following instruction.  But if the cursor backup was successful,
+** jump immediately to P2.
+*/
+case OP_Prev:
 case OP_Next: {
   int i = pOp->p1;
   BtCursor *pCrsr;
@@ -3961,7 +4072,8 @@ case OP_Next: {
     if( p->aCsr[i].nullRow ){
       res = 1;
     }else{
-      rc = sqliteBtreeNext(pCrsr, &res);
+      rc = pOp->opcode==OP_Next ? sqliteBtreeNext(pCrsr, &res) :
+                                  sqliteBtreePrevious(pCrsr, &res);
       p->aCsr[i].nullRow = res;
     }
     if( res==0 ){
@@ -4089,6 +4201,15 @@ case OP_IdxRecno: {
 ** then jump to P2.  Otherwise fall through to the next instruction.
 ** In either case, the stack is popped once.
 */
+/* Opcode: IdxLT P1 P2 *
+**
+** Compare the top of the stack against the key on the index entry that
+** cursor P1 is currently pointing to.  Ignore the last 4 bytes of the
+** index entry.  If the index entry is less than the top of the stack
+** then jump to P2.  Otherwise fall through to the next instruction.
+** In either case, the stack is popped once.
+*/
+case OP_IdxLT:
 case OP_IdxGT:
 case OP_IdxGE: {
   int i= pOp->p1;
@@ -4103,7 +4224,9 @@ case OP_IdxGE: {
     if( rc!=SQLITE_OK ){
       break;
     }
-    if( pOp->opcode==OP_IdxGE ){
+    if( pOp->opcode==OP_IdxLT ){
+      res = -res;
+    }else if( pOp->opcode==OP_IdxGE ){
       res++;
     }
     if( res>0 ){
@@ -4222,7 +4345,7 @@ case OP_IntegrityCk: {
   nRoot = sqliteHashCount(&pSet->hash);
   aRoot = sqliteMalloc( sizeof(int)*(nRoot+1) );
   for(j=0, i=sqliteHashFirst(&pSet->hash); i; i=sqliteHashNext(i), j++){
-    aRoot[j] = atoi((char*)sqliteHashKey(i));
+    toInt((char*)sqliteHashKey(i), &aRoot[j]);
   }
   aRoot[j] = 0;
   z = sqliteBtreeIntegrityCheck(pOp->p2 ? db->pBeTemp : pBt, aRoot, nRoot);
@@ -4752,6 +4875,7 @@ case OP_MemStore: {
   int tos = p->tos;
   char *zOld;
   Mem *pMem;
+  int flags;
   VERIFY( if( tos<0 ) goto not_enough_stack; )
   if( i>=p->nMem ){
     int nOld = p->nMem;
@@ -4773,19 +4897,23 @@ case OP_MemStore: {
     }
   }
   pMem = &p->aMem[i];
-  if( pMem->s.flags & STK_Dyn ){
+  flags = pMem->s.flags;
+  if( flags & STK_Dyn ){
     zOld = pMem->z;
   }else{
     zOld = 0;
   }
   pMem->s = aStack[tos];
-  if( pMem->s.flags & (STK_Static|STK_Dyn) ){
-    if( pOp->p2==0 && (pMem->s.flags & STK_Dyn)!=0 ){
+  flags = pMem->s.flags;
+  if( flags & (STK_Static|STK_Dyn|STK_Ephem) ){
+    if( (flags & STK_Static)!=0 || (pOp->p2 && (flags & STK_Dyn)!=0) ){
+      pMem->z = zStack[tos];
+    }else if( flags & STK_Str ){
       pMem->z = sqliteMalloc( pMem->s.n );
       if( pMem->z==0 ) goto no_mem;
       memcpy(pMem->z, zStack[tos], pMem->s.n);
-    }else{
-      pMem->z = zStack[tos];
+      pMem->s.flags |= STK_Dyn;
+      pMem->s.flags &= ~(STK_Static|STK_Ephem);
     }
   }else{
     pMem->z = pMem->s.z;
@@ -4816,8 +4944,8 @@ case OP_MemLoad: {
   memcpy(&aStack[tos], &p->aMem[i].s, sizeof(aStack[tos])-NBFS);;
   if( aStack[tos].flags & STK_Str ){
     zStack[tos] = p->aMem[i].z;
-    aStack[tos].flags |= STK_Static;
-    aStack[tos].flags &= ~STK_Dyn;
+    aStack[tos].flags |= STK_Ephem;
+    aStack[tos].flags &= ~(STK_Dyn|STK_Static);
   }
   break;
 }
@@ -4970,6 +5098,7 @@ case OP_AggSet: {
     }else{
       zOld = 0;
     }
+    Deephemeralize(p, tos);
     pMem->s = aStack[tos];
     if( pMem->s.flags & STK_Dyn ){
       pMem->z = zStack[tos];
@@ -5003,6 +5132,7 @@ case OP_AggGet: {
     aStack[tos] = pMem->s;
     zStack[tos] = pMem->z;
     aStack[tos].flags &= ~STK_Dyn;
+    aStack[tos].flags |= STK_Ephem;
   }
   break;
 }
@@ -5052,7 +5182,7 @@ case OP_AggNext: {
       aMem[i].s = ctx.s;
       aMem[i].z = ctx.z;
       if( (aMem[i].s.flags & STK_Str) &&
-              (aMem[i].s.flags & (STK_Dyn|STK_Static))==0 ){
+              (aMem[i].s.flags & (STK_Dyn|STK_Static|STK_Ephem))==0 ){
         aMem[i].z = aMem[i].s.z;
       }
       nErr += ctx.isError;
@@ -5103,7 +5233,7 @@ case OP_SetFound: {
   int tos = p->tos;
   VERIFY( if( tos<0 ) goto not_enough_stack; )
   if( Stringify(p, tos) ) goto no_mem;
-  if( VERIFY( i>=0 && i<p->nSet &&) 
+  if( i>=0 && i<p->nSet &&
        sqliteHashFind(&p->aSet[i].hash, zStack[tos], aStack[tos].n)){
     pc = pOp->p2 - 1;
   }
@@ -5122,7 +5252,7 @@ case OP_SetNotFound: {
   int tos = p->tos;
   VERIFY( if( tos<0 ) goto not_enough_stack; )
   if( Stringify(p, tos) ) goto no_mem;
-  if(VERIFY( i>=0 && i<p->nSet &&)
+  if( i<0 || i>=p->nSet ||
        sqliteHashFind(&p->aSet[i].hash, zStack[tos], aStack[tos].n)==0 ){
     pc = pOp->p2 - 1;
   }
@@ -5146,7 +5276,10 @@ case OP_SetFirst:
 case OP_SetNext: {
   Set *pSet;
   int tos;
-  VERIFY( if( pOp->p1<0 || pOp->p1>=p->nSet ) goto bad_instruction; )
+  if( pOp->p1<0 || pOp->p1>=p->nSet ){
+    if( pOp->opcode==OP_SetFirst ) pc = pOp->p2 - 1;
+    break;
+  }
   pSet = &p->aSet[pOp->p1];
   if( pOp->opcode==OP_SetFirst ){
     pSet->prev = sqliteHashFirst(&pSet->hash);
@@ -5167,7 +5300,7 @@ case OP_SetNext: {
   VERIFY( if( NeedStack(p, p->tos) ) goto no_mem; )
   zStack[tos] = sqliteHashKey(pSet->prev);
   aStack[tos].n = sqliteHashKeysize(pSet->prev);
-  aStack[tos].flags = STK_Str | STK_Static;
+  aStack[tos].flags = STK_Str | STK_Ephem;
   break;
 }
 
@@ -5216,8 +5349,13 @@ default: {
           zBuf[0] = ' ';
           if( aStack[i].flags & STK_Dyn ){
             zBuf[1] = 'z';
+            assert( (aStack[i].flags & (STK_Static|STK_Ephem))==0 );
           }else if( aStack[i].flags & STK_Static ){
             zBuf[1] = 't';
+            assert( (aStack[i].flags & (STK_Dyn|STK_Ephem))==0 );
+          }else if( aStack[i].flags & STK_Ephem ){
+            zBuf[1] = 'e';
+            assert( (aStack[i].flags & (STK_Static|STK_Dyn))==0 );
           }else{
             zBuf[1] = 's';
           }
@@ -5239,6 +5377,7 @@ default: {
           fprintf(p->trace, " ???");
         }
       }
+      if( rc!=0 ) fprintf(p->trace," rc=%d",rc);
       fprintf(p->trace,"\n");
     }
 #endif

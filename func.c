@@ -16,7 +16,7 @@
 ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: func.c,v 1.10 2002/10/16 22:36:02 matt Exp $
+** $Id: func.c,v 1.11 2002/12/18 17:59:15 matt Exp $
 */
 #include <ctype.h>
 #include <math.h>
@@ -245,6 +245,14 @@ static void nullifFunc(sqlite_func *context, int argc, const char **argv){
   if( argv[0]!=0 && sqliteCompare(argv[0],argv[1])!=0 ){
     sqlite_set_result_string(context, argv[0], -1);
   }
+}
+
+/*
+** Implementation of the VERSION(*) function.  The result is the version
+** of the SQLite library that is running.
+*/
+static void versionFunc(sqlite_func *context, int argc, const char **argv){
+  sqlite_set_result_string(context, sqlite_version, -1);
 }
 
 #ifdef SQLITE_TEST
@@ -481,6 +489,7 @@ void sqliteRegisterBuiltinFunctions(sqlite *db){
     { "like",       2, SQLITE_NUMERIC, likeFunc   },
     { "glob",       2, SQLITE_NUMERIC, globFunc   },
     { "nullif",     2, SQLITE_ARGS,    nullifFunc },
+    { "sqlite_version",0,SQLITE_TEXT,  versionFunc},
 #ifdef SQLITE_TEST
     { "randstr",    2, SQLITE_TEXT,    randStr    },
 #endif

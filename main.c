@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.12 2002/10/16 22:36:02 matt Exp $
+** $Id: main.c,v 1.13 2002/12/18 17:59:16 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -360,7 +360,7 @@ sqlite *sqlite_open(const char *zFilename, int mode, char **pzErrMsg){
   db->magic = SQLITE_MAGIC_BUSY;
   
   /* Open the backend database driver */
-  rc = sqliteBtreeOpen(zFilename, mode, MAX_PAGES, &db->pBe);
+  rc = sqliteBtreeOpen(zFilename, 0, MAX_PAGES, &db->pBe);
   if( rc!=SQLITE_OK ){
     switch( rc ){
       default: {
@@ -613,6 +613,10 @@ int sqlite_exec(
       sqliteSafetyOff(db);
       return rc;
     }
+    if( pzErrMsg ){
+      sqliteFree(*pzErrMsg);
+      *pzErrMsg = 0;
+    }
   }
   if( db->file_format<3 ){
     sqliteSafetyOff(db);
@@ -684,6 +688,7 @@ const char *sqlite_error_string(int rc){
     case SQLITE_CONSTRAINT: z = "constraint failed";                     break;
     case SQLITE_MISMATCH:   z = "datatype mismatch";                     break;
     case SQLITE_MISUSE:     z = "library routine called out of sequence";break;
+    case SQLITE_NOLFS:      z = "kernel lacks large file support";       break;
     default:                z = "unknown error";                         break;
   }
   return z;

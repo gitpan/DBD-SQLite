@@ -11,8 +11,9 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.14 2002/10/16 22:36:04 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.15 2002/12/18 17:59:18 matt Exp $
 */
+#include "config.h"
 #include "sqlite.h"
 #include "hash.h"
 #include "vdbe.h"
@@ -73,7 +74,11 @@
 # define UINT8_TYPE unsigned char
 #endif
 #ifndef INTPTR_TYPE
-# define INTPTR_TYPE int
+# if SQLITE_PTR_SZ==4
+#   define INTPTR_TYPE int
+# else
+#   define INTPTR_TYPE long long
+# endif
 #endif
 typedef UINT32_TYPE u32;           /* 4-byte unsigned integer */
 typedef UINT16_TYPE u16;           /* 2-byte unsigned integer */
@@ -449,18 +454,11 @@ struct Index {
 /*
 ** Each token coming out of the lexer is an instance of
 ** this structure.  Tokens are also used as part of an expression.
-**
-** A "base" token is a real single token such as would come out of the
-** lexer.  There are also compound tokens which are aggregates of one
-** or more base tokens.  Compound tokens are used to name columns in the
-** result set of a SELECT statement.  In the expression "a+b+c", "b"
-** is a base token but "a+b" is a compound token.
 */
 struct Token {
   const char *z;      /* Text of the token.  Not NULL-terminated! */
   unsigned dyn  : 1;  /* True for malloced memory, false for static */
-  unsigned base : 1;  /* True for a base token, false for compounds */
-  unsigned n    : 30; /* Number of characters in this token */
+  unsigned n    : 31; /* Number of characters in this token */
 };
 
 /*
@@ -500,12 +498,12 @@ struct Token {
 struct Expr {
   u8 op;                 /* Operation performed by this node */
   u8 dataType;           /* Either SQLITE_SO_TEXT or SQLITE_SO_NUM */
-  u8 isJoinExpr;         /* Origin is the ON or USING phrase of a join */
-  u8 nFuncName;          /* Number of characters in a function name */
+  u16 flags;             /* Various flags.  See below */
   Expr *pLeft, *pRight;  /* Left and right subnodes */
   ExprList *pList;       /* A list of expressions used as function arguments
                          ** or in "<expr> IN (<expr-list)" */
   Token token;           /* An operand token */
+  Token span;            /* Complete text of the expression */
   int iTable, iColumn;   /* When op==TK_COLUMN, then this expr node means the
                          ** iColumn-th field of the iTable-th table. */
   int iAgg;              /* When op==TK_COLUMN and pParse->useAgg==TRUE, pull
@@ -513,6 +511,21 @@ struct Expr {
   Select *pSelect;       /* When the expression is a sub-select.  Also the
                          ** right side of "<expr> IN (<select>)" */
 };
+
+/*
+** The following are the meanings of bits in the Expr.flags field.
+*/
+#define EP_FromJoin     0x0001  /* Originated in ON or USING clause of a join */
+#define EP_Oracle8Join  0x0002  /* Carries the Oracle8 "(+)" join operator */
+
+/*
+** These macros can be used to test, set, or clear bits in the 
+** Expr.flags field.
+*/
+#define ExprHasProperty(E,P)     (((E)->flags&(P))==(P))
+#define ExprHasAnyProperty(E,P)  (((E)->flags&(P))!=0)
+#define ExprSetProperty(E,P)     (E)->flags|=(P)
+#define ExprClearProperty(E,P)   (E)->flags&=~(P)
 
 /*
 ** A list of expressions.  Each expression may optionally have a
@@ -601,6 +614,7 @@ struct WhereLevel {
   int iLeftJoin;       /* Memory cell used to implement LEFT OUTER JOIN */
   int top;             /* First instruction of interior of the loop */
   int inOp, inP1, inP2;/* Opcode used to implement an IN operator */
+  int bRev;            /* Do the scan in the reverse direction */
 };
 
 /*
