@@ -1,5 +1,13 @@
 Revision history for Perl extension DBD::SQLite.
 
+1.04
+    - Patched to make it compile on Windows (Steve Hay)
+    - Fetch next row at end of DBI's fetch() so that one-row
+      selects don't need to call ->finish(). This restores DBD::SQLite
+      0.31's behaviour (and should make popfile work again)
+    - last_insert_id will only work on DBI 1.43, so enforce that
+    - Use snprintf from sqlite library to improve portability
+
 1.03
     - Update to sqlite 3.0.4
     - More bug fixes

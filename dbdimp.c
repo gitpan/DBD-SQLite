@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.48 2004/08/09 12:50:12 matt Exp $ */
+/* $Id: dbdimp.c,v 1.49 2004/08/10 18:17:42 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -18,10 +18,8 @@ DBISTATE_DECLARE;
 
 #define sqlite_error(h,xxh,rc,what) _sqlite_error(__FILE__, __LINE__, h, xxh, rc, what)
 #if defined(__GNUC__) && (__GNUC__ > 2)
-#  warning "Using vararg macros to provide trace with line numbers"
 #  define sqlite_trace(level,fmt...) _sqlite_tracef(__FILE__, __LINE__, level, fmt)
 #else
-#  warning "No vararg macros - using trace without line numbers"
 #  define sqlite_trace _sqlite_tracef_noline
 #endif
 
@@ -56,7 +54,7 @@ _sqlite_tracef(char *file, int line, int level, const char *fmt, ...)
     va_list ap;
     if (DBIS->debug >= level) {
         char format[8192];
-        snprintf(format, 8191, "sqlite trace: %s at %s line %d\n", fmt, file, line);
+        sqlite3_snprintf(8191, format, "sqlite trace: %s at %s line %d\n", fmt, file, line);
         va_start(ap, fmt);
         PerlIO_vprintf(DBILOGFP, format, ap);
         va_end(ap);
@@ -71,7 +69,7 @@ _sqlite_tracef_noline(int level, const char *fmt, ...)
     va_list ap;
     if (DBIS->debug >= level) {
         char format[8192];
-        snprintf(format, 8191, "sqlite trace: %s\n", fmt);
+        sqlite3_snprintf(8191, format, "sqlite trace: %s\n", fmt);
         va_start(ap, fmt);
         PerlIO_vprintf(DBILOGFP, format, ap);
         va_end(ap);
@@ -319,12 +317,13 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     }
     
     for (i = 0; i < num_params; i++) {
-        sqlite_trace(4, "params left in 0x%p: %d", imp_sth->params, 1+av_len(imp_sth->params));
         SV *value = av_shift(imp_sth->params);
         SV *sql_type_sv = av_shift(imp_sth->params);
         int sql_type = SvIV(sql_type_sv);
-        
+
+        sqlite_trace(4, "params left in 0x%p: %d", imp_sth->params, 1+av_len(imp_sth->params));
         sqlite_trace(4, "bind %d type %d as %s", i, sql_type, SvPV_nolen(value));
+        
         if (!SvOK(value)) {
             sqlite_trace(5, "binding null");
             retval = sqlite3_bind_null(imp_sth->stmt, i+1);
@@ -391,9 +390,16 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         return imp_sth->nrow;
     }
     
-    DBIc_ACTIVE_on(imp_sth);
-    sqlite_trace(5, "exec ok - %d rows, %d cols\n", imp_sth->nrow, DBIc_NUM_FIELDS(imp_sth));
-    return 0;
+    imp_sth->retval = sqlite3_step(imp_sth->stmt);
+    switch (imp_sth->retval) {
+        case SQLITE_ROW:
+        case SQLITE_DONE: DBIc_ACTIVE_on(imp_sth);
+                          sqlite_trace(5, "exec ok - %d rows, %d cols\n", imp_sth->nrow, DBIc_NUM_FIELDS(imp_sth));
+                          return 0;
+        default:          sqlite3_finalize(imp_sth->stmt);
+                          sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, (char*)sqlite3_errmsg(imp_dbh->db));
+                          return -6;
+    }
 }
 
 int
@@ -435,15 +441,16 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
         return Nullav;
     }
     
-    if ((retval = sqlite3_step(imp_sth->stmt)) != SQLITE_ROW) {
-        if (retval == SQLITE_DONE) {
-            sqlite_st_finish(sth, imp_sth);
-            return Nullav;
-        }
-        else {
-            sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, (char*)sqlite3_errmsg(imp_dbh->db));
-            return Nullav;
-        }
+    if (imp_sth->retval == SQLITE_DONE) {
+        sqlite_st_finish(sth, imp_sth);
+        return Nullav;
+    }
+    
+    if (imp_sth->retval != SQLITE_ROW) {
+        /* error */
+        sqlite_st_finish(sth, imp_sth);
+        sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, (char*)sqlite3_errmsg(imp_dbh->db));
+        return Nullav;
     }
     
     imp_sth->nrow++;
@@ -486,6 +493,8 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
         }
         SvSETMAGIC(AvARRAY(av)[i]);
     }
+    
+    imp_sth->retval = sqlite3_step(imp_sth->stmt);
     
     return av;
 }

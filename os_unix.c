@@ -666,7 +666,8 @@ int sqlite3OsSeek(OsFile *id, off_t offset){
 */
 static int full_fsync(int fd){
   int rc;
-#ifdef F_FULLFSYNC
+#if 0
+/* #ifdef F_FULLFSYNC */
   rc = fcntl(fd, F_FULLFSYNC, 0);
   if( rc ) rc = fsync(fd);
 #else

@@ -8,8 +8,8 @@ ok($sth);
 ok(my $rows = $sth->execute("Fred", "Bloggs", "fred\@bloggs.com"));
 ok($rows == 1);
 ok($dbh->func('last_insert_rowid'));
-if ($DBI::VERSION <= 1.38) {
-  skip("last_insert_id requires DBI v1.38");
+if ($DBI::VERSION < 1.43) {
+  skip("last_insert_id requires DBI v1.43");
 }
 else {
   ok($dbh->last_insert_id(undef, undef, undef, undef));

@@ -34,13 +34,16 @@ EOT
     }
 };
 
+my $nlid = $DBI::VERSION > 1.42 ? '' : '-Dno_last_insert_id';
+
 WriteMakefile(
     'NAME'          => 'DBD::SQLite',
     'VERSION_FROM'  => 'lib/DBD/SQLite.pm', # finds $VERSION
     'PREREQ_PM'     => {DBI => 1.21}, # e.g., Module::Name => 1.1
     'OBJECT'        => '$(O_FILES)',
     'INC'           => '-I$(DBI_INSTARCH_DIR)',
-    'OPTIMIZE'      => "-O6 -DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}",
+    'OPTIMIZE'      => "-O2",
+    'DEFINE'        => "-DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize} $nlid",
     'clean'         => { FILES => 'SQLite.xsi config.h' },
     'PL_FILES'      => {},
     'EXE_FILES'     => [],
