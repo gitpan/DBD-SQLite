@@ -1,9 +1,10 @@
-/* $Id: dbdimp.h,v 1.10 2003/07/31 15:11:46 matt Exp $ */
+/* $Id: dbdimp.h,v 1.11 2003/08/11 21:51:13 matt Exp $ */
 
 #ifndef _DBDIMP_H
 #define _DBDIMP_H   1
 
 #include "SQLiteXS.h"
+#include "sqliteInt.h"
 
 /* 30 second timeout by default */
 #define SQL_TIMEOUT 30000
@@ -31,9 +32,11 @@ struct imp_sth_st {
     dbih_stc_t com;
     /* sqlite specific bits */
     AV *sql;
+    sqlite_vm *vm;
     char **results;
+    char **coldata;
+    int retval;
     int nrow;
-    int c_row;
     int ncols;
     AV *params;
 };

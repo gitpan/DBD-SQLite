@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.35 2003/07/31 15:11:46 matt Exp $ */
+/* $Id: dbdimp.c,v 1.36 2003/08/11 21:51:13 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -63,7 +63,17 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
         != SQLITE_OK)
     {
         /*  warn("failed to set pragma: %s\n", errmsg); */
-	sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
+	    sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
+        Safefree(errmsg);
+        return FALSE;
+    }
+
+    if (retval = sqlite_exec(imp_dbh->db, "PRAGMA show_datatypes = ON",
+        NULL, NULL, &errmsg)
+        != SQLITE_OK)
+    {
+        /*  warn("failed to set pragma: %s\n", errmsg); */
+    	sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
         Safefree(errmsg);
         return FALSE;
     }
@@ -222,10 +232,14 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
     dTHR;
     D_imp_dbh_from_sth;
 
+    /* warn("prepare statement\n"); */
     imp_sth->nrow = 0;
     imp_sth->ncols = 0;
     imp_sth->params = newAV();
     imp_sth->sql = newAV();
+    imp_sth->results = 0;
+    imp_sth->coldata = 0;
+    imp_sth->retval = SQLITE_OK;
     sqlite_st_parse_sql(imp_sth, statement);
 
     return TRUE;
@@ -295,6 +309,22 @@ sqlite_decode(imp_dbh_t *imp_dbh, char *input, size_t *len)
 }
 
 int
+_sqlite_fetch_row (imp_sth_t *imp_sth)
+{
+    while (1)
+    {
+        imp_sth->retval = sqlite_step(imp_sth->vm, 
+            &(imp_sth->ncols), (const char ***)&(imp_sth->results), (const char ***)&(imp_sth->coldata));
+        if (imp_sth->retval == SQLITE_BUSY) {
+            continue;
+        }
+        break;
+    }
+    /* warn("step got: %d\nCol1: %s\n", imp_sth->retval, imp_sth->coldata[0]); */
+    return imp_sth->retval;
+}
+
+int
 sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
 {
     dTHR;
@@ -347,28 +377,37 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     }
 
     imp_sth->results = NULL;
-    if (retval = sqlite_get_table(imp_dbh->db, SvPV_nolen(sql), &(imp_sth->results),
-        &(imp_sth->nrow), &(imp_sth->ncols), &errmsg) != SQLITE_OK)
+    if (retval = sqlite_compile(imp_dbh->db, SvPV_nolen(sql), 0, &(imp_sth->vm), &errmsg) != SQLITE_OK)
+    // if (retval = sqlite_get_table(imp_dbh->db, SvPV_nolen(sql), &(imp_sth->results),
+    //    &(imp_sth->nrow), &(imp_sth->ncols), &errmsg) != SQLITE_OK)
     {
         sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, errmsg);
-        Safefree(errmsg);
+        sqlite_freemem(errmsg);
         return -2;
     }
-
+    
+    if (_sqlite_fetch_row(imp_sth) == SQLITE_ERROR) {
+        sqlite_finalize(imp_sth->vm, &errmsg);
+        sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, errmsg);
+        sqlite_freemem(errmsg);
+        return -2;
+    }
+    
     DBIc_NUM_FIELDS(imp_sth) = imp_sth->ncols;
-    imp_sth->c_row = 1;
-    if (imp_sth->ncols != 0) {
-        DBIc_ACTIVE_on(imp_sth);
+    imp_sth->nrow = -1;
+    
+    /* warn("Execute returned %d cols\n", imp_sth->ncols); */
+    if (imp_sth->ncols == 0) {
+        sqlite_finalize(imp_sth->vm, 0);
+        imp_sth->nrow = sqlite_changes(imp_dbh->db);
+        DBIc_IMPSET_on(imp_sth);
+        return imp_sth->nrow;
     }
-    else {
-	/* sqlite_get_table doesn't set nrow for non-selects, probably a bug, */
-	/* so we have to call sqlite_changes explicitly here */
-	imp_sth->nrow = sqlite_changes(imp_dbh->db);
-        sqlite_free_table(imp_sth->results);
-    }
+    
+    DBIc_ACTIVE_on(imp_sth);
     /* warn("exec ok - %d rows, %d cols\n", imp_sth->nrow, imp_sth->ncols); */
     DBIc_IMPSET_on(imp_sth);
-    return imp_sth->nrow;
+    return 0;
 }
 
 int
@@ -401,23 +440,33 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
     D_imp_dbh_from_sth;
     int numFields = DBIc_NUM_FIELDS(imp_sth);
     int chopBlanks = DBIc_is(imp_sth, DBIcf_ChopBlanks);
-    int current_entry = imp_sth->c_row * numFields;
     int i;
 
     /* warn("current_entry == %d\nnumFields == %d\nnrow == %d",
         current_entry, numFields, imp_sth->nrow); */
 
-    if (current_entry >= ((imp_sth->nrow * numFields) + 1)) {
+    /*
+    if (!DBIc_ACTIVE(imp_sth)) {
+        return Nullav;
+    }
+    */
+    
+    if ((imp_sth->retval == SQLITE_DONE) || (imp_sth->retval == SQLITE_ERROR)) {
         sqlite_st_finish(sth, imp_sth);
         return Nullav;
     }
-
+    
+    if (imp_sth->nrow == -1) {
+        imp_sth->nrow++;
+    }
+    imp_sth->nrow++;
+    
     av = DBIS->get_fbav(imp_sth);
     for (i = 0; i < numFields; i++) {
-        char *val = imp_sth->results[current_entry + i];
+        char *val = imp_sth->results[i];
         /* warn("fetching: %d == %s\n", (current_entry + i), val); */
         if (val != NULL) {
-            int len = strlen(val);
+            size_t len = strlen(val);
             char *decoded;
             if (chopBlanks) {
                 while((len > 0) && (val[len-1] == ' ')) {
@@ -429,24 +478,31 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
             sv_setpvn(AvARRAY(av)[i], decoded, len);
             free(decoded);
 
-	    if (!imp_dbh->no_utf8_flag) {
-		/* sv_utf8_encode(AvARRAY(av)[i]); */
-	    }
+            if (!imp_dbh->no_utf8_flag) {
+            /* sv_utf8_encode(AvARRAY(av)[i]); */
+            }
         }
         else {
             (void)SvOK_off(AvARRAY(av)[i]);
         }
     }
-    imp_sth->c_row++;
+    _sqlite_fetch_row(imp_sth);
     return av;
 }
 
 int
 sqlite_st_finish (SV *sth, imp_sth_t *imp_sth)
 {
+    /* warn("finish statement\n"); */
     if (DBIc_ACTIVE(imp_sth)) {
+        char *errmsg;
         DBIc_ACTIVE_off(imp_sth);
-        sqlite_free_table(imp_sth->results);
+        if (imp_sth->retval = sqlite_finalize(imp_sth->vm, &errmsg) == SQLITE_ERROR) {
+            warn("finalize failed! %s\n", errmsg);
+            sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, errmsg);
+            sqlite_freemem(errmsg);
+            return FALSE;
+        }
     }
     return TRUE;
 }
@@ -454,6 +510,7 @@ sqlite_st_finish (SV *sth, imp_sth_t *imp_sth)
 void
 sqlite_st_destroy (SV *sth, imp_sth_t *imp_sth)
 {
+    /* warn("destroy statement\n"); */
     if (DBIc_ACTIVE(imp_sth)) {
         sqlite_st_finish(sth, imp_sth);
     }
@@ -549,7 +606,7 @@ sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
     SV *retsv = NULL;
     int i;
 
-    if (!imp_sth->results) {
+    if (!imp_sth->coldata) {
         return retsv;
     }
 
@@ -557,17 +614,46 @@ sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
 
     if (strEQ(key, "NAME")) {
         AV *av = newAV();
+        av_extend(av, i);
         retsv = sv_2mortal(newRV(sv_2mortal((SV*)av)));
         while (--i >= 0) {
-            char *fieldname = imp_sth->results[i];
+            char *fieldname = imp_sth->coldata[i];
+            /* warn("Name [%d]: %s\n", i, fieldname); */
             char *dot = instr(fieldname, ".");
             if (dot) /* drop table name from field name */
                 fieldname = ++dot;
             av_store(av, i, newSVpv(fieldname, 0));
         }
     }
+    else if (strEQ(key, "PRECISION")) {
+        AV *av = newAV();
+        retsv = sv_2mortal(newRV(sv_2mortal((SV*)av)));
+    }
+    else if (strEQ(key, "TYPE")) {
+        int i_base = i;
+        AV *av = newAV();
+        av_extend(av, i);
+        retsv = sv_2mortal(newRV(sv_2mortal((SV*)av)));
+        i = i * 2;
+        while (--i >= i_base) {
+            char *fieldname = imp_sth->coldata[i];
+            /* warn("Type [%d]: %s\n", i, fieldname); */
+            char *dot = instr(fieldname, ".");
+            if (dot) /* drop table name from field name */
+                fieldname = ++dot;
+            av_store(av, i - i_base, newSVpv(fieldname, 0));
+        }
+    }
+    else if (strEQ(key, "NULLABLE")) {
+        AV *av = newAV();
+        retsv = sv_2mortal(newRV(sv_2mortal((SV*)av)));
+    }
+    else if (strEQ(key, "SCALE")) {
+        AV *av = newAV();
+        retsv = sv_2mortal(newRV(sv_2mortal((SV*)av)));
+    }
     else if (strEQ(key, "NUM_OF_FIELDS")) {
-        retsv = sv_2mortal(newSViv(imp_sth->ncols));
+        retsv = sv_2mortal(newSViv(i));
     }
 
     return retsv;

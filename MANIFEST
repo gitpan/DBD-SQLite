@@ -57,6 +57,7 @@ t/40nulls.t
 t/40numrows.t
 t/50chopblanks.t
 t/50commit.t
+t/60metadata.t
 t/99cleanup.t
 t/SQLite.dbtest
 t/ak-dbd.t

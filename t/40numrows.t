@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#   $Id: 40numrows.t,v 1.1 2002/02/19 17:19:57 matt Exp $
+#   $Id: 40numrows.t,v 1.2 2003/08/11 21:51:14 matt Exp $
 #
 #   This tests, whether the number of rows can be retrieved.
 #
@@ -97,11 +97,8 @@ while (Testing()) {
     Test($state or $cursor->execute)
            or DbiError($dbh->err, $dbh->errstr);
 
-    Test($state or ($numrows = $cursor->rows) == 1  or  ($numrows == -1))
-	or ErrMsgF("Expected 1 rows, got %s.\n", $numrows);
-
     Test($state or ($numrows = TrueRows($cursor)) == 1)
-	or ErrMsgF("Expected to fetch 1 rows, got %s.\n", $numrows);
+        	or ErrMsgF("Expected to fetch 1 rows, got %s.\n", $numrows);
 
     Test($state or $cursor->finish)
            or DbiError($dbh->err, $dbh->errstr);
@@ -119,11 +116,8 @@ while (Testing()) {
     Test($state or $cursor->execute)
 	   or DbiError($dbh->err, $dbh->errstr);
 
-    Test($state or ($numrows = $cursor->rows) == 2  or  ($numrows == -1))
-	or ErrMsgF("Expected 2 rows, got %s.\n", $numrows);
-
     Test($state or ($numrows = TrueRows($cursor)) == 2)
-	or ErrMsgF("Expected to fetch 2 rows, got %s.\n", $numrows);
+        	or ErrMsgF("Expected to fetch 2 rows, got %s.\n", $numrows);
 
     Test($state or $cursor->finish)
 	   or DbiError($dbh->err, $dbh->errstr);
@@ -141,11 +135,8 @@ while (Testing()) {
     Test($state or $cursor->execute)
 	   or DbiError($dbh->err, $dbh->errstr);
 
-    Test($state or ($numrows = $cursor->rows) == 2  or  ($numrows == -1))
-	or ErrMsgF("Expected 2 rows, got %s.\n", $numrows);
-
     Test($state or ($numrows = TrueRows($cursor)) == 2)
-	or ErrMsgF("Expected to fetch 2 rows, got %s.\n", $numrows);
+	       or ErrMsgF("Expected to fetch 2 rows, got %s.\n", $numrows);
 
     Test($state or $cursor->finish)
 	   or DbiError($dbh->err, $dbh->errstr);
