@@ -16,7 +16,7 @@
 ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: func.c,v 1.24 2004/09/21 14:34:43 matt Exp $
+** $Id: func.c,v 1.25 2004/10/12 09:01:16 matt Exp $
 */
 #include <ctype.h>
 #include <math.h>
@@ -918,7 +918,7 @@ static void minMaxFinalize(sqlite3_context *context){
 ** external linkage.
 */
 void sqlite3RegisterBuiltinFunctions(sqlite3 *db){
-  static struct {
+  static const struct {
      char *zName;
      signed char nArg;
      u8 argType;           /* 0: none.  1: db  2: (-1) */
@@ -962,7 +962,7 @@ void sqlite3RegisterBuiltinFunctions(sqlite3 *db){
     { "test_auxdata",         -1, 0, SQLITE_UTF8, 0, test_auxdata},
 #endif
   };
-  static struct {
+  static const struct {
     char *zName;
     signed char nArg;
     u8 argType;

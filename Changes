@@ -1,5 +1,9 @@
 Revision history for Perl extension DBD::SQLite.
 
+1.07
+    - Fix for a memory leak (spotted by Joel Noble)
+    - Update to sqlite 3.0.8 (fixes bug on Solaris-sparc)
+
 1.06
     - Resolve symbol conflicts on mac os x.
     - Fix define in WriteMakefile lacking space.

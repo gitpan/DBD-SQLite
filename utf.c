@@ -12,7 +12,7 @@
 ** This file contains routines used to translate between UTF-8, 
 ** UTF-16, UTF-16BE, and UTF-16LE.
 **
-** $Id: utf.c,v 1.4 2004/09/21 14:34:46 matt Exp $
+** $Id: utf.c,v 1.5 2004/10/12 09:01:20 matt Exp $
 **
 ** Notes on UTF-8:
 **
@@ -324,17 +324,16 @@ int sqlite3VdbeMemTranslate(Mem *pMem, u8 desiredEnc){
         READ_UTF8(zIn, c); 
         WRITE_UTF16LE(z, c);
       }
-      WRITE_UTF16LE(z, 0);
-      pMem->n = (z-zOut)-2;
-    }else if( desiredEnc==SQLITE_UTF16BE ){
+    }else{
+      assert( desiredEnc==SQLITE_UTF16BE );
       /* UTF-8 -> UTF-16 Big-endian */
       while( zIn<zTerm ){
         READ_UTF8(zIn, c); 
         WRITE_UTF16BE(z, c);
       }
-      WRITE_UTF16BE(z, 0);
-      pMem->n = (z-zOut)-2;
     }
+    pMem->n = z - zOut;
+    *z++ = 0;
   }else{
     assert( desiredEnc==SQLITE_UTF8 );
     if( pMem->enc==SQLITE_UTF16LE ){
@@ -343,18 +342,16 @@ int sqlite3VdbeMemTranslate(Mem *pMem, u8 desiredEnc){
         READ_UTF16LE(zIn, c); 
         WRITE_UTF8(z, c);
       }
-      WRITE_UTF8(z, 0);
-      pMem->n = (z-zOut)-1;
     }else{
       /* UTF-16 Little-endian -> UTF-8 */
       while( zIn<zTerm ){
         READ_UTF16BE(zIn, c); 
         WRITE_UTF8(z, c);
       }
-      WRITE_UTF8(z, 0);
-      pMem->n = (z-zOut)-1;
     }
+    pMem->n = z - zOut;
   }
+  *z = 0;
   assert( (pMem->n+(desiredEnc==SQLITE_UTF8?1:2))<=len );
 
   sqlite3VdbeMemRelease(pMem);

@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.51 2004/09/13 07:19:48 matt Exp $ */
+/* $Id: dbdimp.c,v 1.52 2004/10/04 20:02:21 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -358,6 +358,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         if (value) {
             SvREFCNT_dec(value);
         }
+        SvREFCNT_dec(sql_type_sv);
         if (retval != SQLITE_OK) {
             sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, (char*)sqlite3_errmsg(imp_dbh->db));
             return -4;

@@ -43,12 +43,12 @@ WriteMakefile(
     'VERSION_FROM'  => 'lib/DBD/SQLite.pm', # finds $VERSION
     'PREREQ_PM'     => {DBI => 1.21}, # e.g., Module::Name => 1.1
     'OBJECT'        => '$(O_FILES)',
-    'INC'           => '-I$(DBI_INSTARCH_DIR)',
+    'INC'           => '-I. -I$(DBI_INSTARCH_DIR)',
     'OPTIMIZE'      => "-O2",
     'DEFINE'        => "-DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}" .
                        ($Config{d_usleep} ? " -DHAVE_USLEEP=1" : "") .
                        ($DBI::VERSION > 1.42 ? '' : ' -Dno_last_insert_id'),
-    'clean'         => { FILES => 'SQLite.xsi config.h' },
+    'clean'         => { FILES => 'SQLite.xsi config.h tv.log' },
     'PL_FILES'      => {},
     'EXE_FILES'     => [],
 );
