@@ -103,10 +103,11 @@
 # include <unistd.h>
   typedef struct OsFile OsFile;
   struct OsFile {
-    struct lockInfo *pLock;  /* Information about locks on this inode */
-    int fd;                  /* The file descriptor */
-    int locked;              /* True if this user holds the lock */
-    int dirfd;               /* File descriptor for the directory */
+    struct openCnt *pOpen;    /* Info about all open fd's on this inode */
+    struct lockInfo *pLock;   /* Info about locks on this inode */
+    int fd;                   /* The file descriptor */
+    int locked;               /* True if this instance holds the lock */
+    int dirfd;                /* File descriptor for the directory */
   };
 # define SQLITE_TEMPNAME_SIZE 200
 # if defined(HAVE_USLEEP) && HAVE_USLEEP
@@ -132,6 +133,9 @@
 # else
 #  if !defined(_CYGWIN_TYPES_H)
      typedef long long off_t;
+#    if defined(__MINGW32__)
+#      define	_OFF_T_
+#    endif
 #  endif
 # endif
 # define SQLITE_TEMPNAME_SIZE (MAX_PATH+50)

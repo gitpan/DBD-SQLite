@@ -43,7 +43,7 @@
 ** in this file for details.  If in doubt, do not deviate from existing
 ** commenting and indentation practices when changing or adding code.
 **
-** $Id: vdbe.c,v 1.21 2003/12/05 15:10:32 matt Exp $
+** $Id: vdbe.c,v 1.22 2004/02/03 14:24:36 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -187,9 +187,9 @@ static int hardStringify(Vdbe *p, int i){
   Stack *pStack = &p->aStack[i];
   int fg = pStack->flags;
   if( fg & STK_Real ){
-    sprintf(pStack->z,"%.15g",pStack->r);
+    sqlite_snprintf(sizeof(pStack->z),pStack->z,"%.15g",pStack->r);
   }else if( fg & STK_Int ){
-    sprintf(pStack->z,"%d",pStack->i);
+    sqlite_snprintf(sizeof(pStack->z),pStack->z,"%d",pStack->i);
   }else{
     pStack->z[0] = 0;
   }
@@ -321,7 +321,7 @@ static void hardIntegerify(Vdbe *p, int i){
     if(((P)->aStack[(I)].flags&STK_Real)==0){ hardRealify(P,I); }
 static void hardRealify(Vdbe *p, int i){
   if( p->aStack[i].flags & STK_Str ){
-    p->aStack[i].r = atof(p->zStack[i]);
+    p->aStack[i].r = sqliteAtoF(p->zStack[i]);
   }else if( p->aStack[i].flags & STK_Int ){
     p->aStack[i].r = p->aStack[i].i;
   }else{
@@ -361,42 +361,6 @@ static Sorter *Merge(Sorter *pLeft, Sorter *pRight){
   }
   return sHead.pNext;
 }
-
-/*
-** Convert an integer in between the native integer format and
-** the bigEndian format used as the record number for tables.
-**
-** The bigEndian format (most significant byte first) is used for
-** record numbers so that records will sort into the correct order
-** even though memcmp() is used to compare the keys.  On machines
-** whose native integer format is little endian (ex: i486) the
-** order of bytes is reversed.  On native big-endian machines
-** (ex: Alpha, Sparc, Motorola) the byte order is the same.
-**
-** This function is its own inverse.  In other words
-**
-**         X == byteSwap(byteSwap(X))
-*/
-static int byteSwap(int x){
-  union {
-     char zBuf[sizeof(int)];
-     int i;
-  } ux;
-  ux.zBuf[3] = x&0xff;
-  ux.zBuf[2] = (x>>8)&0xff;
-  ux.zBuf[1] = (x>>16)&0xff;
-  ux.zBuf[0] = (x>>24)&0xff;
-  return ux.i;
-}
-
-/*
-** When converting from the native format to the key format and back
-** again, in addition to changing the byte order we invert the high-order
-** bit of the most significant byte.  This causes negative numbers to
-** sort before positive numbers in the memcmp() function.
-*/
-#define keyToInt(X)   (byteSwap(X) ^ 0x80000000)
-#define intToKey(X)   (byteSwap((X) ^ 0x80000000))
 
 /*
 ** Code contained within the VERIFY() macro is not needed for correct
@@ -545,6 +509,7 @@ int sqliteVdbeExec(
   }
   for(pc=p->pc; rc==SQLITE_OK; pc++){
     assert( pc>=0 && pc<p->nOp );
+    assert( p->tos<=pc );
 #ifdef VDBE_PROFILE
     origPc = pc;
     start = hwtime();
@@ -631,7 +596,7 @@ case OP_Goto: {
 */
 case OP_Gosub: {
   if( p->returnDepth>=sizeof(p->returnStack)/sizeof(p->returnStack[0]) ){
-    sqliteSetString(&p->zErrMsg, "return address stack overflow", 0);
+    sqliteSetString(&p->zErrMsg, "return address stack overflow", (char*)0);
     p->rc = SQLITE_INTERNAL;
     return SQLITE_ERROR;
   }
@@ -648,7 +613,7 @@ case OP_Gosub: {
 */
 case OP_Return: {
   if( p->returnDepth<=0 ){
-    sqliteSetString(&p->zErrMsg, "return address stack underflow", 0);
+    sqliteSetString(&p->zErrMsg, "return address stack underflow", (char*)0);
     p->rc = SQLITE_INTERNAL;
     return SQLITE_ERROR;
   }
@@ -680,7 +645,7 @@ case OP_Halt: {
     p->rc = pOp->p1;
     p->errorAction = pOp->p2;
     if( pOp->p3 ){
-      sqliteSetString(&p->zErrMsg, pOp->p3, 0);
+      sqliteSetString(&p->zErrMsg, pOp->p3, (char*)0);
     }
     return SQLITE_ERROR;
   }else{
@@ -1156,7 +1121,9 @@ case OP_Function: {
   ctx.z = 0;
   ctx.isError = 0;
   ctx.isStep = 0;
+  if( sqliteSafetyOff(db) ) goto abort_due_to_misuse;
   (*ctx.pFunc->xFunc)(&ctx, n, (const char**)&zStack[p->tos-n+1]);
+  if( sqliteSafetyOn(db) ) goto abort_due_to_misuse;
   sqliteVdbePopStack(p, n);
   p->tos++;
   aStack[p->tos] = ctx.s;
@@ -1169,7 +1136,7 @@ case OP_Function: {
   }
   if( ctx.isError ){
     sqliteSetString(&p->zErrMsg, 
-       zStack[p->tos] ? zStack[p->tos] : "user function error", 0);
+       zStack[p->tos] ? zStack[p->tos] : "user function error", (char*)0);
     rc = SQLITE_ERROR;
   }
   break;
@@ -1830,8 +1797,8 @@ case OP_IfNot: {
 /* Opcode: IsNull P1 P2 *
 **
 ** If any of the top abs(P1) values on the stack are NULL, then jump
-** to P2.  The stack is popped P1 times if P1>0.  If P1<0 then all values
-** are left unchanged on the stack.
+** to P2.  Pop the stack P1 times if P1>0.   If P1<0 leave the stack
+** unchanged.
 */
 case OP_IsNull: {
   int i, cnt;
@@ -1850,14 +1817,18 @@ case OP_IsNull: {
 
 /* Opcode: NotNull P1 P2 *
 **
-** Jump to P2 if the top value on the stack is not NULL.  Pop the
-** stack if P1 is greater than zero.  If P1 is less than or equal to
-** zero then leave the value on the stack.
+** Jump to P2 if the top P1 values on the stack are all not NULL.  Pop the
+** stack if P1 times if P1 is greater than zero.  If P1 is less than
+** zero then leave the stack unchanged.
 */
 case OP_NotNull: {
-  VERIFY( if( p->tos<0 ) goto not_enough_stack; )
-  if( (aStack[p->tos].flags & STK_Null)==0 ) pc = pOp->p2-1;
-  if( pOp->p1>0 ){ POPSTACK; }
+  int i, cnt;
+  cnt = pOp->p1;
+  if( cnt<0 ) cnt = -cnt;
+  VERIFY( if( p->tos+1-cnt<0 ) goto not_enough_stack; )
+  for(i=0; i<cnt && (aStack[p->tos-i].flags & STK_Null)==0; i++){}
+  if( i>=cnt ) pc = pOp->p2-1;
+  if( pOp->p1>0 ) sqliteVdbePopStack(p, cnt);
   break;
 }
 
@@ -2090,7 +2061,7 @@ case OP_MakeKey: {
       if( (flags & (STK_Real|STK_Int))==STK_Int ){
         aStack[i].r = aStack[i].i;
       }else if( (flags & (STK_Real|STK_Int))==0 ){
-        aStack[i].r = atof(zStack[i]);
+        aStack[i].r = sqliteAtoF(zStack[i]);
       }
       Release(p, i);
       z = aStack[i].z;
@@ -2229,7 +2200,7 @@ case OP_Transaction: {
           p->rc = SQLITE_BUSY;
           return SQLITE_BUSY;
         }else if( (*db->xBusyCallback)(db->pBusyArg, "", busy++)==0 ){
-          sqliteSetString(&p->zErrMsg, sqlite_error_string(rc), 0);
+          sqliteSetString(&p->zErrMsg, sqlite_error_string(rc), (char*)0);
           busy = 0;
         }
         break;
@@ -2367,7 +2338,7 @@ case OP_VerifyCookie: {
   assert( pOp->p1>=0 && pOp->p1<db->nDb );
   rc = sqliteBtreeGetMeta(db->aDb[pOp->p1].pBt, aMeta);
   if( rc==SQLITE_OK && aMeta[1]!=pOp->p2 ){
-    sqliteSetString(&p->zErrMsg, "database schema has changed", 0);
+    sqliteSetString(&p->zErrMsg, "database schema has changed", (char*)0);
     rc = SQLITE_SCHEMA;
   }
   break;
@@ -2441,7 +2412,7 @@ case OP_OpenWrite: {
     p2 = p->aStack[tos].i;
     POPSTACK;
     if( p2<2 ){
-      sqliteSetString(&p->zErrMsg, "root page number less than 2", 0);
+      sqliteSetString(&p->zErrMsg, "root page number less than 2", (char*)0);
       rc = SQLITE_INTERNAL;
       break;
     }
@@ -2461,7 +2432,7 @@ case OP_OpenWrite: {
           p->rc = SQLITE_BUSY;
           return SQLITE_BUSY;
         }else if( (*db->xBusyCallback)(db->pBusyArg, pOp->p3, ++busy)==0 ){
-          sqliteSetString(&p->zErrMsg, sqlite_error_string(rc), 0);
+          sqliteSetString(&p->zErrMsg, sqlite_error_string(rc), (char*)0);
           busy = 0;
         }
         break;
@@ -2596,8 +2567,15 @@ case OP_MoveTo: {
   pC = &p->aCsr[i];
   if( pC->pCursor!=0 ){
     int res, oc;
+    pC->nullRow = 0;
     if( aStack[tos].flags & STK_Int ){
       int iKey = intToKey(aStack[tos].i);
+      if( pOp->p2==0 && pOp->opcode==OP_MoveTo ){
+        pC->movetoTarget = iKey;
+        pC->deferredMoveto = 1;
+        POPSTACK;
+        break;
+      }
       sqliteBtreeMoveto(pC->pCursor, (char*)&iKey, sizeof(int), &res);
       pC->lastRecno = aStack[tos].i;
       pC->recnoIsValid = res==0;
@@ -2606,7 +2584,7 @@ case OP_MoveTo: {
       sqliteBtreeMoveto(pC->pCursor, zStack[tos], aStack[tos].n, &res);
       pC->recnoIsValid = 0;
     }
-    pC->nullRow = 0;
+    pC->deferredMoveto = 0;
     sqlite_search_count++;
     oc = pOp->opcode;
     if( oc==OP_MoveTo && res<0 ){
@@ -2681,6 +2659,7 @@ case OP_Found: {
     Stringify(p, tos);
     rx = sqliteBtreeMoveto(pC->pCursor, zStack[tos], aStack[tos].n, &res);
     alreadyExists = rx==SQLITE_OK && res==0;
+    pC->deferredMoveto = 0;
   }
   if( pOp->opcode==OP_Found ){
     if( alreadyExists ) pc = pOp->p2 - 1;
@@ -2742,6 +2721,7 @@ case OP_IsUnique: {
     /* Search for an entry in P1 where all but the last four bytes match K.
     ** If there is no such entry, jump immediately to P2.
     */
+    assert( p->aCsr[i].deferredMoveto==0 );
     rc = sqliteBtreeMoveto(pCrsr, zKey, nKey-4, &res);
     if( rc!=SQLITE_OK ) goto abort_due_to_error;
     if( res<0 ){
@@ -2910,6 +2890,7 @@ case OP_NewRecno: {
       }
     }
     pC->recnoIsValid = 0;
+    pC->deferredMoveto = 0;
   }
   p->tos++;
   aStack[p->tos].i = v;
@@ -2992,6 +2973,7 @@ case OP_PutStrKey: {
                           zStack[tos], aStack[tos].n);
     }
     pC->recnoIsValid = 0;
+    pC->deferredMoveto = 0;
   }
   POPSTACK;
   POPSTACK;
@@ -3018,6 +3000,7 @@ case OP_Delete: {
   assert( i>=0 && i<p->nCursor );
   pC = &p->aCsr[i];
   if( pC->pCursor!=0 ){
+    sqliteVdbeCursorMoveto(pC);
     rc = sqliteBtreeDelete(pC->pCursor);
     pC->nextRowidValid = 0;
   }
@@ -3048,6 +3031,16 @@ case OP_KeyAsData: {
 ** If the cursor is not pointing to a valid row, a NULL is pushed
 ** onto the stack.
 */
+/* Opcode: RowKey P1 * *
+**
+** Push onto the stack the complete row key for cursor P1.
+** There is no interpretation of the key.  It is just copied
+** onto the stack exactly as it is found in the database file.
+**
+** If the cursor is not pointing to a valid row, a NULL is pushed
+** onto the stack.
+*/
+case OP_RowKey:
 case OP_RowData: {
   int i = pOp->p1;
   int tos = ++p->tos;
@@ -3060,10 +3053,11 @@ case OP_RowData: {
     aStack[tos].flags = STK_Null;
   }else if( pC->pCursor!=0 ){
     BtCursor *pCrsr = pC->pCursor;
+    sqliteVdbeCursorMoveto(pC);
     if( pC->nullRow ){
       aStack[tos].flags = STK_Null;
       break;
-    }else if( pC->keyAsData ){
+    }else if( pC->keyAsData || pOp->opcode==OP_RowKey ){
       sqliteBtreeKeySize(pCrsr, &n);
     }else{
       sqliteBtreeDataSize(pCrsr, &n);
@@ -3078,7 +3072,7 @@ case OP_RowData: {
       aStack[tos].flags = STK_Str | STK_Dyn;
       zStack[tos] = z;
     }
-    if( pC->keyAsData ){
+    if( pC->keyAsData || pOp->opcode==OP_RowKey ){
       sqliteBtreeKey(pCrsr, 0, n, zStack[tos]);
     }else{
       sqliteBtreeData(pCrsr, 0, n, zStack[tos]);
@@ -3130,6 +3124,7 @@ case OP_Column: {
     zRec = zStack[tos+i];
     payloadSize = aStack[tos+i].n;
   }else if( (pC = &p->aCsr[i])->pCursor!=0 ){
+    sqliteVdbeCursorMoveto(pC);
     zRec = 0;
     pCrsr = pC->pCursor;
     if( pC->nullRow ){
@@ -3236,7 +3231,9 @@ case OP_Recno: {
   int v;
 
   assert( i>=0 && i<p->nCursor );
-  if( (pC = &p->aCsr[i])->recnoIsValid ){
+  pC = &p->aCsr[i];
+  sqliteVdbeCursorMoveto(pC);
+  if( pC->recnoIsValid ){
     v = pC->lastRecno;
   }else if( pC->pseudoTable ){
     v = keyToInt(pC->iKey);
@@ -3275,6 +3272,7 @@ case OP_FullKey: {
     int amt;
     char *z;
 
+    sqliteVdbeCursorMoveto(&p->aCsr[i]);
     sqliteBtreeKeySize(pCrsr, &amt);
     if( amt<=0 ){
       rc = SQLITE_CORRUPT;
@@ -3328,7 +3326,8 @@ case OP_Last: {
   if( (pCrsr = pC->pCursor)!=0 ){
     int res;
     rc = sqliteBtreeLast(pCrsr, &res);
-    p->aCsr[i].nullRow = res;
+    pC->nullRow = res;
+    pC->deferredMoveto = 0;
     if( res && pOp->p2>0 ){
       pc = pOp->p2 - 1;
     }
@@ -3358,6 +3357,7 @@ case OP_Rewind: {
     rc = sqliteBtreeFirst(pCrsr, &res);
     pC->atFirst = res==0;
     pC->nullRow = res;
+    pC->deferredMoveto = 0;
     if( res && pOp->p2>0 ){
       pc = pOp->p2 - 1;
     }
@@ -3396,6 +3396,7 @@ case OP_Next: {
     if( pC->nullRow ){
       res = 1;
     }else{
+      assert( pC->deferredMoveto==0 );
       rc = pOp->opcode==OP_Next ? sqliteBtreeNext(pCrsr, &res) :
                                   sqliteBtreePrevious(pCrsr, &res);
       pC->nullRow = res;
@@ -3444,7 +3445,7 @@ case OP_IdxPut: {
         ){
           rc = SQLITE_CONSTRAINT;
           if( pOp->p3 && pOp->p3[0] ){
-            sqliteSetString(&p->zErrMsg, pOp->p3, 0);
+            sqliteSetString(&p->zErrMsg, pOp->p3, (char*)0);
           }
           goto abort_due_to_error;
         }
@@ -3457,6 +3458,7 @@ case OP_IdxPut: {
       }
     }
     rc = sqliteBtreeInsert(pCrsr, zKey, nKey, "", 0);
+    assert( p->aCsr[i].deferredMoveto==0 );
   }
   POPSTACK;
   break;
@@ -3478,6 +3480,7 @@ case OP_IdxDelete: {
     if( rx==SQLITE_OK && res==0 ){
       rc = sqliteBtreeDelete(pCrsr);
     }
+    assert( p->aCsr[i].deferredMoveto==0 );
   }
   POPSTACK;
   break;
@@ -3500,6 +3503,7 @@ case OP_IdxRecno: {
   if( VERIFY( i>=0 && i<p->nCursor && ) (pCrsr = p->aCsr[i].pCursor)!=0 ){
     int v;
     int sz;
+    assert( p->aCsr[i].deferredMoveto==0 );
     sqliteBtreeKeySize(pCrsr, &sz);
     if( sz<sizeof(u32) ){
       aStack[tos].flags = STK_Null;
@@ -3549,6 +3553,7 @@ case OP_IdxGE: {
     int res, rc;
  
     Stringify(p, tos);
+    assert( p->aCsr[i].deferredMoveto==0 );
     rc = sqliteBtreeKeyCompare(pCrsr, zStack[tos], aStack[tos].n, 4, &res);
     if( rc!=SQLITE_OK ){
       break;
@@ -3561,6 +3566,37 @@ case OP_IdxGE: {
     if( res>0 ){
       pc = pOp->p2 - 1 ;
     }
+  }
+  POPSTACK;
+  break;
+}
+
+/* Opcode: IdxIsNull P1 P2 *
+**
+** The top of the stack contains an index entry such as might be generated
+** by the MakeIdxKey opcode.  This routine looks at the first P1 fields of
+** that key.  If any of the first P1 fields are NULL, then a jump is made
+** to address P2.  Otherwise we fall straight through.
+**
+** The index entry is always popped from the stack.
+*/
+case OP_IdxIsNull: {
+  int i = pOp->p1;
+  int tos = p->tos;
+  int k, n;
+  const char *z;
+
+  assert( tos>=0 );
+  assert( aStack[tos].flags & STK_Str );
+  z = zStack[tos];
+  n = aStack[tos].n;
+  for(k=0; k<n && i>0; i--){
+    if( z[k]=='a' ){
+      pc = pOp->p2-1;
+      break;
+    }
+    while( k<n && z[k] ){ k++; }
+    k++;
   }
   POPSTACK;
   break;
@@ -4057,7 +4093,7 @@ case OP_FileOpen: {
     p->pFile = fopen(pOp->p3, "r");
   }
   if( p->pFile==0 ){
-    sqliteSetString(&p->zErrMsg,"unable to open file: ", pOp->p3, 0);
+    sqliteSetString(&p->zErrMsg,"unable to open file: ", pOp->p3, (char*)0);
     rc = SQLITE_ERROR;
   }
   break;
@@ -4651,11 +4687,24 @@ case OP_SetNext: {
   break;
 }
 
+/* Opcode: Vacuum * * *
+**
+** Vacuum the entire database.  This opcode will cause other virtual
+** machines to be created and run.  It may not be called from within
+** a transaction.
+*/
+case OP_Vacuum: {
+  if( sqliteSafetyOff(db) ) goto abort_due_to_misuse; 
+  rc = sqliteRunVacuum(&p->zErrMsg, db);
+  if( sqliteSafetyOn(db) ) goto abort_due_to_misuse;
+  break;
+}
+
 /* An other opcode is illegal...
 */
 default: {
-  sprintf(zBuf,"%d",pOp->opcode);
-  sqliteSetString(&p->zErrMsg, "unknown opcode ", zBuf, 0);
+  sqlite_snprintf(sizeof(zBuf),zBuf,"%d",pOp->opcode);
+  sqliteSetString(&p->zErrMsg, "unknown opcode ", zBuf, (char*)0);
   rc = SQLITE_INTERNAL;
   break;
 }
@@ -4687,7 +4736,7 @@ default: {
     */
 #ifndef NDEBUG
     if( pc<-1 || pc>=p->nOp ){
-      sqliteSetString(&p->zErrMsg, "jump destination out of range", 0);
+      sqliteSetString(&p->zErrMsg, "jump destination out of range", (char*)0);
       rc = SQLITE_INTERNAL;
     }
     if( p->trace && p->tos>=0 ){
@@ -4758,7 +4807,7 @@ vdbe_halt:
   ** to fail on a modern VM computer, so this code is untested.
   */
 no_mem:
-  sqliteSetString(&p->zErrMsg, "out of memory", 0);
+  sqliteSetString(&p->zErrMsg, "out of memory", (char*)0);
   rc = SQLITE_NOMEM;
   goto vdbe_halt;
 
@@ -4773,7 +4822,7 @@ abort_due_to_misuse:
   */
 abort_due_to_error:
   if( p->zErrMsg==0 ){
-    sqliteSetString(&p->zErrMsg, sqlite_error_string(rc), 0);
+    sqliteSetString(&p->zErrMsg, sqlite_error_string(rc), (char*)0);
   }
   goto vdbe_halt;
 
@@ -4788,15 +4837,15 @@ abort_due_to_interrupt:
   }else{
     rc = SQLITE_INTERRUPT;
   }
-  sqliteSetString(&p->zErrMsg, sqlite_error_string(rc), 0);
+  sqliteSetString(&p->zErrMsg, sqlite_error_string(rc), (char*)0);
   goto vdbe_halt;
 
   /* Jump to here if a operator is encountered that requires more stack
   ** operands than are currently available on the stack.
   */
 not_enough_stack:
-  sprintf(zBuf,"%d",pc);
-  sqliteSetString(&p->zErrMsg, "too few operands on stack at ", zBuf, 0);
+  sqlite_snprintf(sizeof(zBuf),zBuf,"%d",pc);
+  sqliteSetString(&p->zErrMsg, "too few operands on stack at ", zBuf, (char*)0);
   rc = SQLITE_INTERNAL;
   goto vdbe_halt;
 
@@ -4804,8 +4853,8 @@ not_enough_stack:
   */
 VERIFY(
 bad_instruction:
-  sprintf(zBuf,"%d",pc);
-  sqliteSetString(&p->zErrMsg, "illegal operation at ", zBuf, 0);
+  sqlite_snprintf(sizeof(zBuf),zBuf,"%d",pc);
+  sqliteSetString(&p->zErrMsg, "illegal operation at ", zBuf, (char*)0);
   rc = SQLITE_INTERNAL;
   goto vdbe_halt;
 )

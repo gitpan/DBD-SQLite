@@ -1,12 +1,11 @@
-# $Id: SQLite.pm,v 1.37 2003/12/05 15:12:48 matt Exp $
+# $Id: SQLite.pm,v 1.39 2004/02/08 18:10:35 matt Exp $
 
 package DBD::SQLite;
 use strict;
 
 use DBI;
-
 use vars qw($err $errstr $state $drh $VERSION @ISA);
-$VERSION = '0.29';
+$VERSION = '0.30';
 
 use DynaLoader();
 @ISA = ('DynaLoader');
@@ -85,7 +84,9 @@ sub table_info {
 
     my @Where = ();
     my $Sql;
-    if ( $CatVal eq '%' && $SchVal eq '' && $TblVal eq '') { # Rule 19a
+    if (   defined($CatVal) && $CatVal eq '%'
+       && defined($SchVal) && $SchVal eq '' 
+       && defined($TblVal) && $TblVal eq '')  { # Rule 19a
             $Sql = <<'SQL';
 SELECT NULL TABLE_CAT
      , NULL TABLE_SCHEM
@@ -94,7 +95,9 @@ SELECT NULL TABLE_CAT
      , NULL REMARKS
 SQL
     }
-    elsif ( $SchVal eq '%' && $CatVal eq '' && $TblVal eq '') { # Rule 19b
+    elsif (   defined($SchVal) && $SchVal eq '%' 
+          && defined($CatVal) && $CatVal eq '' 
+          && defined($TblVal) && $TblVal eq '') { # Rule 19b
             $Sql = <<'SQL';
 SELECT NULL      TABLE_CAT
      , NULL      TABLE_SCHEM
@@ -103,7 +106,10 @@ SELECT NULL      TABLE_CAT
      , NULL      REMARKS
 SQL
     }
-    elsif ( $TypVal eq '%' && $CatVal eq '' && $SchVal eq '' && $TblVal eq '') { # Rule 19c
+    elsif (    defined($TypVal) && $TypVal eq '%' 
+           && defined($CatVal) && $CatVal eq '' 
+           && defined($SchVal) && $SchVal eq '' 
+           && defined($TblVal) && $TblVal eq '') { # Rule 19c
             $Sql = <<'SQL';
 SELECT NULL TABLE_CAT
      , NULL TABLE_SCHEM

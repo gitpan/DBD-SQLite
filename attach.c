@@ -11,7 +11,7 @@
 *************************************************************************
 ** This file contains code used to implement the ATTACH and DETACH commands.
 **
-** $Id: attach.c,v 1.4 2003/12/05 15:10:23 matt Exp $
+** $Id: attach.c,v 1.6 2004/02/08 18:37:45 matt Exp $
 */
 #include "sqliteInt.h"
 
@@ -28,7 +28,10 @@ void sqliteAttach(Parse *pParse, Token *pFilename, Token *pDbname){
   int rc, i;
   char *zFile, *zName;
   sqlite *db;
+  Vdbe *v;
 
+  v = sqliteGetVdbe(pParse);
+  sqliteVdbeAddOp(v, OP_Halt, 0, 0);
   if( pParse->explain ) return;
   db = pParse->db;
   if( db->file_format<4 ){
@@ -91,8 +94,16 @@ void sqliteAttach(Parse *pParse, Token *pFilename, Token *pDbname){
   sqliteFree(zFile);
   db->flags &= ~SQLITE_Initialized;
   if( pParse->nErr ) return;
-  rc = sqliteInit(pParse->db, &pParse->zErrMsg);
+  if( rc==SQLITE_OK ){
+    rc = sqliteInit(pParse->db, &pParse->zErrMsg);
+  }
   if( rc ){
+    int i = db->nDb - 1;
+    assert( i>=2 );
+    if( db->aDb[i].pBt ){
+      sqliteBtreeClose(db->aDb[i].pBt);
+      db->aDb[i].pBt = 0;
+    }
     sqliteResetInternalSchema(db, 0);
     pParse->nErr++;
     pParse->rc = SQLITE_ERROR;
@@ -109,7 +120,10 @@ void sqliteAttach(Parse *pParse, Token *pFilename, Token *pDbname){
 void sqliteDetach(Parse *pParse, Token *pDbname){
   int i;
   sqlite *db;
+  Vdbe *v;
 
+  v = sqliteGetVdbe(pParse);
+  sqliteVdbeAddOp(v, OP_Halt, 0, 0);
   if( pParse->explain ) return;
   db = pParse->db;
   for(i=0; i<db->nDb; i++){

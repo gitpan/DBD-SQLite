@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.22 2003/12/05 15:10:31 matt Exp $
+** @(#) $Id: sqliteInt.h,v 1.23 2004/02/03 14:24:36 matt Exp $
 */
 #include "config.h"
 #include "sqlite.h"
@@ -118,6 +118,15 @@ typedef UINT16_TYPE u16;           /* 2-byte unsigned integer */
 typedef UINT8_TYPE u8;             /* 1-byte unsigned integer */
 typedef INTPTR_TYPE ptr;           /* Big enough to hold a pointer */
 typedef unsigned INTPTR_TYPE uptr; /* Big enough to hold a pointer */
+
+/*
+** Most C compilers these days recognize "long double", don't they?
+** Just in case we encounter one that does not, we will create a macro
+** for long double so that it can be easily changed to just "double".
+*/
+#ifndef LONGDOUBLE_TYPE
+# define LONGDOUBLE_TYPE long double
+#endif
 
 /*
 ** This macro casts a pointer to an integer.  Useful for doing
@@ -1125,6 +1134,7 @@ Index *sqliteFindIndex(sqlite*,const char*, const char*);
 void sqliteUnlinkAndDeleteIndex(sqlite*,Index*);
 void sqliteCopy(Parse*, SrcList*, Token*, Token*, int);
 void sqliteVacuum(Parse*, Token*);
+int sqliteRunVacuum(char**, sqlite*);
 int sqliteGlobCompare(const unsigned char*,const unsigned char*);
 int sqliteLikeCompare(const unsigned char*,const unsigned char*);
 char *sqliteTableNameFromToken(Token*);
@@ -1202,3 +1212,6 @@ int sqliteFixSelect(DbFixer*, Select*);
 int sqliteFixExpr(DbFixer*, Expr*);
 int sqliteFixExprList(DbFixer*, ExprList*);
 int sqliteFixTriggerStep(DbFixer*, TriggerStep*);
+double sqliteAtoF(const char *z);
+int sqlite_snprintf(int,char*,const char*,...);
+int sqliteFitsIn32Bits(const char *);

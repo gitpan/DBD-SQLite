@@ -9,7 +9,7 @@
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: btree.c,v 1.21 2003/12/05 15:10:23 matt Exp $
+** $Id: btree.c,v 1.22 2004/02/03 14:24:36 matt Exp $
 **
 ** This file implements a external (disk-based) database using BTrees.
 ** For a detailed discussion of BTrees, refer to
@@ -1402,7 +1402,9 @@ static int moveToChild(BtCursor *pCur, int newPgno){
   sqlitepager_unref(pCur->pPage);
   pCur->pPage = pNewPage;
   pCur->idx = 0;
-  if( pNewPage->nCell<1 ) return SQLITE_CORRUPT;
+  if( pNewPage->nCell<1 ){
+    return SQLITE_CORRUPT;
+  }
   return SQLITE_OK;
 }
 
@@ -3157,8 +3159,6 @@ struct IntegrityCk {
   Pager *pPager; /* The associated pager.  Also accessible by pBt->pPager */
   int nPage;     /* Number of pages in the database */
   int *anRef;    /* Number of times each page is referenced */
-  int nTreePage; /* Number of BTree pages */
-  int nByte;     /* Number of bytes of data stored on BTree pages */
   char *zErrMsg; /* An error message.  NULL of no errors seen. */
 };
 
@@ -3169,10 +3169,10 @@ static void checkAppendMsg(IntegrityCk *pCheck, char *zMsg1, char *zMsg2){
   if( pCheck->zErrMsg ){
     char *zOld = pCheck->zErrMsg;
     pCheck->zErrMsg = 0;
-    sqliteSetString(&pCheck->zErrMsg, zOld, "\n", zMsg1, zMsg2, 0);
+    sqliteSetString(&pCheck->zErrMsg, zOld, "\n", zMsg1, zMsg2, (char*)0);
     sqliteFree(zOld);
   }else{
-    sqliteSetString(&pCheck->zErrMsg, zMsg1, zMsg2, 0);
+    sqliteSetString(&pCheck->zErrMsg, zMsg1, zMsg2, (char*)0);
   }
 }
 
@@ -3402,11 +3402,6 @@ static int checkTreePage(
     checkAppendMsg(pCheck, zContext, zMsg);
   }
 #endif
-
-  /* Update freespace totals.
-  */
-  pCheck->nTreePage++;
-  pCheck->nByte += USABLE_SPACE - pPage->nFree;
 
   sqlitepager_unref(pPage);
   return depth;

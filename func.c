@@ -16,7 +16,7 @@
 ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: func.c,v 1.18 2003/12/05 15:10:24 matt Exp $
+** $Id: func.c,v 1.19 2004/02/03 14:24:36 matt Exp $
 */
 #include <ctype.h>
 #include <math.h>
@@ -122,13 +122,11 @@ static void substrFunc(sqlite_func *context, int argc, const char **argv){
     p2 = len-p1;
   }
 #ifdef SQLITE_UTF8
-  for(i=0; i<p1; i++){
-    assert( z[i] );
+  for(i=0; i<p1 && z[i]; i++){
     if( (z[i]&0xc0)==0x80 ) p1++;
   }
   while( z[i] && (z[i]&0xc0)==0x80 ){ i++; p1++; }
-  for(; i<p1+p2; i++){
-    assert( z[i] );
+  for(; i<p1+p2 && z[i]; i++){
     if( (z[i]&0xc0)==0x80 ) p2++;
   }
   while( z[i] && (z[i]&0xc0)==0x80 ){ i++; p2++; }
@@ -149,7 +147,7 @@ static void roundFunc(sqlite_func *context, int argc, const char **argv){
   n = argc==2 ? atoi(argv[1]) : 0;
   if( n>30 ) n = 30;
   if( n<0 ) n = 0;
-  r = atof(argv[0]);
+  r = sqliteAtoF(argv[0]);
   sprintf(zBuf,"%.*f",n,r);
   sqlite_set_result_string(context, zBuf, -1);
 }
@@ -397,7 +395,7 @@ static void sumStep(sqlite_func *context, int argc, const char **argv){
   if( argc<1 ) return;
   p = sqlite_aggregate_context(context, sizeof(*p));
   if( p && argv[0] ){
-    p->sum += atof(argv[0]);
+    p->sum += sqliteAtoF(argv[0]);
     p->cnt++;
   }
 }
@@ -435,7 +433,7 @@ static void stdDevStep(sqlite_func *context, int argc, const char **argv){
   if( argc<1 ) return;
   p = sqlite_aggregate_context(context, sizeof(*p));
   if( p && argv[0] ){
-    x = atof(argv[0]);
+    x = sqliteAtoF(argv[0]);
     p->sum += x;
     p->sum2 += x*x;
     p->cnt++;

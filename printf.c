@@ -139,9 +139,9 @@ static et_info fmtinfo[] = {
 ** 16 (the number of significant digits in a 64-bit float) '0' is
 ** always returned.
 */
-static int et_getdigit(double *val, int *cnt){
+static int et_getdigit(LONGDOUBLE_TYPE *val, int *cnt){
   int digit;
-  double d;
+  LONGDOUBLE_TYPE d;
   if( (*cnt)++ >= 16 ) return '0';
   digit = (int)*val;
   d = digit;
@@ -202,7 +202,7 @@ static int vxprintf(
   int flag_long;            /* True if "l" flag is present */
   int flag_center;          /* True if "=" flag is present */
   unsigned long longvalue;  /* Value for integer types */
-  double realvalue;         /* Value for real types */
+  LONGDOUBLE_TYPE realvalue; /* Value for real types */
   et_info *infop;           /* Pointer to the appropriate info structure */
   char buf[etBUFSIZE];      /* Conversion buffer */
   char prefix;              /* Prefix character.  "+" or "-" or " " or '\0'. */
@@ -757,6 +757,47 @@ char *sqlite_vmprintf(const char *zFormat, va_list ap){
   }
   return zNew;
 }
+
+/* 
+** This function implements the callback from vxprintf. 
+**
+** This routine add nNewChar characters of text in zNewText to
+** the sgMprintf structure pointed to by "arg".  Unlike mout() above,
+** this routine does not allocate new space when the buffer fills.
+** It just truncates.
+*/
+static void sout(void *arg, char *zNewText, int nNewChar){
+  struct sgMprintf *pM = (struct sgMprintf*)arg;
+  if( pM->nChar + nNewChar + 1 > pM->nAlloc ){
+    nNewChar = pM->nAlloc - pM->nChar - 1;
+    if( nNewChar<=0 ) return;
+  }
+  memcpy(&pM->zText[pM->nChar], zNewText, nNewChar);
+  pM->nChar += nNewChar;
+  pM->zText[pM->nChar] = 0;
+}
+
+/*
+** sqlite_sprintf() works like sprintf() except that it ignores the
+** current locale settings.  This is important for SQLite because we
+** are not able to use a "," as the decimal point in place of "." as
+** specified by some locales.
+*/
+int sqlite_snprintf(int n, char *zBuf, const char *zFormat, ...){
+  va_list ap;
+  struct sgMprintf sMprintf;
+
+  sMprintf.nChar = 0;
+  sMprintf.nAlloc = n;
+  sMprintf.zText = zBuf;
+  sMprintf.zBase = zBuf;
+  va_start(ap,zFormat);
+  vxprintf(sout,&sMprintf,zFormat,ap);
+  va_end(ap);
+  return sMprintf.nChar;
+}
+
+
 
 /*
 ** The following four routines implement the varargs versions of the
