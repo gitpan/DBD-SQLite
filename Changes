@@ -1,5 +1,8 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.10
+    - Fixed missing SQLiteXS.h from 0.09
+
 0.09
     - Updated to SQLite 2.3.3, and some file cleanups to make that easier
       next time.

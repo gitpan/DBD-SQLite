@@ -4,6 +4,7 @@ MANIFEST.SKIP
 Makefile.PL
 README
 SQLite.xs
+SQLiteXS.h
 btree.c
 btree.h
 build.c
