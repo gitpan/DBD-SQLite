@@ -2,6 +2,7 @@ Changes
 MANIFEST
 MANIFEST.SKIP
 Makefile.PL
+README
 SQLite.xs
 btree.c
 btree.h
@@ -48,7 +49,6 @@ t/ak-dbd.t
 t/dbdadmin.t
 t/lib.pl
 table.c
-test.pl
 threadtest.c
 tokenize.c
 update.c

@@ -15,7 +15,7 @@
 ** individual tokens and sends those tokens one-by-one over to the
 ** parser for analysis.
 **
-** $Id: tokenize.c,v 1.1.1.1 2002/02/18 17:39:01 matt Exp $
+** $Id: tokenize.c,v 1.2 2002/02/20 13:34:53 matt Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -345,6 +345,9 @@ static int sqliteGetToken(const unsigned char *z, int *tokenType){
   *tokenType = TK_ILLEGAL;
   return 1;
 }
+
+#undef malloc
+#undef free
 
 /*
 ** Run the parser on the given SQL string.  The parser structure is

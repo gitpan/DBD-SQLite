@@ -18,7 +18,7 @@
 ** file simultaneously, or one process from reading the database while
 ** another is writing.
 **
-** @(#) $Id: pager.c,v 1.2 2002/02/18 21:41:56 matt Exp $
+** @(#) $Id: pager.c,v 1.3 2002/02/20 13:34:53 matt Exp $
 */
 #include "sqliteInt.h"
 #include "pager.h"
@@ -75,7 +75,7 @@ struct PgHdr {
   PgHdr *pNextAll, *pPrevAll;    /* A list of all pages */
   char inJournal;                /* TRUE if has been written to journal */
   char inCkpt;                   /* TRUE if written to the checkpoint journal */
-  char dirty;                    /* TRUE if we need to write back changes */
+  char isdirty;                    /* TRUE if we need to write back changes */
   /* SQLITE_PAGE_SIZE bytes of page data follow this header */
   /* Pager.nExtra bytes of local data follow the page data */
 };
@@ -249,7 +249,7 @@ static int pager_unwritelock(Pager *pPager){
   pPager->aInJournal = 0;
   for(pPg=pPager->pAll; pPg; pPg=pPg->pNextAll){
     pPg->inJournal = 0;
-    pPg->dirty = 0;
+    pPg->isdirty = 0;
   }
   pPager->state = SQLITE_READLOCK;
   return rc;
@@ -674,11 +674,11 @@ static int syncAllPages(Pager *pPager){
     pPager->needSync = 0;
   }
   for(pPg=pPager->pFirst; pPg; pPg=pPg->pNextFree){
-    if( pPg->dirty ){
+    if( pPg->isdirty ){
       sqliteOsSeek(&pPager->fd, (pPg->pgno-1)*SQLITE_PAGE_SIZE);
       rc = sqliteOsWrite(&pPager->fd, PGHDR_TO_DATA(pPg), SQLITE_PAGE_SIZE);
       if( rc!=SQLITE_OK ) break;
-      pPg->dirty = 0;
+      pPg->isdirty = 0;
     }
   }
   return rc;
@@ -801,7 +801,7 @@ int sqlitepager_get(Pager *pPager, Pgno pgno, void **ppPage){
       ** of the free list */
       int cnt = pPager->mxPage/2;
       pPg = pPager->pFirst;
-      while( pPg->dirty && 0<cnt-- && pPg->pNextFree ){
+      while( pPg->isdirty && 0<cnt-- && pPg->pNextFree ){
         pPg = pPg->pNextFree;
       }
 
@@ -817,7 +817,7 @@ int sqlitepager_get(Pager *pPager, Pgno pgno, void **ppPage){
       ** near future.  That is way we write all dirty pages after a
       ** sync.
       */
-      if( pPg==0 || pPg->dirty ){
+      if( pPg==0 || pPg->isdirty ){
         int rc = syncAllPages(pPager);
         if( rc!=0 ){
           sqlitepager_rollback(pPager);
@@ -827,7 +827,7 @@ int sqlitepager_get(Pager *pPager, Pgno pgno, void **ppPage){
         pPg = pPager->pFirst;
       }
       assert( pPg->nRef==0 );
-      assert( pPg->dirty==0 );
+      assert( pPg->isdirty==0 );
 
       /* Unlink the old page from the free list and the hash table
       */
@@ -868,7 +868,7 @@ int sqlitepager_get(Pager *pPager, Pgno pgno, void **ppPage){
     }else{
       pPg->inCkpt = 0;
     }
-    pPg->dirty = 0;
+    pPg->isdirty = 0;
     pPg->nRef = 1;
     REFINFO(pPg);
     pPager->nRef++;
@@ -1015,7 +1015,7 @@ int sqlitepager_write(void *pData){
   /* Mark the page as dirty.  If the page has already been written
   ** to the journal then we can return right away.
   */
-  pPg->dirty = 1;
+  pPg->isdirty = 1;
   if( pPg->inJournal && (pPg->inCkpt || pPager->ckptOpen==0) ){
     return SQLITE_OK;
   }
@@ -1122,7 +1122,7 @@ int sqlitepager_write(void *pData){
 */
 int sqlitepager_iswriteable(void *pData){
   PgHdr *pPg = DATA_TO_PGHDR(pData);
-  return pPg->dirty;
+  return pPg->isdirty;
 }
 
 /*
@@ -1153,7 +1153,7 @@ int sqlitepager_commit(Pager *pPager){
     goto commit_abort;
   }
   for(pPg=pPager->pAll; pPg; pPg=pPg->pNextAll){
-    if( pPg->dirty==0 ) continue;
+    if( pPg->isdirty==0 ) continue;
     rc = sqliteOsSeek(&pPager->fd, (pPg->pgno-1)*SQLITE_PAGE_SIZE);
     if( rc!=SQLITE_OK ) goto commit_abort;
     rc = sqliteOsWrite(&pPager->fd, PGHDR_TO_DATA(pPg), SQLITE_PAGE_SIZE);

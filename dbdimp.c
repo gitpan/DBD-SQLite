@@ -1,8 +1,12 @@
-/* $Id: dbdimp.c,v 1.8 2002/02/19 18:50:59 matt Exp $ */
+/* $Id: dbdimp.c,v 1.12 2002/02/22 07:26:00 matt Exp $ */
 
 #include "sqlite.h"
 
 DBISTATE_DECLARE;
+
+#ifndef PL_na
+STRLEN PL_na;
+#endif
 
 void
 sqlite_init(dbistate_t *dbistate)
@@ -51,9 +55,22 @@ int
 sqlite_db_disconnect (SV *dbh, imp_dbh_t *imp_dbh)
 {
     dTHR;
+    DBIc_ACTIVE_off(imp_dbh);
+
+    if (DBIc_has(imp_dbh, DBIcf_AutoCommit)) {
+        int retval;
+        char *errmsg;
+        if (retval = sqlite_exec(imp_dbh->db, "ROLLBACK TRANSACTION",
+            NULL, NULL, &errmsg)
+            != SQLITE_OK)
+        {
+            sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
+            return FALSE;
+        }
+    }
+
     sqlite_close(imp_dbh->db);
     imp_dbh->db = NULL;
-    DBIc_ACTIVE_off(imp_dbh);
 
     return TRUE;
 }
@@ -146,13 +163,13 @@ sqlite_st_parse_sql(imp_sth_t *imp_sth, char *statement)
     chunk = NEWSV(0, strlen(statement)); /* 20 is just a guess */
     sv_setpv(chunk, "");
 
-    // warn("parsing: %s\n", statement);
+    /* warn("parsing: %s\n", statement); */
 
     while (*statement) {
-        // warn("parse: %c => %s\n", *statement, SvPV(chunk, PL_na));
+        /*  warn("parse: %c => %s\n", *statement, SvPV(chunk, PL_na)); */
         if (*statement == '\'') {
             if (in_literal) {
-                // either end of literal, or escape
+                /*  either end of literal, or escape */
                 if (statement[1] && statement[1] == '\'') {
                     statement++;
                     sv_catpvn(chunk, "''", 2);
@@ -244,33 +261,34 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     for (i = 0; i < num_params; i++) {
         SV *value = av_shift(imp_sth->params);
         if (value && SvOK(value)) {
-            // warn("binding param: %s\n", SvPV(value, PL_na));
+            /* warn("binding param: %s\n", SvPV(value, PL_na)); */
             sv_catpvn(sql, "'", 1);
             sv_catpv(sql, sqlite_quote(value));
             sv_catpvn(sql, "'", 1);
         }
         else {
-            // warn("binding NULL\n");
+            /* warn("binding NULL\n"); */
             sv_catpvn(sql, "NULL", 4);
         }
         sv_catsv(sql, AvARRAY(imp_sth->sql)[pos++]);
     }
-    //warn("Executing: %s\n", SvPV(sql, PL_na));
+    /* warn("Executing: %s\n", SvPV(sql, PL_na)); */
 
     if (retval = sqlite_exec(imp_dbh->db, "PRAGMA empty_result_callbacks = ON",
         NULL, NULL, &errmsg)
         != SQLITE_OK)
     {
-        // warn("failed to set pragma: %s\n", errmsg);
+        /*  warn("failed to set pragma: %s\n", errmsg); */
         sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
         sv_setiv(DBIc_ERR(imp_dbh), retval);
         return -2;
     }
 
+    imp_sth->results = NULL;
     if (retval = sqlite_get_table(imp_dbh->db, SvPV(sql, PL_na), &(imp_sth->results),
         &(imp_sth->nrow), &(imp_sth->ncols), &errmsg) != SQLITE_OK)
     {
-        // warn("exec failed: %s\n", errmsg);
+        /*  warn("exec failed: %s\n", errmsg); */
         SvREFCNT_dec(sql);
         sv_setpv(DBIc_ERRSTR(imp_dbh), errmsg);
         sv_setiv(DBIc_ERR(imp_dbh), retval);
@@ -278,10 +296,12 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     }
 
     SvREFCNT_dec(sql);
-    // warn("exec ok - %d rows\n", imp_sth->nrow);
+    /* warn("exec ok - %d rows\n", imp_sth->nrow); */
     DBIc_NUM_FIELDS(imp_sth) = imp_sth->ncols;
     imp_sth->c_row = 1;
-    if (imp_sth->results) { DBIc_ACTIVE_on(imp_sth); }
+    if (imp_sth->ncols != 0) {
+        DBIc_ACTIVE_on(imp_sth);
+    }
     DBIc_IMPSET_on(imp_sth);
     return imp_sth->nrow;
 }
@@ -300,7 +320,7 @@ sqlite_bind_ph (SV *sth, imp_sth_t *imp_sth,
     if (is_inout) {
         croak("InOut bind params not implemented");
     }
-    // warn("bind: %s => %s\n", SvPV(param, PL_na), SvPV(value, PL_na));
+    /* warn("bind: %s => %s\n", SvPV(param, PL_na), SvPV(value, PL_na)); */
     if (sql_type >= SQL_NUMERIC && sql_type <= SQL_DOUBLE) {
         av_store(imp_sth->params, SvIV(param) - 1, newSViv(SvIV(value)));
     }
@@ -418,7 +438,7 @@ sqlite_db_FETCH_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv)
     char *key = SvPV(keysv, PL_na);
 
     if (strncmp(key, "AutoCommit", 10) == 0) {
-        // warn("fetching autocommit\n");
+        /* warn("fetching autocommit\n"); */
         return newSViv(DBIc_is(imp_dbh, DBIcf_AutoCommit));
     }
     return NULL;

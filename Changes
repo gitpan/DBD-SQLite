@@ -1,5 +1,10 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.06
+    - Win32 and 5.00404 build fixes
+    - Added some more performance tests to test.pl
+    - Make sure to set $sth->{Active} only on selects
+
 0.05
     - Added all DBD::CSV tests (ported, of course)
     - Fixed bugs that the above revealed.
