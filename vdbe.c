@@ -30,7 +30,7 @@
 ** But other routines are also provided to help in building up
 ** a program instruction by instruction.
 **
-** $Id: vdbe.c,v 1.4 2002/03/12 15:43:02 matt Exp $
+** $Id: vdbe.c,v 1.6 2002/03/21 16:39:18 matt Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -660,6 +660,7 @@ static void AggReset(Agg *pAgg){
       Mem *pMem = &pElem->aMem[i];
       if( pAgg->apFunc[i] && (pMem->s.flags & STK_AggCtx)!=0 ){
         sqlite_func ctx;
+        ctx.pFunc = pAgg->apFunc[i];
         ctx.s.flags = STK_Null;
         ctx.z = 0;
         ctx.pAgg = pMem->z;
