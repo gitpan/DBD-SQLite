@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.15 2002/02/23 11:17:18 matt Exp $ */
+/* $Id: dbdimp.c,v 1.16 2002/02/25 11:42:43 matt Exp $ */
 
 #include "sqlite.h"
 
@@ -306,6 +306,9 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     if (imp_sth->ncols != 0) {
         DBIc_ACTIVE_on(imp_sth);
     }
+    else {
+        sqlite_free_table(imp_sth->results);
+    }
     DBIc_IMPSET_on(imp_sth);
     return imp_sth->nrow;
 }
@@ -380,15 +383,18 @@ int
 sqlite_st_finish (SV *sth, imp_sth_t *imp_sth)
 {
     DBIc_ACTIVE_off(imp_sth);
+    sqlite_free_table(imp_sth->results);
     return TRUE;
 }
 
 void
 sqlite_st_destroy (SV *sth, imp_sth_t *imp_sth)
 {
+    if (DBIc_ACTIVE(imp_sth)) {
+        sqlite_st_finish(sth, imp_sth);
+    }
     SvREFCNT_dec((SV*)imp_sth->sql);
     SvREFCNT_dec((SV*)imp_sth->params);
-    sqlite_free_table(imp_sth->results);
     DBIc_IMPSET_off(imp_sth);
 }
 

@@ -1,4 +1,4 @@
-# $Id: SQLite.pm,v 1.8 2002/02/22 14:32:36 matt Exp $
+# $Id: SQLite.pm,v 1.10 2002/02/25 11:51:10 matt Exp $
 
 package DBD::SQLite;
 use strict;
@@ -6,7 +6,7 @@ use strict;
 use DBI;
 
 use vars qw($err $errstr $state $drh $VERSION @ISA);
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 use DynaLoader();
 @ISA = ('DynaLoader');
@@ -131,7 +131,7 @@ refer to the docs on the SQLite web page, listed above, for SQL details.
 The API works exactly as every DBI module does. Please see L<DBI> for more
 details.
 
-=head2 $dbh->last_insert_rowid
+=head2 $dbh->func('last_insert_rowid')
 
 This method returns the last inserted rowid. If you specify an INTEGER PRIMARY
 KEY as the first column in your table, that is the column that is returned.

@@ -1,5 +1,9 @@
 Revision history for Perl extension DBD::SQLite.
 
+0.08
+    - Last of the mem leaks fixed
+    - Doc fix on last_insert_rowid
+
 0.07
     - Memory leak fixes (though still leaks some, beware)
     - Some API cleanups and test cleanups
