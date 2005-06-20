@@ -36,19 +36,92 @@ EOT
     }
 };
 
+# 2005/6/19, by rjray@blackperl.com
+#
+# Determine if we are going to use the provided SQLite code, or an already-
+# installed copy. To this end, look for two command-line parameters:
+#
+#    USE_LOCAL_SQLITE -- If non-false, force use of the installed version
+#    SQLITE_LOCATION  -- If passed, look for headers and libs under this root
+#
+# In absense of either of those, expect SQLite 3.X.X libs and headers in the
+# common places known to Perl or the C compiler.
+require File::Spec;
+my ($force_local, $sqlite_base, $sqlite_lib, $sqlite_inc);
+if ($sqlite_base = (grep(/SQLITE_LOCATION=.*/, @ARGV))[0]) {
+    $sqlite_base =~ /=(.*)/;
+    $sqlite_base = $1;
+    $sqlite_lib = File::Spec->catdir($sqlite_base, 'lib');
+    $sqlite_inc = File::Spec->catdir($sqlite_base, 'include');
+}
+if ($force_local = (grep(/USE_LOCAL_SQLITE=.*/, @ARGV))[0]) {
+    $force_local =~ /=(.*)/;
+    $force_local = "$1" ? 1 : 0;
+    if ($force_local) {
+        undef $sqlite_lib; # Keep these from making into CFLAGS/LDFLAGS
+        undef $sqlite_inc;
+    }
+}
+
+# Now, check for a compatible sqlite3
+unless ($force_local) {
+    my ($dir, $file, $fh, $version);
+    print "Checking installed SQLite version...\n";
+    if ($sqlite_inc) {
+        open($fh, '< ' . File::Spec->catfile($sqlite_inc, 'sqlite3.h'))
+            or die "Error opening sqlite3.h in $sqlite_inc: $!";
+        while (defined($_ = <$fh>)) {
+            if (/\#define\s+SQLITE_VERSION_NUMBER\s+(\d+)/) {
+                $version = $1;
+                last;
+            }
+        }
+        close($fh);
+    } else {
+        # Go hunting for the file (Matt: Add more dirs here as you see fit)
+        for $dir ([ qw(usr include) ], [ qw(usr local include) ]) {
+            $file = File::Spec->catfile('', @$dir, 'sqlite3.h');
+            next unless (-f $file);
+            open($fh, "< $file") or die "Error opening $file: $!";
+            while (defined($_ = <$fh>)) {
+                if (/\#define\s+SQLITE_VERSION_NUMBER\s+(\d+)/) {
+                    $version = $1;
+                    last;
+                }
+            }
+            close($fh);
+            last if $version;
+        }
+    }
+    unless ($version && ($version >= 3001003)) {
+        warn "SQLite version must be at least 3.1.3. No header file at that\n";
+        warn "version or higher was found. Using the local version instead.\n";
+        $force_local = 1;
+        undef $sqlite_lib;
+        undef $sqlite_inc;
+    } else {
+        print "Looks good\n";
+    }
+}
+
+@ARGV = grep(! /SQLITE_LOCATION|USE_LOCAL_SQLITE/, @ARGV);
+
 my $nlid = $DBI::VERSION > 1.42 ? '' : '-Dno_last_insert_id';
 
 WriteMakefile(
     'NAME'          => 'DBD::SQLite',
     'VERSION_FROM'  => 'lib/DBD/SQLite.pm', # finds $VERSION
     'PREREQ_PM'     => {DBI => 1.21}, # e.g., Module::Name => 1.1
-    'OBJECT'        => '$(O_FILES)',
-    'INC'           => '-I. -I$(DBI_INSTARCH_DIR)',
+    'OBJECT'        => ($force_local) ? '$(O_FILES)' : 'SQLite.o dbdimp.o',
+    'INC'           => '-I. -I$(DBI_INSTARCH_DIR)' .
+                       (($sqlite_inc) ? " -I$sqlite_inc" : ''),
+    $force_local ? () : ('LIBS' => '-lsqlite3'),
+    $sqlite_lib  ? ('dynamic_lib' => { OTHERLDFLAGS => "-L$sqlite_lib" }) : (),
     'OPTIMIZE'      => "-O2",
     'DEFINE'        => "-DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}" .
                        ($Config{d_usleep} ? " -DHAVE_USLEEP=1" : "") .
                        ($DBI::VERSION > 1.42 ? '' : ' -Dno_last_insert_id'),
-    'clean'         => { FILES => 'SQLite.xsi config.h tv.log output/foo' },
+    'clean'         => { FILES => 'SQLite.xsi config.h tv.log output' },
     'PL_FILES'      => {},
     'EXE_FILES'     => [],
 );

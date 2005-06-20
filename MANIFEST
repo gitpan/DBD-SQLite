@@ -4,6 +4,7 @@ auth.c
 btree.c
 btree.h
 build.c
+callback.c
 Changes
 date.c
 dbdimp.c
@@ -28,8 +29,6 @@ opcodes.c
 opcodes.h
 os.h
 os_common.h
-os_mac.c
-os_mac.h
 os_test.c
 os_test.h
 os_unix.c
@@ -42,6 +41,7 @@ parse.c
 parse.h
 ppport.h
 pragma.c
+prepare.c
 printf.c
 random.c
 README

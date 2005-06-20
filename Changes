@@ -1,5 +1,11 @@
 Revision history for Perl extension DBD::SQLite.
 
+1.09
+    - Support external SQLite library (rjray)
+    - Don't convert things that look like numbers to numbers unless
+      specifically requested.
+    - Upgrade to sqlite 3.2.2
+
 1.08
     - Support 64 bit integers (uses floating point numbers when perl is not 
         compiled with 64 bit int support). This also fixes issues with using

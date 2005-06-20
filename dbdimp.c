@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.53 2004/10/12 18:42:55 matt Exp $ */
+/* $Id: dbdimp.c,v 1.54 2005/06/20 13:53:01 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -356,10 +356,6 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
             STRLEN len;
             char * data = SvPV(value, len);
             retval = sqlite3_bind_blob(imp_sth->stmt, i+1, data, len, SQLITE_TRANSIENT);
-        }
-        else if (looks_like_number(value)) {
-            /* bind ordinary numbers as numbers - otherwise we might sort wrong */
-            retval = sqlite3_bind_double(imp_sth->stmt, i+1, SvNV(value));
         }
         else {
             STRLEN len;
