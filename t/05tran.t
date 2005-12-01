@@ -5,6 +5,7 @@ unlink("foo");
 my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "",
   {AutoCommit => 0, RaiseError => 1});
 
+# $dbh->trace(2);
 ok($dbh);
 
 $dbh->do("CREATE TABLE MST (id, lbl)");

@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.54 2005/06/20 13:53:01 matt Exp $ */
+/* $Id: dbdimp.c,v 1.56 2005/12/01 20:48:05 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -97,7 +97,7 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
     DBIc_IMPSET_on(imp_dbh);
 
     imp_dbh->in_tran = FALSE;
-    imp_dbh->no_utf8_flag = FALSE;
+    imp_dbh->unicode = FALSE;
     imp_dbh->functions = newAV();
     imp_dbh->aggregates = newAV();
     imp_dbh->timeout = SQL_TIMEOUT;
@@ -183,6 +183,7 @@ sqlite_db_rollback(SV *dbh, imp_dbh_t *imp_dbh)
     char *errmsg;
 
     if (imp_dbh->in_tran) {
+        sqlite_trace(2, "ROLLBACK TRAN");
         if ((retval = sqlite3_exec(imp_dbh->db, "ROLLBACK TRANSACTION",
             NULL, NULL, &errmsg))
             != SQLITE_OK)
@@ -209,7 +210,7 @@ sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
     }
 
     if (imp_dbh->in_tran) {
-        sqlite_trace(3, "COMMIT TRAN");
+        sqlite_trace(2, "COMMIT TRAN");
         if ((retval = sqlite3_exec(imp_dbh->db, "COMMIT TRANSACTION",
             NULL, NULL, &errmsg))
             != SQLITE_OK)
@@ -502,7 +503,11 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
                     val[len] = '\0';
                 }
                 sv_setpv(AvARRAY(av)[i], val);
-                SvUTF8_off(AvARRAY(av)[i]);
+                if (imp_dbh->unicode) {
+                  SvUTF8_on(AvARRAY(av)[i]);
+                } else {
+                  SvUTF8_off(AvARRAY(av)[i]);
+                }
                 if (chopBlanks) Safefree(val);
                 break;
             case SQLITE_BLOB:
@@ -593,6 +598,10 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
         DBIc_set(imp_dbh, DBIcf_AutoCommit, SvTRUE(valuesv));
         return TRUE;
     }
+    if (strEQ(key, "unicode")) {
+      imp_dbh->unicode = !(! SvTRUE(valuesv));
+      return TRUE;
+    }
     return FALSE;
 }
 
@@ -605,6 +614,10 @@ sqlite_db_FETCH_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv)
     if (strEQ(key, "sqlite_version")) {
         return newSVpv(sqlite3_version,0);
     }
+   if (strEQ(key, "unicode")) {
+     return newSViv(imp_dbh->unicode ? 1 : 0);
+   }
+
     return NULL;
 }
 

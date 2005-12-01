@@ -119,7 +119,9 @@ WriteMakefile(
     $sqlite_lib  ? ('dynamic_lib' => { OTHERLDFLAGS => "-L$sqlite_lib" }) : (),
     'OPTIMIZE'      => "-O2",
     'DEFINE'        => "-DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}" .
-                       ($Config{d_usleep} ? " -DHAVE_USLEEP=1" : "") .
+                       ( ($Config{d_usleep} ||
+                          $Config{osname} =~ m/linux/) ?
+                                " -DHAVE_USLEEP=1" : "" ) .
                        ($DBI::VERSION > 1.42 ? '' : ' -Dno_last_insert_id'),
     'clean'         => { FILES => 'SQLite.xsi config.h tv.log output' },
     'PL_FILES'      => {},
