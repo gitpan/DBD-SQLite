@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.56 2005/12/01 20:48:05 matt Exp $ */
+/* $Id: dbdimp.c,v 1.57 2005/12/02 17:28:53 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -494,7 +494,7 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
                 break;
             case SQLITE_TEXT:
                 val = (char*)sqlite3_column_text(imp_sth->stmt, i);
-                len = strlen(val);
+                len = sqlite3_column_bytes(imp_sth->stmt, i);
                 if (chopBlanks) {
                     val = savepv(val);
                     while((len > 0) && (val[len-1] == ' ')) {
@@ -502,7 +502,7 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
                     }
                     val[len] = '\0';
                 }
-                sv_setpv(AvARRAY(av)[i], val);
+                sv_setpvn(AvARRAY(av)[i], val, len);
                 if (imp_dbh->unicode) {
                   SvUTF8_on(AvARRAY(av)[i]);
                 } else {

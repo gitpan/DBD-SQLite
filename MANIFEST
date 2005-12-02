@@ -65,6 +65,7 @@ t/20createdrop.t
 t/30insertfetch.t
 t/40bindparam.t
 t/40blobs.t
+t/40blobtext.t
 t/40listfields.t
 t/40nulls.t
 t/40numrows.t

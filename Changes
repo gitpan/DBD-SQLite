@@ -1,5 +1,8 @@
 Revision history for Perl extension DBD::SQLite.
 
+1.11
+    - Make blobs work transparently (without SQLBLOB binding)
+
 1.10
     - Fix Unicode support (DOMQ)
     - Support usleep on all Linux (inc. debian) (DOMQ)

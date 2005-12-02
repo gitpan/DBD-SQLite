@@ -1,11 +1,11 @@
-# $Id: SQLite.pm,v 1.49 2005/12/01 20:48:05 matt Exp $
+# $Id: SQLite.pm,v 1.51 2005/12/02 17:31:57 matt Exp $
 
 package DBD::SQLite;
 use strict;
 
 use DBI;
 use vars qw($err $errstr $state $drh $VERSION @ISA);
-$VERSION = '1.10';
+$VERSION = '1.11';
 
 use DynaLoader();
 @ISA = ('DynaLoader');
@@ -519,10 +519,11 @@ The aggregate function can then be used as:
 
 =head1 BLOBS
 
-SQLite fully supports blobs, but they're a little complex to store and retrieve
-from the database due to the typeless nature of SQLite. In order to make proper
-use of blobs you need to explicitly bind variables to a prepared statement using
-a BLOB type:
+As of version 1.11, blobs should "just work" in SQLite as text columns. However
+this will cause the data to be treated as a string, so SQL statements such
+as length(x) will return the length of the column as a NUL terminated string,
+rather than the size of the blob in bytes. In order to store natively as a
+BLOB use the following code:
 
   use DBI qw(:sql_types);
   my $dbh = DBI->connect("dbi:sqlite:/path/to/db");
@@ -540,8 +541,6 @@ And then retreival just works:
   my $blobo = $row->[1];
   
   # now $blobo == $blob
-
-This is all necessary because SQLite is typeless. Sorry.
 
 =head1 NOTES
 
