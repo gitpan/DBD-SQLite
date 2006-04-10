@@ -47,6 +47,13 @@ src/test2.c
 src/test3.c
 src/test4.c
 src/test5.c
+src/test6.c
+src/test7.c
+src/test8.c
+src/test9.c
+src/test_async.c
+src/test_md5.c
+src/test_server.c
 src/tclsqlite.c
 src/shell.c
 src/lemon.c

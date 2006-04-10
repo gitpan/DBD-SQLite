@@ -7,10 +7,12 @@ btree.h
 build.c
 callback.c
 Changes
+complete.c
 date.c
 dbdimp.c
 dbdimp.h
 delete.c
+earlyexit.pl
 experimental.c
 expr.c
 func.c
@@ -28,6 +30,7 @@ MANIFEST.SKIP
 META.yml			Module meta-data (added by MakeMaker)
 opcodes.c
 opcodes.h
+os.c
 os.h
 os_common.h
 os_test.c
@@ -58,9 +61,11 @@ t/03insert.t
 t/04select.t
 t/05tran.t
 t/06error.t
+t/07busy.t
 t/08create_function.t
 t/09create_aggregate.t
 t/10dsnlist.t
+t/11unicode.t
 t/20createdrop.t
 t/30insertfetch.t
 t/40bindparam.t

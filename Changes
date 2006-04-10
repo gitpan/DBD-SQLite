@@ -1,5 +1,8 @@
 Revision history for Perl extension DBD::SQLite.
 
+1.12
+	- Brought up to date with SQLite 3.3.5
+
 1.11
     - Make blobs work transparently (without SQLBLOB binding)
 

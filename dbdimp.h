@@ -1,4 +1,4 @@
-/* $Id: dbdimp.h,v 1.16 2005/08/05 21:21:02 matt Exp $ */
+/* $Id: dbdimp.h,v 1.17 2006/04/10 01:50:05 matt Exp $ */
 
 #ifndef _DBDIMP_H
 #define _DBDIMP_H   1
@@ -77,6 +77,7 @@ void sqlite_db_create_aggregate( SV *dbh, const char *name, int argc, SV *aggr )
 
 static SV *
 newUTF8SVpv(char *s, STRLEN len) {
+  dTHX;
   register SV *sv;
 
   sv = newSVpv(s, len);
@@ -86,6 +87,7 @@ newUTF8SVpv(char *s, STRLEN len) {
 
 static SV *
 newUTF8SVpvn(char *s, STRLEN len) {
+  dTHX;
   register SV *sv;
 
   sv = newSV(0);

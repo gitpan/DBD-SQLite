@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.57 2005/12/02 17:28:53 matt Exp $ */
+/* $Id: dbdimp.c,v 1.58 2006/04/10 01:50:05 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -260,7 +260,7 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
     imp_sth->retval = SQLITE_OK;
     imp_sth->params = newAV();
 
-    if ((retval = sqlite3_prepare(imp_dbh->db, statement, 0, &(imp_sth->stmt), &extra))
+    if ((retval = sqlite3_prepare(imp_dbh->db, statement, -1, &(imp_sth->stmt), &extra))
         != SQLITE_OK)
     {
         if (imp_sth->stmt) {
@@ -320,7 +320,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         psv = hv_fetch((HV*)SvRV(sth), "Statement", 9, 0);
         statement = (psv && SvOK(*psv)) ? SvPV_nolen(*psv) : "";
         sqlite_trace(3, "re-prepare statement %s", statement);
-        if ((retval = sqlite3_prepare(imp_dbh->db, statement, 0, &(imp_sth->stmt), &extra))
+        if ((retval = sqlite3_prepare(imp_dbh->db, statement, -1, &(imp_sth->stmt), &extra))
             != SQLITE_OK)
         {
             if (imp_sth->stmt) {
@@ -740,7 +740,7 @@ sqlite_db_func_dispatcher(sqlite3_context *context, int argc, sqlite3_value **va
     PUSHMARK(SP);
     for ( i=0; i < argc; i++ ) {
         SV *arg;
-        int len;
+        int len = sqlite3_value_bytes(value[i]);
         int type = sqlite3_value_type(value[i]);
         
         /* warn("func dispatch type: %d, value: %s\n", type, sqlite3_value_text(value[i])); */
@@ -752,10 +752,9 @@ sqlite_db_func_dispatcher(sqlite3_context *context, int argc, sqlite3_value **va
                 arg = sv_2mortal(newSVnv(sqlite3_value_double(value[i])));
                 break;
             case SQLITE_TEXT:
-                arg = sv_2mortal(newSVpv(sqlite3_value_text(value[i]),0));
+                arg = sv_2mortal(newSVpv(sqlite3_value_text(value[i]),len));
                 break;
             case SQLITE_BLOB:
-                len = sqlite3_value_bytes(value[i]);
                 arg = sv_2mortal(newSVpvn(sqlite3_value_blob(value[i]), len));
                 break;
             default:
