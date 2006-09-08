@@ -108,7 +108,7 @@ ok( $result &&  $result->[0] == 1);
 $result = $dbh->selectrow_arrayref( "SELECT noop('')" );
 ok( $result &&  $result->[0] eq '' );
 
-$result = $dbh->selectrow_arrayref( "SELECT noop(1.1)" );
-ok( $result &&  $result->[0] == 1.1 );
+$result = $dbh->selectrow_arrayref( "SELECT noop(1.0625)" );
+ok( $result &&  $result->[0] == 1.0625 );
 
 $dbh->disconnect;

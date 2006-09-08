@@ -14,5 +14,5 @@ my $names = $sth->{NAME};
 ok(@$names == 4);
 print("# ", join(', ', @$names), "\n");
 ok($names->[0] eq "f1");	# make sure the "f." is removed
-$sth->finish;
+undef $sth;
 $dbh->disconnect;

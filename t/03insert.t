@@ -15,4 +15,6 @@ ok($sth->execute("test", "test", "1"));
 ok($sth->execute("test", "test", "2"));
 ok($sth->execute("test", "test", "3"));
 ok($dbh->do("delete from f where f1='test'") == 3);
+$sth->finish;
+undef $sth;
 $dbh->disconnect;

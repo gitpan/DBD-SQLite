@@ -1,4 +1,4 @@
-/* $Id: dbdimp.h,v 1.17 2006/04/10 01:50:05 matt Exp $ */
+/* $Id: dbdimp.h,v 1.20 2006/09/08 04:50:50 matt Exp $ */
 
 #ifndef _DBDIMP_H
 #define _DBDIMP_H   1
@@ -39,7 +39,9 @@ struct imp_sth_st {
     */
     int retval;
     int nrow;
+    char *statement;
     AV *params;
+    AV *col_types;
 };
 
 #define dbd_init                sqlite_init
@@ -61,7 +63,7 @@ struct imp_sth_st {
 #define dbd_st_rows             sqlite_st_rows
 #define dbd_st_execute          sqlite_st_execute
 #define dbd_st_fetch            sqlite_st_fetch
-#define dbd_st_finish           sqlite_st_finish
+#define dbd_st_finish3          sqlite_st_finish3
 #define dbd_st_destroy          sqlite_st_destroy
 #define dbd_st_blob_read        sqlite_st_blob_read
 #define dbd_st_STORE_attrib     sqlite_st_STORE_attrib
@@ -69,6 +71,7 @@ struct imp_sth_st {
 #define dbd_st_STORE_attrib_k   sqlite_st_STORE_attrib_k
 #define dbd_st_FETCH_attrib_k   sqlite_st_FETCH_attrib_k
 #define dbd_bind_ph             sqlite_bind_ph
+#define dbd_st_bind_col			sqlite_bind_col
 
 void sqlite_db_create_function(SV *dbh, const char *name, int argc, SV *func);
 void sqlite_db_create_aggregate( SV *dbh, const char *name, int argc, SV *aggr );
@@ -101,6 +104,7 @@ newUTF8SVpvn(char *s, STRLEN len) {
 #define newUTF8SVpv newSVpv
 #define newUTF8SVpvn newSVpvn
 #define SvUTF8_on(a) (a)
+#define SvUTF8_off(a) (a)
 #define sv_utf8_upgrade(a) (a)
 
 #endif

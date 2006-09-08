@@ -33,4 +33,5 @@ print(join(', ', @$names), "\n");
 while(my $raD = $sth->fetchrow_arrayref()) {
     print join(":", @$raD), "\n";
 }
+undef $sth;
 $dbh->disconnect;

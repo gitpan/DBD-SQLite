@@ -12,7 +12,7 @@ foreach my $file (@c_files) {
         $line++;
         if (/^(.*)\/\//) {
             my $m = $1;
-            if ($m !~ /\*/) { # skip the // in c++ comment in parse.c
+            if ($m !~ /\*/ && $m !~ /http:$/) { # skip the // in c++ comment in parse.c
                 ok(0, 1, "C++ comment in $file line $line");
                 next FILE;
             }

@@ -49,28 +49,27 @@ if (!defined($pid)) {
     # fork failed
     skip("No fork here", 1);
     skip("No fork here", 1);
-    exit;
-}
-if ($pid) {
-    # parent
+} elsif (!$pid) {
+    # child
     my $db2 = DBI->connect('dbi:SQLite:foo', '', '', 
     {
         RaiseError => 1,
         PrintError => 0,
         AutoCommit => 0,
     });
+    $db2->do("INSERT INTO Blah VALUES ( 3, 'Test3' )");
+    select WRITER; $| = 1; select STDOUT;
+    print WRITER "Ready\n";
+    sleep(5);
+    $db2->commit;
+} else {
+    # parent
+    close WRITER;
     my $line = <READER>;
     chomp($line);
     ok($line, "Ready");
-    $db2->func(10000, 'busy_timeout');
-    ok($db2->do("INSERT INTO Blah VALUES (4, 'Test4' )"));
-    $db2->commit;
-    exit;
+    $db->func(10000, 'busy_timeout');
+    ok($db->do("INSERT INTO Blah VALUES (4, 'Test4' )"));
+    $db->commit;
+    wait;
 }
-
-$db->do("INSERT INTO Blah VALUES ( 3, 'Test3' )");
-print WRITER "Ready\n";
-sleep(5);
-$db->commit;
- 
-

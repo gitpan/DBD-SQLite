@@ -38,6 +38,10 @@ for (1..5) {
     ok($sth->execute($_, $blob));
 }
 
+$sth->finish;
+
+undef $sth;
+
 my $sel = $db->prepare("SELECT * FROM Blah WHERE id = ?");
 
 ok($sel);
@@ -50,6 +54,10 @@ for (1..5) {
     ok($row->[1] eq $blob);
     ok(!$sel->fetch);
 }
+
+$sel->finish;
+
+undef $sel;
 
 $db->disconnect;
 

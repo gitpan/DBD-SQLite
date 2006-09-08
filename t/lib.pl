@@ -1,6 +1,6 @@
 #   Hej, Emacs, give us -*- perl mode here!
 #
-#   $Id: lib.pl,v 1.3 2002/12/19 18:35:43 matt Exp $
+#   $Id: lib.pl,v 1.4 2006/09/07 23:24:27 matt Exp $
 #
 #   lib.pl is the file where database specific things should live,
 #   whereever possible. For example, you define certain constants
@@ -26,6 +26,8 @@ $dbdriver = $mdriver; # $dbdriver is usually just the same as $mdriver.
 #
 #   DSN being used; do not edit this, edit "$dbdriver.dbtest" instead
 #
+mkdir 'output';
+
 $haveFileSpec = eval { require File::Spec };
 my $table_dir = $haveFileSpec ?
     File::Spec->catdir(File::Spec->curdir(), 'output', 'foo') : 'output/foo';

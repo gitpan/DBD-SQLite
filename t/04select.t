@@ -49,5 +49,6 @@ while ($row = $sth->fetch) {
 }	
 ok($num_rows == 1);
 $sth->finish;
+undef $sth;
 $dbh->do("delete from f where f1='test'");
 $dbh->disconnect;

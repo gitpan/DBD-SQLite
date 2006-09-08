@@ -1,10 +1,13 @@
+use ExtUtils::MakeMaker;
 eval {
     require DBI;
     require DBI::DBD;
-    die "Your DBI Version is too old - require at least 1.03"
-        unless $DBI::VERSION >= 1.03;
+    die "Your DBI Version is too old - DBD::SQLite requires at least 1.21"
+        unless $DBI::VERSION >= 1.21;
 };
-use ExtUtils::MakeMaker;
+if ($@) {
+    warn $@;
+}
 use Config;
 use strict;
 eval {
@@ -108,6 +111,10 @@ unless ($force_local) {
 
 my $nlid = $DBI::VERSION > 1.42 ? '' : '-Dno_last_insert_id';
 
+my $libs = '';
+$libs .= "-L$sqlite_lib " if ($sqlite_lib); 
+$libs .= "-lsqlite3 " unless ($force_local);
+
 WriteMakefile(
     'NAME'          => 'DBD::SQLite',
     'VERSION_FROM'  => 'lib/DBD/SQLite.pm', # finds $VERSION
@@ -115,8 +122,7 @@ WriteMakefile(
     'OBJECT'        => ($force_local) ? '$(O_FILES)' : 'SQLite.o dbdimp.o',
     'INC'           => '-I. -I$(DBI_INSTARCH_DIR)' .
                        (($sqlite_inc) ? " -I$sqlite_inc" : ''),
-    $force_local ? () : ('LIBS' => '-lsqlite3'),
-    $sqlite_lib  ? ('dynamic_lib' => { OTHERLDFLAGS => "-L$sqlite_lib" }) : (),
+    $libs ? ('LIBS' => $libs) : (),
     'OPTIMIZE'      => "-O2",
     'DEFINE'        => "-DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}" .
                        ( ($Config{d_usleep} ||
