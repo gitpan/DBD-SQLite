@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#   $Id: 40prepcached.t,v 1.1 2006/04/23 22:44:44 matt Exp $
+#   $Id: 40numrows.t,v 1.2 2003/08/11 21:51:14 matt Exp $
 #
 #   This is a regression test for bug #15186:
 #   http://rt.cpan.org/Public/Bug/Display.html?id=15186

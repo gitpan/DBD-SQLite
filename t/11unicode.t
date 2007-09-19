@@ -106,7 +106,17 @@ Test($textback eq $bytestring, "Same text, different encoding");
 
 # Start over but now activate Unicode support.
 
-$dbh->{unicode} = 1;
+if ($ENV{DBI_AUTOPROXY}) {
+    # for testing DBD::Gofer we have to create a new dbh with unicode enabled
+    # because we can't change the attribute for an existing dbh
+    $dbh = DBI->connect($test_dsn, $test_user, $test_password, {
+        RaiseError => 1,
+        unicode => 1,
+    })
+}
+else {
+    $dbh->{unicode} = 1;
+}
 
 ($textback, $bytesback) =
     database_roundtrip($utfstring, $bytestring);

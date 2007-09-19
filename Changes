@@ -1,5 +1,16 @@
 Revision history for Perl extension DBD::SQLite.
 
+1.14
+    - Updated to SQLite 3.4.2
+    - Switch to sqlite3_prepare_v2 which fixes a number of bugs
+      with re-using statements
+    - Fix bug with overflowing integers in user defined functions
+    - Fix bug when building under no-threads perl
+
+1.13
+	- A number of bug fixes from RT.
+	- Support named bind parameters
+
 1.12
 	- Brought up to date with SQLite 3.3.5
 

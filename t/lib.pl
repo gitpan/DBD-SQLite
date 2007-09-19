@@ -1,6 +1,6 @@
 #   Hej, Emacs, give us -*- perl mode here!
 #
-#   $Id: lib.pl,v 1.4 2006/09/07 23:24:27 matt Exp $
+#   $Id: lib.pl,v 1.3 2002/12/19 18:35:43 matt Exp $
 #
 #   lib.pl is the file where database specific things should live,
 #   whereever possible. For example, you define certain constants
@@ -11,6 +11,8 @@ require 5.003;
 use strict;
 use vars qw($mdriver $dbdriver $childPid $test_dsn $test_user $test_password
             $haveFileSpec);
+
+$| = 1; # flush stdout asap to keep in sync with stderr
 
 
 #
@@ -171,7 +173,8 @@ select (STDOUT) ; $| = 1 ;
 		print "ok $::numTests ". (defined($error) ? "$error\n" : "\n");
 		return 1;
 	    } else {
-		print("not ok $::numTests - " .
+		my ($pack, $file, $line) = caller();
+		print("not ok $::numTests at line $line - " .
 			(defined($error) ? "$error\n" : "\n"));
 		print("FAILED Test $::numTests - " .
 			(defined($error) ? "$error\n" : "\n"));

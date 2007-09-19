@@ -1,4 +1,4 @@
-/* $Id: dbdimp.h,v 1.20 2006/09/08 04:50:50 matt Exp $ */
+/* $Id: dbdimp.h,v 1.19 2006/09/07 23:24:27 matt Exp $ */
 
 #ifndef _DBDIMP_H
 #define _DBDIMP_H   1
@@ -64,6 +64,7 @@ struct imp_sth_st {
 #define dbd_st_execute          sqlite_st_execute
 #define dbd_st_fetch            sqlite_st_fetch
 #define dbd_st_finish3          sqlite_st_finish3
+#define dbd_st_finish           sqlite_st_finish
 #define dbd_st_destroy          sqlite_st_destroy
 #define dbd_st_blob_read        sqlite_st_blob_read
 #define dbd_st_STORE_attrib     sqlite_st_STORE_attrib

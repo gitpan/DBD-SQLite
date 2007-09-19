@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#   $Id: 40blobs.t,v 1.5 2004/07/21 20:50:45 matt Exp $
+#   $Id: 40blobs.t,v 1.4 2003/07/31 14:09:16 matt Exp $
 #
 #   This is a test for correct handling of BLOBS; namely $dbh->quote
 #   is expected to work correctly.

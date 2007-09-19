@@ -4,6 +4,7 @@ attach.c
 auth.c
 btree.c
 btree.h
+btreeInt.h
 build.c
 callback.c
 Changes
@@ -14,6 +15,15 @@ dbdimp.h
 delete.c
 expr.c
 func.c
+fts2.c
+fts2.h
+fts2_hash.c
+fts2_hash.h
+fts2_icu.c
+fts2_porter.c
+fts2_tokenizer.c
+fts2_tokenizer.h
+fts2_tokenizer1.c
 getsqlite.pl
 hash.c
 hash.h
@@ -24,6 +34,7 @@ lib/DBD/SQLite.pm
 loadext.c
 main.c
 Makefile.PL
+malloc.c
 MANIFEST
 MANIFEST.SKIP
 META.yml			Module meta-data (added by MakeMaker)
@@ -34,12 +45,8 @@ os.h
 os_common.h
 os_os2.c
 os_os2.h
-os_test.c
-os_test.h
 os_unix.c
-os_unix.h
 os_win.c
-os_win.h
 pager.c
 pager.h
 parse.c
@@ -55,6 +62,7 @@ SQLite.xs
 sqlite3.h
 sqlite3ext.h
 sqliteInt.h
+sqliteLimit.h
 SQLiteXS.h
 t/00basic.t
 t/01logon.t
@@ -80,6 +88,7 @@ t/40prepcached.t
 t/50chopblanks.t
 t/50commit.t
 t/60metadata.t
+t/70schemachange.t
 t/90cppcomments.t
 t/99cleanup.t
 t/ak-dbd.t
@@ -97,6 +106,7 @@ vdbe.c
 vdbe.h
 vdbeapi.c
 vdbeaux.c
+vdbeblob.c
 vdbefifo.c
 vdbeInt.h
 vdbemem.c

@@ -30,7 +30,7 @@ my $num_rows = 0;
 while ($row = $sth->fetch) {
 	$num_rows++;
 }	
-ok($num_rows == 1, 1, "Check num_rows ($num_rows) == 1");
+ok($num_rows, 1, "Check num_rows ($num_rows) == 1");
 $sth->finish;
 $dbh->do("delete from f where f1='test'");
 $sth = $dbh->prepare("INSERT INTO f (f1, f2, f3) VALUES (?, ?, ?)");

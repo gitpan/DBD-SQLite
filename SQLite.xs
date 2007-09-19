@@ -1,4 +1,4 @@
-/* $Id: SQLite.xs,v 1.9 2006/09/07 23:24:27 matt Exp $ */
+/* $Id: SQLite.xs,v 1.8 2005/06/20 13:53:00 matt Exp $ */
 
 #include "SQLiteXS.h"
 

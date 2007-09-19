@@ -1,4 +1,4 @@
-/* $Id: dbdimp.c,v 1.63 2006/09/08 04:50:50 matt Exp $ */
+/* $Id: dbdimp.c,v 1.64 2006/09/18 18:54:05 matt Exp $ */
 
 #include "SQLiteXS.h"
 
@@ -262,7 +262,7 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
     imp_sth->col_types = newAV();
     Newz(0, imp_sth->statement, strlen(statement)+1, char);
     
-    if ((retval = sqlite3_prepare(imp_dbh->db, statement, -1, &(imp_sth->stmt), &extra))
+    if ((retval = sqlite3_prepare_v2(imp_dbh->db, statement, -1, &(imp_sth->stmt), &extra))
         != SQLITE_OK)
     {
         if (imp_sth->stmt) {
@@ -394,12 +394,13 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     
     sqlite_trace(3, "Execute returned %d cols\n", DBIc_NUM_FIELDS(imp_sth));
     if (DBIc_NUM_FIELDS(imp_sth) == 0) {
-        while ((retval = sqlite3_step(imp_sth->stmt)) != SQLITE_DONE) {
-            if (retval == SQLITE_ROW) {
+        while ((imp_sth->retval = sqlite3_step(imp_sth->stmt)) != SQLITE_DONE) {
+            if (imp_sth->retval == SQLITE_ROW) {
                 continue;
             }
+            /* There are bug reports that say this should be sqlite3_reset() */
             sqlite3_finalize(imp_sth->stmt);
-            sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, (char*)sqlite3_errmsg(imp_dbh->db));
+            sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, (char*)sqlite3_errmsg(imp_dbh->db));
             return -5;
         }
         /* warn("Finalize\n"); */
@@ -417,6 +418,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         case SQLITE_DONE: DBIc_ACTIVE_on(imp_sth);
                           sqlite_trace(5, "exec ok - %d rows, %d cols\n", imp_sth->nrow, DBIc_NUM_FIELDS(imp_sth));
                           return 0;
+                          /* There are bug reports that say this should be sqlite3_reset() */
         default:          sqlite3_finalize(imp_sth->stmt);
                           sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, (char*)sqlite3_errmsg(imp_dbh->db));
                           return -6;
@@ -440,14 +442,14 @@ sqlite_bind_ph (SV *sth, imp_sth_t *imp_sth,
                                 int is_inout, IV maxlen)
 {
     int pos;
-    if (!SvIOK(param)) {
-        int len;
+    if (!looks_like_number(param)) {
+        STRLEN len;
         char *paramstring;
         paramstring = SvPV(param, len);
-        if( paramstring[len] == 0 && strlen(paramstring) == len) {
+        if(paramstring[len] == 0 && strlen(paramstring) == len) {
             pos = sqlite3_bind_parameter_index(imp_sth->stmt, paramstring);
             if (pos==0)
-                croak("Unknown named parameter");
+                croak("Unknown named parameter: %s", paramstring);
             pos = 2 * (pos - 1);
         }
         else {
@@ -771,7 +773,11 @@ sqlite_db_set_result(sqlite3_context *context, SV *result, int is_error )
 /* warn("result: %s\n", SvPV_nolen(result)); */
     if ( !SvOK(result) ) {
         sqlite3_result_null( context );
-    } else if( SvIOK(result) ) {
+    } else if( SvIOK_UV(result) ) {
+        s = SvPV(result, len);
+        sqlite3_result_text( context, s, len, SQLITE_TRANSIENT );
+    }
+    else if ( SvIOK(result) ) {
         sqlite3_result_int( context, SvIV(result));
     } else if ( !is_error && SvIOK(result) ) {
         sqlite3_result_double( context, SvNV(result));
@@ -797,7 +803,7 @@ sqlite_db_func_dispatcher(sqlite3_context *context, int argc, sqlite3_value **va
     PUSHMARK(SP);
     for ( i=0; i < argc; i++ ) {
         SV *arg;
-        int len = sqlite3_value_bytes(value[i]);
+        STRLEN len = sqlite3_value_bytes(value[i]);
         int type = sqlite3_value_type(value[i]);
         
         /* warn("func dispatch type: %d, value: %s\n", type, sqlite3_value_text(value[i])); */
@@ -809,7 +815,7 @@ sqlite_db_func_dispatcher(sqlite3_context *context, int argc, sqlite3_value **va
                 arg = sv_2mortal(newSVnv(sqlite3_value_double(value[i])));
                 break;
             case SQLITE_TEXT:
-                arg = sv_2mortal(newSVpv(sqlite3_value_text(value[i]),len));
+                arg = sv_2mortal(newSVpvn((const char *)sqlite3_value_text(value[i]), len));
                 break;
             case SQLITE_BLOB:
                 arg = sv_2mortal(newSVpvn(sqlite3_value_blob(value[i]), len));
@@ -960,7 +966,7 @@ sqlite_db_aggr_step_dispatcher (sqlite3_context *context,
     XPUSHs( sv_2mortal( newSVsv( aggr->aggr_inst ) ));
     for ( i=0; i < argc; i++ ) {
         SV *arg;
-        int len;
+        int len = sqlite3_value_bytes(value[i]);
         int type = sqlite3_value_type(value[i]);
         
         switch(type) {
@@ -971,10 +977,9 @@ sqlite_db_aggr_step_dispatcher (sqlite3_context *context,
                 arg = sv_2mortal(newSVnv(sqlite3_value_double(value[i])));
                 break;
             case SQLITE_TEXT:
-                arg = sv_2mortal(newSVpv(sqlite3_value_text(value[i]), 0));
+                arg = sv_2mortal(newSVpvn((const char *)sqlite3_value_text(value[i]), len));
                 break;
             case SQLITE_BLOB:
-                len = sqlite3_value_bytes(value[i]);
                 arg = sv_2mortal(newSVpvn(sqlite3_value_blob(value[i]), len));
                 break;
             default:

@@ -96,8 +96,8 @@ unless ($force_local) {
             last if $version;
         }
     }
-    unless ($version && ($version >= 3001003)) {
-        warn "SQLite version must be at least 3.1.3. No header file at that\n";
+    unless ($version && ($version >= 3003009)) {
+        warn "SQLite version must be at least 3.3.9. No header file at that\n";
         warn "version or higher was found. Using the local version instead.\n";
         $force_local = 1;
         undef $sqlite_lib;
@@ -124,11 +124,12 @@ WriteMakefile(
                        (($sqlite_inc) ? " -I$sqlite_inc" : ''),
     $libs ? ('LIBS' => $libs) : (),
     'OPTIMIZE'      => "-O2",
-    'DEFINE'        => "-DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}" .
+    'DEFINE'        => "-DSQLITE_CORE -DSQLITE_ENABLE_FTS2 -DNDEBUG=1 -DSQLITE_PTR_SZ=$Config{ptrsize}" .
                        ( ($Config{d_usleep} ||
                           $Config{osname} =~ m/linux/) ?
                                 " -DHAVE_USLEEP=1" : "" ) .
-                       ($DBI::VERSION > 1.42 ? '' : ' -Dno_last_insert_id'),
+                       ($DBI::VERSION > 1.42 ? '' : ' -Dno_last_insert_id') . 
+                       ($Config{usethreads} ? '' : ' -DTHREADSAFE=0'),
     'clean'         => { FILES => 'SQLite.xsi config.h tv.log output' },
     'PL_FILES'      => {},
     'EXE_FILES'     => [],
