@@ -144,10 +144,15 @@ int
 sqlite_db_disconnect (SV *dbh, imp_dbh_t *imp_dbh)
 {
     dTHR;
+    sqlite3_stmt *pStmt;
     DBIc_ACTIVE_off(imp_dbh);
 
     if (DBIc_is(imp_dbh, DBIcf_AutoCommit) == FALSE) {
         sqlite_db_rollback(dbh, imp_dbh);
+    }
+
+    while ( (pStmt = sqlite3_next_stmt(imp_dbh->db, 0))!=0 ) {
+        sqlite3_finalize(pStmt);
     }
 
     if (sqlite3_close(imp_dbh->db) == SQLITE_BUSY) {
@@ -157,9 +162,11 @@ sqlite_db_disconnect (SV *dbh, imp_dbh_t *imp_dbh)
     imp_dbh->db = NULL;
 
     av_undef(imp_dbh->functions);
+    SvREFCNT_dec(imp_dbh->functions);
     imp_dbh->functions = (AV *)NULL;
 
     av_undef(imp_dbh->aggregates);
+    SvREFCNT_dec(imp_dbh->aggregates);
     imp_dbh->aggregates = (AV *)NULL;
 
     return TRUE;
@@ -398,8 +405,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
             if (imp_sth->retval == SQLITE_ROW) {
                 continue;
             }
-            /* There are bug reports that say this should be sqlite3_reset() */
-            sqlite3_finalize(imp_sth->stmt);
+            sqlite3_reset(imp_sth->stmt);
             sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, (char*)sqlite3_errmsg(imp_dbh->db));
             return -5;
         }
@@ -606,9 +612,13 @@ sqlite_st_finish3 (SV *sth, imp_sth_t *imp_sth, int is_destroy)
 void
 sqlite_st_destroy (SV *sth, imp_sth_t *imp_sth)
 {
+    D_imp_dbh_from_sth;
     /* warn("destroy statement: %s\n", imp_sth->statement); */
     DBIc_ACTIVE_off(imp_sth);
-    sqlite3_finalize(imp_sth->stmt);
+    if (DBIc_ACTIVE(imp_dbh)) {
+        /* finalize sth when active connection */
+        sqlite3_finalize(imp_sth->stmt);
+    }
     Safefree(imp_sth->statement);
     SvREFCNT_dec((SV*)imp_sth->params);
     SvREFCNT_dec((SV*)imp_sth->col_types);

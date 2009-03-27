@@ -1,14 +1,15 @@
-# $Id: SQLite.pm,v 1.52 2006/04/10 01:50:05 matt Exp $
-
 package DBD::SQLite;
+
+use 5.005;
 use strict;
-
 use DBI;
-use vars qw($err $errstr $state $drh $VERSION @ISA);
-$VERSION = '1.14';
-
 use DynaLoader();
-@ISA = ('DynaLoader');
+
+use vars qw($err $errstr $state $drh $VERSION @ISA);
+BEGIN {
+	$VERSION = '1.19_01';
+	@ISA     = ('DynaLoader');
+}
 
 __PACKAGE__->bootstrap($VERSION);
 
@@ -208,7 +209,7 @@ sub primary_key_info {
 	my @pk = split /\s*,\s*/, $2 || '';
 	unless (@pk) {
 	    my $prefix = $1;
-	    $prefix =~ s/.*create\s+table\s+.*?\(\s*//i;
+	    $prefix =~ s/.*create\s+table\s+.*?\(\s*//si;
 	    $prefix = (split /\s*,\s*/, $prefix)[-1];
 	    @pk = (split /\s+/, $prefix)[0]; # take first word as name
 	}
@@ -286,7 +287,7 @@ __END__
 
 =head1 NAME
 
-DBD::SQLite - Self Contained RDBMS in a DBI Driver
+DBD::SQLite - Self Contained SQLite RDBMS in a DBI Driver
 
 =head1 SYNOPSIS
 
@@ -296,7 +297,7 @@ DBD::SQLite - Self Contained RDBMS in a DBI Driver
 =head1 DESCRIPTION
 
 SQLite is a public domain RDBMS database engine that you can find
-at http://www.hwaci.com/sw/sqlite/.
+at L<http://www.hwaci.com/sw/sqlite/>.
 
 Rather than ask you to install SQLite first, because SQLite is public
 domain, DBD::SQLite includes the entire thing in the distribution. So
@@ -310,7 +311,7 @@ SQLite supports the following features:
 
 =item Implements a large subset of SQL92
 
-See http://www.hwaci.com/sw/sqlite/lang.html for details.
+See L<http://www.hwaci.com/sw/sqlite/lang.html> for details.
 
 =item A complete DB in a single disk file
 
@@ -358,10 +359,10 @@ strings coming out of the database. For more details on the UTF-8 flag see
 L<perlunicode>. The default is for the UTF-8 flag to be turned off.
 
 Also note that due to some bizareness in SQLite's type system (see
-http://www.sqlite.org/datatype3.html), if you want to retain
+L<http://www.sqlite.org/datatype3.html>), if you want to retain
 blob-style behavior for B<some> columns under C<< $dbh->{unicode} = 1
 >> (say, to store images in the database), you have to state so
-explicitely using the 3-argument form of L<DBI/bind_param> when doing
+explicitly using the 3-argument form of L<DBI/bind_param> when doing
 updates:
 
     use DBI qw(:sql_types);
@@ -428,7 +429,7 @@ After this, it could be use from SQL as:
 
 =head2 $dbh->func( $name, $argc, $pkg, 'create_aggregate' )
 
-This method will register a new aggregate function which can then used
+This method will register a new aggregate function which can then be used
 from SQL. The method's parameters are:
 
 =over
@@ -463,7 +464,7 @@ the method.
 
 =item step(@_)
 
-This method will be called once for each rows in the aggregate.
+This method will be called once for each row in the aggregate.
 
 =item finalize()
 
@@ -526,23 +527,27 @@ rather than the size of the blob in bytes. In order to store natively as a
 BLOB use the following code:
 
   use DBI qw(:sql_types);
-  my $dbh = DBI->connect("dbi:sqlite:/path/to/db");
-  
+  my $dbh = DBI->connect("dbi:sqlite:/path/to/db","","");
+
   my $blob = `cat foo.jpg`;
   my $sth = $dbh->prepare("INSERT INTO mytable VALUES (1, ?)");
   $sth->bind_param(1, $blob, SQL_BLOB);
   $sth->execute();
 
-And then retreival just works:
+And then retrieval just works:
 
   $sth = $dbh->prepare("SELECT * FROM mytable WHERE id = 1");
   $sth->execute();
   my $row = $sth->fetch;
   my $blobo = $row->[1];
-  
+
   # now $blobo == $blob
 
 =head1 NOTES
+
+Although the database is stored in a single file, the directory containing the
+database file must be writable by SQLite because the library will create
+several temporary files there.
 
 To access the database from the command line, try using dbish which comes with
 the DBI module. Just type:
@@ -584,20 +589,36 @@ Which will prevent sqlite from doing fsync's when writing (which
 slows down non-transactional writes significantly) at the expense of some
 peace of mind. Also try playing with the cache_size pragma.
 
-=head1 BUGS
+=head1 SUPPORT
 
-Likely to be many, please use http://rt.cpan.org/ for reporting bugs.
+Bugs should be reported via the CPAN bug tracker at
+
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBD-SQLite>
 
 =head1 AUTHOR
 
-Matt Sergeant, matt@sergeant.org
+Matt Sergeant E<lt>matt@sergeant.orgE<gt>
 
-Perl extension functions contributed by Francis J. Lacoste
-<flacoste@logreport.org> and Wolfgang Sourdeau
-<wolfgang@logreport.org>
+Francis J. Lacoste E<lt>flacoste@logreport.orgE<gt>
 
-=head1 SEE ALSO
+Wolfgang Sourdeau E<lt>wolfgang@logreport.orgE<gt>
 
-L<DBI>.
+Adam Kennedy E<lt>adamk@cpan.orgE<gt>
+
+=head1 COPYRIGHT
+
+The bundled SQLite is Public Domain.
+
+DBD::SQLite is copyright 2002 - 2007 Matt Sergeant.
+
+Some parts copyright 2008 Francis J. Lacoste and Wolfgang Sourdeau.
+
+Some parts copyright 2008 - 2009 Adam Kennedy.
+
+This program is free software; you can redistribute
+it and/or modify it under the same terms as Perl itself.
+
+The full text of the license can be found in the
+LICENSE file included with this module.
 
 =cut
