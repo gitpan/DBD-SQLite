@@ -2,6 +2,7 @@ alter.c
 analyze.c
 attach.c
 auth.c
+backup.c
 bitvec.c
 btmutex.c
 btree.c
@@ -124,7 +125,6 @@ t/dbdadmin.t
 t/lib.pl
 t/SQLite.dbtest
 table.c
-TODO
 tokenize.c
 trigger.c
 update.c
