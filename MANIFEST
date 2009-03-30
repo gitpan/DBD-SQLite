@@ -1,3 +1,4 @@
+.gitignore
 alter.c
 analyze.c
 attach.c
@@ -121,6 +122,7 @@ t/98_pod.t
 t/99_pmv.t
 t/99cleanup.t
 t/ak-dbd.t
+t/column-info.t
 t/dbdadmin.t
 t/lib.pl
 t/SQLite.dbtest

@@ -63,7 +63,7 @@ if ( $force_local = (grep(/USE_LOCAL_SQLITE=.*/, @ARGV))[0] ) {
 # Now check for a compatible sqlite3
 unless ( $force_local ) {
 	my ($dir, $file, $fh, $version);
-	print "Checking installed SQLite version...\n";
+	print "Checking installed SQLite version...\n" if $ENV{AUTOMATED_TESTING};
 	if ( $sqlite_inc ) {
 		open($fh, '< ' . File::Spec->catfile($sqlite_inc, 'sqlite3.h'))
 			or die "Error opening sqlite3.h in $sqlite_inc: $!";
@@ -97,7 +97,7 @@ unless ( $force_local ) {
 		undef $sqlite_lib;
 		undef $sqlite_inc;
 	} else {
-		print "Looks good\n";
+		print "Looks good\n" if $ENV{AUTOMATED_TESTING};
 	}
 }
 
@@ -150,14 +150,14 @@ WriteMakefile(
 		'DBI'        => 1.21,
 		'Test::More' => '0.42',
 	},
-	($ExtUtils::MakeMaker::VERSION ge '6.46'? (
+	( $ExtUtils::MakeMaker::VERSION ge '6.46'? (
 		'LICENSE'    => 'perl',
 		'META_MERGE' => {
 			'configure_requires' => {
 				DBI => 1.21,
 			},
 		},
-	) : ()),
+	) : () ),
 	OBJECT       => ( $force_local ? '$(O_FILES)' : 'SQLite.o dbdimp.o' ),
 	OPTIMIZE     => '-O2',
 	clean        => {
@@ -167,7 +167,9 @@ WriteMakefile(
 	EXE_FILES    => [],
 	INC          => join( ' ', @CC_INC    ),
 	DEFINE       => join( ' ', @CC_DEFINE ),
-	( @CC_LIBS ? ( LIBS => join( ' ', @CC_LIBS ) ) : () ),
+	( @CC_LIBS ? (
+		LIBS => join( ' ', @CC_LIBS )
+	) : () ),
 );
 
 package MY;
@@ -175,7 +177,9 @@ package MY;
 sub postamble {
 	require DBI;
 	require DBI::DBD;
-	eval { DBI::DBD::dbd_postamble(@_) };
+	eval {
+		DBI::DBD::dbd_postamble(@_)
+	};
 }
 
 sub libscan {
