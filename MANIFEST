@@ -59,6 +59,7 @@ mutex_noop.c
 mutex_os2.c
 mutex_unix.c
 mutex_w32.c
+notify.c
 opcodes.c
 opcodes.h
 os.c
