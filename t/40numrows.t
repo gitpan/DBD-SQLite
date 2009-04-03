@@ -1,40 +1,30 @@
-#!/usr/local/bin/perl
-#
-#   $Id: 40numrows.t,v 1.1 2002/02/19 17:19:57 matt Exp $
-#
-#   This tests, whether the number of rows can be retrieved.
-#
+#!/usr/bin/perl
 
-$^W = 1;
-$| = 1;
+# This tests, whether the number of rows can be retrieved.
 
+use strict;
+BEGIN {
+	$|  = 1;
+	$^W = 1;
+}
 
-#
-#   Make -w happy
-#
-$test_dsn = '';
-$test_user = '';
-$test_password = '';
+use t::lib::Test;
 
+use vars qw($state);
 
 #
 #   Include lib.pl
 #
-use DBI;
-$mdriver = "";
-foreach $file ("lib.pl", "t/lib.pl", "DBD-~DBD_DRIVER~/t/lib.pl") {
-    do $file; if ($@) { print STDERR "Error while executing lib.pl: $@\n";
-			   exit 10;
-		      }
-    if ($mdriver ne '') {
-	last;
-    }
+do 't/lib.pl';
+if ($@) {
+	print STDERR "Error while executing lib.pl: $@\n";
+	exit 10;
 }
 
 sub ServerError() {
     print STDERR ("Cannot connect: ", $DBI::errstr, "\n",
 	"\tEither your server is not up and running or you have no\n",
-	"\tpermissions for acessing the DSN $test_dsn.\n",
+	"\tpermissions for acessing the DSN 'DBI:SQLite:dbname=foo'.\n",
 	"\tThis test requires a running server and write permissions.\n",
 	"\tPlease make sure your server is running and you have\n",
 	"\tpermissions, then retry.\n");
@@ -56,11 +46,12 @@ sub TrueRows($) {
 #   Main loop; leave this untouched, put tests after creating
 #   the new table.
 #
+my ($dbh, $table, $def, $cursor, $numrows);
 while (Testing()) {
     #
     #   Connect to the database
-    Test($state or ($dbh = DBI->connect($test_dsn, $test_user,
-					$test_password)))
+    Test($state or ($dbh = DBI->connect('DBI:SQLite:dbname=foo', '',
+					'')))
 	or ServerError();
 
     #
@@ -150,3 +141,4 @@ while (Testing()) {
 	   or DbiError($dbh->err, $dbh->errstr);
 
 }
+

@@ -1,28 +1,22 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
-use vars qw($test_dsn $test_user $test_password $mdriver $dbdriver);
+BEGIN {
+	$|  = 1;
+	$^W = 1;
+}
+
+use t::lib::Test;
 
 if ($^O eq 'MSWin32') {
     print "1..0 # Skip changing active database's schema doesn't work under Windows\n";
     exit 0;
 }
 
-$DBI::errstr = '';  # Make -w happy
-require DBI;
-
-# Include lib.pl
-$mdriver = '';
-my $file;
-foreach $file ('lib.pl', 't/lib.pl') {
-  do $file;
-  if ($@) {
-    print STDERR "Error while executing lib.pl: $@\n";
-    exit 10;
-  }
-  if ($mdriver ne '') {
-    last;
-  }
+do 't/lib.pl';
+if ($@) {
+	print STDERR "Error while executing lib.pl: $@\n";
+	exit 10;
 }
 
 sub ServerError() {
@@ -35,7 +29,7 @@ use vars qw($state);
 while (Testing()) {
   # Connect to the database
   my $dbh;
-  Test($state or $dbh = DBI->connect($test_dsn, $test_user, $test_password))
+  Test($state or $dbh = DBI->connect("DBI:SQLite:dbname=foo", '', ''))
       or ServerError();
 
   # Create some tables
@@ -94,3 +88,4 @@ while (Testing()) {
   Test($state or $dbh->disconnect())
       or DbiError($dbh->err, $dbh->errstr);
 }
+

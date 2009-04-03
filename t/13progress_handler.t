@@ -1,6 +1,13 @@
-use Test;
-BEGIN { plan tests => 3; }
-use DBI;
+#!/usr/bin/perl
+
+use strict;
+BEGIN {
+	$|  = 1;
+	$^W = 1;
+}
+
+use Test::More tests => 3;
+use t::lib::Test;
 
 my $N_OPCODES = 50; # how many opcodes before calling the progress handler
 
@@ -12,8 +19,7 @@ sub progress_handler {
 }
 
 # connect and register the progress handler
-my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "", { RaiseError => 1 } );
-ok($dbh);
+my $dbh = connect_ok( RaiseError => 1 );
 $dbh->func( $N_OPCODES, \&progress_handler, "progress_handler" );
 
 # populate a temporary table with random numbers

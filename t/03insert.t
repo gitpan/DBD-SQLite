@@ -1,25 +1,36 @@
-use Test;
-use DBI;
-BEGIN { plan tests => 11 }
-my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "");
-ok($dbh);
-ok($dbh->do("delete from f"));
-my $sth = $dbh->prepare("INSERT INTO f VALUES (?, ?, ?)", { go_last_insert_id_args => [undef, undef, undef, undef] });
-ok($sth);
-ok(my $rows = $sth->execute("Fred", "Bloggs", "fred\@bloggs.com"));
-ok($rows == 1);
+#!/usr/bin/perl
 
-ok($sth->execute("test", "test", "1"), 1);
-ok($sth->execute("test", "test", "2"), 1);
-ok($sth->execute("test", "test", "3"), 1);
+use strict;
+BEGIN {
+	$|  = 1;
+	$^W = 1;
+}
 
-my $unless_min_dbi =
-    $DBI::VERSION < 1.43 ? 'last_insert_id requires DBI v1.43' : '';
-skip($unless_min_dbi, $dbh->last_insert_id(undef, undef, undef, undef), 4 );
+use Test::More tests => 11;
+use t::lib::Test;
 
-ok($dbh->func('last_insert_rowid'), 4, 'last_insert_rowid should be 4');
+my $dbh = connect_ok();
 
-ok($dbh->do("delete from f where f1='test'"), 3);
-$sth->finish;
-undef $sth;
+ok( $dbh->do("CREATE TABLE f (f1, f2, f3)"), 'CREATE TABLE f' );
+ok( $dbh->do("delete from f"), 'DELETE FROM f' );
+
+SCOPE: {
+	my $sth = $dbh->prepare("INSERT INTO f VALUES (?, ?, ?)", { go_last_insert_id_args => [undef, undef, undef, undef] });
+	isa_ok($sth, 'DBI::st');
+	my $rows = $sth->execute("Fred", "Bloggs", "fred\@bloggs.com");
+	is( $rows, 1, '->execute returns 1 row' );
+
+	is( $sth->execute("test", "test", "1"), 1 );
+	is( $sth->execute("test", "test", "2"), 1 );
+	is( $sth->execute("test", "test", "3"), 1 );
+
+	SKIP: {
+    	skip( 'last_insert_id requires DBI v1.43', 2 ) if $DBI::VERSION < 1.43;
+    	is( $dbh->last_insert_id(undef, undef, undef, undef), 4 );
+    	is( $dbh->func('last_insert_rowid'), 4, 'last_insert_rowid should be 4' );
+	}
+}
+
+is( $dbh->do("delete from f where f1='test'"), 3 );
+
 $dbh->disconnect;

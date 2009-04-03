@@ -1,6 +1,15 @@
-use Test;
-use DBI;
+#!/usr/bin/perl
+
+use strict;
+BEGIN {
+	$|  = 1;
+	$^W = 1;
+}
+
+use Test::More;
+use t::lib::Test;
 use Fatal qw(open);
+
 my @c_files = <*.c>, <*.xs>;
 plan tests => scalar(@c_files);
 
@@ -13,11 +22,11 @@ foreach my $file (@c_files) {
         if (/^(.*)\/\//) {
             my $m = $1;
             if ($m !~ /\*/ && $m !~ /http:$/) { # skip the // in c++ comment in parse.c
-                ok(0, 1, "C++ comment in $file line $line");
+                fail("C++ comment in $file line $line");
                 next FILE;
             }
         }
     }
-    ok(1,1,"$file has no C++ comments");
+    pass("$file has no C++ comments");
     close(F);
 }

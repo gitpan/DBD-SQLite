@@ -1,20 +1,17 @@
-#!/usr/local/bin/perl
-#
-#   $Id: 40blobs.t,v 1.4 2003/07/31 14:09:16 matt Exp $
-#
-#   This is a test for correct handling of BLOBS; namely $dbh->quote
-#   is expected to work correctly.
-#
+#!/usr/bin/perl
 
-$^W = 1;
+# This is a test for correct handling of BLOBS; namely $dbh->quote
+# is expected to work correctly.
 
+use strict;
+BEGIN {
+	$|  = 1;
+	$^W = 1;
+}
 
-#
-#   Make -w happy
-#
-$test_dsn = '';
-$test_user = '';
-$test_password = '';
+use t::lib::Test;
+
+use vars qw($state);
 
 
 #
@@ -23,25 +20,17 @@ $test_password = '';
 
 use DBI qw(:sql_types);
 
-$mdriver = "";
-foreach $file ("lib.pl", "t/lib.pl") {
-    do $file; if ($@) { print STDERR "Error while executing lib.pl: $@\n";
-			   exit 10;
-		      }
-    if ($mdriver ne '') {
-	last;
-    }
-}
-if ($dbdriver eq 'mSQL'  ||  $dbdriver eq 'mSQL1') {
-    print "1..0\n";
-    exit 0;
+do 't/lib.pl';
+if ($@) {
+	print STDERR "Error while executing lib.pl: $@\n";
+	exit 10;
 }
 
 sub ServerError() {
     my $err = $DBI::errstr; # Hate -w ...
     print STDERR ("Cannot connect: ", $DBI::errstr, "\n",
 	"\tEither your server is not up and running or you have no\n",
-	"\tpermissions for acessing the DSN $test_dsn.\n",
+	"\tpermissions for acessing the DSN 'DBI:SQLite:dbname=foo'.\n",
 	"\tThis test requires a running server and write permissions.\n",
 	"\tPlease make sure your server is running and you have\n",
 	"\tpermissions, then retry.\n");
@@ -74,10 +63,11 @@ sub ShowBlob($) {
 #   Main loop; leave this untouched, put tests after creating
 #   the new table.
 #
+my ($dbh, $table, $cursor, $row);
 while (Testing()) {
     #
     #   Connect to the database
-    Test($state or $dbh = DBI->connect($test_dsn, $test_user, $test_password))
+    Test($state or $dbh = DBI->connect('DBI:SQLite:dbname=foo', '', ''))
 	or ServerError();
 
 
@@ -90,7 +80,7 @@ while (Testing()) {
 	   or DbiError($dbh->error, $dbh->errstr);
 
     my($def);
-    foreach $size (128) {
+    foreach my $size (128) {
 	#
 	#   Create a new table
 	#
@@ -110,18 +100,13 @@ while (Testing()) {
 	my ($blob, $qblob) = "";
 	if (!$state) {
 	    my $b = "";
-	    for ($j = 0;  $j < 256;  $j++) {
+	    for (my $j = 0;  $j < 256;  $j++) {
 		$b .= chr($j);
 	    }
-	    for ($i = 0;  $i < $size;  $i++) {
+	    for (my $i = 0;  $i < $size;  $i++) {
 		$blob .= $b;
 	    }
-	    if ($mdriver eq 'pNET') {
-		# Quote manually, no remote quote
-		$qblob = eval "DBD::" . $dbdriver . "::db->quote(\$blob)";
-	    } else {
-		$qblob = $dbh->quote($blob);
-	    }
+            $qblob = $dbh->quote($blob);
 	}
 
 	#

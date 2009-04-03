@@ -1,75 +1,74 @@
+#!/usr/bin/perl
+
 use strict;
-
-package count_aggr;
-
-sub new {
-    bless { count => 0 }, shift;
+BEGIN {
+	$|  = 1;
+	$^W = 1;
 }
 
-sub step {
-    $_[0]{count}++;
-    return;
+use Test::More tests => 15;
+use t::lib::Test;
+
+# Create the aggregate test packages
+SCOPE: {
+	package count_aggr;
+
+	sub new {
+		bless { count => 0 }, shift;
+	}
+
+	sub step {
+		$_[0]{count}++;
+		return;
+	}
+
+	sub finalize {
+		my $c = $_[0]{count};
+		$_[0]{count} = undef;
+
+		return $c;
+	}
+
+	package obj_aggregate;
+
+	sub new {
+		bless { count => 0 }, shift;
+	}
+
+	sub step {
+		$_[0]{count}++ if defined $_[1];
+	}
+
+	sub finalize {
+		my $c = $_[0]{count};
+		$_[0]{count} = undef;
+		return $c;
+	}
+
+	package fail_aggregate;
+
+	sub new {
+		my $class = shift;
+		if ( ref $class ) {
+			die "new() failed on request" if $class->{'fail'} eq 'new';
+			return undef if $class->{'fail'} eq 'undef';
+			return bless { %$class }, ref $class;
+		} else {
+			return bless { 'fail' => $_[0] }, $class;
+		}
+	}
+
+	sub step {
+		die "step() failed on request" if $_[0]{fail} eq 'step';
+	}
+
+	sub finalize {
+		die "finalize() failed on request" if $_[0]{fail} eq 'finalize';
+	}
 }
 
-sub finalize {
-     my $c = $_[0]{count};
-     $_[0]{count} = undef;
+my $dbh = connect_ok( PrintError => 0 );
 
-     return $c;
-}
-
-package obj_aggregate;
-
-sub new {
-    bless { count => 0 }, shift;
-}
-
-sub step {
-    $_[0]{count}++
-        if defined $_[1];
-}
-
-sub finalize {
-     my $c = $_[0]{count};
-     $_[0]{count} = undef;
-     return $c;
-}
-
-package fail_aggregate;
-
-sub new {
-        my $class = shift;
-        if ( ref $class ) {
-            die "new() failed on request"
-              if $class->{'fail'} eq 'new';
-            return undef 
-              if $class->{'fail'} eq 'undef';
-            return bless { %$class }, ref $class;
-        } else {
-            return bless { 'fail' => $_[0] }, $class;
-        }
-}
-
-sub step {
-    die "step() failed on request"
-        if $_[0]{fail} eq 'step';
-}
-
-sub finalize {
-    die "finalize() failed on request"
-        if $_[0]{fail} eq 'finalize';
-}
-
-package main;
-
-use Test;
-BEGIN { plan tests => 15 }
-use DBI;
-
-my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "", { PrintError => 0 } );
-ok($dbh);
-
-$dbh->do( "DROP TABLE aggr_test;" );
 $dbh->do( "CREATE TABLE aggr_test ( field )" );
 foreach my $val ( qw/NULL 1 'test'/ ) {
     $dbh->do( "INSERT INTO aggr_test VALUES ( $val )" );

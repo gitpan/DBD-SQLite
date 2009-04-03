@@ -1,4 +1,3 @@
-.gitignore
 alter.c
 analyze.c
 attach.c
@@ -92,9 +91,9 @@ sqliteInt.h
 sqliteLimit.h
 SQLiteXS.h
 status.c
-t/00basic.t
+t/00compile.t
 t/01logon.t
-t/02cr_table.t
+t/02create_table.t
 t/03insert.t
 t/04select.t
 t/05tran.t
@@ -102,10 +101,11 @@ t/06error.t
 t/07busy.t
 t/08create_function.t
 t/09create_aggregate.t
-t/10dsnlist.t
 t/11unicode.t
 t/12create_collation.t
 t/13progress_handler.t
+t/14ak_dbd.t
+t/15column_info.t
 t/20createdrop.t
 t/30insertfetch.t
 t/40bindparam.t
@@ -123,12 +123,8 @@ t/90cppcomments.t
 t/97_meta.t
 t/98_pod.t
 t/99_pmv.t
-t/99cleanup.t
-t/ak-dbd.t
-t/column-info.t
-t/dbdadmin.t
 t/lib.pl
-t/SQLite.dbtest
+t/lib/Test.pm
 table.c
 tokenize.c
 trigger.c

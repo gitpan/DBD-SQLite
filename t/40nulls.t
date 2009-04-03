@@ -1,18 +1,16 @@
-#!/usr/local/bin/perl
-#
-#   $Id: 40nulls.t,v 1.1.1.1 1999/06/13 12:59:35 joe Exp $
-#
-#   This is a test for correctly handling NULL values.
-#
+#!/usr/bin/perl
 
+# This is a test for correctly handling NULL values.
 
-#
-#   Make -w happy
-#
-$test_dsn = '';
-$test_user = '';
-$test_password = '';
+use strict;
+BEGIN {
+	$|  = 1;
+	$^W = 1;
+}
 
+use t::lib::Test;
+
+use vars qw($state);
 
 #
 #   Include lib.pl
@@ -20,20 +18,16 @@ $test_password = '';
 use DBI;
 use vars qw($COL_NULLABLE);
 
-$mdriver = "";
-foreach $file ("lib.pl", "t/lib.pl") {
-    do $file; if ($@) { print STDERR "Error while executing lib.pl: $@\n";
-			   exit 10;
-		      }
-    if ($mdriver ne '') {
-	last;
-    }
+do 't/lib.pl';
+if ($@) {
+	print STDERR "Error while executing lib.pl: $@\n";
+	exit 10;
 }
 
 sub ServerError() {
     print STDERR ("Cannot connect: ", $DBI::errstr, "\n",
 	"\tEither your server is not up and running or you have no\n",
-	"\tpermissions for acessing the DSN $test_dsn.\n",
+	"\tpermissions for acessing the DSN 'DBI:SQLite:dbname=foo'.\n",
 	"\tThis test requires a running server and write permissions.\n",
 	"\tPlease make sure your server is running and you have\n",
 	"\tpermissions, then retry.\n");
@@ -44,10 +38,11 @@ sub ServerError() {
 #   Main loop; leave this untouched, put tests after creating
 #   the new table.
 #
+my ($dbh, $table, $def, $cursor, $rv);
 while (Testing()) {
     #
     #   Connect to the database
-    Test($state or $dbh = DBI->connect($test_dsn, $test_user, $test_password))
+    Test($state or $dbh = DBI->connect('DBI:SQLite:dbname=foo', '', ''))
 	or ServerError();
 
     #
@@ -74,19 +69,16 @@ while (Testing()) {
 	                    . " ( NULL, 'NULL-valued id' )"))
            or DbiError($dbh->err, $dbh->errstr);
 
-    Test($state or $cursor = $dbh->prepare("SELECT * FROM $table"
-	                                   . " WHERE " . IsNull("id")))
+    Test($state or $cursor = $dbh->prepare("SELECT * FROM $table WHERE id IS NULL"))
            or DbiError($dbh->err, $dbh->errstr);
 
     Test($state or $cursor->execute)
            or DbiError($dbh->err, $dbh->errstr);
 
-    Test($state or ($rv = $cursor->fetchrow_arrayref) or $dbdriver eq 'CSV'
-	 or $dbdriver eq 'ConfFile')
+    Test($state or ($rv = $cursor->fetchrow_arrayref))
 	or DbiError($dbh->err, $dbh->errstr);
 
-    Test($state or (!defined($$rv[0])  and  defined($$rv[1])) or
-	 $dbdriver eq 'CSV' or $dbdriver eq 'ConfFile')
+    Test($state or (!defined($$rv[0])  and  defined($$rv[1])))
 	or DbiError($dbh->err, $dbh->errstr);
 
     Test($state or $cursor->finish)

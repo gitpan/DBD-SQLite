@@ -1,6 +1,14 @@
-use Test;
-BEGIN { plan tests => 27 }
-use DBI;
+#!/usr/bin/perl
+
+use strict;
+BEGIN {
+	$|  = 1;
+	$^W = 1;
+}
+
+use Test::More tests => 27;
+use t::lib::Test;
+
 my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "", { });
 ok($dbh);
 $dbh->{PrintError} = 0;

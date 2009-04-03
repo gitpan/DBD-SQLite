@@ -1,28 +1,24 @@
-#!/usr/local/bin/perl
-#
-#   $Id: 50commit.t,v 1.1.1.1 1999/06/13 12:59:35 joe Exp $
-#
-#   This is testing the transaction support.
-#
-$^W = 1;
+#!/usr/bin/perl
 
+# This is testing the transaction support.
+
+use strict;
+BEGIN {
+	$|  = 1;
+	$^W = 1;
+}
+
+use t::lib::Test;
+
+use vars qw($state);
 
 #
 #   Include lib.pl
 #
-require DBI;
-$mdriver = "";
-foreach $file ("lib.pl", "t/lib.pl") {
-    do $file; if ($@) { print STDERR "Error while executing lib.pl: $@\n";
-			   exit 10;
-		      }
-    if ($mdriver ne '') {
-	last;
-    }
-}
-if ($mdriver eq 'whatever') {
-    print "1..0\n";
-    exit 0;
+do 't/lib.pl';
+if ($@) {
+	print STDERR "Error while executing lib.pl: $@\n";
+	exit 10;
 }
 
 
@@ -58,16 +54,17 @@ sub NumRows($$$) {
 #   Main loop; leave this untouched, put tests after creating
 #   the new table.
 #
+my ($dbh, $def, $table, $msg);
 while (Testing()) {
     #
     #   Connect to the database
-    Test($state or ($dbh = DBI->connect($test_dsn, $test_user,
-					$test_password)),
+    Test($state or ($dbh = DBI->connect("DBI:SQLite:dbname=foo", '',
+					'')),
 	 'connect',
 	 "Attempting to connect.\n")
 	or ErrMsgF("Cannot connect: Error %s.\n\n"
 		   . "Make sure, your database server is up and running.\n"
-		   . "Check that '$test_dsn' references a valid database"
+		   . "Check that 'DBI:SQLite:dbname=foo' references a valid database"
 		   . " name.\nDBI error message: %s\n",
 		   $DBI::err, $DBI::errstr);
 
@@ -94,7 +91,7 @@ while (Testing()) {
     #
     #   Tests for databases that do support transactions
     #
-    if (HaveTransactions()) {
+    if ( 1 ) {
 	# Turn AutoCommit off
 	$dbh->{AutoCommit} = 0;
 	Test($state or (!$dbh->err && !$dbh->errstr && !$dbh->{AutoCommit}))
@@ -105,7 +102,7 @@ while (Testing()) {
 	Test($state or $dbh->do("INSERT INTO $table VALUES (1, 'Jochen')"))
 	    or ErrMsgF("Failed to insert value: err %s, errstr %s.\n",
 		       $dbh->err, $dbh->errstr);
-	my $msg;
+
 	Test($state or !($msg = NumRows($dbh, $table, 1)))
 	    or ErrMsg($msg);
 	Test($state or $dbh->rollback)
@@ -135,8 +132,8 @@ while (Testing()) {
 	Test($state or $dbh->disconnect)
 	    or ErrMsgF("Failed to disconnect: err %s, errstr %s.\n",
 		       $dbh->err, $dbh->errstr);
-	Test($state or ($dbh = DBI->connect($test_dsn, $test_user,
-					    $test_password)))
+	Test($state or ($dbh = DBI->connect("DBI:SQLite:dbname=foo", '',
+					    '')))
 	    or ErrMsgF("Failed to reconnect: err %s, errstr %s.\n",
 		       $DBI::err, $DBI::errstr);
 	Test($state or !($msg = NumRows($dbh, $table, 0)))
@@ -145,18 +142,6 @@ while (Testing()) {
 	# Check whether AutoCommit is on again
 	Test($state or $dbh->{AutoCommit})
 	    or ErrMsg("AutoCommit is off\n");
-
-    #
-    #   Tests for databases that don't support transactions
-    #
-    } else {
-	if (!$state) {
-	    $@ = '';
-	    eval { $dbh->{AutoCommit} = 0; }
-	}
-	Test($state or $@)
-	    or ErrMsg("Expected fatal error for AutoCommit => 0\n",
-		      'AutoCommit off -> error');
     }
 
     #   Check whether AutoCommit mode works.
@@ -168,8 +153,8 @@ while (Testing()) {
     Test($state or $dbh->disconnect, 'disconnect')
 	or ErrMsgF("Failed to disconnect: err %s, errstr %s.\n",
 		   $dbh->err, $dbh->errstr);
-    Test($state or ($dbh = DBI->connect($test_dsn, $test_user,
-					$test_password)))
+    Test($state or ($dbh = DBI->connect("DBI:SQLite:dbname=foo", '',
+					'')))
 	or ErrMsgF("Failed to reconnect: err %s, errstr %s.\n",
 		   $DBI::err, $DBI::errstr);
     Test($state or !($msg = NumRows($dbh, $table, 1)))

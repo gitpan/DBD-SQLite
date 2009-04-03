@@ -1,10 +1,14 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
-use Test;
-BEGIN { plan tests => 26 }
-use DBI;
+use strict;
+BEGIN {
+	$|  = 1;
+	$^W = 1;
+}
 
-unlink('foo', 'foo-journal');
+use Test::More tests => 26;
+use t::lib::Test;
+
 my $db = DBI->connect('dbi:SQLite:foo', '', '', 
 {
     RaiseError => 1,
@@ -61,9 +65,6 @@ undef $sel;
 
 $db->disconnect;
 
-unlink('foo', 'foo-journal');
-
-
 sub dumpblob {
     my $blob = shift;
     print("# showblob length: ", length($blob), "\n");
@@ -84,3 +85,4 @@ sub dumpblob {
     }
     if ($ENV{SHOW_BLOBS}) { close(OUT) }
 }
+
