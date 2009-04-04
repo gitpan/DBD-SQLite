@@ -1,17 +1,17 @@
 --- #YAML:1.0
 name:               DBD-SQLite
-version:            1.19_07
+version:            1.19_08
 abstract:           Self Contained SQLite RDBMS in a DBI Driver
 author:
     - Adam Kennedy <adamk@cpan.org>
 license:            perl
 distribution_type:  module
 configure_requires:
-    DBI:                  1.21
+    DBI:                  1.43
     ExtUtils::MakeMaker:  6.48
     File::Spec:           0.82
 requires:
-    DBI:         1.21
+    DBI:         1.43
     perl:        5.00503
     Test::More:  0.42
 resources:

@@ -2,13 +2,13 @@ package DBD::SQLite;
 
 use 5.00503;
 use strict;
-use DBI        ();
+use DBI   1.43 ();
 use DynaLoader ();
 
 use vars qw($VERSION @ISA);
 use vars qw{$err $errstr $state $drh $sqlite_version};
 BEGIN {
-    $VERSION = '1.19_07';
+    $VERSION = '1.19_08';
     @ISA     = ('DynaLoader');
     $drh     = undef;
 }

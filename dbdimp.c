@@ -430,8 +430,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         case SQLITE_DONE: DBIc_ACTIVE_on(imp_sth);
                           sqlite_trace(5, "exec ok - %d rows, %d cols\n", imp_sth->nrow, DBIc_NUM_FIELDS(imp_sth));
                           return 0;
-                          /* There are bug reports that say this should be sqlite3_reset() */
-        default:          sqlite3_finalize(imp_sth->stmt);
+        default:          sqlite3_reset(imp_sth->stmt);
                           imp_sth->stmt = NULL;
                           sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, (char*)sqlite3_errmsg(imp_dbh->db));
                           return -6;
@@ -733,9 +732,9 @@ sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
             const char *fieldname = sqlite3_column_name(imp_sth->stmt, n);
             if (fieldname) {
                 /* warn("Name [%d]: %s\n", n, fieldname); */
-                char *dot = instr(fieldname, ".");
-                if (dot) /* drop table name from field name */
-                    fieldname = ++dot;
+                /* char *dot = instr(fieldname, ".");     */
+                /* if (dot)  drop table name from field name */
+                /*    fieldname = ++dot;     */
                 av_store(av, n, newSVpv(fieldname, 0));
             }
         }
