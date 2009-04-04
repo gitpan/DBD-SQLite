@@ -8,7 +8,7 @@ use DynaLoader ();
 use vars qw($VERSION @ISA);
 use vars qw{$err $errstr $state $drh $sqlite_version};
 BEGIN {
-    $VERSION = '1.19_06';
+    $VERSION = '1.19_07';
     @ISA     = ('DynaLoader');
     $drh     = undef;
 }
@@ -601,7 +601,7 @@ rather than the size of the blob in bytes. In order to store natively as a
 BLOB use the following code:
 
   use DBI qw(:sql_types);
-  my $dbh = DBI->connect("dbi:sqlite:/path/to/db","","");
+  my $dbh = DBI->connect("dbi:SQLite:dbfile","","");
   
   my $blob = `cat foo.jpg`;
   my $sth = $dbh->prepare("INSERT INTO mytable VALUES (1, ?)");

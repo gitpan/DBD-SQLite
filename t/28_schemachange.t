@@ -8,10 +8,10 @@ BEGIN {
 
 use t::lib::Test;
 
-if ($^O eq 'MSWin32') {
-    print "1..0 # Skip changing active database's schema doesn't work under Windows\n";
-    exit 0;
-}
+#if ($^O eq 'MSWin32') {
+#    print "1..0 # Skip changing active database's schema doesn't work under Windows\n";
+#    exit 0;
+#}
 
 do 't/lib.pl';
 if ($@) {
@@ -60,11 +60,15 @@ while (Testing()) {
       or DbiError($dbh->err, $dbh->errstr);
 
   my $pid;
-  if (!defined($pid = fork())) {
+  if ( not defined($pid = fork()) ) {
     die("fork: $!");
-  } elsif ($pid == 0) {
+  } elsif ( $pid == 0 ) {
     # Child: drop the second table
-    if (!$state) {
+    if ( $^O =~ /win32/i ) {
+      # sqlite prohibits thread sharing parent connection
+      $dbh = DBI->connect("DBI:SQLite:dbname=foo", '', '');
+    }
+    if ( not $state ) {
       $dbh->do("DROP TABLE $table2")
           or DbiError($dbh->err, $dbh->errstr);
       $dbh->disconnect()
@@ -74,7 +78,12 @@ while (Testing()) {
   }
 
   # Parent: wait for the child to finish, then attempt to use the database
-  Test(waitpid($pid, 0) >= 0) or print("waitpid: $!\n");
+  Test(waitpid($pid, 0) != -1) or print("waitpid: $!\n");
+
+  if ( $^O =~ /win32/i ) {
+    # schema changed, need to reconnect
+    $dbh = DBI->connect("DBI:SQLite:dbname=foo", '', '');
+  }
 
   Test($state or $dbh->do("DROP TABLE $table1"))
       or DbiError($dbh->err, $dbh->errstr);
