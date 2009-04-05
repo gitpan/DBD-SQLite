@@ -2,13 +2,13 @@ package DBD::SQLite;
 
 use 5.00503;
 use strict;
-use DBI   1.43 ();
+use DBI   1.57 ();
 use DynaLoader ();
 
 use vars qw($VERSION @ISA);
 use vars qw{$err $errstr $drh $sqlite_version};
 BEGIN {
-    $VERSION = '1.19_09';
+    $VERSION = '1.19_10';
     @ISA     = ('DynaLoader');
 
     # Driver singleton
@@ -65,7 +65,7 @@ sub connect {
     DBD::SQLite::db::_login($dbh, $real, $user, $auth) or return undef;
 
     # install perl collations
-    my $perl_collation        = sub {$_[0] cmp $_[1]};
+    my $perl_collation        = sub { $_[0] cmp $_[1] };
     my $perl_locale_collation = sub { use locale; $_[0] cmp $_[1] };
     $dbh->func( "perl",       $perl_collation,        "create_collation" );
     $dbh->func( "perllocale", $perl_locale_collation, "create_collation" );
@@ -95,6 +95,10 @@ sub prepare {
 
 sub _get_version {
     return( DBD::SQLite::db::FETCH($_[0], 'sqlite_version') );
+}
+
+sub disconnect {
+	$DB::single = 1;
 }
 
 my %info = (
@@ -481,7 +485,7 @@ Retrieve the current busy timeout.
 
 Set the current busy timeout. The timeout is in milliseconds.
 
-=head2 $dbh->func( $name, $argc, $func_ref, "create_function" )
+=head2 $dbh->func( $name, $argc, $code_ref, "create_function" )
 
 This method will register a new function which will be useable in an SQL
 query. The method's parameters are:
@@ -498,7 +502,7 @@ be used from SQL.
 The number of arguments taken by the function. If this number is -1,
 the function can take any number of arguments.
 
-=item $func_ref
+=item $code_ref
 
 This should be a reference to the function's implementation.
 
@@ -512,6 +516,31 @@ current number of seconds since the epoch:
 After this, it could be use from SQL as:
 
   INSERT INTO mytable ( now() );
+
+=head2 $dbh->func( $name, $code_ref, "create_collation" )
+
+This method will register a new function which will be useable in an SQL
+query as a COLLATE option for sorting. The method's parameters are:
+
+=over
+
+=item $name
+
+The name of the function. This is the name of the function as it will
+be used from SQL.
+
+=item $code_ref
+
+This should be a reference to the function's implementation.
+
+=back
+
+By default, the collations "perl" and "perllocale" are created for you.
+
+These allow sorting in Perl terms using "cmp", in both locale and non-locale
+forms. For example, the following does a locale-aware Perl cmp sort.
+
+  SELECT * FROM foo ORDER BY name COLLATE perllocale
 
 =head2 $dbh->func( $name, $argc, $pkg, 'create_aggregate' )
 

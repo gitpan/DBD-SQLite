@@ -161,6 +161,7 @@ if ( $sqlite_inc ) {
 my @CC_DEFINE = (
 	'-DSQLITE_CORE',
 	'-DSQLITE_ENABLE_FTS3',
+	'-DSQLITE_ENABLE_COLUMN_METADATA',
 	'-DNDEBUG=1',
 	"-DSQLITE_PTR_SZ=$Config{ptrsize}"
 );
@@ -209,7 +210,7 @@ WriteMakefile(
 			configure_requires => {
 				'ExtUtils::MakeMaker' => '6.48',
 				'File::Spec'          => (WINLIKE ? '3.27' : '0.82'),
-				'DBI'                 => '1.43',
+				'DBI'                 => '1.57',
 			},
 			build_requires => {
 				'Test::More'          => '0.42',

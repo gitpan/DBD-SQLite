@@ -86,7 +86,7 @@ DRIVER PRIVATE METHODS
   $dbh->func( $ms, 'busy_timeout' )
     Set the current busy timeout. The timeout is in milliseconds.
 
-  $dbh->func( $name, $argc, $func_ref, "create_function" )
+  $dbh->func( $name, $argc, $code_ref, "create_function" )
     This method will register a new function which will be useable in an SQL
     query. The method's parameters are:
 
@@ -98,7 +98,7 @@ DRIVER PRIVATE METHODS
         The number of arguments taken by the function. If this number is -1,
         the function can take any number of arguments.
 
-    $func_ref
+    $code_ref
         This should be a reference to the function's implementation.
 
     For example, here is how to define a now() function which returns the
@@ -109,6 +109,25 @@ DRIVER PRIVATE METHODS
     After this, it could be use from SQL as:
 
       INSERT INTO mytable ( now() );
+
+  $dbh->func( $name, $code_ref, "create_collation" )
+    This method will register a new function which will be useable in an SQL
+    query as a COLLATE option for sorting. The method's parameters are:
+
+    $name
+        The name of the function. This is the name of the function as it
+        will be used from SQL.
+
+    $code_ref
+        This should be a reference to the function's implementation.
+
+    By default, the collations "perl" and "perllocale" are created for you.
+
+    These allow sorting in Perl terms using "cmp", in both locale and
+    non-locale forms. For example, the following does a locale-aware Perl
+    cmp sort.
+
+      SELECT * FROM foo ORDER BY name COLLATE perllocale
 
   $dbh->func( $name, $argc, $pkg, 'create_aggregate' )
     This method will register a new aggregate function which can then be

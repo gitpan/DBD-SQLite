@@ -128,10 +128,15 @@ t/lib.pl
 t/lib/Test.pm
 t/rt_15186_prepcached.t
 t/rt_21406_auto_finish.t
+t/rt_25460_numeric_aggregate.t
 t/rt_27553_prepared_cache_and_analyze.t
 t/rt_29058_group_by.t
+t/rt_29629_sqlite_where_length.t
 t/rt_31324_full_names.t
+t/rt_32889_prepare_cached_reexecute.t
 t/rt_36836_duplicate_key.t
+t/rt_36838_unique_and_bus_error.t
+t/rt_40594_nullable.t
 table.c
 tokenize.c
 trigger.c

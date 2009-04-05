@@ -341,10 +341,9 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     dTHR;
     D_imp_dbh_from_sth;
     char *errmsg;
-    const char *extra;
     int num_params = DBIc_NUM_PARAMS(imp_sth);
     int i;
-    int retval;
+    int retval = 0;
 
     sqlite_trace(3, "execute");
 
@@ -529,7 +528,7 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
     D_imp_dbh_from_sth;
     int numFields = DBIc_NUM_FIELDS(imp_sth);
     int chopBlanks = DBIc_is(imp_sth, DBIcf_ChopBlanks);
-    int i, retval;
+    int i;
 
     sqlite_trace(6, "numFields == %d, nrow == %d\n", numFields, imp_sth->nrow);
 
@@ -740,6 +739,7 @@ type_to_odbc_type (int type)
 SV *
 sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
 {
+    D_imp_dbh_from_sth;
     char *key = SvPV_nolen(keysv);
     SV *retsv = NULL;
     int i,n;
@@ -791,7 +791,23 @@ sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
     }
     else if (strEQ(key, "NULLABLE")) {
         AV *av = newAV();
+        av_extend(av, i);
         retsv = sv_2mortal(newRV(sv_2mortal((SV*)av)));
+#if defined(SQLITE_ENABLE_COLUMN_METADATA)
+        for (n = 0; n < i; n++) {
+            const char *database  = sqlite3_column_database_name(imp_sth->stmt, n);
+            const char *tablename = sqlite3_column_table_name(imp_sth->stmt, n);
+            const char *fieldname = sqlite3_column_name(imp_sth->stmt, n);
+            const char *datatype, *collseq;
+            int notnull, primary, autoinc;
+            int retval = sqlite3_table_column_metadata(imp_dbh->db, database, tablename, fieldname, &datatype, &collseq, &notnull, &primary, &autoinc);
+            if (retval != SQLITE_OK) {
+                char *errmsg = (char*)sqlite3_errmsg(imp_dbh->db);
+                sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, errmsg);
+            }
+            av_store(av, n, newSViv(!notnull));
+        }
+#endif
     }
     else if (strEQ(key, "SCALE")) {
         AV *av = newAV();
@@ -918,6 +934,20 @@ sqlite3_db_create_function( SV *dbh, const char *name, int argc, SV *func )
     if ( rv != SQLITE_OK )
     {
         croak( "sqlite_create_function failed with error %s", 
+               sqlite3_errmsg(imp_dbh->db) );
+    }
+}
+
+void
+sqlite3_db_enable_load_extension( SV *dbh, int onoff )
+{
+    D_imp_dbh(dbh);
+    int rv;
+    
+    rv = sqlite3_enable_load_extension( imp_dbh->db, onoff );
+    if ( rv != SQLITE_OK )
+    {
+        croak( "sqlite_enable_load_extension failed with error %s", 
                sqlite3_errmsg(imp_dbh->db) );
     }
 }
@@ -1269,7 +1299,6 @@ sqlite3_db_progress_handler( SV *dbh, int n_opcodes, SV *handler )
       sqlite3_progress_handler( imp_dbh->db, 0, NULL, NULL);
     }
     else {
-      int rv;
       SV *handler_sv = newSVsv(handler);
 
       /* Copy the handler ref so that it can be deallocated at disconnect */
