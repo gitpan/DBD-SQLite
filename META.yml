@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               DBD-SQLite
-version:            1.19_08
+version:            1.19_09
 abstract:           Self Contained SQLite RDBMS in a DBI Driver
 author:
     - Adam Kennedy <adamk@cpan.org>
@@ -10,14 +10,19 @@ configure_requires:
     DBI:                  1.43
     ExtUtils::MakeMaker:  6.48
     File::Spec:           0.82
+build_requires:
+    Test::More:        0.42
+    Test::NoWarnings:  0.081
 requires:
-    DBI:         1.43
-    perl:        5.00503
-    Test::More:  0.42
+    DBI:               1.43
+    perl:              5.006
+    Test::More:        0.42
+    Test::NoWarnings:  0.081
 resources:
-    bugtracker:  http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBD-SQLite
-    license:     http://dev.perl.org/licenses/
-    repository:  http://svn.ali.as/cpan/trunk/DBD-SQLite
+    bugtracker:   http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBD-SQLite
+    license:      http://dev.perl.org/licenses/
+    MailingList:  http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/dbd-sqlite
+    repository:   http://svn.ali.as/cpan/trunk/DBD-SQLite
 no_index:
     directory:
         - t

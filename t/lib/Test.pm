@@ -9,7 +9,7 @@ use Test::More ();
 
 use vars qw{$VERSION @ISA @EXPORT};
 BEGIN {
-	$VERSION = '1.19_08';
+	$VERSION = '1.19_09';
 	@ISA     = qw{ Exporter };
 	@EXPORT  = qw{ connect_ok };
 }
@@ -30,7 +30,7 @@ END   { clean() }
 
 # A simplified connect function for the most common case
 sub connect_ok {
-	my @params = ( "dbi:SQLite:dbname=foo", "", "" );
+	my @params = ( 'dbi:SQLite:dbname=foo', '', '' );
 	if ( @_ ) {
 		push @params, { @_ };
 	}

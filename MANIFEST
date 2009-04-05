@@ -119,6 +119,8 @@ t/26_commit.t
 t/27_metadata.t
 t/28_schemachange.t
 t/29_cppcomments.t
+t/30_auto_rollback.t
+t/31_bind_weird_number_param.t
 t/97_meta.t
 t/98_pod.t
 t/99_pmv.t
@@ -126,6 +128,8 @@ t/lib.pl
 t/lib/Test.pm
 t/rt_15186_prepcached.t
 t/rt_21406_auto_finish.t
+t/rt_27553_prepared_cache_and_analyze.t
+t/rt_29058_group_by.t
 t/rt_31324_full_names.t
 t/rt_36836_duplicate_key.t
 table.c

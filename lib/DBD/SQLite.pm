@@ -6,10 +6,12 @@ use DBI   1.43 ();
 use DynaLoader ();
 
 use vars qw($VERSION @ISA);
-use vars qw{$err $errstr $state $drh $sqlite_version};
+use vars qw{$err $errstr $drh $sqlite_version};
 BEGIN {
-    $VERSION = '1.19_08';
+    $VERSION = '1.19_09';
     @ISA     = ('DynaLoader');
+
+    # Driver singleton
     $drh     = undef;
 }
 
@@ -39,29 +41,40 @@ package DBD::SQLite::dr;
 sub connect {
     my ($drh, $dbname, $user, $auth, $attr) = @_;
 
+    # Default PrintWarn to the value of $^W
+    unless ( defined $attr->{PrintWarn} ) {
+        $attr->{PrintWarn} = $^W ? 1 : 0;
+    }
+
     my $dbh = DBI::_new_dbh( $drh, {
         Name => $dbname,
     } );
 
-    my $real_dbname = $dbname;
+    my $real = $dbname;
     if ( $dbname =~ /=/ ) {
         foreach my $attrib ( split(/;/, $dbname ) ) {
             my ($k, $v) = split(/=/, $attrib, 2);
             if ($k eq 'dbname') {
-                $real_dbname = $v;
+                $real = $v;
             } else {
                 # TODO: add to attribs
             }
         }
     }
-    DBD::SQLite::db::_login($dbh, $real_dbname, $user, $auth)
-        or return undef;
+
+    DBD::SQLite::db::_login($dbh, $real, $user, $auth) or return undef;
 
     # install perl collations
     my $perl_collation        = sub {$_[0] cmp $_[1]};
     my $perl_locale_collation = sub { use locale; $_[0] cmp $_[1] };
     $dbh->func( "perl",       $perl_collation,        "create_collation" );
     $dbh->func( "perllocale", $perl_locale_collation, "create_collation" );
+
+    # HACK: Since PrintWarn = 0 doesn't seem to actually prevent warnings
+    # in DBD::SQLite we set Warn to false if PrintWarn is false.
+    unless ( $attr->{PrintWarn} ) {
+        $attr->{Warn} = 0;
+    }
 
     return $dbh;
 }
@@ -75,8 +88,7 @@ sub prepare {
         Statement => $statement,
     });
 
-    DBD::SQLite::st::_prepare($sth, $statement, @attribs)
-        or return undef;
+    DBD::SQLite::st::_prepare($sth, $statement, @attribs) or return undef;
 
     return $sth;
 }
@@ -86,9 +98,9 @@ sub _get_version {
 }
 
 my %info = (
-    17 => 'SQLite',         # SQL_DBMS_NAME
-    18 => \&_get_version,   # SQL_DBMS_VER
-    29 => '"',              # SQL_IDENTIFIER_QUOTE_CHAR
+    17 => 'SQLite',       # SQL_DBMS_NAME
+    18 => \&_get_version, # SQL_DBMS_VER
+    29 => '"',            # SQL_IDENTIFIER_QUOTE_CHAR
 );
 
 sub get_info {
@@ -442,6 +454,7 @@ updates:
   use DBI qw(:sql_types);
   $dbh->{unicode} = 1;
   my $sth = $dbh->prepare("INSERT INTO mytable (blobcolumn) VALUES (?)");
+  
   # Binary_data will be stored as is.
   $sth->bind_param(1, $binary_data, SQL_BLOB);
 
@@ -649,7 +662,7 @@ but what surprised me most of all was:
   ORDER BY count desc
   LIMIT 20
 
-To discover the top 20 hit URLs on the site (http://axkit.org), and it
+To discover the top 20 hit URLs on the site (L<http://axkit.org>), and it
 returned within 2 seconds. I'm seriously considering switching my log
 analysis code to use this little speed demon!
 

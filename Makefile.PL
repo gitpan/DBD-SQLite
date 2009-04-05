@@ -1,4 +1,4 @@
-use 5.00503;
+use 5.006; #from ExtUtils::MakeMaker 6.48 and DBI 1.43
 use strict;
 use ExtUtils::MakeMaker;
 use Config;
@@ -90,7 +90,7 @@ if ( 0 ) {
 		my ($dir, $file, $fh, $version);
 		print "Checking installed SQLite version...\n" if $ENV{AUTOMATED_TESTING};
 		if ( $sqlite_inc ) {
-			open($fh, '< ' . File::Spec->catfile($sqlite_inc, 'sqlite3.h'))
+			open($fh, '< ' , File::Spec->catfile($sqlite_inc, 'sqlite3.h'))
 				or die "Error opening sqlite3.h in $sqlite_inc: $!";
 			while ( defined($_ = <$fh>) ) {
 				if (/\#define\s+SQLITE_VERSION_NUMBER\s+(\d+)/) {
@@ -104,7 +104,7 @@ if ( 0 ) {
 			foreach $dir ( [ qw(usr include) ], [ qw(usr local include) ] ) {
 				$file = File::Spec->catfile('', @$dir, 'sqlite3.h');
 				next unless (-f $file);
-				open($fh, "< $file") or die "Error opening $file: $!";
+				open($fh, "<", $file) or die "Error opening $file: $!";
 				while ( defined($_ = <$fh>) ) {
 					if (/\#define\s+SQLITE_VERSION_NUMBER\s+(\d+)/) {
 						$version = $1;
@@ -167,9 +167,6 @@ my @CC_DEFINE = (
 if ( $Config{d_usleep} || $Config{osname} =~ m/linux/ ) {
 	push @CC_DEFINE, '-DHAVE_USLEEP=1';
 }
-if ( $DBI::VERSION <= 1.42 ) {
-	push @CC_DEFINE, '-Dno_last_insert_id';
-}
 unless ( $Config{usethreads} ) {
 	push @CC_DEFINE, '-DTHREADSAFE=0';
 }
@@ -194,11 +191,12 @@ WriteMakefile(
 	ABSTRACT         => 'Self Contained SQLite RDBMS in a DBI Driver',
 	VERSION_FROM     => 'lib/DBD/SQLite.pm',
 	PREREQ_PM        => {
-		'DBI'        => '1.43',
-		'Test::More' => '0.42',
+		'DBI'              => '1.43',
+		'Test::More'       => '0.42',
+		'Test::NoWarnings' => '0.081',
 	},
 	OPTIONAL( '6.48',
-		MIN_PERL_VERSION => '5.00503',
+		MIN_PERL_VERSION => '5.006',
 	),
 	OPTIONAL( '6.31',
 		LICENSE => 'perl',	
@@ -213,14 +211,22 @@ WriteMakefile(
 				'File::Spec'          => (WINLIKE ? '3.27' : '0.82'),
 				'DBI'                 => '1.43',
 			},
+			build_requires => {
+				'Test::More'          => '0.42',
+				'Test::NoWarnings'    => '0.081',
+			},
 			resources => {
-				license    => 'http://dev.perl.org/licenses/',
-				bugtracker => 'http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBD-SQLite',
-				repository => 'http://svn.ali.as/cpan/trunk/DBD-SQLite',
+				license     => 'http://dev.perl.org/licenses/',
+				bugtracker  => 'http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBD-SQLite',
+				repository  => 'http://svn.ali.as/cpan/trunk/DBD-SQLite',
+				MailingList => 'http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/dbd-sqlite',
 			},
 		},
 	),
-	OBJECT           => ( $force_local ? '$(O_FILES)' : 'SQLite.o dbdimp.o' ),
+	OBJECT           => ( $force_local
+		? '$(O_FILES)'
+		: 'SQLite.o dbdimp.o'
+	),
 	OPTIMIZE         => '-O2',
 	clean            => {
 		FILES => 'SQLite.xsi config.h tv.log',

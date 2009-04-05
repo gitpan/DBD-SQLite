@@ -64,7 +64,8 @@ DRIVER PRIVATE ATTRIBUTES
           use DBI qw(:sql_types);
           $dbh->{unicode} = 1;
           my $sth = $dbh->prepare("INSERT INTO mytable (blobcolumn) VALUES (?)");
-          # Binary_data will be stored as is.
+          
+  # Binary_data will be stored as is.
           $sth->bind_param(1, $binary_data, SQL_BLOB);
 
         Defining the column type as "BLOB" in the DDL is not sufficient.
@@ -241,7 +242,7 @@ PERFORMANCE
       ORDER BY count desc
       LIMIT 20
 
-    To discover the top 20 hit URLs on the site (http://axkit.org), and it
+    To discover the top 20 hit URLs on the site (<http://axkit.org>), and it
     returned within 2 seconds. I'm seriously considering switching my log
     analysis code to use this little speed demon!
 

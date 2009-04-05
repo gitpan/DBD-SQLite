@@ -1,5 +1,27 @@
 Changes for Perl extension DBD-SQLite.
 
+1.19_09 Sun  5 Apr 2009
+    - Require perl 5.6 because dependencies require it
+    - Updated ppport.h to the most recent release 3.17 (ADAMK)
+    - Adding $DBI::VERSION diag to help diagnose FAIL reports (ADAMK)
+    - #29519 was only resolved on Win32. Applied a more comprehensive
+      patch (JHEDDEN)
+    - Rewrote 28_schemachange.t in Test::More style (ADAMK)
+    - Bug fix in 28_schemachange.t rewrite re fork/connect (DUNCAND)
+    - Resolved #44779: [t/03insert.t] last_insert_id returns undef where 4
+      is expected (DUNCAND, CHORNY; that is, DUNCAND debugged and solved
+      the ticket based on _08, which was a flaw in the Makefile.PL
+      involving an always-applied -Dno_last_insert_id, but it turns out
+      CHORNY had inadvertantly applied the fix in the name of DBI cleaning)
+    - Starting to use Test::NoWarnings in the test scripts (ADAMK)
+    - Added link to MailingList resource (ADAMK)
+    - Squelch warnings inless PrintWarn is set in line with guidance from
+      the DBI documentation (ADAMK)
+    - Resolved #29058: don't quote a bind param (as a text) if it
+      looks like a number (ISHIGAKI)
+    - Resolved #27553: prepare_cached and analyze issue (actually
+      this has been fixed before) (ISHIGAKI)
+
 1.19_08 Sat  4 Apr 2009
     - Bumped minimum DBI dependency to 1.43 so last_insert_id is supported
       in DBI (ADAMK)
@@ -12,7 +34,7 @@ Changes for Perl extension DBD-SQLite.
       test (ADAMK)
     - Resolved #9792: Crashes upon re-executing a statement (ADAMK)
     - Resolved #21472: Spurious "not an error" and "bind or column index
-      out of range" errirs (MSERGEANT)
+      out of range" errors (MSERGEANT)
     - Resolved #32723: last_insert_rowid should handle sqlite_int64,
       not int (ADAMK)
     - Resolved #37215: memory leaks in sqlite_db_disconnect (ADAMK)
