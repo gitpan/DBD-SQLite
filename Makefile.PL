@@ -46,6 +46,17 @@ EOT
 	}
 };
 
+# Because DBI generates a postamble at configure-time, we need
+# the required version of DBI very early.
+my $DBI_required = 1.57;
+eval {
+	require DBI;
+};
+if ( $@ or DBI->VERSION < $DBI_required ) {
+	print "DBI 1.57 is required to configure this module, please install it or upgrade your CPAN/CPANPLUS shell\n";
+	exit(0);
+}
+
 # 2005/6/19, by rjray@blackperl.com
 #
 # Determine if we are going to use the provided SQLite code, or an already-
@@ -192,9 +203,9 @@ WriteMakefile(
 	ABSTRACT         => 'Self Contained SQLite RDBMS in a DBI Driver',
 	VERSION_FROM     => 'lib/DBD/SQLite.pm',
 	PREREQ_PM        => {
-		'DBI'              => '1.43',
+		'File::Spec'       => (WINLIKE ? '3.27' : '0.82'),
+		'DBI'              => $DBI_required,
 		'Test::More'       => '0.42',
-		'Test::NoWarnings' => '0.081',
 	},
 	OPTIONAL( '6.48',
 		MIN_PERL_VERSION => '5.006',
@@ -203,18 +214,19 @@ WriteMakefile(
 		LICENSE => 'perl',	
 	),
 	OPTIONAL( '6.11',
-		AUTHOR  => 'Adam Kennedy <adamk@cpan.org>', # Maintainer
+		AUTHOR  => 'Adam Kennedy <adamk@cpan.org>', # Release manager (can this be an array?)
 	),
 	OPTIONAL( '6.46',
 		META_MERGE => {
 			configure_requires => {
 				'ExtUtils::MakeMaker' => '6.48',
-				'File::Spec'          => (WINLIKE ? '3.27' : '0.82'),
-				'DBI'                 => '1.57',
+				'File::Spec'          => '0.82', # This is not allowed to be computed
+				'DBI'                 => $DBI_required,
 			},
 			build_requires => {
+				'File::Spec'          => (WINLIKE ? '3.27' : '0.82'),
 				'Test::More'          => '0.42',
-				'Test::NoWarnings'    => '0.081',
+				# 'Test::NoWarnings'    => '0.081', # Bundled in /inc
 			},
 			resources => {
 				license     => 'http://dev.perl.org/licenses/',

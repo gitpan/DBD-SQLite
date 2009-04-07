@@ -9,9 +9,12 @@ use Test::More ();
 
 use vars qw{$VERSION @ISA @EXPORT};
 BEGIN {
-	$VERSION = '1.19_10';
+	$VERSION = '1.20';
 	@ISA     = qw{ Exporter };
 	@EXPORT  = qw{ connect_ok };
+
+	# Allow tests to load modules bundled in /inc
+	unshift @INC, 'inc';
 }
 
 # Always load the DBI module

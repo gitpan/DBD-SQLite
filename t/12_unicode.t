@@ -9,9 +9,9 @@ BEGIN {
 	$^W = 1;
 }
 
+use t::lib::Test;
 use Test::More tests => 16;
 use Test::NoWarnings;
-use t::lib::Test;
 
 #
 #   Include std stuff

@@ -1,6 +1,6 @@
 package DBD::SQLite;
 
-use 5.00503;
+use 5.006;
 use strict;
 use DBI   1.57 ();
 use DynaLoader ();
@@ -8,7 +8,7 @@ use DynaLoader ();
 use vars qw($VERSION @ISA);
 use vars qw{$err $errstr $drh $sqlite_version};
 BEGIN {
-    $VERSION = '1.19_10';
+    $VERSION = '1.20';
     @ISA     = ('DynaLoader');
 
     # Driver singleton
@@ -95,10 +95,6 @@ sub prepare {
 
 sub _get_version {
     return( DBD::SQLite::db::FETCH($_[0], 'sqlite_version') );
-}
-
-sub disconnect {
-	$DB::single = 1;
 }
 
 my %info = (
