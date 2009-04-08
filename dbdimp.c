@@ -351,7 +351,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
 
     if (!DBIc_ACTIVE(imp_dbh)) {
         sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, "attempt to execute on inactive database handle");
-        return FALSE;
+        return -2;
     }
 
     if (DBIc_ACTIVE(imp_sth)) {

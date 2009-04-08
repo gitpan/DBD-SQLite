@@ -123,6 +123,7 @@ t/28_schemachange.t
 t/29_cppcomments.t
 t/30_auto_rollback.t
 t/31_bind_weird_number_param.t
+t/32_inactive_error.t
 t/97_meta.t
 t/98_pod.t
 t/99_pmv.t
