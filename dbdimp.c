@@ -93,7 +93,7 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
 
     if ( sqlite3_open(dbname, &(imp_dbh->db)) != SQLITE_OK ) {
         sqlite_error(dbh, (imp_xxh_t*)imp_dbh, 1, (char*)sqlite3_errmsg(imp_dbh->db));
-        return FALSE;
+        return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
     DBIc_IMPSET_on(imp_dbh);
 
@@ -112,7 +112,7 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
     {
         /*  warn("failed to set pragma: %s\n", errmsg); */
         sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
-        return FALSE;
+        return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
 
     if ((retval = sqlite3_exec(imp_dbh->db, "PRAGMA show_datatypes = ON",
@@ -121,7 +121,7 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
     {
         /*  warn("failed to set pragma: %s\n", errmsg); */
         sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
-        return FALSE;
+        return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
 
     DBIc_ACTIVE_on(imp_dbh);
@@ -213,7 +213,7 @@ sqlite_db_rollback(SV *dbh, imp_dbh_t *imp_dbh)
             != SQLITE_OK)
         {
             sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
-            return FALSE;
+            return FALSE; /* -> &sv_no in SQLite.xsi */
         }
         imp_dbh->in_tran = FALSE;
     }
@@ -240,7 +240,7 @@ sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
             != SQLITE_OK)
         {
             sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
-            return FALSE;
+            return FALSE; /* -> &sv_no in SQLite.xsi */
         }
         imp_dbh->in_tran = FALSE;
     }
@@ -271,12 +271,12 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
 
     if (!DBIc_ACTIVE(imp_dbh)) {
       sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, "attempt to prepare on inactive database handle");
-      return FALSE;
+      return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
 
     if (strlen(statement) < 1) {
       sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, "attempt to prepare empty statement");
-      return FALSE;
+      return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
 
     sqlite_trace(2, "prepare statement: %s", statement);
@@ -293,7 +293,7 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
             sqlite3_finalize(imp_sth->stmt);
         }
         sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, (char*)sqlite3_errmsg(imp_dbh->db));
-        return FALSE;
+        return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
 
     /* store the query for later re-use if required */
@@ -351,7 +351,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
 
     if (!DBIc_ACTIVE(imp_dbh)) {
         sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, "attempt to execute on inactive database handle");
-        return -2;
+        return -2; /* -> undef in SQLite.xsi */
     }
 
     if (DBIc_ACTIVE(imp_sth)) {
@@ -359,7 +359,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
          if ((imp_sth->retval = sqlite3_reset(imp_sth->stmt)) != SQLITE_OK) {
              char *errmsg = (char*)sqlite3_errmsg(imp_dbh->db);
              sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, errmsg);
-             return FALSE;
+             return -2; /* -> undef in SQLite.xsi */
          }
     }
 
@@ -420,7 +420,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         SvREFCNT_dec(sql_type_sv);
         if (retval != SQLITE_OK) {
             sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, (char*)sqlite3_errmsg(imp_dbh->db));
-            return -4;
+            return -4; /* -> undef in SQLite.xsi */
         }
     }
 
@@ -431,7 +431,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
             != SQLITE_OK)
         {
             sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, errmsg);
-            return -2;
+            return -2; /* -> undef in SQLite.xsi */
         }
         imp_dbh->in_tran = TRUE;
     }
@@ -446,7 +446,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
             }
             sqlite3_reset(imp_sth->stmt);
             sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, (char*)sqlite3_errmsg(imp_dbh->db));
-            return -5;
+            return -5; /* -> undef in SQLite.xsi */
         }
         /* warn("Finalize\n"); */
         sqlite3_reset(imp_sth->stmt);
@@ -462,11 +462,11 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         case SQLITE_ROW:
         case SQLITE_DONE: DBIc_ACTIVE_on(imp_sth);
                           sqlite_trace(5, "exec ok - %d rows, %d cols\n", imp_sth->nrow, DBIc_NUM_FIELDS(imp_sth));
-                          return 0;
+                          return 0; /* -> '0E0' in SQLite.xsi */
         default:          sqlite3_reset(imp_sth->stmt);
                           imp_sth->stmt = NULL;
                           sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, (char*)sqlite3_errmsg(imp_dbh->db));
-                          return -6;
+                          return -6; /* -> undef in SQLite.xsi */
     }
 }
 
@@ -549,7 +549,7 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
         /* error */
         sqlite_st_finish(sth, imp_sth);
         sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, (char*)sqlite3_errmsg(imp_dbh->db));
-        return Nullav;
+        return Nullav; /* -> undef in SQLite.xsi */
     }
 
     imp_sth->nrow++;
@@ -642,7 +642,7 @@ sqlite_st_finish3 (SV *sth, imp_sth_t *imp_sth, int is_destroy)
         char *errmsg = (char*)sqlite3_errmsg(imp_dbh->db);
         /* warn("finalize failed! %s\n", errmsg); */
         sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, errmsg);
-        return FALSE;
+        return FALSE; /* -> &sv_no (or void) in SQLite.xsi */
     }
     
     return TRUE;
@@ -689,7 +689,7 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
                     != SQLITE_OK)
                 {
                     sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
-                    return TRUE;
+                    return TRUE; /* XXX: is this correct? */
                 }
                 imp_dbh->in_tran = FALSE;
             }
@@ -808,8 +808,11 @@ sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
             if (retval != SQLITE_OK) {
                 char *errmsg = (char*)sqlite3_errmsg(imp_dbh->db);
                 sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, errmsg);
+                av_store(av, n, newSViv(2)); /* SQL_NULLABLE_UNKNOWN */
             }
-            av_store(av, n, newSViv(!notnull));
+            else {
+                av_store(av, n, newSViv(!notnull));
+            }
         }
 #endif
     }
@@ -854,14 +857,14 @@ sqlite_db_set_result(sqlite3_context *context, SV *result, int is_error )
 }
 
 static void
-sqlite_db_func_dispatcher(sqlite3_context *context, int argc, sqlite3_value **value)
+sqlite_db_func_dispatcher(int is_unicode, sqlite3_context *context, int argc, sqlite3_value **value)
 {
     dSP;
     int count;
     int i;
     SV *func;
 
-    func = sqlite3_user_data(context);
+    func      = sqlite3_user_data(context);
 
     ENTER;
     SAVETMPS;
@@ -881,7 +884,11 @@ sqlite_db_func_dispatcher(sqlite3_context *context, int argc, sqlite3_value **va
                 arg = sv_2mortal(newSVnv(sqlite3_value_double(value[i])));
                 break;
             case SQLITE_TEXT:
-                arg = sv_2mortal(newSVpvn((const char *)sqlite3_value_text(value[i]), len));
+                arg = newSVpvn((const char *)sqlite3_value_text(value[i]), len);
+                if (is_unicode) {
+                  SvUTF8_on(arg);
+                }
+                arg = sv_2mortal(arg);
                 break;
             case SQLITE_BLOB:
                 arg = sv_2mortal(newSVpvn(sqlite3_value_blob(value[i]), len));
@@ -921,6 +928,19 @@ sqlite_db_func_dispatcher(sqlite3_context *context, int argc, sqlite3_value **va
     LEAVE;
 }
 
+
+static void
+sqlite_db_func_dispatcher_unicode(sqlite3_context *context, int argc, sqlite3_value **value)
+{
+  sqlite_db_func_dispatcher(1, context, argc, value);
+}
+
+static void
+sqlite_db_func_dispatcher_no_unicode(sqlite3_context *context, int argc, sqlite3_value **value)
+{
+  sqlite_db_func_dispatcher(0, context, argc, value);
+}
+
 void
 sqlite3_db_create_function( SV *dbh, const char *name, int argc, SV *func )
 {
@@ -933,8 +953,10 @@ sqlite3_db_create_function( SV *dbh, const char *name, int argc, SV *func )
 
     /* warn("create_function %s with %d args\n", name, argc); */
     rv = sqlite3_create_function( imp_dbh->db, name, argc, SQLITE_UTF8,
-                                 func_sv,
-                                 sqlite_db_func_dispatcher, NULL, NULL );
+                                  func_sv,
+                                  imp_dbh->unicode ? sqlite_db_func_dispatcher_unicode
+                                                   : sqlite_db_func_dispatcher_no_unicode, 
+                                  NULL, NULL );
     if ( rv != SQLITE_OK )
     {
         croak( "sqlite_create_function failed with error %s", 

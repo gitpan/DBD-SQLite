@@ -119,15 +119,31 @@ DRIVER PRIVATE METHODS
         will be used from SQL.
 
     $code_ref
-        This should be a reference to the function's implementation.
+        This should be a reference to the function's implementation. The
+        driver will check that this is a proper sorting function.
 
-    By default, the collations "perl" and "perllocale" are created for you.
+    Collations "binary" and "nocase" are builtin within Sqlite. Collations
+    "perl" and "perllocale" are builtin within the "DBD::SQLite" driver, and
+    correspond to the Perl "cmp" operator with or without the locale pragma;
+    so you can write for example
 
-    These allow sorting in Perl terms using "cmp", in both locale and
-    non-locale forms. For example, the following does a locale-aware Perl
-    cmp sort.
+      CREATE TABLE foo(txt1 COLLATE perl,
+                       txt2 COLLATE perllocale,
+                       txt3 COLLATE nocase)
+
+    or
 
       SELECT * FROM foo ORDER BY name COLLATE perllocale
+
+    If the attribute "$dbh->{unicode}" is set, strings coming from the
+    database and passed to the collation function will be properly tagged
+    with the utf8 flag; but this only works if the "unicode" attribute is
+    set before the call to "create_collation". The recommended way to
+    activate unicode is to set the parameter at connection time :
+
+      my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "", 
+                              { RaiseError => 1,
+                                unicode    => 1} );
 
   $dbh->func( $name, $argc, $pkg, 'create_aggregate' )
     This method will register a new aggregate function which can then be
@@ -205,6 +221,23 @@ DRIVER PRIVATE METHODS
       SELECT group_name, variance(score)
       FROM results
       GROUP BY group_name;
+
+  $dbh->func( $n_opcodes, $code_ref, 'progress_handler' )
+    This method registers a handler to be invoked periodically during long
+    running calls to SQLite. An example use for this interface is to keep a
+    GUI updated during a large query. The parameters are:
+
+    $n_opcodes
+        The progress handler is invoked once for every $n_opcodes virtual
+        machine opcodes in SQLite.
+
+    $handler
+        Reference to the handler subroutine. If the progress handler returns
+        non-zero, the SQLite operation is interrupted. This feature can be
+        used to implement a "Cancel" button on a GUI dialog box.
+
+        Set this argument to "undef" if you want to unregister a previous
+        progress handler.
 
 BLOBS
     As of version 1.11, blobs should "just work" in SQLite as text columns.
