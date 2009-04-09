@@ -1,3 +1,4 @@
+#define PERL_NO_GET_CONTEXT
 
 #include "SQLiteXS.h"
 
@@ -19,7 +20,7 @@ DBISTATE_DECLARE;
 
 #define sqlite_error(h,xxh,rc,what) _sqlite_error(__FILE__, __LINE__, h, xxh, rc, what)
 #if defined(__GNUC__) && (__GNUC__ > 2)
-#  define sqlite_trace(level,fmt...) _sqlite_tracef(__FILE__, __LINE__, level, fmt)
+#  define sqlite_trace(h,xxh,level,fmt...) _sqlite_tracef(__FILE__, __LINE__, h, xxh, level, fmt)
 #else
 #  define sqlite_trace _sqlite_tracef_noline
 #endif
@@ -27,54 +28,52 @@ DBISTATE_DECLARE;
 void
 sqlite_init(dbistate_t *dbistate)
 {
-    dTHR;
-    DBIS = dbistate;
+    dTHX;
+    DBIS = dbistate; /* XXX: looks like this can be removed, right? */
 }
 
 static void
 _sqlite_error(char *file, int line, SV *h, imp_xxh_t *imp_xxh, int rc, char *what)
 {
-    dTHR;
+    dTHX;
 
-    SV *errstr = DBIc_ERRSTR(imp_xxh);
-    sv_setiv(DBIc_ERR(imp_xxh), (IV)rc);
-    sv_setpv(errstr, what);
+    DBIh_SET_ERR_CHAR(h, imp_xxh, Nullch, rc, what, Nullch, Nullch);
 
     /* #7753: DBD::SQLite error shouldn't include extraneous info */
     /* sv_catpvf(errstr, "(%d) at %s line %d", rc, file, line); */
 
-    if ( DBIS->debug >= 3 ) {
-        PerlIO_printf(DBILOGFP, "sqlite error %d recorded: %s at %s line %d\n",
+    if ( DBIc_TRACE_LEVEL(imp_xxh) >= 3 ) {
+        PerlIO_printf(DBIc_LOGPIO(imp_xxh), "sqlite error %d recorded: %s at %s line %d\n",
             rc, what, file, line);
     }
 }
 
 static void
-_sqlite_tracef(char *file, int line, int level, const char *fmt, ...)
+_sqlite_tracef(char *file, int line, SV *h, imp_xxh_t *imp_xxh, int level, const char *fmt, ...)
 {
-    dTHR;
+    dTHX;
     
     va_list ap;
-    if (DBIS->debug >= level) {
+    if ( DBIc_TRACE_LEVEL(imp_xxh) >= level ) {
         char format[8192];
         sqlite3_snprintf(8191, format, "sqlite trace: %s at %s line %d\n", fmt, file, line);
         va_start(ap, fmt);
-        PerlIO_vprintf(DBILOGFP, format, ap);
+        PerlIO_vprintf(DBIc_LOGPIO(imp_xxh), format, ap);
         va_end(ap);
     }
 }
 
 static void
-_sqlite_tracef_noline(int level, const char *fmt, ...)
+_sqlite_tracef_noline(SV *h, imp_xxh_t *imp_xxh, int level, const char *fmt, ...)
 {
-    dTHR;
+    dTHX;
     
     va_list ap;
-    if (DBIS->debug >= level) {
+    if ( DBIc_TRACE_LEVEL(imp_xxh) >= level ) {
         char format[8192];
         sqlite3_snprintf(8191, format, "sqlite trace: %s\n", fmt);
         va_start(ap, fmt);
-        PerlIO_vprintf(DBILOGFP, format, ap);
+        PerlIO_vprintf(DBIc_LOGPIO(imp_xxh), format, ap);
         va_end(ap);
     }
 }
@@ -82,17 +81,17 @@ _sqlite_tracef_noline(int level, const char *fmt, ...)
 int
 sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pass)
 {
-    dTHR;
+    dTHX;
     int retval;
     char *errmsg = NULL;
 
-    if ( DBIS->debug >= 3 ) {
+    if ( DBIc_TRACE_LEVEL(imp_dbh) >= 3 ) {
         PerlIO_printf(DBILOGFP, "    login '%s' (version %s)\n",
             dbname, sqlite3_version);
     }
 
-    if ( sqlite3_open(dbname, &(imp_dbh->db)) != SQLITE_OK ) {
-        sqlite_error(dbh, (imp_xxh_t*)imp_dbh, 1, (char*)sqlite3_errmsg(imp_dbh->db));
+    if ((retval = sqlite3_open(dbname, &(imp_dbh->db))) != SQLITE_OK ) {
+        sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, (char*)sqlite3_errmsg(imp_dbh->db));
         return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
     DBIc_IMPSET_on(imp_dbh);
@@ -144,6 +143,8 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
 int
 dbd_set_sqlite3_busy_timeout ( SV *dbh, int timeout )
 {
+  dTHX;
+
   D_imp_dbh(dbh);
   if (timeout) {
     imp_dbh->timeout = timeout;
@@ -155,7 +156,7 @@ dbd_set_sqlite3_busy_timeout ( SV *dbh, int timeout )
 int
 sqlite_db_disconnect (SV *dbh, imp_dbh_t *imp_dbh)
 {
-    dTHR;
+    dTHX;
     sqlite3_stmt *pStmt;
     DBIc_ACTIVE_off(imp_dbh);
 
@@ -187,7 +188,7 @@ sqlite_db_disconnect (SV *dbh, imp_dbh_t *imp_dbh)
 void
 sqlite_db_destroy (SV *dbh, imp_dbh_t *imp_dbh)
 {
-    dTHR;
+    dTHX;
     if (DBIc_ACTIVE(imp_dbh)) {
         /* warn("DBIc_ACTIVE is on"); */
         sqlite_db_disconnect(dbh, imp_dbh);
@@ -202,12 +203,12 @@ sqlite_db_destroy (SV *dbh, imp_dbh_t *imp_dbh)
 int
 sqlite_db_rollback(SV *dbh, imp_dbh_t *imp_dbh)
 {
-    dTHR;
+    dTHX;
     int retval;
     char *errmsg;
 
     if (imp_dbh->in_tran) {
-        sqlite_trace(2, "ROLLBACK TRAN");
+        sqlite_trace(dbh, (imp_xxh_t*)imp_dbh, 2, "ROLLBACK TRAN");
         if ((retval = sqlite3_exec(imp_dbh->db, "ROLLBACK TRANSACTION",
             NULL, NULL, &errmsg))
             != SQLITE_OK)
@@ -224,7 +225,7 @@ sqlite_db_rollback(SV *dbh, imp_dbh_t *imp_dbh)
 int
 sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
 {
-    dTHR;
+    dTHX;
     int retval;
     char *errmsg;
 
@@ -234,7 +235,7 @@ sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
     }
 
     if (imp_dbh->in_tran) {
-        sqlite_trace(2, "COMMIT TRAN");
+        sqlite_trace(dbh, (imp_xxh_t*)imp_dbh, 2, "COMMIT TRAN");
         if ((retval = sqlite3_exec(imp_dbh->db, "COMMIT TRANSACTION",
             NULL, NULL, &errmsg))
             != SQLITE_OK)
@@ -250,13 +251,14 @@ sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
 int
 sqlite_discon_all(SV *drh, imp_drh_t *imp_drh)
 {
-    dTHR;
+    dTHX;
     return FALSE; /* no way to do this */
 }
 
 SV *
 sqlite_db_last_insert_id(SV *dbh, imp_dbh_t *imp_dbh, SV *catalog, SV *schema, SV *table, SV *field, SV *attr)
 {
+    dTHX;
     return newSViv(sqlite3_last_insert_rowid(imp_dbh->db));
 }
 
@@ -264,22 +266,22 @@ int
 sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
                 char *statement, SV *attribs)
 {
-    dTHR;
+    dTHX;
     D_imp_dbh_from_sth;
     const char *extra;
     int retval = 0;
 
     if (!DBIc_ACTIVE(imp_dbh)) {
-      sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, "attempt to prepare on inactive database handle");
+      sqlite_error(sth, (imp_xxh_t*)imp_sth, -2, "attempt to prepare on inactive database handle");
       return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
 
     if (strlen(statement) < 1) {
-      sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, "attempt to prepare empty statement");
+      sqlite_error(sth, (imp_xxh_t*)imp_sth, -2, "attempt to prepare empty statement");
       return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
 
-    sqlite_trace(2, "prepare statement: %s", statement);
+    sqlite_trace(sth, (imp_xxh_t*)imp_sth, 2, "prepare statement: %s", statement);
     imp_sth->nrow      = -1;
     imp_sth->retval    = SQLITE_OK;
     imp_sth->params    = newAV();
@@ -309,6 +311,7 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
 char *
 sqlite_quote(imp_dbh_t *imp_dbh, SV *val)
 {
+    dTHX;
     STRLEN len;
     char *cval = SvPV(val, len);
     SV *ret = sv_2mortal(NEWSV(0, SvCUR(val) + 2));
@@ -330,6 +333,7 @@ sqlite_quote(imp_dbh_t *imp_dbh, SV *val)
 void
 sqlite_st_reset (SV *sth)
 {
+    dTHX;
     D_imp_sth(sth);
     if (DBIc_IMPSET(imp_sth))
         sqlite3_reset(imp_sth->stmt);
@@ -338,24 +342,24 @@ sqlite_st_reset (SV *sth)
 int
 sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
 {
-    dTHR;
+    dTHX;
     D_imp_dbh_from_sth;
     char *errmsg;
     int num_params = DBIc_NUM_PARAMS(imp_sth);
     int i;
     int retval = 0;
 
-    sqlite_trace(3, "execute");
+    sqlite_trace(sth, (imp_xxh_t*)imp_sth, 3, "execute");
 
     /* warn("execute\n"); */
 
     if (!DBIc_ACTIVE(imp_dbh)) {
-        sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, "attempt to execute on inactive database handle");
+        sqlite_error(sth, (imp_xxh_t*)imp_sth, -2, "attempt to execute on inactive database handle");
         return -2; /* -> undef in SQLite.xsi */
     }
 
     if (DBIc_ACTIVE(imp_sth)) {
-         sqlite_trace(3, "execute still active, reset");
+         sqlite_trace(sth, (imp_xxh_t*)imp_sth, 3, "execute still active, reset");
          if ((imp_sth->retval = sqlite3_reset(imp_sth->stmt)) != SQLITE_OK) {
              char *errmsg = (char*)sqlite3_errmsg(imp_dbh->db);
              sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, errmsg);
@@ -368,11 +372,11 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         SV *sql_type_sv = av_shift(imp_sth->params);
         int sql_type = SvIV(sql_type_sv);
 
-        sqlite_trace(4, "params left in 0x%p: %d", imp_sth->params, 1+av_len(imp_sth->params));
-        sqlite_trace(4, "bind %d type %d as %s", i, sql_type, SvPV_nolen_undef_ok(value));
+        sqlite_trace(sth, (imp_xxh_t*)imp_sth, 4, "params left in 0x%p: %d", imp_sth->params, 1+av_len(imp_sth->params));
+        sqlite_trace(sth, (imp_xxh_t*)imp_sth, 4, "bind %d type %d as %s", i, sql_type, SvPV_nolen_undef_ok(value));
         
         if (!SvOK(value)) {
-            sqlite_trace(5, "binding null");
+            sqlite_trace(sth, (imp_xxh_t*)imp_sth, 5, "binding null");
             retval = sqlite3_bind_null(imp_sth->stmt, i+1);
         }
         else if (sql_type >= SQL_NUMERIC && sql_type <= SQL_SMALLINT) {
@@ -425,7 +429,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     }
 
     if ( (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) && (!imp_dbh->in_tran) ) {
-        sqlite_trace(2, "BEGIN TRAN");
+        sqlite_trace(sth, (imp_xxh_t*)imp_sth, 2, "BEGIN TRAN");
         if ((retval = sqlite3_exec(imp_dbh->db, "BEGIN TRANSACTION",
             NULL, NULL, &errmsg))
             != SQLITE_OK)
@@ -438,7 +442,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
 
     imp_sth->nrow = 0;
 
-    sqlite_trace(3, "Execute returned %d cols\n", DBIc_NUM_FIELDS(imp_sth));
+    sqlite_trace(sth, (imp_xxh_t*)imp_sth, 3, "Execute returned %d cols\n", DBIc_NUM_FIELDS(imp_sth));
     if (DBIc_NUM_FIELDS(imp_sth) == 0) {
         while ((imp_sth->retval = sqlite3_step(imp_sth->stmt)) != SQLITE_DONE) {
             if (imp_sth->retval == SQLITE_ROW) {
@@ -461,7 +465,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
     switch (imp_sth->retval) {
         case SQLITE_ROW:
         case SQLITE_DONE: DBIc_ACTIVE_on(imp_sth);
-                          sqlite_trace(5, "exec ok - %d rows, %d cols\n", imp_sth->nrow, DBIc_NUM_FIELDS(imp_sth));
+                          sqlite_trace(sth, (imp_xxh_t*)imp_sth, 5, "exec ok - %d rows, %d cols\n", imp_sth->nrow, DBIc_NUM_FIELDS(imp_sth));
                           return 0; /* -> '0E0' in SQLite.xsi */
         default:          sqlite3_reset(imp_sth->stmt);
                           imp_sth->stmt = NULL;
@@ -486,6 +490,7 @@ sqlite_bind_ph (SV *sth, imp_sth_t *imp_sth,
                 SV *param, SV *value, IV sql_type, SV *attribs,
                                 int is_inout, IV maxlen)
 {
+    dTHX;
     int pos;
     if (!looks_like_number(param)) {
         STRLEN len;
@@ -493,21 +498,27 @@ sqlite_bind_ph (SV *sth, imp_sth_t *imp_sth,
         paramstring = SvPV(param, len);
         if(paramstring[len] == 0 && strlen(paramstring) == len) {
             pos = sqlite3_bind_parameter_index(imp_sth->stmt, paramstring);
-            if (pos==0)
-                croak("Unknown named parameter: %s", paramstring);
+            if (pos==0) {
+                char errmsg[8192];
+                sqlite3_snprintf(8191, errmsg, "Unknown named parameter: %s", paramstring);
+                sqlite_error(sth, (imp_xxh_t*)imp_sth, -2, errmsg);
+                return FALSE; /* -> &sv_no in SQLite.xsi */
+            }
             pos = 2 * (pos - 1);
         }
         else {
-            croak("<param> could not be coerced to a C string");
+            sqlite_error(sth, (imp_xxh_t*)imp_sth, -2, "<param> could not be coerced to a C string");
+            return FALSE; /* -> &sv_no in SQLite.xsi */
         }
     }
     else {
         if (is_inout) {
-            croak("InOut bind params not implemented");
+            sqlite_error(sth, (imp_xxh_t*)imp_sth, -2, "InOut bind params not implemented");
+            return FALSE; /* -> &sv_no in SQLite.xsi */
         }
     }
     pos = 2 * (SvIV(param) - 1);
-    sqlite_trace(3, "bind into 0x%p: %d => %s (%d) pos %d\n",
+    sqlite_trace(sth, (imp_xxh_t*)imp_sth, 3, "bind into 0x%p: %d => %s (%d) pos %d\n",
       imp_sth->params, SvIV(param), SvPV_nolen_undef_ok(value), sql_type, pos);
     av_store(imp_sth->params, pos, SvREFCNT_inc(value));
     av_store(imp_sth->params, pos+1, newSViv(sql_type));
@@ -518,6 +529,8 @@ sqlite_bind_ph (SV *sth, imp_sth_t *imp_sth,
 int
 sqlite_bind_col(SV *sth, imp_sth_t *imp_sth, SV *col, SV *ref, IV sql_type, SV *attribs)
 {
+    dTHX;
+
     /* store the type */
     av_store(imp_sth->col_types, SvIV(col)-1, newSViv(sql_type));
 
@@ -528,13 +541,15 @@ sqlite_bind_col(SV *sth, imp_sth_t *imp_sth, SV *col, SV *ref, IV sql_type, SV *
 AV *
 sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
 {
+    dTHX;
+
     AV *av;
     D_imp_dbh_from_sth;
     int numFields = DBIc_NUM_FIELDS(imp_sth);
     int chopBlanks = DBIc_is(imp_sth, DBIcf_ChopBlanks);
     int i;
 
-    sqlite_trace(6, "numFields == %d, nrow == %d\n", numFields, imp_sth->nrow);
+    sqlite_trace(sth, (imp_xxh_t*)imp_sth, 6, "numFields == %d, nrow == %d\n", numFields, imp_sth->nrow);
 
     if (!DBIc_ACTIVE(imp_sth)) {
         return Nullav;
@@ -554,7 +569,7 @@ sqlite_st_fetch (SV *sth, imp_sth_t *imp_sth)
 
     imp_sth->nrow++;
 
-    av = DBIS->get_fbav(imp_sth);
+    av = DBIc_DBISTATE((imp_xxh_t *)imp_sth)->get_fbav(imp_sth);
     for (i = 0; i < numFields; i++) {
         int len;
         char * val;
@@ -621,6 +636,8 @@ sqlite_st_finish (SV *sth, imp_sth_t *imp_sth)
 int
 sqlite_st_finish3 (SV *sth, imp_sth_t *imp_sth, int is_destroy)
 {
+    dTHX;
+
     D_imp_dbh_from_sth;
 
     /* warn("finish statement\n"); */
@@ -651,6 +668,8 @@ sqlite_st_finish3 (SV *sth, imp_sth_t *imp_sth, int is_destroy)
 void
 sqlite_st_destroy (SV *sth, imp_sth_t *imp_sth)
 {
+    dTHX;
+
     D_imp_dbh_from_sth;
     /* warn("destroy statement: %s\n", imp_sth->statement); */
     DBIc_ACTIVE_off(imp_sth);
@@ -674,7 +693,7 @@ sqlite_st_blob_read (SV *sth, imp_sth_t *imp_sth,
 int
 sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
 {
-    dTHR;
+    dTHX;
     char *key = SvPV_nolen(keysv);
     char *errmsg;
     int retval;
@@ -683,7 +702,7 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
         if (SvTRUE(valuesv)) {
             /* commit tran? */
             if ( (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) && (imp_dbh->in_tran) ) {
-                sqlite_trace(2, "COMMIT TRAN");
+                sqlite_trace(dbh, (imp_xxh_t*)imp_dbh, 2, "COMMIT TRAN");
                 if ((retval = sqlite3_exec(imp_dbh->db, "COMMIT TRANSACTION",
                     NULL, NULL, &errmsg))
                     != SQLITE_OK)
@@ -707,7 +726,7 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
 SV *
 sqlite_db_FETCH_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv)
 {
-    dTHR;
+    dTHX;
     char *key = SvPV_nolen(keysv);
 
     if (strEQ(key, "sqlite_version")) {
@@ -723,6 +742,7 @@ sqlite_db_FETCH_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv)
 int
 sqlite_st_STORE_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv, SV *valuesv)
 {
+    dTHX;
     char *key = SvPV_nolen(keysv);
     return FALSE;
 }
@@ -743,6 +763,7 @@ type_to_odbc_type (int type)
 SV *
 sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
 {
+    dTHX;
     D_imp_dbh_from_sth;
     char *key = SvPV_nolen(keysv);
     SV *retsv = NULL;
@@ -830,6 +851,7 @@ sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
 static void
 sqlite_db_set_result(sqlite3_context *context, SV *result, int is_error )
 {
+    dTHX;
     STRLEN len;
     char *s;
 
@@ -859,6 +881,7 @@ sqlite_db_set_result(sqlite3_context *context, SV *result, int is_error )
 static void
 sqlite_db_func_dispatcher(int is_unicode, sqlite3_context *context, int argc, sqlite3_value **value)
 {
+    dTHX;
     dSP;
     int count;
     int i;
@@ -944,37 +967,41 @@ sqlite_db_func_dispatcher_no_unicode(sqlite3_context *context, int argc, sqlite3
 void
 sqlite3_db_create_function( SV *dbh, const char *name, int argc, SV *func )
 {
+    dTHX;
     D_imp_dbh(dbh);
-    int rv;
+    int retval;
 
     /* Copy the function reference */
     SV *func_sv = newSVsv(func);
     av_push( imp_dbh->functions, func_sv );
 
     /* warn("create_function %s with %d args\n", name, argc); */
-    rv = sqlite3_create_function( imp_dbh->db, name, argc, SQLITE_UTF8,
+    retval = sqlite3_create_function( imp_dbh->db, name, argc, SQLITE_UTF8,
                                   func_sv,
                                   imp_dbh->unicode ? sqlite_db_func_dispatcher_unicode
                                                    : sqlite_db_func_dispatcher_no_unicode, 
                                   NULL, NULL );
-    if ( rv != SQLITE_OK )
+    if ( retval != SQLITE_OK )
     {
-        croak( "sqlite_create_function failed with error %s", 
-               sqlite3_errmsg(imp_dbh->db) );
+        char errmsg[8192];
+        sqlite3_snprintf(8191, errmsg, "sqlite_create_function failed with error %s", sqlite3_errmsg(imp_dbh->db));
+        sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
     }
 }
 
 void
 sqlite3_db_enable_load_extension( SV *dbh, int onoff )
 {
+    dTHX;
     D_imp_dbh(dbh);
-    int rv;
+    int retval;
     
-    rv = sqlite3_enable_load_extension( imp_dbh->db, onoff );
-    if ( rv != SQLITE_OK )
+    retval = sqlite3_enable_load_extension( imp_dbh->db, onoff );
+    if ( retval != SQLITE_OK )
     {
-        croak( "sqlite_enable_load_extension failed with error %s", 
-               sqlite3_errmsg(imp_dbh->db) );
+        char errmsg[8192];
+        sqlite3_snprintf(8191, errmsg, "sqlite_enable_load_extension failed with error %s", sqlite3_errmsg(imp_dbh->db));
+        sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
     }
 }
 
@@ -988,6 +1015,7 @@ struct aggrInfo {
 static void
 sqlite_db_aggr_new_dispatcher( sqlite3_context *context, aggrInfo *aggr_info )
 {
+    dTHX;
     dSP;
     SV *pkg = NULL;
     int count = 0;
@@ -1045,6 +1073,7 @@ static void
 sqlite_db_aggr_step_dispatcher (sqlite3_context *context,
                                 int argc, sqlite3_value **value)
 {
+    dTHX;
     dSP;
     int i;
     aggrInfo *aggr;
@@ -1109,6 +1138,7 @@ sqlite_db_aggr_step_dispatcher (sqlite3_context *context,
 static void
 sqlite_db_aggr_finalize_dispatcher( sqlite3_context *context )
 {
+    dTHX;
     dSP;
     aggrInfo *aggr, myAggr;
     int count = 0;
@@ -1174,24 +1204,26 @@ sqlite_db_aggr_finalize_dispatcher( sqlite3_context *context )
 void
 sqlite3_db_create_aggregate( SV *dbh, const char *name, int argc, SV *aggr_pkg )
 {
+    dTHX;
     D_imp_dbh(dbh);
-    int rv;
+    int retval;
 
     /* Copy the aggregate reference */
     SV *aggr_pkg_copy = newSVsv(aggr_pkg);
     av_push( imp_dbh->aggregates, aggr_pkg_copy );
 
-    rv = sqlite3_create_function( imp_dbh->db, name, argc, SQLITE_UTF8,
+    retval = sqlite3_create_function( imp_dbh->db, name, argc, SQLITE_UTF8,
                                   aggr_pkg_copy,
                                   NULL,
                                   sqlite_db_aggr_step_dispatcher, 
                                   sqlite_db_aggr_finalize_dispatcher
                                 );
 
-    if ( rv != SQLITE_OK )
+    if ( retval != SQLITE_OK )
     {
-        croak( "sqlite_create_aggregate failed with error %s", 
-               sqlite3_errmsg(imp_dbh->db) );
+        char errmsg[8192];
+        sqlite3_snprintf(8191, errmsg, "sqlite_create_aggregate failed with error %s", sqlite3_errmsg(imp_dbh->db));
+        sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
     }
 }
 
@@ -1199,6 +1231,7 @@ sqlite3_db_create_aggregate( SV *dbh, const char *name, int argc, SV *aggr_pkg )
 int sqlite_db_collation_dispatcher(void *func, int len1, const void *string1,
                                                int len2, const void *string2)
 {
+    dTHX;
     dSP;
     int cmp;
     int n_retval;
@@ -1226,6 +1259,7 @@ int sqlite_db_collation_dispatcher_utf8(
   void *func, int len1, const void *string1,
               int len2, const void *string2)
 {
+    dTHX;
     dSP;
     int cmp;
     int n_retval;
@@ -1258,6 +1292,7 @@ int sqlite_db_collation_dispatcher_utf8(
 void
 sqlite3_db_create_collation( SV *dbh, const char *name, SV *func )
 {
+    dTHX;
     D_imp_dbh(dbh);
     int rv, rv2;
     void *aa = "aa";
@@ -1289,14 +1324,15 @@ sqlite3_db_create_collation( SV *dbh, const char *name, SV *func )
 
     if ( rv != SQLITE_OK )
     {
-        croak( "sqlite_create_collation failed with error %s", 
-               sqlite3_errmsg(imp_dbh->db) );
+        char errmsg[8192];
+        sqlite3_snprintf(8191, errmsg, "sqlite_create_collation failed with error %s", sqlite3_errmsg(imp_dbh->db));
     }
 }
 
 
 int sqlite_db_progress_handler_dispatcher( void *handler )
 {
+    dTHX;
     dSP;
     int n_retval;
     int retval;
@@ -1318,6 +1354,7 @@ int sqlite_db_progress_handler_dispatcher( void *handler )
 void
 sqlite3_db_progress_handler( SV *dbh, int n_opcodes, SV *handler )
 {
+    dTHX;
     D_imp_dbh(dbh);
 
     if (handler == &PL_sv_undef) {
