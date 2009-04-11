@@ -1,5 +1,5 @@
 NAME
-    DBD::SQLite - Self Contained RDBMS in a DBI Driver
+    DBD::SQLite - Self-contained RDBMS in a DBI Driver
 
 SYNOPSIS
       use DBI;
@@ -123,13 +123,15 @@ DRIVER PRIVATE METHODS
         driver will check that this is a proper sorting function.
 
     Collations "binary" and "nocase" are builtin within Sqlite. Collations
-    "perl" and "perllocale" are builtin within the "DBD::SQLite" driver, and
+    "perl" and "perllocale" are builtin within the DBD::SQLite driver, and
     correspond to the Perl "cmp" operator with or without the locale pragma;
     so you can write for example
 
-      CREATE TABLE foo(txt1 COLLATE perl,
-                       txt2 COLLATE perllocale,
-                       txt3 COLLATE nocase)
+      CREATE TABLE foo(
+          txt1 COLLATE perl,
+          txt2 COLLATE perllocale,
+          txt3 COLLATE nocase
+      )
 
     or
 
@@ -141,9 +143,13 @@ DRIVER PRIVATE METHODS
     set before the call to "create_collation". The recommended way to
     activate unicode is to set the parameter at connection time :
 
-      my $dbh = DBI->connect("dbi:SQLite:dbname=foo", "", "", 
-                              { RaiseError => 1,
-                                unicode    => 1} );
+      my $dbh = DBI->connect(
+          "dbi:SQLite:dbname=foo", "", "", 
+          {
+              RaiseError => 1,
+              unicode    => 1,
+          }
+      );
 
   $dbh->func( $name, $argc, $pkg, 'create_aggregate' )
     This method will register a new aggregate function which can then be
