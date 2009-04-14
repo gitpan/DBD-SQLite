@@ -8,7 +8,7 @@ use DynaLoader ();
 use vars qw($VERSION @ISA);
 use vars qw{$err $errstr $drh $sqlite_version};
 BEGIN {
-    $VERSION = '1.22_04';
+    $VERSION = '1.22_05';
     @ISA     = ('DynaLoader');
 
     # Driver singleton
@@ -383,7 +383,7 @@ DBD::SQLite - Self-contained RDBMS in a DBI Driver
 =head1 DESCRIPTION
 
 SQLite is a public domain RDBMS database engine that you can find
-at L<http://www.hwaci.com/sw/sqlite/>.
+at L<http://www.sqlite.org/>.
 
 Rather than ask you to install SQLite first, because SQLite is public
 domain, B<DBD::SQLite> includes the entire thing in the distribution.
@@ -397,7 +397,7 @@ SQLite supports the following features:
 
 =item Implements a large subset of SQL92
 
-See L<http://www.hwaci.com/sw/sqlite/lang.html> for details.
+See L<http://www.sqlite.org/lang.html> for details.
 
 =item A complete DB in a single disk file
 
@@ -441,10 +441,10 @@ e.g., "2.8.0". Can only be read.
 =item unicode
 
 If set to a true value, B<DBD::SQLite> will turn the UTF-8 flag on for all text
-strings coming out of the database. For more details on the UTF-8 flag see
+strings coming out of the database (this feature is currently disabled for perl < 5.8.5). For more details on the UTF-8 flag see
 L<perlunicode>. The default is for the UTF-8 flag to be turned off.
 
-Also note that due to some bizareness in SQLite's type system (see
+Also note that due to some bizarreness in SQLite's type system (see
 L<http://www.sqlite.org/datatype3.html>), if you want to retain
 blob-style behavior for B<some> columns under C<< $dbh->{unicode} = 1
 >> (say, to store images in the database), you have to state so
@@ -532,7 +532,7 @@ The driver will check that this is a proper sorting function.
 
 =back
 
-Collations C<binary> and C<nocase> are builtin within Sqlite.
+Collations C<binary> and C<nocase> are builtin within SQLite.
 Collations C<perl> and C<perllocale> are builtin within 
 the B<DBD::SQLite> driver, and correspond to the 
 Perl C<cmp> operator with or without the L<locale> pragma; 
@@ -766,26 +766,14 @@ There're several pended RT bugs/patches at the moment
 
 Here's the list.
 
-L<http://rt.cpan.org/Public/Bug/Display.html?id=41631>
-(patch required)
-
-L<http://rt.cpan.org/Public/Bug/Display.html?id=40594>
-(patch required, and the following tests may break)
-
-L<http://rt.cpan.org/Public/Bug/Display.html?id=30167>
-(need to see what is the best solution right now)
-
-L<http://rt.cpan.org/Public/Bug/Display.html?id=36836>
-(patch required)
-
-L<http://rt.cpan.org/Public/Bug/Display.html?id=13631>
-(test required)
-
 L<http://rt.cpan.org/Public/Bug/Display.html?id=35449>
-(break tests)
+(breaks tests)
 
 L<http://rt.cpan.org/Public/Bug/Display.html?id=29629>
-(patch required)
+(requires a patch)
+
+L<http://rt.cpan.org/Public/Bug/Display.html?id=29058>
+(requires a patch)
 
 Switch tests to L<Test::More> to support more advanced testing behaviours
 

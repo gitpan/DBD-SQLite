@@ -1,5 +1,11 @@
 Changes for Perl extension DBD-SQLite.
 
+1.22_05 Wed 15 Apr 2009
+    - Hopefully the last dev release before the next production release.
+    - Updated to SQLite 3.6.13 (DUNCAND)
+    - Setting svn:eol-style to native to prevent EOL issues (ADAMK)
+    - Resolved #44861: tweaked Makefile.PL to support older HP-UX (ISHIGAKI)
+
 1.22_04 Sat 11 Apr 2009 
     - Adding support parsing attributes out of the DSN (ADAMK)
     - Inserted pTHX_/aTHX_ for better efficiency (suggested in #44884 by TIMB) (ISHIGAKI)

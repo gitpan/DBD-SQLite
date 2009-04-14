@@ -182,6 +182,9 @@ if ( $Config{d_usleep} || $Config{osname} =~ m/linux/ ) {
 unless ( $Config{usethreads} ) {
 	push @CC_DEFINE, '-DTHREADSAFE=0';
 }
+if ($^O eq 'hpux' and $Config{osvers} <= 10.20) {
+	push @CC_DEFINE, '-DSQLITE_OMIT_LOAD_EXTENSION';
+}
 
 my @CC_OPTIONS = (
 	INC          => join( ' ', @CC_INC    ),
@@ -252,6 +255,8 @@ WriteMakefile(
 
 package MY;
 
+use Config;
+
 sub postamble {
 	require DBI;
 	require DBI::DBD;
@@ -264,4 +269,25 @@ sub libscan {
 	my ($self, $path) = @_;
 	return if $path =~ /\.pl$/;
 	($path =~ m/\~$/) ? undef : $path;
+}
+
+sub test_via_harness {
+	my ($self, $perl, $tests) = @_;
+	if ($^O eq 'hpux' and $Config{osvers} <= 10.20) {
+		return qq{\tPERL_DL_NONLAZY=0 $perl "-MExtUtils::Command::MM" }.
+				qq{"-e" "test_harness(\$(TEST_VERBOSE), '\$(INST_LIB)', '\$(INST_ARCHLIB)')" $tests\n};
+	}
+	else {
+		$self->SUPER::test_via_harness($perl, $tests);
+	}
+}
+
+sub test_via_script {
+	my ($self, $perl, $script) = @_;
+	if ($^O eq 'hpux' and $Config{osvers} <= 10.20) {
+		return qq{\tPERL_DL_NONLAZY=0 $perl "-I\$(INST_LIB)" "-I\$(INST_ARCHLIB)" $script\n};
+	}
+	else {
+		$self->SUPER::test_via_script($perl, $script);
+	}
 }

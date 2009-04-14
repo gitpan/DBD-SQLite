@@ -7,7 +7,7 @@ SYNOPSIS
 
 DESCRIPTION
     SQLite is a public domain RDBMS database engine that you can find at
-    <http://www.hwaci.com/sw/sqlite/>.
+    <http://www.sqlite.org/>.
 
     Rather than ask you to install SQLite first, because SQLite is public
     domain, DBD::SQLite includes the entire thing in the distribution. So in
@@ -17,7 +17,7 @@ DESCRIPTION
     SQLite supports the following features:
 
     Implements a large subset of SQL92
-        See <http://www.hwaci.com/sw/sqlite/lang.html> for details.
+        See <http://www.sqlite.org/lang.html> for details.
 
     A complete DB in a single disk file
         Everything for your database is stored in a single disk file, making
@@ -50,11 +50,12 @@ DRIVER PRIVATE ATTRIBUTES
 
     unicode
         If set to a true value, DBD::SQLite will turn the UTF-8 flag on for
-        all text strings coming out of the database. For more details on the
-        UTF-8 flag see perlunicode. The default is for the UTF-8 flag to be
-        turned off.
+        all text strings coming out of the database (this feature is
+        currently disabled for perl < 5.8.5). For more details on the UTF-8
+        flag see perlunicode. The default is for the UTF-8 flag to be turned
+        off.
 
-        Also note that due to some bizareness in SQLite's type system (see
+        Also note that due to some bizarreness in SQLite's type system (see
         <http://www.sqlite.org/datatype3.html>), if you want to retain
         blob-style behavior for some columns under "$dbh->{unicode} = 1"
         (say, to store images in the database), you have to state so
@@ -122,7 +123,7 @@ DRIVER PRIVATE METHODS
         This should be a reference to the function's implementation. The
         driver will check that this is a proper sorting function.
 
-    Collations "binary" and "nocase" are builtin within Sqlite. Collations
+    Collations "binary" and "nocase" are builtin within SQLite. Collations
     "perl" and "perllocale" are builtin within the DBD::SQLite driver, and
     correspond to the Perl "cmp" operator with or without the locale pragma;
     so you can write for example
@@ -326,21 +327,11 @@ TO DO
 
     Here's the list.
 
-    <http://rt.cpan.org/Public/Bug/Display.html?id=41631> (patch required)
+    <http://rt.cpan.org/Public/Bug/Display.html?id=35449> (breaks tests)
 
-    <http://rt.cpan.org/Public/Bug/Display.html?id=40594> (patch required,
-    and the following tests may break)
+    <http://rt.cpan.org/Public/Bug/Display.html?id=29629> (requires a patch)
 
-    <http://rt.cpan.org/Public/Bug/Display.html?id=30167> (need to see what
-    is the best solution right now)
-
-    <http://rt.cpan.org/Public/Bug/Display.html?id=36836> (patch required)
-
-    <http://rt.cpan.org/Public/Bug/Display.html?id=13631> (test required)
-
-    <http://rt.cpan.org/Public/Bug/Display.html?id=35449> (break tests)
-
-    <http://rt.cpan.org/Public/Bug/Display.html?id=29629> (patch required)
+    <http://rt.cpan.org/Public/Bug/Display.html?id=29058> (requires a patch)
 
     Switch tests to Test::More to support more advanced testing behaviours
 
