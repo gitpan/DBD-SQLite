@@ -8,7 +8,7 @@ use DynaLoader ();
 use vars qw($VERSION @ISA);
 use vars qw{$err $errstr $drh $sqlite_version};
 BEGIN {
-    $VERSION = '1.22_06';
+    $VERSION = '1.22_07';
     @ISA     = ('DynaLoader');
 
     # Initialize errors
@@ -65,17 +65,18 @@ sub connect {
 
     # To avoid unicode and long file name problems on Windows,
     # convert to the shortname if the file (or parent directory) exists.
-    if ( $^O eq 'MSWin32' ) {
+    if ( $^O eq 'MSWin32' and $real ne ':memory:' ) {
         require Win32;
         require File::Basename;
         my ($file, $dir, $suffix) = File::Basename::fileparse($real);
-        if ( -f $real ) {
+        my $short = Win32::GetShortPathName($real);
+        if ( $short && -f $short ) {
             # Existing files will work directly.
-            $real = Win32::GetShortPathName($real);
+            $real = $short;
         } elsif ( -d $dir ) {
             # We are creating a new file.
             # Does the directory it's in at least exist?
-            $real = Win32::GetShortPathName($dir) . $file . $suffix;
+            $real = join '', grep { defined } Win32::GetShortPathName($dir), $file, $suffix;
         } else {
             # SQLite can't do mkpath anyway.
             # So let it go through as it and fail.

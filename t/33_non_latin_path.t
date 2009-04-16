@@ -13,7 +13,7 @@ use t::lib::Test;
 use Test::More;
 BEGIN {
 	if ( $] >= 5.008005 ) {
-		plan( tests => 13 );
+		plan( tests => 25 );
 	} else {
 		plan( skip_all => 'Unicode is not supported before 5.8.5' );
 	}
@@ -29,7 +29,7 @@ eval "require utf8";
 die $@ if $@;
 
 my $dir = File::Temp::tempdir( CLEANUP => 1 );
-foreach my $subdir ( 'longascii', 'adatbázis' ) {
+foreach my $subdir ( 'longascii', 'adatbázis', 'name with spaces', '¿¿¿ ¿¿¿¿¿¿') {
 	utf8::upgrade($subdir);
 	ok(
 		mkdir(catdir($dir, $subdir)),
@@ -47,7 +47,7 @@ foreach my $subdir ( 'longascii', 'adatbázis' ) {
 	};
 	is( $@, '', "Could connect to database in $subdir" );
 	diag( $@ ) if $@;
-	unlink($dbfile)  if -e $dbfile;
+	unlink(_path($dbfile))  if -e _path($dbfile);
 
 	# Repeat with the unicode flag on
 	my $ufile = $dbfile;
@@ -61,6 +61,7 @@ foreach my $subdir ( 'longascii', 'adatbázis' ) {
 	};
 	is( $@, '', "Could connect to database in $subdir" );
 	diag( $@ ) if $@;
+	unlink(_path($ufile))  if -e _path($ufile);
 	
 	# when the name of the database file has non-latin characters
 	my $dbfilex = catfile($dir, "$subdir.db");
@@ -68,4 +69,23 @@ foreach my $subdir ( 'longascii', 'adatbázis' ) {
 		DBI->connect("dbi:SQLite:dbname=$dbfilex", "", "", {RaiseError => 1, PrintError => 0});
 	};
 	ok(!$@, "Could connect to database in $dbfilex") or diag $@;
+	unlink(_path($dbfilex))  if -e _path($dbfilex);
+}
+
+sub _path {  # copied from DBD::SQLite::connect
+	my $path = shift;
+	return $path unless $^O eq 'MSWin32';
+
+	require Win32;
+	require File::Basename;
+
+	my ($file, $dir, $suffix) = File::Basename::fileparse($path);
+	my $short = Win32::GetShortPathName($path);
+	if ( $short && -f $short ) {
+		# Existing files will work directly.
+		return $short;
+	} elsif ( -d $dir ) {
+		return join '', grep { defined } Win32::GetShortPathName($dir), $file, $suffix;
+	}
+	return $path;
 }
