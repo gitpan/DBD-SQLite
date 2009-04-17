@@ -230,7 +230,7 @@ sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
     char *errmsg;
 
     if (DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
-        warn("commit ineffective with AutoCommit");
+	/* We don't need to warn, because the DBI layer will do it for us */
         return TRUE;
     }
 

@@ -128,7 +128,6 @@ t/33_non_latin_path.t
 t/97_meta.t
 t/98_pod.t
 t/99_pmv.t
-t/lib.pl
 t/lib/Test.pm
 t/rt_15186_prepcached.t
 t/rt_21406_auto_finish.t
