@@ -212,6 +212,9 @@ WriteMakefile(
 		( WINLIKE ? (
 			'Win32' => '0.30',
 		) : () ),
+		( ($^O eq 'cygwin' && $] < 5.010) ? (
+			'Filesys::CygwinPaths' => '0',
+		) : () ),
 	},
 	OPTIONAL( '6.48',
 		MIN_PERL_VERSION => '5.006',
@@ -236,10 +239,15 @@ WriteMakefile(
 			},
 			resources => {
 				license     => 'http://dev.perl.org/licenses/',
-				bugtracker  => 'http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBD-SQLite',
+				bugtracker  => 'http://rt.cpan.org/Public/Dist/Display.html?Name=DBD-SQLite',
 				repository  => 'http://svn.ali.as/cpan/trunk/DBD-SQLite',
 				MailingList => 'http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/dbd-sqlite',
 			},
+			no_index => {
+				directory => [ qw{
+					t inc util
+				} ],
+			}
 		},
 	),
 	OBJECT           => ( $force_local
