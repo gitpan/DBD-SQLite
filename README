@@ -78,8 +78,13 @@ DRIVER PRIVATE METHODS
     is returned. Otherwise, it is the hidden ROWID column. See the sqlite
     docs for details.
 
-    Note: You can now use $dbh->last_insert_id() if you have a recent
-    version of DBI.
+    Generally you should not be using this method. Use the DBI
+    last_insert_id method instead. The usage of this is:
+
+      $h->last_insert_id($catalog, $schema, $table_name, $field_name [, \%attr ])
+
+    Running "$h->last_insert_id("","","","")" is the equivalent of running
+    "$dbh->func('last_insert_rowid')" directly.
 
   $dbh->func('busy_timeout')
     Retrieve the current busy timeout.
@@ -229,10 +234,14 @@ DRIVER PRIVATE METHODS
       FROM results
       GROUP BY group_name;
 
+    For more examples, see the DBD::SQLite::Cookbook.
+
   $dbh->func( $n_opcodes, $code_ref, 'progress_handler' )
     This method registers a handler to be invoked periodically during long
-    running calls to SQLite. An example use for this interface is to keep a
-    GUI updated during a large query. The parameters are:
+    running calls to SQLite.
+
+    An example use for this interface is to keep a GUI updated during a
+    large query. The parameters are:
 
     $n_opcodes
         The progress handler is invoked once for every $n_opcodes virtual
@@ -316,6 +325,28 @@ PERFORMANCE
     down non-transactional writes significantly) at the expense of some
     peace of mind. Also try playing with the cache_size pragma.
 
+    The memory usage of SQLite can also be tuned using the cache_size
+    pragma.
+
+      $dbh->do("PRAGMA cache_size = 800000");
+
+    The above will allocate 800M for DB cache; the default is 2M. Your sweet
+    spot probably lies somewhere in between.
+
+TO DO
+    The following items remain to be done.
+
+  Warnings Upgrade
+    We currently use a horridly hacky method to issue and suppress warnings.
+    It suffices for now, but just barely.
+
+    Migrate all of the warning code to use the recommended DBI warnings.
+
+  Leak Detection
+    Implement one or more leak detection tests that only run during
+    AUTOMATED_TESTING and RELEASE_TESTING and validate that none of the C
+    code we work with leaks.
+
 SUPPORT
     Bugs should be reported via the CPAN bug tracker at
 
@@ -351,7 +382,9 @@ COPYRIGHT
 
     DBD::SQLite is copyright 2002 - 2007 Matt Sergeant.
 
-    Some parts copyright 2008 Francis J. Lacoste and Wolfgang Sourdeau.
+    Some parts copyright 2008 Francis J. Lacoste.
+
+    Some parts copyright 2008 Wolfgang Sourdeau.
 
     Some parts copyright 2008 - 2009 Adam Kennedy.
 

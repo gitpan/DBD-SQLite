@@ -8,7 +8,7 @@ use DynaLoader ();
 use vars qw($VERSION @ISA);
 use vars qw{$err $errstr $drh $sqlite_version};
 BEGIN {
-    $VERSION = '1.24_01';
+    $VERSION = '1.24_02';
     @ISA     = ('DynaLoader');
 
     # Initialize errors
@@ -498,8 +498,13 @@ This method returns the last inserted rowid. If you specify an INTEGER PRIMARY
 KEY as the first column in your table, that is the column that is returned.
 Otherwise, it is the hidden ROWID column. See the sqlite docs for details.
 
-Note: You can now use $dbh-E<gt>last_insert_id() if you have a recent version of
-DBI.
+Generally you should not be using this method. Use the L<DBI> last_insert_id
+method instead. The usage of this is:
+
+  $h->last_insert_id($catalog, $schema, $table_name, $field_name [, \%attr ])
+
+Running C<$h-E<gt>last_insert_id("","","","")> is the equivalent of running
+C<$dbh-E<gt>func('last_insert_rowid')> directly.
 
 =head2 $dbh->func('busy_timeout')
 
@@ -683,13 +688,15 @@ The aggregate function can then be used as:
   FROM results
   GROUP BY group_name;
 
+For more examples, see the L<DBD::SQLite::Cookbook>.
+
 =head2 $dbh->func( $n_opcodes, $code_ref, 'progress_handler' )
 
-This method registers a handler to be invoked 
-periodically during long running calls to SQLite.
-An example use for this interface is to keep a GUI 
-updated during a large query.
-The parameters are:
+This method registers a handler to be invoked periodically during long
+running calls to SQLite.
+
+An example use for this interface is to keep a GUI updated during a
+large query. The parameters are:
 
 =over
 
@@ -711,11 +718,11 @@ progress handler.
 
 =head1 BLOBS
 
-As of version 1.11, blobs should "just work" in SQLite as text columns. However
-this will cause the data to be treated as a string, so SQL statements such
-as length(x) will return the length of the column as a NUL terminated string,
-rather than the size of the blob in bytes. In order to store natively as a
-BLOB use the following code:
+As of version 1.11, blobs should "just work" in SQLite as text columns.
+However this will cause the data to be treated as a string, so SQL
+statements such as length(x) will return the length of the column as a NUL
+terminated string, rather than the size of the blob in bytes. In order to
+store natively as a BLOB use the following code:
 
   use DBI qw(:sql_types);
   my $dbh = DBI->connect("dbi:SQLite:dbfile","","");
@@ -781,6 +788,30 @@ Which will prevent sqlite from doing fsync's when writing (which
 slows down non-transactional writes significantly) at the expense of some
 peace of mind. Also try playing with the cache_size pragma.
 
+The memory usage of SQLite can also be tuned using the cache_size pragma.
+
+  $dbh->do("PRAGMA cache_size = 800000");
+
+The above will allocate 800M for DB cache; the default is 2M. Your sweet spot
+probably lies somewhere in between.
+
+=head1 TO DO
+
+The following items remain to be done.
+
+=head2 Warnings Upgrade
+
+We currently use a horridly hacky method to issue and suppress warnings.
+It suffices for now, but just barely.
+
+Migrate all of the warning code to use the recommended DBI warnings.
+
+=head2 Leak Detection
+
+Implement one or more leak detection tests that only run during
+AUTOMATED_TESTING and RELEASE_TESTING and validate that none of the C
+code we work with leaks.
+
 =head1 SUPPORT
 
 Bugs should be reported via the CPAN bug tracker at
@@ -823,7 +854,9 @@ The bundled SQLite code in this distribution is Public Domain.
 
 DBD::SQLite is copyright 2002 - 2007 Matt Sergeant.
 
-Some parts copyright 2008 Francis J. Lacoste and Wolfgang Sourdeau.
+Some parts copyright 2008 Francis J. Lacoste.
+
+Some parts copyright 2008 Wolfgang Sourdeau.
 
 Some parts copyright 2008 - 2009 Adam Kennedy.
 
