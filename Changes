@@ -1,5 +1,15 @@
 Changes for Perl extension DBD-SQLite
 
+1.26_01 Tue  5 May 2009
+    - Added ORDINAL_POSITION support for $dbh->column_info (ADAMK)
+    - Applied several fixes from GFUJI to clean up code (#45578)
+      (ISHIGAKI)
+    - Skipped some of the unicode path tests under cygwin (#45166)
+      (JDHEDDEN)
+    - Added some explanation and workarounds for a SQL that
+      compares a return value of a function with a numeric bind
+      value (ISHIGAKI)
+
 1.25 Thu 23 Apr 2009
     - Amalgamation conversion turned out to be quicker than expected.
     - Changing to a production release.  (ADAMK)

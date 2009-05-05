@@ -8,8 +8,8 @@ use DynaLoader ();
 use vars qw($VERSION @ISA);
 use vars qw{$err $errstr $drh $sqlite_version};
 BEGIN {
-    $VERSION = '1.25';
-    @ISA     = ('DynaLoader');
+    $VERSION = '1.26_01';
+    @ISA     = 'DynaLoader';
 
     # Initialize errors
     $err     = undef;
@@ -65,7 +65,7 @@ sub connect {
 
     # To avoid unicode and long file name problems on Windows,
     # convert to the shortname if the file (or parent directory) exists.
-    if ( $^O =~ /MSWin32|cygwin/ and $real ne ':memory:' ) {
+    if ( $^O =~ /MSWin32/ and $real ne ':memory:' ) {
         require Win32;
         require File::Basename;
         my ($file, $dir, $suffix) = File::Basename::fileparse($real);
@@ -80,15 +80,6 @@ sub connect {
         } else {
             # SQLite can't do mkpath anyway.
             # So let it go through as it and fail.
-        }
-        if ( $^O eq 'cygwin' ) {
-            if ( $] >= 5.010 ) {
-                $real = Cygwin::win_to_posix_path($real, 'absolute');
-            }
-            else {
-                require Filesys::CygwinPaths;
-                $real = Filesys::CygwinPaths::fullposixpath($real);
-            }
         }
     }
 
@@ -244,7 +235,7 @@ sub primary_key_info {
     my($dbh, $catalog, $schema, $table) = @_;
 
     # This is a hack but much simpler than using pragma index_list etc
-    # also the pragma doesn't list 'INTEGER PRIMARK KEY' autoinc PKs!
+    # also the pragma doesn't list 'INTEGER PRIMARY KEY' autoinc PKs!
     my @pk_info;
     my $sth_tables = $dbh->table_info($catalog, $schema, $table, '');
     while ( my $row = $sth_tables->fetchrow_hashref ) {
@@ -324,6 +315,27 @@ sub type_info_all {
 #    ];
 }
 
+my @COLUMN_INFO = qw(
+    TABLE_CAT
+    TABLE_SCHEM
+    TABLE_NAME
+    COLUMN_NAME
+    DATA_TYPE
+    TYPE_NAME
+    COLUMN_SIZE
+    BUFFER_LENGTH
+    DECIMAL_DIGITS
+    NUM_PREC_RADIX
+    NULLABLE
+    REMARKS
+    COLUMN_DEF
+    SQL_DATA_TYPE
+    SQL_DATETIME_SUB
+    CHAR_OCTET_LENGTH
+    ORDINAL_POSITION
+    IS_NULLABLE
+);
+
 # Taken from Fey::Loader::SQLite
 sub column_info {
     my($dbh, $catalog, $schema, $table, $column) = @_;
@@ -332,24 +344,18 @@ sub column_info {
         $column = undef;
     }
 
-    my $sth_columns = $dbh->prepare( "PRAGMA table_info('$table')" );
+    my @cols        = ();
+    my $position    = 0;
+    my $sth_columns = $dbh->prepare("PRAGMA table_info('$table')");
     $sth_columns->execute;
-
-    my @names = qw(
-        TABLE_CAT TABLE_SCHEM TABLE_NAME COLUMN_NAME
-        DATA_TYPE TYPE_NAME COLUMN_SIZE BUFFER_LENGTH
-        DECIMAL_DIGITS NUM_PREC_RADIX NULLABLE
-        REMARKS COLUMN_DEF SQL_DATA_TYPE SQL_DATETIME_SUB
-        CHAR_OCTET_LENGTH ORDINAL_POSITION IS_NULLABLE
-    );
-
-    my @cols;
     while ( my $col_info = $sth_columns->fetchrow_hashref ) {
+        $position++;
         next if defined $column && $column ne $col_info->{name};
 
         my %col = (
-            TABLE_NAME  => $table,
-            COLUMN_NAME => $col_info->{name},
+            TABLE_NAME       => $table,
+            COLUMN_NAME      => $col_info->{name},
+            ORDINAL_POSITION => $position,
         );
 
         my $type = $col_info->{type};
@@ -372,24 +378,26 @@ sub column_info {
             $col{IS_NULLABLE} = 'YES';
         }
 
-        foreach my $key ( @names ) {
+        foreach my $key ( @COLUMN_INFO ) {
             next if exists $col{$key};
             $col{$key} = undef;
         }
 
         push @cols, \%col;
     }
+    $sth_columns->finish;
 
     my $sponge = DBI->connect("DBI:Sponge:", '','')
         or return $dbh->DBI::set_err($DBI::err, "DBI::Sponge: $DBI::errstr");
     my $sth = $sponge->prepare( "column_info $table", {
-        rows          => [ map { [ @{$_}{@names} ] } @cols ],
-        NUM_OF_FIELDS => scalar @names,
-        NAME          => \@names,
+        rows          => [ map { [ @{$_}{@COLUMN_INFO} ] } @cols ],
+        NUM_OF_FIELDS => scalar @COLUMN_INFO,
+        NAME          => [ @COLUMN_INFO ],
     } ) or return $dbh->DBI::set_err(
         $sponge->err,
         $sponge->errstr,
     );
+
     return $sth;
 }
 
@@ -756,6 +764,46 @@ On the command line to access the file F<foo.db>.
 
 Alternatively you can install SQLite from the link above without conflicting
 with B<DBD::SQLite> and use the supplied C<sqlite> command line tool.
+
+=head1 FUNCTIONS AND BIND PARAMETERS
+
+As of this writing, a SQL that compares a return value of a function with a numeric bind value like this doesn't work as you might expect.
+
+  my $sth = $dbh->prepare(q{
+    SELECT bar FROM foo GROUP BY bar HAVING count(*) > ?;
+  });
+  $sth->execute(5);
+
+This is because DBD::SQLite assumes that all the bind values are text (and should be quoted) by default. Thus the above statement becomes like this while executing:
+
+  SELECT bar FROM foo GROUP BY bar HAVING count(*) > "5";
+
+There are two workarounds for this.
+
+=over 4
+
+=item Use bind_param() explicitly
+
+As shown above in the C<BLOB> section, you can always use C<bind_param()> to tell the type of a bind value.
+
+  use DBI qw(:sql_types);  # Don't forget this
+
+  my $sth = $dbh->prepare(q{
+    SELECT bar FROM foo GROUP BY bar HAVING count(*) > ?;
+  });
+  $sth->bind_param(1, 5, SQL_INTEGER);
+  $sth->execute();
+
+=item Add zero to make it a number
+
+This is somewhat weird, but works anyway.
+
+  my $sth = $dbh->prepare(q{
+    SELECT bar FROM foo GROUP BY bar HAVING count(*) > (? + 0);
+  });
+  $sth->execute(5);
+
+=back
 
 =head1 PERFORMANCE
 
