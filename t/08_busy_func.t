@@ -9,15 +9,8 @@ BEGIN {
 }
 
 use t::lib::Test;
-use Test::More;
-
-BEGIN {
-	plan skip_all => 'requires DBI v1.608' if $DBI::VERSION < 1.608;
-}
-
+use Test::More tests => 12;
 use Test::NoWarnings;
-
-plan tests => 12;
 
 my $dbh = connect_ok(
     RaiseError => 1,
@@ -31,7 +24,7 @@ my $dbh2 = connect_ok(
     AutoCommit => 0,
 );
 
-ok($dbh2->sqlite_busy_timeout(3000));
+ok($dbh2->func(3000, 'busy_timeout'));
 
 ok($dbh->do("CREATE TABLE Blah ( id INTEGER, val VARCHAR )"));
 ok($dbh->commit);
@@ -78,7 +71,7 @@ if (!defined($pid)) {
     my $line = <READER>;
     chomp($line);
     ok($line, "Ready");
-    ok($dbh->sqlite_busy_timeout(10000));
+    ok($dbh->func(10000, 'busy_timeout'));
     ok($dbh->do("INSERT INTO Blah VALUES (4, 'Test4' )"));
     $dbh->commit;
     wait;

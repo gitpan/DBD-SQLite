@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               DBD-SQLite
-version:            1.26_01
+version:            1.26_02
 abstract:           Self Contained SQLite RDBMS in a DBI Driver
 author:
     - Adam Kennedy <adamk@cpan.org>
@@ -11,8 +11,9 @@ configure_requires:
     ExtUtils::MakeMaker:  6.48
     File::Spec:           0.82
 build_requires:
-    File::Spec:  0.82
-    Test::More:  0.42
+    ExtUtils::MakeMaker:  0
+    File::Spec:           0.82
+    Test::More:           0.42
 requires:
     DBI:         1.57
     File::Spec:  0.82
@@ -30,7 +31,7 @@ no_index:
         - t
         - inc
         - util
-generated_by:       ExtUtils::MakeMaker version 6.48
+generated_by:       ExtUtils::MakeMaker version 6.50
 meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html
     version:  1.4

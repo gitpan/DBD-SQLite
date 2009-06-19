@@ -7,15 +7,8 @@ BEGIN {
 }
 
 use t::lib::Test;
-use Test::More;
-
-BEGIN {
-	plan skip_all => 'requires DBI v1.608' if $DBI::VERSION < 1.608;
-}
-
+use Test::More tests => 22;
 use Test::NoWarnings;
-
-plan tests => 22;
 
 # Create the aggregate test packages
 SCOPE: {
@@ -82,7 +75,7 @@ foreach my $val ( qw/NULL 1 'test'/ ) {
     $dbh->do( "INSERT INTO aggr_test VALUES ( $val )" );
 }
 
-ok($dbh->sqlite_create_aggregate( "newcount", 0, "count_aggr" ));
+ok($dbh->func( "newcount", 0, "count_aggr", "create_aggregate" ));
 my $result = $dbh->selectrow_arrayref( "SELECT newcount() FROM aggr_test" );
 ok( $result && $result->[0] == 3 );
 
@@ -100,7 +93,7 @@ ok( $result && !$result->[0] );
 $result = $dbh->selectrow_arrayref( "SELECT newcount() FROM aggr_empty_test" );
 ok( $result && !$result->[0] );
 
-ok($dbh->sqlite_create_aggregate( "defined", 1, 'obj_aggregate' ));
+ok($dbh->func( "defined", 1, 'obj_aggregate', "create_aggregate" ));
 $result = $dbh->selectrow_arrayref( "SELECT defined(field) FROM aggr_test" );
 ok( $result && $result->[0] == 2 );
 $result = $dbh->selectrow_arrayref( "SELECT defined(field) FROM aggr_test" );
@@ -115,7 +108,7 @@ local $SIG{__WARN__} = sub { $last_warn = join "", @_ };
 foreach my $fail ( qw/ new step finalize/ ) {
     $last_warn = '';  
     my $aggr = new fail_aggregate( $fail );
-    ok($dbh->sqlite_create_aggregate( "fail_$fail", -1, $aggr ));
+    ok($dbh->func( "fail_$fail", -1, $aggr, 'create_aggregate' ));
     $result = $dbh->selectrow_arrayref( "SELECT fail_$fail() FROM aggr_test" );
 #   ok( !$result && $DBI::errstr =~ /$fail\(\) failed on request/ );
     ok( !defined $result->[0] && $last_warn =~ /$fail\(\) failed on request/ );
@@ -130,7 +123,7 @@ foreach my $fail ( qw/ new step finalize/ ) {
 
 my $aggr = new fail_aggregate( 'undef' );
 $last_warn = '';
-ok($dbh->sqlite_create_aggregate( "fail_undef", -1, $aggr ));
+ok($dbh->func( "fail_undef", -1, $aggr, 'create_aggregate' ));
 $result = $dbh->selectrow_arrayref( "SELECT fail_undef() FROM aggr_test" );
 # ok( !$result && $DBI::errstr =~ /new\(\) should return a blessed reference/ );
 ok( !defined $result->[0] && $last_warn =~ /new\(\) should return a blessed reference/ );

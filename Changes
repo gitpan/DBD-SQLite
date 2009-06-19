@@ -1,5 +1,18 @@
 Changes for Perl extension DBD-SQLite
 
+1.26_02 Fri 19 Jun 2009
+    - Updated to SQLite 3.6.15 (DUNCAND)
+    - Resolved #44882: Use of $h->func() should be deprecated and
+      replaced with calls to driver-private 'installed methods'
+      (ISHIGAKI)
+    - Added access to Online Backup functionality. (TJC)
+    - Added enable_load_extension pod (ISHIGAKI)
+    - Now private methods/functions return true after successful
+      calls (#44871) (ISHIGAKI)
+    - Removed all of the "croak"s (#44871) (ISHIGAKI)
+    - Resolved #46831: table_info schema is incorrect and doesn't
+      work with attached databases (VLYON/ISHIGAKI)
+
 1.26_01 Tue  5 May 2009
     - Added ORDINAL_POSITION support for $dbh->column_info (ADAMK)
     - Applied several fixes from GFUJI to clean up code (#45578)

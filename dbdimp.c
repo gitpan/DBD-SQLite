@@ -129,7 +129,7 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
 }
 
 int
-dbd_set_sqlite3_busy_timeout (pTHX_ SV *dbh, int timeout )
+sqlite3_db_busy_timeout (pTHX_ SV *dbh, int timeout )
 {
   D_imp_dbh(dbh);
   if (timeout) {
@@ -935,7 +935,7 @@ sqlite_db_func_dispatcher_no_unicode(sqlite3_context *context, int argc, sqlite3
   sqlite_db_func_dispatcher(0, context, argc, value);
 }
 
-void
+int
 sqlite3_db_create_function(pTHX_ SV *dbh, const char *name, int argc, SV *func )
 {
     D_imp_dbh(dbh);
@@ -955,10 +955,12 @@ sqlite3_db_create_function(pTHX_ SV *dbh, const char *name, int argc, SV *func )
     {
         char* const errmsg = form("sqlite_create_function failed with error %s", sqlite3_errmsg(imp_dbh->db));
         sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
+        return FALSE;
     }
+    return TRUE;
 }
 
-void
+int
 sqlite3_db_enable_load_extension(pTHX_ SV *dbh, int onoff )
 {
     D_imp_dbh(dbh);
@@ -969,15 +971,10 @@ sqlite3_db_enable_load_extension(pTHX_ SV *dbh, int onoff )
     {
         char* const errmsg = form("sqlite_enable_load_extension failed with error %s", sqlite3_errmsg(imp_dbh->db));
         sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
+        return FALSE;
     }
+    return TRUE;
 }
-
-typedef struct aggrInfo aggrInfo;
-struct aggrInfo {
-  SV *aggr_inst;
-  SV *err;
-  int inited;
-};
 
 static void
 sqlite_db_aggr_new_dispatcher(pTHX_ sqlite3_context *context, aggrInfo *aggr_info )
@@ -1167,7 +1164,7 @@ sqlite_db_aggr_finalize_dispatcher( sqlite3_context *context )
     LEAVE;
 }
 
-void
+int
 sqlite3_db_create_aggregate(pTHX_ SV *dbh, const char *name, int argc, SV *aggr_pkg )
 {
     D_imp_dbh(dbh);
@@ -1188,18 +1185,21 @@ sqlite3_db_create_aggregate(pTHX_ SV *dbh, const char *name, int argc, SV *aggr_
     {
         char* const errmsg = form("sqlite_create_aggregate failed with error %s", sqlite3_errmsg(imp_dbh->db));
         sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
+        return FALSE;
     }
+    return TRUE;
 }
 
 
-static int
-sqlite_db_collation_dispatcher(void *func, int len1, const void *string1,
-                                               int len2, const void *string2)
+int
+sqlite_db_collation_dispatcher(
+  void *func, int len1, const void *string1,
+              int len2, const void *string2)
 {
     dTHX;
     dSP;
-    int cmp;
-    int n_retval;
+    int cmp = 0;
+    int n_retval, i;
 
     ENTER;
     SAVETMPS;
@@ -1207,12 +1207,14 @@ sqlite_db_collation_dispatcher(void *func, int len1, const void *string1,
     XPUSHs( sv_2mortal ( newSVpvn( string1, len1) ) );
     XPUSHs( sv_2mortal ( newSVpvn( string2, len2) ) );
     PUTBACK;
-    n_retval = call_sv((void*)func, G_SCALAR);
-    if (n_retval != 1) {
-      croak("collation function returned %d arguments", n_retval);
-    }
+    n_retval = call_sv(func, G_SCALAR);
     SPAGAIN;
-    cmp = POPi;
+    if (n_retval != 1) {
+        warn("collation function returned %d arguments", n_retval);
+    }
+    for(i = 0; i < n_retval; i++) {
+        cmp = POPi;
+    }
     PUTBACK;
     FREETMPS;
     LEAVE;
@@ -1220,15 +1222,15 @@ sqlite_db_collation_dispatcher(void *func, int len1, const void *string1,
     return cmp;
 }
 
-static int
+int
 sqlite_db_collation_dispatcher_utf8(
   void *func, int len1, const void *string1,
               int len2, const void *string2)
 {
     dTHX;
     dSP;
-    int cmp;
-    int n_retval;
+    int cmp = 0;
+    int n_retval, i;
     SV *sv1, *sv2;
 
     ENTER;
@@ -1241,12 +1243,14 @@ sqlite_db_collation_dispatcher_utf8(
     XPUSHs( sv_2mortal ( sv1 ) );
     XPUSHs( sv_2mortal ( sv2 ) );
     PUTBACK;
-    n_retval = call_sv((void*)func, G_SCALAR);
-    if (n_retval != 1) {
-      croak("collation function returned %d arguments", n_retval);
-    }
+    n_retval = call_sv(func, G_SCALAR);
     SPAGAIN;
-    cmp = POPi;
+    if (n_retval != 1) {
+        warn("collation function returned %d arguments", n_retval);
+    }
+    for(i = 0; i < n_retval; i++) {
+        cmp = POPi;
+    }
     PUTBACK;
     FREETMPS;
     LEAVE;
@@ -1254,8 +1258,7 @@ sqlite_db_collation_dispatcher_utf8(
     return cmp;
 }
 
-
-void
+int
 sqlite3_db_create_collation(pTHX_ SV *dbh, const char *name, SV *func )
 {
     D_imp_dbh(dbh);
@@ -1268,12 +1271,12 @@ sqlite3_db_create_collation(pTHX_ SV *dbh, const char *name, SV *func )
     /* Check that this is a proper collation function */
     rv = sqlite_db_collation_dispatcher(func_sv, 2, aa, 2, aa);
     if (rv != 0) {
-      warn("improper collation function: %s(aa, aa) returns %d!", name, rv); 
+        sqlite_trace(dbh, (imp_xxh_t*)imp_dbh, 2, "improper collation function: %s(aa, aa) returns %d!", name, rv);
     }
     rv  = sqlite_db_collation_dispatcher(func_sv, 2, aa, 2, zz);
     rv2 = sqlite_db_collation_dispatcher(func_sv, 2, zz, 2, aa);
     if (rv2 != (rv * -1)) {
-      warn("improper collation function: '%s' is not symmetric", name); 
+        sqlite_trace(dbh, (imp_xxh_t*)imp_dbh, 2, "improper collation function: '%s' is not symmetric", name);
     }
 
     /* Copy the func reference so that it can be deallocated at disconnect */
@@ -1281,36 +1284,40 @@ sqlite3_db_create_collation(pTHX_ SV *dbh, const char *name, SV *func )
 
     /* Register the func within sqlite3 */
     rv = sqlite3_create_collation( 
-      imp_dbh->db, name, SQLITE_UTF8,
-      func_sv, 
-      imp_dbh->unicode ? sqlite_db_collation_dispatcher_utf8 
-                       : sqlite_db_collation_dispatcher
+        imp_dbh->db, name, SQLITE_UTF8,
+        func_sv, 
+        imp_dbh->unicode ? sqlite_db_collation_dispatcher_utf8 
+                         : sqlite_db_collation_dispatcher
       );
 
     if ( rv != SQLITE_OK )
     {
         char* const errmsg = form("sqlite_create_collation failed with error %s", sqlite3_errmsg(imp_dbh->db));
+        sqlite_error(dbh, (imp_xxh_t*)imp_dbh, rv, errmsg);
+        return FALSE;
     }
+    return TRUE;
 }
 
-
-static int
+int
 sqlite_db_progress_handler_dispatcher( void *handler )
 {
     dTHX;
     dSP;
-    int n_retval;
-    int retval;
+    int n_retval, i;
+    int retval = 0;
 
     ENTER;
     SAVETMPS;
     PUSHMARK(SP);
     n_retval = call_sv( handler, G_SCALAR );
-    if ( n_retval != 1 ) {
-      croak( "progress_handler returned %d arguments", n_retval );
-    }
     SPAGAIN;
-    retval = POPi;
+    if ( n_retval != 1 ) {
+        warn( "progress_handler returned %d arguments", n_retval );
+    }
+    for(i = 0; i < n_retval; i++) {
+        retval = POPi;
+    }
     PUTBACK;
     FREETMPS;
     LEAVE;
@@ -1318,9 +1325,7 @@ sqlite_db_progress_handler_dispatcher( void *handler )
     return retval;
 }
 
-
-
-void
+int
 sqlite3_db_progress_handler(pTHX_ SV *dbh, int n_opcodes, SV *handler )
 {
     D_imp_dbh(dbh);
@@ -1340,6 +1345,87 @@ sqlite3_db_progress_handler(pTHX_ SV *dbh, int n_opcodes, SV *handler )
                                 sqlite_db_progress_handler_dispatcher,
                                 handler_sv );
     }
+    return TRUE;
+}
+
+/* Accesses the SQLite Online Backup API, and fills the currently loaded
+ * database from the passed filename.
+ * Usual usage of this would be when you're operating on the :memory:
+ * special database connection and want to copy it in from a real db.
+ */
+int
+sqlite_db_backup_from_file(pTHX_ SV *dbh, char *filename)
+{
+    int rc;
+    sqlite3 *pFrom;
+    sqlite3_backup *pBackup;
+
+    D_imp_dbh(dbh);
+
+    rc = sqlite3_open(filename, &pFrom);
+    if ( rc != SQLITE_OK )
+    {
+        char* const errmsg = form("sqlite_backup_from_file failed with error %s", sqlite3_errmsg(imp_dbh->db));
+        sqlite_error(dbh, (imp_xxh_t*)imp_dbh, rc, errmsg);
+        return FALSE;
+    }
+
+    pBackup = sqlite3_backup_init(imp_dbh->db, "main", pFrom, "main");
+    if (pBackup) {
+        (void)sqlite3_backup_step(pBackup, -1);
+        (void)sqlite3_backup_finish(pBackup);
+    }
+    rc = sqlite3_errcode(imp_dbh->db);
+    (void)sqlite3_close(pFrom);
+
+    if ( rc != SQLITE_OK )
+    {
+        char* const errmsg = form("sqlite_backup_from_file failed with error %s", sqlite3_errmsg(imp_dbh->db));
+        sqlite_error(dbh, (imp_xxh_t*)imp_dbh, rc, errmsg);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/* Accesses the SQLite Online Backup API, and copies the currently loaded
+ * database into the passed filename.
+ * Usual usage of this would be when you're operating on the :memory:
+ * special database connection, and want to back it up to an on-disk file.
+ */
+int
+sqlite_db_backup_to_file(pTHX_ SV *dbh, char *filename)
+{
+    int rc;
+    sqlite3 *pTo;
+    sqlite3_backup *pBackup;
+
+    D_imp_dbh(dbh);
+
+    rc = sqlite3_open(filename, &pTo);
+    if ( rc != SQLITE_OK )
+    {
+        char* const errmsg = form("sqlite_backup_to_file failed with error %s", sqlite3_errmsg(imp_dbh->db));
+        sqlite_error(dbh, (imp_xxh_t*)imp_dbh, rc, errmsg);
+        return FALSE;
+    }
+
+    pBackup = sqlite3_backup_init(pTo, "main", imp_dbh->db, "main");
+    if (pBackup) {
+        (void)sqlite3_backup_step(pBackup, -1);
+        (void)sqlite3_backup_finish(pBackup);
+    }
+    rc = sqlite3_errcode(pTo);
+    (void)sqlite3_close(pTo);
+
+    if ( rc != SQLITE_OK )
+    {
+        char* const errmsg = form("sqlite_backup_to_file failed with error %s", sqlite3_errmsg(imp_dbh->db));
+        sqlite_error(dbh, (imp_xxh_t*)imp_dbh, rc, errmsg);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /* end */

@@ -7,15 +7,8 @@ BEGIN {
 }
 
 use t::lib::Test;
-use Test::More;
-
-BEGIN {
-	plan skip_all => 'requires DBI v1.608' if $DBI::VERSION < 1.608;
-}
-
+use Test::More tests => 6;
 use Test::NoWarnings;
-
-plan tests => 6;
 
 my $N_OPCODES = 50; # how many opcodes before calling the progress handler
 
@@ -28,7 +21,7 @@ sub progress_handler {
 
 # connect and register the progress handler
 my $dbh = connect_ok( RaiseError => 1 );
-ok($dbh->sqlite_progress_handler( $N_OPCODES, \&progress_handler ));
+ok($dbh->func( $N_OPCODES, \&progress_handler, "progress_handler" ));
 
 # populate a temporary table with random numbers
 $dbh->do( 'CREATE TEMP TABLE progress_test ( foo )' );
@@ -47,7 +40,7 @@ ok($n_callback);
 
 
 # unregister the progress handler, set counter back to zero, do more work
-ok($dbh->sqlite_progress_handler( $N_OPCODES, undef ));
+ok($dbh->func( $N_OPCODES, undef, "progress_handler" ));
 $n_callback = 0;
 $result = $dbh->do( "SELECT * from progress_test ORDER BY foo DESC " );
 

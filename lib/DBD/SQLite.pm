@@ -8,7 +8,7 @@ use DynaLoader ();
 use vars qw($VERSION @ISA);
 use vars qw{$err $errstr $drh $sqlite_version};
 BEGIN {
-    $VERSION = '1.26_01';
+    $VERSION = '1.26_02';
     @ISA     = 'DynaLoader';
 
     # Initialize errors
@@ -24,13 +24,31 @@ BEGIN {
 
 __PACKAGE__->bootstrap($VERSION);
 
+my $methods_are_installed;
+
 sub driver {
-    $drh or
+    return $drh if $drh;
+
+    if (!$methods_are_installed && $DBI::VERSION >= 1.608) {
+        DBI->setup_driver('DBD::SQLite');
+        DBD::SQLite::db->install_method('sqlite_last_insert_rowid');
+        DBD::SQLite::db->install_method('sqlite_busy_timeout');
+        DBD::SQLite::db->install_method('sqlite_create_function');
+        DBD::SQLite::db->install_method('sqlite_create_aggregate');
+        DBD::SQLite::db->install_method('sqlite_create_collation');
+        DBD::SQLite::db->install_method('sqlite_progress_handler');
+        DBD::SQLite::db->install_method('sqlite_backup_from_file');
+        DBD::SQLite::db->install_method('sqlite_backup_to_file');
+        DBD::SQLite::db->install_method('sqlite_enable_load_extension');
+        $methods_are_installed++;
+    }
+
     $drh = DBI::_new_drh( "$_[0]::dr", {
         Name        => 'SQLite',
         Version     => $VERSION,
         Attribution => 'DBD::SQLite by Matt Sergeant et al',
     } );
+    return $drh;
 }
 
 sub CLONE {
@@ -133,16 +151,28 @@ sub get_info {
     return $v;
 }
 
+sub _attached_database_list {
+    my $dbh = shift;
+    my @attached;
+
+    my $sth_databases = $dbh->prepare( 'PRAGMA database_list' );
+    $sth_databases->execute;
+    while ( my $db_info = $sth_databases->fetchrow_hashref ) {
+        push @attached, $db_info->{name} if $db_info->{seq} >= 2;
+    }
+    return @attached;
+}
+
 # SQL/CLI (ISO/IEC JTC 1/SC 32 N 0595), 6.63 Tables
 # Based on DBD::Oracle's
-# See also http://www.ch-werner.de/sqliteodbc/html/sqliteodbc_8c.html#a117
+# See also http://www.ch-werner.de/sqliteodbc/html/sqlite3odbc_8c.html#a213
 sub table_info {
     my ($dbh, $cat_val, $sch_val, $tbl_val, $typ_val) = @_;
 
     my @where = ();
     my $sql;
-    if (   defined($cat_val) && $cat_val eq '%'
-       && defined($sch_val) && $sch_val eq '' 
+    if (  defined($cat_val) && $cat_val eq '%'
+       && defined($sch_val) && $sch_val eq ''
        && defined($tbl_val) && $tbl_val eq '')  { # Rule 19a
             $sql = <<'END_SQL';
 SELECT NULL TABLE_CAT
@@ -152,21 +182,28 @@ SELECT NULL TABLE_CAT
      , NULL REMARKS
 END_SQL
     }
-    elsif (   defined($sch_val) && $sch_val eq '%' 
-          && defined($cat_val) && $cat_val eq '' 
+    elsif (  defined($cat_val) && $cat_val eq ''
+          && defined($sch_val) && $sch_val eq '%'
           && defined($tbl_val) && $tbl_val eq '') { # Rule 19b
             $sql = <<'END_SQL';
 SELECT NULL      TABLE_CAT
-     , NULL      TABLE_SCHEM
+     , t.tn      TABLE_SCHEM
      , NULL      TABLE_NAME
      , NULL      TABLE_TYPE
      , NULL      REMARKS
+FROM (
+     SELECT 'main' tn
+     UNION SELECT 'temp' tn
 END_SQL
+            for my $db_name (_attached_database_list($dbh)) {
+                $sql .= "     UNION SELECT '$db_name' tn\n";
+            }
+            $sql .= ") t\n";
     }
-    elsif (    defined($typ_val) && $typ_val eq '%' 
-           && defined($cat_val) && $cat_val eq '' 
-           && defined($sch_val) && $sch_val eq '' 
-           && defined($tbl_val) && $tbl_val eq '') { # Rule 19c
+    elsif (  defined($cat_val) && $cat_val eq ''
+          && defined($sch_val) && $sch_val eq ''
+          && defined($tbl_val) && $tbl_val eq ''
+          && defined($typ_val) && $typ_val eq '%') { # Rule 19c
             $sql = <<'END_SQL';
 SELECT NULL TABLE_CAT
      , NULL TABLE_SCHEM
@@ -187,26 +224,41 @@ SELECT *
 FROM
 (
 SELECT NULL         TABLE_CAT
-     , NULL         TABLE_SCHEM
+     ,              TABLE_SCHEM
      , tbl_name     TABLE_NAME
      ,              TABLE_TYPE
      , NULL         REMARKS
      , sql          sqlite_sql
 FROM (
-    SELECT tbl_name, upper(type) TABLE_TYPE, sql
+    SELECT 'main' TABLE_SCHEM, tbl_name, upper(type) TABLE_TYPE, sql
     FROM sqlite_master
     WHERE type IN ( 'table','view')
 UNION ALL
-    SELECT tbl_name, 'LOCAL TEMPORARY' TABLE_TYPE, sql
+    SELECT 'temp' TABLE_SCHEM, tbl_name, 'LOCAL TEMPORARY' TABLE_TYPE, sql
     FROM sqlite_temp_master
     WHERE type IN ( 'table','view')
+END_SQL
+
+            for my $db_name (_attached_database_list($dbh)) {
+                    $sql .= <<"END_SQL";
 UNION ALL
-    SELECT 'sqlite_master'      tbl_name, 'SYSTEM TABLE' TABLE_TYPE, NULL sql
+    SELECT '$db_name' TABLE_SCHEM, tbl_name, upper(type) TABLE_TYPE, sql
+    FROM "$db_name".sqlite_master
+    WHERE type IN ('table','view')
+END_SQL
+            }
+
+            $sql .= <<'END_SQL';
 UNION ALL
-    SELECT 'sqlite_temp_master' tbl_name, 'SYSTEM TABLE' TABLE_TYPE, NULL sql
+    SELECT 'main' TABLE_SCHEM, 'sqlite_master'      tbl_name, 'SYSTEM TABLE' TABLE_TYPE, NULL sql
+UNION ALL
+    SELECT 'temp' TABLE_SCHEM, 'sqlite_temp_master' tbl_name, 'SYSTEM TABLE' TABLE_TYPE, NULL sql
 )
 )
 END_SQL
+            if ( defined $sch_val ) {
+                    push @where, "TABLE_SCHEM LIKE '$sch_val'";
+            }
             if ( defined $tbl_val ) {
                     push @where, "TABLE_NAME LIKE '$tbl_val'";
             }
@@ -500,7 +552,11 @@ Defining the column type as C<BLOB> in the DDL is B<not> sufficient.
 
 =head1 DRIVER PRIVATE METHODS
 
-=head2 $dbh->func('last_insert_rowid')
+The following methods can be called via the func() method with a little tweak, but the use of func() method is now discouraged by the L<DBI> author for various reasons (see L<DBI's document|http://search.cpan.org/dist/DBI/lib/DBI/DBD.pm#Using_install_method()_to_expose_driver-private_methods> for details). So, if you're using L<DBI> >= 1.608, use these C<sqlite_> methods. If you need to use an older L<DBI>, you can call these like this:
+
+  $dbh->func( ..., "(method name without sqlite_ prefix)" );
+
+=head2 $dbh->sqlite_last_insert_rowid()
 
 This method returns the last inserted rowid. If you specify an INTEGER PRIMARY
 KEY as the first column in your table, that is the column that is returned.
@@ -512,17 +568,17 @@ method instead. The usage of this is:
   $h->last_insert_id($catalog, $schema, $table_name, $field_name [, \%attr ])
 
 Running C<$h-E<gt>last_insert_id("","","","")> is the equivalent of running
-C<$dbh-E<gt>func('last_insert_rowid')> directly.
+C<$dbh-E<gt>sqlite_last_insert_rowid()> directly.
 
-=head2 $dbh->func('busy_timeout')
+=head2 $dbh->sqlite_busy_timeout()
 
 Retrieve the current busy timeout.
 
-=head2 $dbh->func( $ms, 'busy_timeout' )
+=head2 $dbh->sqlite_busy_timeout( $ms )
 
 Set the current busy timeout. The timeout is in milliseconds.
 
-=head2 $dbh->func( $name, $argc, $code_ref, "create_function" )
+=head2 $dbh->sqlite_create_function( $name, $argc, $code_ref )
 
 This method will register a new function which will be useable in an SQL
 query. The method's parameters are:
@@ -548,13 +604,13 @@ This should be a reference to the function's implementation.
 For example, here is how to define a now() function which returns the
 current number of seconds since the epoch:
 
-  $dbh->func( 'now', 0, sub { return time }, 'create_function' );
+  $dbh->sqlite_create_function( 'now', 0, sub { return time } );
 
 After this, it could be use from SQL as:
 
   INSERT INTO mytable ( now() );
 
-=head2 $dbh->func( $name, $code_ref, "create_collation" )
+=head2 $dbh->sqlite_create_collation( $name, $code_ref )
 
 This method will register a new function which will be useable in an SQL
 query as a COLLATE option for sorting. The method's parameters are:
@@ -604,7 +660,7 @@ is to set the parameter at connection time :
       }
   );
 
-=head2 $dbh->func( $name, $argc, $pkg, 'create_aggregate' )
+=head2 $dbh->sqlite_create_aggregate( $name, $argc, $pkg )
 
 This method will register a new aggregate function which can then be used
 from SQL. The method's parameters are:
@@ -688,7 +744,7 @@ Here is a simple aggregate function which returns the variance
       return $sigma;
   }
   
-  $dbh->func( "variance", 1, 'variance', "create_aggregate" );
+  $dbh->sqlite_create_aggregate( "variance", 1, 'variance' );
 
 The aggregate function can then be used as:
 
@@ -698,7 +754,7 @@ The aggregate function can then be used as:
 
 For more examples, see the L<DBD::SQLite::Cookbook>.
 
-=head2 $dbh->func( $n_opcodes, $code_ref, 'progress_handler' )
+=head2 $dbh->sqlite_progress_handler( $n_opcodes, $code_ref )
 
 This method registers a handler to be invoked periodically during long
 running calls to SQLite.
@@ -724,6 +780,18 @@ progress handler.
 
 =back
 
+=head2 $dbh->sqlite_backup_from_file( $filename )
+
+This method accesses the SQLite Online Backup API, and will take a backup of
+the named database file, copying it to, and overwriting, your current database
+connection. This can be particularly handy if your current connection is to the
+special :memory: database, and you wish to populate it from an existing DB.
+
+=head2 $dbh->sqlite_backup_to_file( $filename )
+
+This method accesses the SQLite Online Backup API, and will take a backup of
+the currently connected database, and write it out to the named file.
+
 =head1 BLOBS
 
 As of version 1.11, blobs should "just work" in SQLite as text columns.
@@ -748,6 +816,14 @@ And then retrieval just works:
   my $blobo = $row->[1];
   
   # now $blobo == $blob
+
+=head2 $dbh->sqlite_enable_load_extension( $bool )
+
+Calling this method with a true value enables loading (external) sqlite3 extensions. After the call, you can load extensions like this:
+
+  $dbh->sqlite_enable_load_extension(1);
+  $sth = $dbh->prepare("select load_extension('libsqlitefunctions.so')")
+  or die "Cannot prepare: " . $dbh->errstr();
 
 =head1 NOTES
 
