@@ -19,12 +19,12 @@ struct imp_dbh_st {
     dbih_dbc_t com;
     /* sqlite specific bits */
     sqlite3 *db;
-    bool in_tran;
     bool unicode;
     bool handle_binary_nulls;
     int timeout;
     AV *functions;
     AV *aggregates;
+    SV *collation_needed_callback;
 };
 
 /* Statement Handle */
@@ -78,16 +78,22 @@ struct aggrInfo {
   int inited;
 };
 
-int sqlite3_db_create_function(pTHX_ SV *dbh, const char *name, int argc, SV *func);
-int sqlite3_db_enable_load_extension(pTHX_ SV *dbh, int onoff);
-int sqlite3_db_create_aggregate(pTHX_ SV *dbh, const char *name, int argc, SV *aggr );
-int sqlite3_db_create_collation(pTHX_ SV *dbh, const char *name, SV *func);
-int sqlite3_db_progress_handler(pTHX_ SV *dbh, int n_opcodes, SV *handler);
+
+int sqlite_db_create_function(pTHX_ SV *dbh, const char *name, int argc, SV *func);
+int sqlite_db_enable_load_extension(pTHX_ SV *dbh, int onoff);
+int sqlite_db_create_aggregate(pTHX_ SV *dbh, const char *name, int argc, SV *aggr );
+int sqlite_db_create_collation(pTHX_ SV *dbh, const char *name, SV *func);
+int sqlite_db_progress_handler(pTHX_ SV *dbh, int n_opcodes, SV *handler);
 void sqlite_st_reset(pTHX_ SV *sth );
 int sqlite_bind_col( SV *sth, imp_sth_t *imp_sth, SV *col, SV *ref, IV sql_type, SV *attribs );
-int sqlite3_db_busy_timeout (pTHX_ SV *dbh, int timeout );
+int sqlite_db_busy_timeout (pTHX_ SV *dbh, int timeout );
 int sqlite_db_backup_from_file(pTHX_ SV *dbh, char *filename);
 int sqlite_db_backup_to_file(pTHX_ SV *dbh, char *filename);
+void sqlite_db_collation_needed(pTHX_ SV *dbh, SV *callback );
+SV* sqlite_db_commit_hook( pTHX_ SV *dbh, SV *hook );
+SV* sqlite_db_rollback_hook( pTHX_ SV *dbh, SV *hook );
+SV* sqlite_db_update_hook( pTHX_ SV *dbh, SV *hook );
+int sqlite_db_set_authorizer( pTHX_ SV *dbh, SV *authorizer );
 
 #ifdef SvUTF8_on
 

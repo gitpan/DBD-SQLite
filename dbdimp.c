@@ -84,12 +84,12 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
     }
     DBIc_IMPSET_on(imp_dbh);
 
-    imp_dbh->in_tran             = FALSE;
-    imp_dbh->unicode             = FALSE;
-    imp_dbh->functions           = newAV();
-    imp_dbh->aggregates          = newAV();
-    imp_dbh->timeout             = SQL_TIMEOUT;
-    imp_dbh->handle_binary_nulls = FALSE;
+    imp_dbh->unicode                   = FALSE;
+    imp_dbh->functions                 = newAV();
+    imp_dbh->aggregates                = newAV();
+    imp_dbh->collation_needed_callback = newSVsv( &PL_sv_undef );
+    imp_dbh->timeout                   = SQL_TIMEOUT;
+    imp_dbh->handle_binary_nulls       = FALSE;
 
     sqlite3_busy_timeout(imp_dbh->db, SQL_TIMEOUT);
 
@@ -99,6 +99,8 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
     {
         /*  warn("failed to set pragma: %s\n", errmsg); */
         sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
+        if (errmsg)
+            sqlite3_free(errmsg);
         return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
 
@@ -108,6 +110,8 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
     {
         /*  warn("failed to set pragma: %s\n", errmsg); */
         sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
+        if (errmsg)
+            sqlite3_free(errmsg);
         return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
 
@@ -129,7 +133,7 @@ sqlite_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pas
 }
 
 int
-sqlite3_db_busy_timeout (pTHX_ SV *dbh, int timeout )
+sqlite_db_busy_timeout (pTHX_ SV *dbh, int timeout )
 {
   D_imp_dbh(dbh);
   if (timeout) {
@@ -168,6 +172,10 @@ sqlite_db_disconnect (SV *dbh, imp_dbh_t *imp_dbh)
     SvREFCNT_dec(imp_dbh->aggregates);
     imp_dbh->aggregates = (AV *)NULL;
 
+    sv_setsv(imp_dbh->collation_needed_callback, &PL_sv_undef);
+    SvREFCNT_dec(imp_dbh->collation_needed_callback);
+    imp_dbh->collation_needed_callback = (SV *)NULL;
+
     return TRUE;
 }
 
@@ -193,16 +201,17 @@ sqlite_db_rollback(SV *dbh, imp_dbh_t *imp_dbh)
     int retval;
     char *errmsg;
 
-    if (imp_dbh->in_tran) {
+    if (!sqlite3_get_autocommit(imp_dbh->db)) {
         sqlite_trace(dbh, (imp_xxh_t*)imp_dbh, 2, "ROLLBACK TRAN");
         if ((retval = sqlite3_exec(imp_dbh->db, "ROLLBACK TRANSACTION",
             NULL, NULL, &errmsg))
             != SQLITE_OK)
         {
             sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
+            if (errmsg)
+                sqlite3_free(errmsg);
             return FALSE; /* -> &sv_no in SQLite.xsi */
         }
-        imp_dbh->in_tran = FALSE;
     }
 
     return TRUE;
@@ -220,16 +229,17 @@ sqlite_db_commit(SV *dbh, imp_dbh_t *imp_dbh)
         return TRUE;
     }
 
-    if (imp_dbh->in_tran) {
+    if (!sqlite3_get_autocommit(imp_dbh->db)) {
         sqlite_trace(dbh, (imp_xxh_t*)imp_dbh, 2, "COMMIT TRAN");
         if ((retval = sqlite3_exec(imp_dbh->db, "COMMIT TRANSACTION",
             NULL, NULL, &errmsg))
             != SQLITE_OK)
         {
             sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
+            if (errmsg)
+                sqlite3_free(errmsg);
             return FALSE; /* -> &sv_no in SQLite.xsi */
         }
-        imp_dbh->in_tran = FALSE;
     }
     return TRUE;
 }
@@ -272,7 +282,6 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
     imp_sth->retval    = SQLITE_OK;
     imp_sth->params    = newAV();
     imp_sth->col_types = newAV();
-    imp_sth->statement = savepv(statement); /* store the query for later re-use if required */
 
     if ((retval = sqlite3_prepare_v2(imp_dbh->db, statement, -1, &(imp_sth->stmt), &extra))
         != SQLITE_OK)
@@ -283,6 +292,10 @@ sqlite_st_prepare (SV *sth, imp_sth_t *imp_sth,
         sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, (char*)sqlite3_errmsg(imp_dbh->db));
         return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
+
+    /* store the query for later re-use if required */
+    /* but only when the query is properly prepared */
+    imp_sth->statement = savepv(statement);
 
     DBIc_NUM_PARAMS(imp_sth) = sqlite3_bind_parameter_count(imp_sth->stmt);
     DBIc_NUM_FIELDS(imp_sth) = sqlite3_column_count(imp_sth->stmt);
@@ -334,7 +347,7 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
 
         sqlite_trace(sth, (imp_xxh_t*)imp_sth, 4, "params left in 0x%p: %d", imp_sth->params, 1+av_len(imp_sth->params));
         sqlite_trace(sth, (imp_xxh_t*)imp_sth, 4, "bind %d type %d as %s", i, sql_type, SvPV_nolen_undef_ok(value));
-        
+
         if (!SvOK(value)) {
             sqlite_trace(sth, (imp_xxh_t*)imp_sth, 5, "binding null");
             retval = sqlite3_bind_null(imp_sth->stmt, i+1);
@@ -392,16 +405,17 @@ sqlite_st_execute (SV *sth, imp_sth_t *imp_sth)
         }
     }
 
-    if ( (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) && (!imp_dbh->in_tran) ) {
+    if ( (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) && (sqlite3_get_autocommit(imp_dbh->db)) ) {
         sqlite_trace(sth, (imp_xxh_t*)imp_sth, 2, "BEGIN TRAN");
         if ((retval = sqlite3_exec(imp_dbh->db, "BEGIN TRANSACTION",
             NULL, NULL, &errmsg))
             != SQLITE_OK)
         {
             sqlite_error(sth, (imp_xxh_t*)imp_sth, retval, errmsg);
+            if (errmsg)
+                sqlite3_free(errmsg);
             return -2; /* -> undef in SQLite.xsi */
         }
-        imp_dbh->in_tran = TRUE;
     }
 
     imp_sth->nrow = 0;
@@ -611,9 +625,9 @@ sqlite_st_finish3 (SV *sth, imp_sth_t *imp_sth, int is_destroy)
     if (!DBIc_ACTIVE(imp_dbh))  /* no longer connected  */
         return 1;
 
-        if (is_destroy) {
-            return TRUE;
-        }
+    if (is_destroy) {
+        return TRUE;
+    }
 
     if ((imp_sth->retval = sqlite3_reset(imp_sth->stmt)) != SQLITE_OK) {
         char *errmsg = (char*)sqlite3_errmsg(imp_dbh->db);
@@ -621,7 +635,7 @@ sqlite_st_finish3 (SV *sth, imp_sth_t *imp_sth, int is_destroy)
         sqlite_error(sth, (imp_xxh_t*)imp_sth, imp_sth->retval, errmsg);
         return FALSE; /* -> &sv_no (or void) in SQLite.xsi */
     }
-    
+
     return TRUE;
 }
 
@@ -661,16 +675,17 @@ sqlite_db_STORE_attrib (SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv)
     if (strEQ(key, "AutoCommit")) {
         if (SvTRUE(valuesv)) {
             /* commit tran? */
-            if ( (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) && (imp_dbh->in_tran) ) {
+            if ( (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) && (!sqlite3_get_autocommit(imp_dbh->db)) ) {
                 sqlite_trace(dbh, (imp_xxh_t*)imp_dbh, 2, "COMMIT TRAN");
                 if ((retval = sqlite3_exec(imp_dbh->db, "COMMIT TRANSACTION",
                     NULL, NULL, &errmsg))
                     != SQLITE_OK)
                 {
                     sqlite_error(dbh, (imp_xxh_t*)imp_dbh, retval, errmsg);
+                    if (errmsg)
+                        sqlite3_free(errmsg);
                     return TRUE; /* XXX: is this correct? */
                 }
-                imp_dbh->in_tran = FALSE;
             }
         }
         DBIc_set(imp_dbh, DBIcf_AutoCommit, SvTRUE(valuesv));
@@ -742,7 +757,7 @@ sqlite_st_FETCH_attrib (SV *sth, imp_sth_t *imp_sth, SV *keysv)
     if (!DBIc_ACTIVE(imp_sth)) {
         return NULL;
     }
-    
+
     /* warn("fetch: %s\n", key); */
 
     i = DBIc_NUM_FIELDS(imp_sth);
@@ -896,7 +911,7 @@ sqlite_db_func_dispatcher(int is_unicode, sqlite3_context *context, int argc, sq
     PUTBACK;
 
     count = call_sv(func, G_SCALAR|G_EVAL);
-    
+
     SPAGAIN;
 
     /* Check for an error */
@@ -922,7 +937,6 @@ sqlite_db_func_dispatcher(int is_unicode, sqlite3_context *context, int argc, sq
     LEAVE;
 }
 
-
 static void
 sqlite_db_func_dispatcher_unicode(sqlite3_context *context, int argc, sqlite3_value **value)
 {
@@ -936,7 +950,7 @@ sqlite_db_func_dispatcher_no_unicode(sqlite3_context *context, int argc, sqlite3
 }
 
 int
-sqlite3_db_create_function(pTHX_ SV *dbh, const char *name, int argc, SV *func )
+sqlite_db_create_function(pTHX_ SV *dbh, const char *name, int argc, SV *func )
 {
     D_imp_dbh(dbh);
     int retval;
@@ -961,11 +975,11 @@ sqlite3_db_create_function(pTHX_ SV *dbh, const char *name, int argc, SV *func )
 }
 
 int
-sqlite3_db_enable_load_extension(pTHX_ SV *dbh, int onoff )
+sqlite_db_enable_load_extension(pTHX_ SV *dbh, int onoff )
 {
     D_imp_dbh(dbh);
     int retval;
-    
+
     retval = sqlite3_enable_load_extension( imp_dbh->db, onoff );
     if ( retval != SQLITE_OK )
     {
@@ -985,14 +999,14 @@ sqlite_db_aggr_new_dispatcher(pTHX_ sqlite3_context *context, aggrInfo *aggr_inf
 
     aggr_info->err = NULL;
     aggr_info->aggr_inst = NULL;
-    
+
     pkg = sqlite3_user_data(context);
     if ( !pkg )
         return;
 
     ENTER;
     SAVETMPS;
-    
+
     PUSHMARK(SP);
     XPUSHs( sv_2mortal( newSVsv(pkg) ) );
     PUTBACK;
@@ -1008,7 +1022,7 @@ sqlite_db_aggr_new_dispatcher(pTHX_ sqlite3_context *context, aggrInfo *aggr_inf
         POPs;
     } else if ( count != 1 ) {
         int i;
-        
+
         aggr_info->err = newSVpvf( "new() should return one value, got %d", 
                                   count );
         /* Clear the stack */
@@ -1062,7 +1076,7 @@ sqlite_db_aggr_step_dispatcher (sqlite3_context *context,
         SV *arg;
         int len = sqlite3_value_bytes(value[i]);
         int type = sqlite3_value_type(value[i]);
-        
+
         switch(type) {
             case SQLITE_INTEGER:
                 arg = sv_2mortal(newSViv(sqlite3_value_int(value[i])));
@@ -1145,7 +1159,7 @@ sqlite_db_aggr_finalize_dispatcher( sqlite3_context *context )
         }
         PUTBACK;
     }
-    
+
     if ( aggr->err ) {
         warn( "DBD::SQLite: error in aggregator cannot be reported to SQLite: %s",
             SvPV_nolen( aggr->err ) );
@@ -1165,7 +1179,7 @@ sqlite_db_aggr_finalize_dispatcher( sqlite3_context *context )
 }
 
 int
-sqlite3_db_create_aggregate(pTHX_ SV *dbh, const char *name, int argc, SV *aggr_pkg )
+sqlite_db_create_aggregate(pTHX_ SV *dbh, const char *name, int argc, SV *aggr_pkg )
 {
     D_imp_dbh(dbh);
     int retval;
@@ -1189,7 +1203,6 @@ sqlite3_db_create_aggregate(pTHX_ SV *dbh, const char *name, int argc, SV *aggr_
     }
     return TRUE;
 }
-
 
 int
 sqlite_db_collation_dispatcher(
@@ -1259,7 +1272,7 @@ sqlite_db_collation_dispatcher_utf8(
 }
 
 int
-sqlite3_db_create_collation(pTHX_ SV *dbh, const char *name, SV *func )
+sqlite_db_create_collation(pTHX_ SV *dbh, const char *name, SV *func )
 {
     D_imp_dbh(dbh);
     int rv, rv2;
@@ -1299,8 +1312,50 @@ sqlite3_db_create_collation(pTHX_ SV *dbh, const char *name, SV *func )
     return TRUE;
 }
 
+void
+sqlite_db_collation_needed_dispatcher (
+    void *dbh,
+    sqlite3* db,               /* unused */
+    int eTextRep,              /* unused */
+    const char* collation_name
+)
+{
+    dTHX;
+    dSP;
+
+    D_imp_dbh(dbh);
+
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(SP);
+    XPUSHs( dbh );
+    XPUSHs( sv_2mortal ( newSVpv( collation_name, 0) ) );
+    PUTBACK;
+
+    call_sv( imp_dbh->collation_needed_callback, G_VOID );
+    SPAGAIN;
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+}
+
+void
+sqlite_db_collation_needed(pTHX_ SV *dbh, SV *callback )
+{
+    D_imp_dbh(dbh);
+
+    /* remember the callback within the dbh */
+    sv_setsv(imp_dbh->collation_needed_callback, callback);
+
+    /* Register the func within sqlite3 */
+    (void) sqlite3_collation_needed( imp_dbh->db, 
+                                     (void*) SvOK(callback) ? dbh : NULL,
+                                     sqlite_db_collation_needed_dispatcher );
+}
+
 int
-sqlite_db_progress_handler_dispatcher( void *handler )
+sqlite_db_generic_callback_dispatcher( void *callback )
 {
     dTHX;
     dSP;
@@ -1310,10 +1365,10 @@ sqlite_db_progress_handler_dispatcher( void *handler )
     ENTER;
     SAVETMPS;
     PUSHMARK(SP);
-    n_retval = call_sv( handler, G_SCALAR );
+    n_retval = call_sv( callback, G_SCALAR );
     SPAGAIN;
     if ( n_retval != 1 ) {
-        warn( "progress_handler returned %d arguments", n_retval );
+        warn( "callback returned %d arguments", n_retval );
     }
     for(i = 0; i < n_retval; i++) {
         retval = POPi;
@@ -1326,11 +1381,11 @@ sqlite_db_progress_handler_dispatcher( void *handler )
 }
 
 int
-sqlite3_db_progress_handler(pTHX_ SV *dbh, int n_opcodes, SV *handler )
+sqlite_db_progress_handler(pTHX_ SV *dbh, int n_opcodes, SV *handler )
 {
     D_imp_dbh(dbh);
 
-    if (handler == &PL_sv_undef) {
+    if (!SvOK(handler)) {
       /* remove previous handler */
       sqlite3_progress_handler( imp_dbh->db, 0, NULL, NULL);
     }
@@ -1342,10 +1397,181 @@ sqlite3_db_progress_handler(pTHX_ SV *dbh, int n_opcodes, SV *handler )
 
       /* Register the func within sqlite3 */
       sqlite3_progress_handler( imp_dbh->db, n_opcodes, 
-                                sqlite_db_progress_handler_dispatcher,
+                                sqlite_db_generic_callback_dispatcher,
                                 handler_sv );
     }
     return TRUE;
+}
+
+SV*
+sqlite_db_commit_hook( pTHX_ SV *dbh, SV *hook )
+{
+    D_imp_dbh(dbh);
+    void *retval;
+
+    if (!SvOK(hook)) {
+      /* remove previous hook */
+      retval = sqlite3_commit_hook( imp_dbh->db, NULL, NULL );
+    }
+    else {
+      SV *hook_sv = newSVsv( hook );
+
+      /* Copy the handler ref so that it can be deallocated at disconnect */
+      av_push( imp_dbh->functions, hook_sv );
+
+      /* Register the hook within sqlite3 */
+      retval = sqlite3_commit_hook( imp_dbh->db, 
+                                    sqlite_db_generic_callback_dispatcher,
+                                    hook_sv );
+    }
+
+    return retval ? newSVsv(retval) : &PL_sv_undef;
+}
+
+SV*
+sqlite_db_rollback_hook( pTHX_ SV *dbh, SV *hook )
+{
+    D_imp_dbh(dbh);
+    void *retval;
+
+    if (!SvOK(hook)) {
+      /* remove previous hook */
+      retval = sqlite3_rollback_hook( imp_dbh->db, NULL, NULL );
+    }
+    else {
+      SV *hook_sv = newSVsv( hook );
+
+      /* Copy the handler ref so that it can be deallocated at disconnect */
+      av_push( imp_dbh->functions, hook_sv );
+
+      /* Register the hook within sqlite3 */
+      retval = sqlite3_rollback_hook( imp_dbh->db, 
+                                      (void(*)(void *))
+                                        sqlite_db_generic_callback_dispatcher,
+                                      hook_sv );
+    }
+
+    return retval ? newSVsv(retval) : &PL_sv_undef;
+}
+
+void
+sqlite_db_update_dispatcher( void *callback, int op, 
+                             char const *database, char const *table,
+                             sqlite3_int64 rowid )
+{
+    dTHX;
+    dSP;
+
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(SP);
+
+    XPUSHs( sv_2mortal ( newSViv ( op          ) ) );
+    XPUSHs( sv_2mortal ( newSVpv ( database, 0 ) ) );
+    XPUSHs( sv_2mortal ( newSVpv ( table,    0 ) ) );
+    XPUSHs( sv_2mortal ( newSViv ( rowid       ) ) );
+    PUTBACK;
+
+    call_sv( callback, G_VOID );
+    SPAGAIN;
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+}
+
+SV*
+sqlite_db_update_hook( pTHX_ SV *dbh, SV *hook )
+{
+    D_imp_dbh(dbh);
+    void *retval;
+
+    if (!SvOK(hook)) {
+      /* remove previous hook */
+      retval = sqlite3_update_hook( imp_dbh->db, NULL, NULL );
+    }
+    else {
+      SV *hook_sv = newSVsv( hook );
+
+      /* Copy the handler ref so that it can be deallocated at disconnect */
+      av_push( imp_dbh->functions, hook_sv );
+
+      /* Register the hook within sqlite3 */
+      retval = sqlite3_update_hook( imp_dbh->db, 
+                                    sqlite_db_update_dispatcher,
+                                    hook_sv );
+    }
+
+    return retval ? newSVsv(retval) : &PL_sv_undef;
+}
+
+int
+sqlite_db_authorizer_dispatcher (
+    void *authorizer,
+    int  action_code,
+    const char *details_1,
+    const char *details_2,
+    const char *details_3,
+    const char *details_4
+)
+{
+    dTHX;
+    dSP;
+    int retval = 0;
+    int n_retval, i;
+
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(SP);
+
+    XPUSHs( sv_2mortal ( newSViv ( action_code ) ) );
+
+    /* these ifs are ugly but without them, perl 5.8 segfaults */
+    XPUSHs( sv_2mortal( details_1 ? newSVpv( details_1, 0 ) : &PL_sv_undef ) );
+    XPUSHs( sv_2mortal( details_2 ? newSVpv( details_2, 0 ) : &PL_sv_undef ) );
+    XPUSHs( sv_2mortal( details_3 ? newSVpv( details_3, 0 ) : &PL_sv_undef ) );
+    XPUSHs( sv_2mortal( details_4 ? newSVpv( details_4, 0 ) : &PL_sv_undef ) );
+    PUTBACK;
+
+    n_retval = call_sv(authorizer, G_SCALAR);
+    SPAGAIN;
+    if ( n_retval != 1 ) {
+        warn( "callback returned %d arguments", n_retval );
+    }
+    for(i = 0; i < n_retval; i++) {
+        retval = POPi;
+    }
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+
+    return retval;
+}
+
+int
+sqlite_db_set_authorizer( pTHX_ SV *dbh, SV *authorizer )
+{
+    D_imp_dbh(dbh);
+    int retval;
+
+    if (!SvOK(authorizer)) {
+      /* remove previous hook */
+      retval = sqlite3_set_authorizer( imp_dbh->db, NULL, NULL );
+    }
+    else {
+      SV *authorizer_sv = newSVsv( authorizer );
+
+      /* Copy the coderef so that it can be deallocated at disconnect */
+      av_push( imp_dbh->functions, authorizer_sv );
+
+      /* Register the hook within sqlite3 */
+      retval = sqlite3_set_authorizer( imp_dbh->db, 
+                                       sqlite_db_authorizer_dispatcher,
+                                       authorizer_sv );
+    }
+
+    return retval;
 }
 
 /* Accesses the SQLite Online Backup API, and fills the currently loaded

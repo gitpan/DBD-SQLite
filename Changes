@@ -1,5 +1,28 @@
 Changes for Perl extension DBD-SQLite
 
+1.26_03 Wed 12 Aug 2009
+    - Updated to SQLite 3.6.17 (ISHIGAKI)
+    - Switched to use :memory: for most of the tests (ISHIGAKI)
+    - Fixed a memory leak when prepare should fail (ISHIGAKI)
+    - Added support for commit/rollback/update hooks (DAMI)
+    - Added support for set_authorizer (DAMI)
+    - Added support for collation_needed(), and reorganised driver API
+      for user-defined collations (DAMI)
+    - Exported constants from sqlite3.h into DBD::SQLite namespace (DAMI)
+    - Added support in t/lib/Test.pm for checking both versions of
+      driver-private methods ("func" / "sqlite_*") (DAMI)
+    - Removed unused and obsolete "list_tables" from SQLite.xs (DAMI)
+    - Added a default implementation for the REGEXP infix operator (DAMI)
+    - Renamed several internal sqlite3_ functions to sqlite_
+      for clarity (ISHIGAKI)
+    - Accept empty filename at connect (sqlite will open a tempfile) (DAMI)
+    - Documented the connect() method (DAMI)
+    - Replaced imp_dbh->in_tran with sqlite3_get_autocommit(), hoping
+      this would fix the annoying rollback issues, including #48393
+      (ISHIGAKI)
+    - META.yml requires is now generated instead of being derived from the
+      (incorrect) PREREQ_PM values by ExtUtils::MakeMaker (ADAMK)
+
 1.26_02 Fri 19 Jun 2009
     - Updated to SQLite 3.6.15 (DUNCAND)
     - Resolved #44882: Use of $h->func() should be deprecated and

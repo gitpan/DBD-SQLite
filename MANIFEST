@@ -1,4 +1,3 @@
-.gitignore
 Changes
 dbdimp.c
 dbdimp.h
@@ -19,23 +18,17 @@ sqlite3ext.h
 SQLiteXS.h
 t/01_compile.t
 t/02_logon.t
-t/02_logon_func.t
 t/03_create_table.t
 t/04_insert.t
 t/05_select.t
 t/06_tran.t
 t/07_error.t
 t/08_busy.t
-t/08_busy_func.t
 t/09_create_function.t
-t/09_create_function_func.t
 t/10_create_aggregate.t
-t/10_create_aggregate_func.t
 t/12_unicode.t
 t/13_create_collation.t
-t/13_create_collation_func.t
 t/14_progress_handler.t
-t/14_progress_handler_func.t
 t/15_ak_dbd.t
 t/16_column_info.t
 t/17_createdrop.t
@@ -56,8 +49,9 @@ t/31_bind_weird_number_param.t
 t/32_inactive_error.t
 t/33_non_latin_path.t
 t/34_online_backup.t
-t/34_online_backup_func.t
 t/35_table_info.t
+t/36_hooks.t
+t/37_regexp.t
 t/97_meta.t
 t/98_pod.t
 t/99_pmv.t
@@ -67,7 +61,6 @@ t/rt_21406_auto_finish.t
 t/rt_25371_asymmetric_unicode.t
 t/rt_25460_numeric_aggregate.t
 t/rt_25924_user_defined_func_unicode.t
-t/rt_25924_user_defined_func_unicode_func.t
 t/rt_27553_prepared_cache_and_analyze.t
 t/rt_29058_group_by.t
 t/rt_29629_sqlite_where_length.t
@@ -76,4 +69,5 @@ t/rt_32889_prepare_cached_reexecute.t
 t/rt_36836_duplicate_key.t
 t/rt_36838_unique_and_bus_error.t
 t/rt_40594_nullable.t
+util/getsqlite.pl
 META.yml                                 Module meta-data (added by MakeMaker)

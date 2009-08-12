@@ -3,16 +3,16 @@ NAME
 
 SYNOPSIS
       use DBI;
-      my $dbh = DBI->connect("dbi:SQLite:dbname=dbfile","","");
+      my $dbh = DBI->connect("dbi:SQLite:dbname=$dbfile","","");
 
 DESCRIPTION
-    SQLite is a public domain RDBMS database engine that you can find at
-    <http://www.sqlite.org/>.
+    SQLite is a public domain file-based relational database engine that you
+    can find at <http://www.sqlite.org/>.
 
-    Rather than ask you to install SQLite first, because SQLite is public
-    domain, DBD::SQLite includes the entire thing in the distribution. So in
-    order to get a fast transaction capable RDBMS working for your perl
-    project you simply have to install this module, and nothing else.
+    DBD::SQLite is a Perl DBI driver for SQLite, that includes the entire
+    thing in the distribution. So in order to get a fast transaction capable
+    RDBMS working for your perl project you simply have to install this
+    module, and nothing else.
 
     SQLite supports the following features:
 
@@ -41,6 +41,27 @@ CONFORMANCE WITH DBI SPECIFICATION
 
     Currently many statement attributes are not implemented or are limited
     by the typeless nature of the SQLite database.
+
+CONNECTING
+    The name of the database file is passed in the the DBI connection string
+    :
+
+      my $dbh = DBI->connect("dbi:SQLite:dbname=$dbfile","","");
+
+    The file is opened in read/write mode, and will be created if it does
+    not exist yet.
+
+    If the filename $dbfile is ":memory:", then a private, temporary
+    in-memory database is created for the connection. This in-memory
+    database will vanish when the database connection is closed. Future
+    versions of SQLite might make use of additional special filenames that
+    begin with the ":" character. It is recommended that when a database
+    filename actually does begin with a ":" character you should prefix the
+    filename with a pathname such as "./" to avoid ambiguity.
+
+    If the filename $dbfile is an empty string, then a private, temporary
+    on-disk database will be created. This private database will be
+    automatically deleted as soon as the database connection is closed.
 
 DRIVER PRIVATE ATTRIBUTES
   Database Handle Attributes
@@ -74,9 +95,11 @@ DRIVER PRIVATE ATTRIBUTES
 DRIVER PRIVATE METHODS
     The following methods can be called via the func() method with a little
     tweak, but the use of func() method is now discouraged by the DBI author
-    for various reasons (see <DBI's document> for details). So, if you're
-    using DBI >= 1.608, use these "sqlite_" methods. If you need to use an
-    older DBI, you can call these like this:
+    for various reasons (see DBI's document
+    <http://search.cpan.org/dist/DBI/lib/DBI/DBD.pm#Using_install_method()_t
+    o_expose_driver-private_methods> for details). So, if you're using DBI
+    >= 1.608, use these "sqlite_" methods. If you need to use an older DBI,
+    you can call these like this:
 
       $dbh->func( ..., "(method name without sqlite_ prefix)" );
 
@@ -124,46 +147,55 @@ DRIVER PRIVATE METHODS
 
       INSERT INTO mytable ( now() );
 
+   REGEXP function
+    SQLite includes syntactic support for an infix operator 'REGEXP', but
+    without any implementation. The "DBD::SQLite" driver automatically
+    registers an implementation that performs standard perl regular
+    expression matching, using current locale. So for example you can search
+    for words starting with an 'A' with a query like
+
+      SELECT * from table WHERE column REGEXP '\bA\w+'
+
+    If you want case-insensitive searching, use perl regex flags, like this
+    :
+
+      SELECT * from table WHERE column REGEXP '(?i:\bA\w+)'
+
+    The default REGEXP implementation can be overriden through the
+    "create_function" API described above.
+
+    Note that regexp matching will not use SQLite indices, but will iterate
+    over all rows, so it could be quite costly in terms of performance.
+
   $dbh->sqlite_create_collation( $name, $code_ref )
-    This method will register a new function which will be useable in an SQL
-    query as a COLLATE option for sorting. The method's parameters are:
+    This method manually registers a new function which will be useable in
+    an SQL query as a COLLATE option for sorting. Such functions can also be
+    registered automatically on demand: see section "COLLATION FUNCTIONS"
+    below.
+
+    The method's parameters are:
 
     $name
-        The name of the function. This is the name of the function as it
-        will be used from SQL.
+        The name of the function exposed to SQL.
 
     $code_ref
-        This should be a reference to the function's implementation. The
-        driver will check that this is a proper sorting function.
+        Reference to the function's implementation. The driver will check
+        that this is a proper sorting function.
 
-    Collations "binary" and "nocase" are builtin within SQLite. Collations
-    "perl" and "perllocale" are builtin within the DBD::SQLite driver, and
-    correspond to the Perl "cmp" operator with or without the locale pragma;
-    so you can write for example
+  $dbh->sqlite_collation_needed( $code_ref )
+    This method manually registers a callback function that will be invoked
+    whenever an undefined collation sequence is required from an SQL
+    statement. The callback is invoked as
 
-      CREATE TABLE foo(
-          txt1 COLLATE perl,
-          txt2 COLLATE perllocale,
-          txt3 COLLATE nocase
-      )
+      $code_ref->($dbh, $collation_name)
 
-    or
+    and should register the desired collation using
+    "sqlite_create_collation".
 
-      SELECT * FROM foo ORDER BY name COLLATE perllocale
-
-    If the attribute "$dbh->{unicode}" is set, strings coming from the
-    database and passed to the collation function will be properly tagged
-    with the utf8 flag; but this only works if the "unicode" attribute is
-    set before the call to "create_collation". The recommended way to
-    activate unicode is to set the parameter at connection time :
-
-      my $dbh = DBI->connect(
-          "dbi:SQLite:dbname=foo", "", "", 
-          {
-              RaiseError => 1,
-              unicode    => 1,
-          }
-      );
+    An initial callback is already registered by "DBD::SQLite", so for most
+    common cases it will be simpler to just add your collation sequences in
+    the %DBD::SQLite::COLLATION hash (see section "COLLATION FUNCTIONS"
+    below).
 
   $dbh->sqlite_create_aggregate( $name, $argc, $pkg )
     This method will register a new aggregate function which can then be
@@ -255,13 +287,98 @@ DRIVER PRIVATE METHODS
         The progress handler is invoked once for every $n_opcodes virtual
         machine opcodes in SQLite.
 
-    $handler
+    $code_ref
         Reference to the handler subroutine. If the progress handler returns
         non-zero, the SQLite operation is interrupted. This feature can be
         used to implement a "Cancel" button on a GUI dialog box.
 
         Set this argument to "undef" if you want to unregister a previous
         progress handler.
+
+  $dbh->sqlite_commit_hook( $code_ref )
+    This method registers a callback function to be invoked whenever a
+    transaction is committed. Any callback set by a previous call to
+    "sqlite_commit_hook" is overridden. A reference to the previous callback
+    (if any) is returned. Registering an "undef" disables the callback.
+
+    When the commit hook callback returns zero, the commit operation is
+    allowed to continue normally. If the callback returns non-zero, then the
+    commit is converted into a rollback (in that case, any attempt to
+    *explicitly* call "$dbh->rollback()" afterwards would yield an error).
+
+  $dbh->sqlite_rollback_hook( $code_ref )
+    This method registers a callback function to be invoked whenever a
+    transaction is rolled back. Any callback set by a previous call to
+    "sqlite_rollback_hook" is overridden. A reference to the previous
+    callback (if any) is returned. Registering an "undef" disables the
+    callback.
+
+  $dbh->sqlite_update_hook( $code_ref )
+    This method registers a callback function to be invoked whenever a row
+    is updated, inserted or deleted. Any callback set by a previous call to
+    "sqlite_update_hook" is overridden. A reference to the previous callback
+    (if any) is returned. Registering an "undef" disables the callback.
+
+    The callback will be called as
+
+      $code_ref->($action_code, $database, $table, $rowid)
+
+    where
+
+    $action_code
+        is an integer equal to either "DBD::SQLite::INSERT",
+        "DBD::SQLite::DELETE" or "DBD::SQLite::UPDATE" (see "Action Codes");
+
+    $database
+        is the name of the database containing the affected row;
+
+    $table
+        is the name of the table containing the affected row;
+
+    $rowid
+        is the unique 64-bit signed integer key of the affected row within
+        that table.
+
+  $dbh->sqlite_set_authorizer( $code_ref )
+    This method registers an authorizer callback to be invoked whenever SQL
+    statements are being compiled by the "prepare" in DBI method. The
+    authorizer callback should return "DBD::SQLite::OK" to allow the action,
+    "DBD::SQLite::IGNORE" to disallow the specific action but allow the SQL
+    statement to continue to be compiled, or "DBD::SQLite::DENY" to cause
+    the entire SQL statement to be rejected with an error. If the authorizer
+    callback returns any other value, then then "prepare" call that
+    triggered the authorizer will fail with an error message.
+
+    An authorizer is used when preparing SQL statements from an untrusted
+    source, to ensure that the SQL statements do not try to access data they
+    are not allowed to see, or that they do not try to execute malicious
+    statements that damage the database. For example, an application may
+    allow a user to enter arbitrary SQL queries for evaluation by a
+    database. But the application does not want the user to be able to make
+    arbitrary changes to the database. An authorizer could then be put in
+    place while the user-entered SQL is being prepared that disallows
+    everything except SELECT statements.
+
+    The callback will be called as
+
+      $code_ref->($action_code, $string1, $string2, $database, $trigger_or_view)
+
+    where
+
+    $action_code
+        is an integer that specifies what action is being authorized (see
+        "Action Codes").
+
+    $string1, $string2
+        are strings that depend on the action code (see "Action Codes").
+
+    $database
+        is the name of the database ("main", "temp", etc.) if applicable.
+
+    $trigger_or_view
+        is the name of the inner-most trigger or view that is responsible
+        for the access attempt, or "undef" if this access attempt is
+        directly from top-level SQL code.
 
   $dbh->sqlite_backup_from_file( $filename )
     This method accesses the SQLite Online Backup API, and will take a
@@ -274,6 +391,184 @@ DRIVER PRIVATE METHODS
     This method accesses the SQLite Online Backup API, and will take a
     backup of the currently connected database, and write it out to the
     named file.
+
+  $dbh->sqlite_enable_load_extension( $bool )
+    Calling this method with a true value enables loading (external) sqlite3
+    extensions. After the call, you can load extensions like this:
+
+      $dbh->sqlite_enable_load_extension(1);
+      $sth = $dbh->prepare("select load_extension('libsqlitefunctions.so')")
+      or die "Cannot prepare: " . $dbh->errstr();
+
+DRIVER CONSTANTS
+    A subset of SQLite C constants are made available to Perl, because they
+    may be needed when writing hooks or authorizer callbacks. For accessing
+    such constants, the "DBD::Sqlite" module must be explicitly "use"d at
+    compile time. For example, an authorizer that forbids any DELETE
+    operation would be written as follows :
+
+      use DBD::SQLite;
+      $dbh->sqlite_set_authorizer(sub {
+        my $action_code = shift;
+        return $action_code == DBD::SQLite::DELETE ? DBD::SQLite::DENY
+                                                   : DBD::SQLite::OK;
+      });
+
+    The list of constants implemented in "DBD::SQLite" is given below; more
+    information can be found ad at
+    <http://www.sqlite.org/c3ref/constlist.html>.
+
+  Authorizer Return Codes
+      OK
+      DENY
+      IGNORE
+
+  Action Codes
+    The "set_authorizer" method registers a callback function that is
+    invoked to authorize certain SQL statement actions. The first parameter
+    to the callback is an integer code that specifies what action is being
+    authorized. The second and third parameters to the callback are strings,
+    the meaning of which varies according to the action code. Below is the
+    list of action codes, together with their associated strings.
+
+      # constant              string1         string2
+      # ========              =======         =======
+      CREATE_INDEX            Index Name      Table Name
+      CREATE_TABLE            Table Name      undef
+      CREATE_TEMP_INDEX       Index Name      Table Name
+      CREATE_TEMP_TABLE       Table Name      undef
+      CREATE_TEMP_TRIGGER     Trigger Name    Table Name
+      CREATE_TEMP_VIEW        View Name       undef
+      CREATE_TRIGGER          Trigger Name    Table Name
+      CREATE_VIEW             View Name       undef
+      DELETE                  Table Name      undef
+      DROP_INDEX              Index Name      Table Name
+      DROP_TABLE              Table Name      undef
+      DROP_TEMP_INDEX         Index Name      Table Name
+      DROP_TEMP_TABLE         Table Name      undef
+      DROP_TEMP_TRIGGER       Trigger Name    Table Name
+      DROP_TEMP_VIEW          View Name       undef
+      DROP_TRIGGER            Trigger Name    Table Name
+      DROP_VIEW               View Name       undef
+      INSERT                  Table Name      undef
+      PRAGMA                  Pragma Name     1st arg or undef
+      READ                    Table Name      Column Name
+      SELECT                  undef           undef
+      TRANSACTION             Operation       undef
+      UPDATE                  Table Name      Column Name
+      ATTACH                  Filename        undef
+      DETACH                  Database Name   undef
+      ALTER_TABLE             Database Name   Table Name
+      REINDEX                 Index Name      undef
+      ANALYZE                 Table Name      undef
+      CREATE_VTABLE           Table Name      Module Name
+      DROP_VTABLE             Table Name      Module Name
+      FUNCTION                undef           Function Name
+      SAVEPOINT               Operation       Savepoint Name
+
+COLLATION FUNCTIONS
+  Definition
+    SQLite v3 provides the ability for users to supply arbitrary comparison
+    functions, known as user-defined "collation sequences" or "collating
+    functions", to be used for comparing two text values.
+    <http://www.sqlite.org/datatype3.html#collation> explains how collations
+    are used in various SQL expressions.
+
+  Builtin collation sequences
+    The following collation sequences are builtin within SQLite :
+
+    BINARY
+        Compares string data using memcmp(), regardless of text encoding.
+
+    NOCASE
+        The same as binary, except the 26 upper case characters of ASCII are
+        folded to their lower case equivalents before the comparison is
+        performed. Note that only ASCII characters are case folded. SQLite
+        does not attempt to do full UTF case folding due to the size of the
+        tables required.
+
+    RTRIM
+        The same as binary, except that trailing space characters are
+        ignored.
+
+    In addition, "DBD::SQLite" automatically installs the following
+    collation sequences :
+
+    perl
+        corresponds to the Perl "cmp" operator
+
+    perllocale
+        Perl "cmp" operator, in a context where "use locale" is activated.
+
+  Usage
+    You can write for example
+
+      CREATE TABLE foo(
+          txt1 COLLATE perl,
+          txt2 COLLATE perllocale,
+          txt3 COLLATE nocase
+      )
+
+    or
+
+      SELECT * FROM foo ORDER BY name COLLATE perllocale
+
+  Unicode handling
+    If the attribute "$dbh->{unicode}" is set, strings coming from the
+    database and passed to the collation function will be properly tagged
+    with the utf8 flag; but this only works if the "unicode" attribute is
+    set before the first call to a perl collation sequence . The recommended
+    way to activate unicode is to set the parameter at connection time :
+
+      my $dbh = DBI->connect(
+          "dbi:SQLite:dbname=foo", "", "",
+          {
+              RaiseError => 1,
+              unicode    => 1,
+          }
+      );
+
+  Adding user-defined collations
+    The native SQLite API for adding user-defined collations is exposed
+    through methods "sqlite_create_collation" and "sqlite_collation_needed".
+
+    To avoid calling these functions every time a $dbh handle is created,
+    "DBD::SQLite" offers a simpler interface through the
+    %DBD::SQLite::COLLATION hash : just insert your own collation functions
+    in that hash, and whenever an unknown collation name is encountered in
+    SQL, the appropriate collation function will be loaded on demand from
+    the hash. For example, here is a way to sort text values regardless of
+    their accented characters :
+
+      use DBD::SQLite;
+      $DBD::SQLite::COLLATION{no_accents} = sub {
+        my ( $a, $b ) = map lc, @_;
+        tr[àâáäåãçðèêéëìîíïñòôóöõøùûúüý]
+          [aaaaaacdeeeeiiiinoooooouuuuy] for $a, $b;
+        $a cmp $b;
+      };
+      my $dbh  = DBI->connect("dbi:SQLite:dbname=dbfile");
+      my $sql  = "SELECT ... FROM ... ORDER BY ... COLLATE no_accents");
+      my $rows = $dbh->selectall_arrayref($sql);
+
+    The builtin "perl" or "perllocale" collations are predefined in that
+    same hash.
+
+    The COLLATION hash is a global registry within the current process;
+    hence there is a risk of undesired side-effects. Therefore, to prevent
+    action at distance, the hash is implemented as a "write-only" hash, that
+    will happily accept new entries, but will raise an exception if any
+    attempt is made to override or delete a existing entry (including the
+    builtin "perl" and "perllocale").
+
+    If you really, really need to change or delete an entry, you can always
+    grab the tied object underneath %DBD::SQLite::COLLATION --- but don't do
+    that unless you really know what you are doing. Also observe that
+    changes in the global hash will not modify existing collations in
+    existing database handles: it will only affect new *requests* for
+    collations. In other words, if you want to change the behaviour of a
+    collation within an existing $dbh, you need to call the
+    "create_collation" method directly.
 
 BLOBS
     As of version 1.11, blobs should "just work" in SQLite as text columns.
@@ -299,21 +594,13 @@ BLOBS
       
   # now $blobo == $blob
 
-  $dbh->sqlite_enable_load_extension( $bool )
-    Calling this method with a true value enables loading (external) sqlite3
-    extensions. After the call, you can load extensions like this:
-
-      $dbh->sqlite_enable_load_extension(1);
-      $sth = $dbh->prepare("select load_extension('libsqlitefunctions.so')")
-      or die "Cannot prepare: " . $dbh->errstr();
-
 NOTES
     Although the database is stored in a single file, the directory
     containing the database file must be writable by SQLite because the
     library will create several temporary files there.
 
     To access the database from the command line, try using dbish which
-    comes with the DBI module. Just type:
+    comes with the DBI::Shell module. Just type:
 
       dbish dbi:SQLite:foo.db
 
@@ -345,8 +632,8 @@ FUNCTIONS AND BIND PARAMETERS
         "bind_param()" to tell the type of a bind value.
 
           use DBI qw(:sql_types);  # Don't forget this
-
-          my $sth = $dbh->prepare(q{
+          
+  my $sth = $dbh->prepare(q{
             SELECT bar FROM foo GROUP BY bar HAVING count(*) > ?;
           });
           $sth->bind_param(1, 5, SQL_INTEGER);
@@ -412,6 +699,13 @@ TO DO
     AUTOMATED_TESTING and RELEASE_TESTING and validate that none of the C
     code we work with leaks.
 
+  Stream API for Blobs
+    Reading/writing into blobs using "sqlite2_blob_open" /
+    "sqlite2_blob_close".
+
+  Flags for sqlite3_open_v2
+    Support the full API of sqlite3_open_v2 (flags for opening the file).
+
 SUPPORT
     Bugs should be reported via the CPAN bug tracker at
 
@@ -441,6 +735,8 @@ AUTHOR
     Adam Kennedy <adamk@cpan.org>
 
     Max Maischein <corion@cpan.org>
+
+    Laurent Dami <dami@cpan.org>
 
 COPYRIGHT
     The bundled SQLite code in this distribution is Public Domain.
