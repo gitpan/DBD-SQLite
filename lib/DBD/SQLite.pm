@@ -10,7 +10,7 @@ use vars qw{$err $errstr $drh $sqlite_version};
 use vars qw{%COLLATION};
 
 BEGIN {
-    $VERSION = '1.26_03';
+    $VERSION = '1.26_04';
     @ISA     = 'DynaLoader';
 
     # Initialize errors
@@ -202,7 +202,7 @@ sub _attached_database_list {
 # Based on DBD::Oracle's
 # See also http://www.ch-werner.de/sqliteodbc/html/sqlite3odbc_8c.html#a213
 sub table_info {
-    my ($dbh, $cat_val, $sch_val, $tbl_val, $typ_val) = @_;
+    my ($dbh, $cat_val, $sch_val, $tbl_val, $typ_val, $attr) = @_;
 
     my @where = ();
     my $sql;
@@ -267,11 +267,9 @@ SELECT NULL         TABLE_CAT
 FROM (
     SELECT 'main' TABLE_SCHEM, tbl_name, upper(type) TABLE_TYPE, sql
     FROM sqlite_master
-    WHERE type IN ( 'table','view')
 UNION ALL
     SELECT 'temp' TABLE_SCHEM, tbl_name, 'LOCAL TEMPORARY' TABLE_TYPE, sql
     FROM sqlite_temp_master
-    WHERE type IN ( 'table','view')
 END_SQL
 
             for my $db_name (_attached_database_list($dbh)) {
@@ -279,7 +277,6 @@ END_SQL
 UNION ALL
     SELECT '$db_name' TABLE_SCHEM, tbl_name, upper(type) TABLE_TYPE, sql
     FROM "$db_name".sqlite_master
-    WHERE type IN ('table','view')
 END_SQL
             }
 
@@ -291,11 +288,13 @@ UNION ALL
 )
 )
 END_SQL
+            $attr = {} unless ref $attr eq 'HASH';
+            my $escape = defined $attr->{Escape} ? " ESCAPE '$attr->{Escape}'" : '';
             if ( defined $sch_val ) {
-                    push @where, "TABLE_SCHEM LIKE '$sch_val'";
+                    push @where, "TABLE_SCHEM LIKE '$sch_val'$escape";
             }
             if ( defined $tbl_val ) {
-                    push @where, "TABLE_NAME LIKE '$tbl_val'";
+                    push @where, "TABLE_NAME LIKE '$tbl_val'$escape";
             }
             if ( defined $typ_val ) {
                     my $table_type_list;
@@ -306,8 +305,8 @@ END_SQL
                             if ($table_type !~ /^'.*'$/) {
                                     $table_type = "'" . $table_type . "'";
                             }
-                            $table_type_list = join(", ", @ttype_list);
                     }
+                    $table_type_list = join(', ', @ttype_list);
                     push @where, "TABLE_TYPE IN (\U$table_type_list)" if $table_type_list;
             }
             $sql .= ' WHERE ' . join("\n   AND ", @where ) . "\n" if @where;
@@ -319,12 +318,17 @@ END_SQL
 }
 
 sub primary_key_info {
-    my($dbh, $catalog, $schema, $table) = @_;
+    my ($dbh, $catalog, $schema, $table) = @_;
+
+    # Escape the schema and table name
+    $schema =~ s/([\\_%])/\\$1/g if defined $schema;
+    my $escaped = $table;
+    $escaped =~ s/([\\_%])/\\$1/g;
+    my $sth_tables = $dbh->table_info($catalog, $schema, $escaped, undef, {Escape => '\\'});
 
     # This is a hack but much simpler than using pragma index_list etc
     # also the pragma doesn't list 'INTEGER PRIMARY KEY' autoinc PKs!
     my @pk_info;
-    my $sth_tables = $dbh->table_info($catalog, $schema, $table, '');
     while ( my $row = $sth_tables->fetchrow_hashref ) {
         my $sql = $row->{sqlite_sql} or next;
         next unless $sql =~ /(.*?)\s*PRIMARY\s+KEY\s*(?:\(\s*(.*?)\s*\))?/si;
@@ -350,7 +354,7 @@ sub primary_key_info {
     my $sponge = DBI->connect("DBI:Sponge:", '','')
         or return $dbh->DBI::set_err($DBI::err, "DBI::Sponge: $DBI::errstr");
     my @names = qw(TABLE_CAT TABLE_SCHEM TABLE_NAME COLUMN_NAME KEY_SEQ PK_NAME);
-    my $sth = $sponge->prepare( "column_info $table", {
+    my $sth = $sponge->prepare( "primary_key_info $table", {
         rows          => [ map { [ @{$_}{@names} ] } @pk_info ],
         NUM_OF_FIELDS => scalar @names,
         NAME          => \@names,
@@ -423,60 +427,106 @@ my @COLUMN_INFO = qw(
     IS_NULLABLE
 );
 
-# Taken from Fey::Loader::SQLite
 sub column_info {
-    my($dbh, $catalog, $schema, $table, $column) = @_;
+    my ($dbh, $cat_val, $sch_val, $tbl_val, $col_val) = @_;
 
-    if ( defined $column and $column eq '%' ) {
-        $column = undef;
+    if ( defined $col_val and $col_val eq '%' ) {
+        $col_val = undef;
     }
 
-    my @cols        = ();
-    my $position    = 0;
-    my $sth_columns = $dbh->prepare("PRAGMA table_info('$table')");
-    $sth_columns->execute;
-    while ( my $col_info = $sth_columns->fetchrow_hashref ) {
-        $position++;
-        next if defined $column && $column ne $col_info->{name};
+    # Get a list of all tables ordered by TABLE_SCHEM, TABLE_NAME
+    my $sql = <<'END_SQL';
+SELECT TABLE_SCHEM, tbl_name TABLE_NAME
+FROM (
+    SELECT 'main' TABLE_SCHEM, tbl_name
+    FROM sqlite_master
+    WHERE type IN ('table','view')
+UNION ALL
+    SELECT 'temp' TABLE_SCHEM, tbl_name
+    FROM sqlite_temp_master
+    WHERE type IN ('table','view')
+END_SQL
 
-        my %col = (
-            TABLE_NAME       => $table,
-            COLUMN_NAME      => $col_info->{name},
-            ORDINAL_POSITION => $position,
-        );
-
-        my $type = $col_info->{type};
-        if ( $type =~ s/(\w+)\((\d+)(?:,(\d+))?\)/$1/ ) {
-            $col{COLUMN_SIZE}    = $2;
-            $col{DECIMAL_DIGITS} = $3;
-        }
-
-        $col{TYPE_NAME} = $type;
-
-        if ( defined $col_info->{dflt_value} ) {
-            $col{COLUMN_DEF} = $col_info->{dflt_value}
-        }
-
-        if ( $col_info->{notnull} ) {
-            $col{NULLABLE}    = 0;
-            $col{IS_NULLABLE} = 'NO';
-        } else {
-            $col{NULLABLE}    = 1;
-            $col{IS_NULLABLE} = 'YES';
-        }
-
-        foreach my $key ( @COLUMN_INFO ) {
-            next if exists $col{$key};
-            $col{$key} = undef;
-        }
-
-        push @cols, \%col;
+    for my $db_name (_attached_database_list($dbh)) {
+        $sql .= <<"END_SQL";
+UNION ALL
+    SELECT '$db_name' TABLE_SCHEM, tbl_name
+    FROM "$db_name".sqlite_master
+    WHERE type IN ('table','view')
+END_SQL
     }
-    $sth_columns->finish;
+
+    $sql .= <<'END_SQL';
+UNION ALL
+    SELECT 'main' TABLE_SCHEM, 'sqlite_master' tbl_name
+UNION ALL
+    SELECT 'temp' TABLE_SCHEM, 'sqlite_temp_master' tbl_name
+)
+END_SQL
+
+    my @where;
+    if ( defined $sch_val ) {
+        push @where, "TABLE_SCHEM LIKE '$sch_val'";
+    }
+    if ( defined $tbl_val ) {
+        push @where, "TABLE_NAME LIKE '$tbl_val'";
+    }
+    $sql .= ' WHERE ' . join("\n   AND ", @where ) . "\n" if @where;
+    $sql .= " ORDER BY TABLE_SCHEM, TABLE_NAME\n";
+    my $sth_tables = $dbh->prepare($sql) or return undef;
+    $sth_tables->execute or return undef;
+
+    # Taken from Fey::Loader::SQLite
+    my @cols;
+    while ( my ($schema, $table) = $sth_tables->fetchrow_array ) {
+        my $sth_columns = $dbh->prepare(qq{PRAGMA "$schema".table_info("$table")});
+        $sth_columns->execute;
+
+        for ( my $position = 1; my $col_info = $sth_columns->fetchrow_hashref; $position++ ) {
+            if ( defined $col_val ) {
+                # This must do a LIKE comparison
+                my $sth = $dbh->prepare("SELECT '$col_info->{name}' LIKE '$col_val'") or return undef;
+                $sth->execute or return undef;
+                # Skip columns that don't match $col_val
+                next unless ($sth->fetchrow_array)[0];
+            }
+
+            my %col = (
+                TABLE_SCHEM      => $schema,
+                TABLE_NAME       => $table,
+                COLUMN_NAME      => $col_info->{name},
+                ORDINAL_POSITION => $position,
+            );
+
+            my $type = $col_info->{type};
+            if ( $type =~ s/(\w+) ?\((\d+)(?:,(\d+))?\)/$1/ ) {
+                $col{COLUMN_SIZE}    = $2;
+                $col{DECIMAL_DIGITS} = $3;
+            }
+
+            $col{TYPE_NAME} = $type;
+
+            if ( defined $col_info->{dflt_value} ) {
+                $col{COLUMN_DEF} = $col_info->{dflt_value}
+            }
+
+            if ( $col_info->{notnull} ) {
+                $col{NULLABLE}    = 0;
+                $col{IS_NULLABLE} = 'NO';
+            } else {
+                $col{NULLABLE}    = 1;
+                $col{IS_NULLABLE} = 'YES';
+            }
+
++            push @cols, \%col;
+        }
+        $sth_columns->finish;
+    }
+    $sth_tables->finish;
 
     my $sponge = DBI->connect("DBI:Sponge:", '','')
         or return $dbh->DBI::set_err($DBI::err, "DBI::Sponge: $DBI::errstr");
-    my $sth = $sponge->prepare( "column_info $table", {
+    $sponge->prepare( "column_info", {
         rows          => [ map { [ @{$_}{@COLUMN_INFO} ] } @cols ],
         NUM_OF_FIELDS => scalar @COLUMN_INFO,
         NAME          => [ @COLUMN_INFO ],
@@ -484,8 +534,6 @@ sub column_info {
         $sponge->err,
         $sponge->errstr,
     );
-
-    return $sth;
 }
 
 
@@ -575,6 +623,30 @@ details about core features.
 
 Currently many statement attributes are not implemented or are
 limited by the typeless nature of the SQLite database.
+
+=head3 B<table_info>
+
+  $sth = $dbh->table_info(undef, $schema, $table, $type, \%attr);
+
+Returns all tables and schemas (databases) as specified in L<DBI/table_info>.
+The schema and table arguments will do a C<LIKE> search. You can specify an
+ESCAPE character by including an 'Escape' attribute in \%attr. The C<$type>
+argument accepts a comma seperated list of the following types 'TABLE',
+'VIEW', 'LOCAL TEMPORARY' and 'SYSTEM TABLE' (by default all are returned).
+Note that a statement handle is returned, and not a direct list of tables.
+
+The following fields are returned:
+
+B<TABLE_CAT>: Always NULL, as SQLite does not have the concept of catalogs.
+
+B<TABLE_SCHEM>: The name of the schema (database) that the table or view is
+in. The default schema is 'main', temporary tables are in 'temp' and other
+databases will be in the name given when the database was attached.
+
+B<TABLE_NAME>: The name of the table or view.
+
+B<TABLE_TYPE>: The type of object returned. Will be one of 'TABLE', 'VIEW',
+'LOCAL TEMPORARY' or 'SYSTEM TABLE'.
 
 =head1 CONNECTING
 
@@ -1372,23 +1444,7 @@ Bugs should be reported via the CPAN bug tracker at
 
 L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBD-SQLite>
 
-=head1 TO DO
-
-There're several pended RT bugs/patches at the moment
-(mainly due to the lack of tests/patches or segfaults on tests).
-
-Here's the list.
-
-L<http://rt.cpan.org/Public/Bug/Display.html?id=35449>
-(breaks tests)
-
-L<http://rt.cpan.org/Public/Bug/Display.html?id=29629>
-(requires a patch)
-
-L<http://rt.cpan.org/Public/Bug/Display.html?id=29058>
-(requires a patch)
-
-Switch tests to L<Test::More> to support more advanced testing behaviours
+Note that bugs of bundled sqlite library (i.e. bugs in C<sqlite3.[ch]>) should be reported to the sqlite developers at sqlite.org via their bug tracker or via their mailing list.
 
 =head1 AUTHOR
 

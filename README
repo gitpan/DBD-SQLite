@@ -42,6 +42,31 @@ CONFORMANCE WITH DBI SPECIFICATION
     Currently many statement attributes are not implemented or are limited
     by the typeless nature of the SQLite database.
 
+   table_info
+      $sth = $dbh->table_info(undef, $schema, $table, $type, \%attr);
+
+    Returns all tables and schemas (databases) as specified in "table_info"
+    in DBI. The schema and table arguments will do a "LIKE" search. You can
+    specify an ESCAPE character by including an 'Escape' attribute in
+    \%attr. The $type argument accepts a comma seperated list of the
+    following types 'TABLE', 'VIEW', 'LOCAL TEMPORARY' and 'SYSTEM TABLE'
+    (by default all are returned). Note that a statement handle is returned,
+    and not a direct list of tables.
+
+    The following fields are returned:
+
+    TABLE_CAT: Always NULL, as SQLite does not have the concept of catalogs.
+
+    TABLE_SCHEM: The name of the schema (database) that the table or view is
+    in. The default schema is 'main', temporary tables are in 'temp' and
+    other databases will be in the name given when the database was
+    attached.
+
+    TABLE_NAME: The name of the table or view.
+
+    TABLE_TYPE: The type of object returned. Will be one of 'TABLE', 'VIEW',
+    'LOCAL TEMPORARY' or 'SYSTEM TABLE'.
+
 CONNECTING
     The name of the database file is passed in the the DBI connection string
     :
@@ -711,19 +736,9 @@ SUPPORT
 
     <http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBD-SQLite>
 
-TO DO
-    There're several pended RT bugs/patches at the moment (mainly due to the
-    lack of tests/patches or segfaults on tests).
-
-    Here's the list.
-
-    <http://rt.cpan.org/Public/Bug/Display.html?id=35449> (breaks tests)
-
-    <http://rt.cpan.org/Public/Bug/Display.html?id=29629> (requires a patch)
-
-    <http://rt.cpan.org/Public/Bug/Display.html?id=29058> (requires a patch)
-
-    Switch tests to Test::More to support more advanced testing behaviours
+    Note that bugs of bundled sqlite library (i.e. bugs in "sqlite3.[ch]")
+    should be reported to the sqlite developers at sqlite.org via their bug
+    tracker or via their mailing list.
 
 AUTHOR
     Matt Sergeant <matt@sergeant.org>
