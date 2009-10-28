@@ -1,5 +1,24 @@
 Changes for Perl extension DBD-SQLite
 
+1.26_06 Wed 28 Ocr 2009
+    *** CHANGES THAT MAY POSSIBLY BREAK YOUR OLD APPLICATIONS ***
+    - Removed undocumented (and most probably unused) reset method
+      from a statement handle (which was only accessible via func().)
+      Simply use "$sth->finish" instead. (ISHIGAKI)
+    - Now DBD::SQLite supports foreign key constraints by default.
+      Long-ignored foreign keys (typically written for other DB
+      engines) will start working. If you don't want this feature,
+      issue a pragma to disable foreign keys. (ISHIGAKI)
+    - Renamed "unicode" attribute to "sqlite_unicode" for integrity.
+      Old "unicode" attribute is still accessible but will be
+      deprecated in the near future. (ISHIGAKI)
+
+    - You can see file/line info while tracing even if you compile
+      with a non-gcc compiler. (ISHIGAKI)
+    - Major code refactoring. (ISHIGAKI)
+    - Pod reorganized, and some of the missing bits (including
+      pragma) are added. (ISHIGAKI)
+
 1.26_05 Thu 15 Oct 2009
     - Updated to SQLite 3.6.19 (ISHIGAKI)
 
@@ -7,6 +26,8 @@ Changes for Perl extension DBD-SQLite
     *** CHANGES THAT MAY POSSIBLY BREAK YOUR OLD APPLICATIONS ***
     - Resolved #49716: Fixed $dbh->column_info to work according to
       the spec in DBI and added support for attached databases. (VLYON)
+    - Fixed $sth->primary_key_info to work according to the spec in DBI
+      and changed the tests in t/27_metadata.t to reflect this. (VLYON)
     - Tweaked not to hide a real error by a "not an error" issued
       by another sqlite3 function between the failed sqlite3 function
       and the sqlite_error to report. Note that this change makes
@@ -22,8 +43,6 @@ Changes for Perl extension DBD-SQLite
       (ISHIGAKI)
     - Added documentation and an 'Escape' attribute for $sth->table_info.
       (VLYON)
-    - Fixed $sth->primary_key_info to work according to the spec in DBI
-      and changed the tests in t/27_metadata.t to reflect this. (VLYON)
 
 1.26_03 Wed 12 Aug 2009
     - Updated to SQLite 3.6.17 (ISHIGAKI)

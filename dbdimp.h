@@ -5,6 +5,10 @@
 #include "SQLiteXS.h"
 #include "sqlite3.h"
 
+#define PERL_UNICODE_DOES_NOT_WORK_WELL           \
+    (PERL_REVISION <= 5) && ((PERL_VERSION < 8)   \
+ || (PERL_VERSION == 8 && PERL_SUBVERSION < 5))
+
 /* 30 second timeout by default */
 #define SQL_TIMEOUT 30000
 
@@ -38,23 +42,19 @@ struct imp_sth_st {
     */
     int retval;
     int nrow;
-    char *statement;
     AV *params;
     AV *col_types;
 };
 
 #define dbd_init                sqlite_init
 #define dbd_discon_all          sqlite_discon_all
-#define dbd_db_login            sqlite_db_login
-#define dbd_db_do               sqlite_db_do
+#define dbd_db_login6           sqlite_db_login6
 #define dbd_db_commit           sqlite_db_commit
 #define dbd_db_rollback         sqlite_db_rollback
 #define dbd_db_disconnect       sqlite_db_disconnect
 #define dbd_db_destroy          sqlite_db_destroy
 #define dbd_db_STORE_attrib     sqlite_db_STORE_attrib
 #define dbd_db_FETCH_attrib     sqlite_db_FETCH_attrib
-#define dbd_db_STORE_attrib_k   sqlite_db_STORE_attrib_k
-#define dbd_db_FETCH_attrib_k   sqlite_db_FETCH_attrib_k
 #define dbd_db_last_insert_id   sqlite_db_last_insert_id
 #define dbd_st_prepare          sqlite_st_prepare
 #define dbd_st_rows             sqlite_st_rows
@@ -66,8 +66,6 @@ struct imp_sth_st {
 #define dbd_st_blob_read        sqlite_st_blob_read
 #define dbd_st_STORE_attrib     sqlite_st_STORE_attrib
 #define dbd_st_FETCH_attrib     sqlite_st_FETCH_attrib
-#define dbd_st_STORE_attrib_k   sqlite_st_STORE_attrib_k
-#define dbd_st_FETCH_attrib_k   sqlite_st_FETCH_attrib_k
 #define dbd_bind_ph             sqlite_bind_ph
 #define dbd_st_bind_col         sqlite_bind_col
 
@@ -84,7 +82,6 @@ int sqlite_db_enable_load_extension(pTHX_ SV *dbh, int onoff);
 int sqlite_db_create_aggregate(pTHX_ SV *dbh, const char *name, int argc, SV *aggr );
 int sqlite_db_create_collation(pTHX_ SV *dbh, const char *name, SV *func);
 int sqlite_db_progress_handler(pTHX_ SV *dbh, int n_opcodes, SV *handler);
-void sqlite_st_reset(pTHX_ SV *sth );
 int sqlite_bind_col( SV *sth, imp_sth_t *imp_sth, SV *col, SV *ref, IV sql_type, SV *attribs );
 int sqlite_db_busy_timeout (pTHX_ SV *dbh, int timeout );
 int sqlite_db_backup_from_file(pTHX_ SV *dbh, char *filename);
