@@ -140,14 +140,35 @@ NOTABLE DIFFERENCES FROM OTHER DRIVERS
           $sth->execute(5);
 
   Foreign Keys
-    Since SQLite 3.6.19 (released on Oct 14, 2009; bundled with DBD::SQLite
-    1.26_05), foreign key constraints are supported (though with some
-    limitations). See <http://www.sqlite.org/foreignkeys.html> for details.
-    Though SQLite does NOT enable this feature by default yet (for backward
-    compatibility), DBD::SQLite enables it internally. If you don't want
-    this feature, issue a pragma to disable the feature.
+    BE PREPARED! WOLVES APPROACH!!
+
+    SQLite has started supporting foreign key constraints since 3.6.19
+    (released on Oct 14, 2009; bundled with DBD::SQLite 1.26_05). To be
+    exact, SQLite has long been able to parse a schema with foreign keys,
+    but the constraints has not been enforced. Now you can issue a pragma
+    actually to enable this feature and enforce the constraints.
+
+    To do this, issue the following pragma (see below), preferably as soon
+    as you connect to a database and you're not in a transaction:
+
+      $dbh->do("PRAGMA foreign_keys = ON");
+
+    And you can explicitly disable the feature whenever you like by turning
+    the pragma off:
 
       $dbh->do("PRAGMA foreign_keys = OFF");
+
+    As of this writing, this feature is disabled by default by the sqlite
+    team, and by us, to secure backward compatibility, as this feature may
+    break your applications, and actually broke some for us. If you have
+    used a schema with foreign key constraints but haven't cared them much
+    and supposed they're always ignored for SQLite, be prepared, and please
+    do extensive testing to ensure that your applications will continue to
+    work when the foreign keys support is enabled by default. It is very
+    likely that the sqlite team will turn it default-on in the future, and
+    we plan to do it NO LATER THAN they do so.
+
+    See <http://www.sqlite.org/foreignkeys.html> for details.
 
   Pragma
     SQLite has a set of "Pragma"s to modifiy its operation or to query for
@@ -224,9 +245,10 @@ DRIVER PRIVATE ATTRIBUTES
 
         Defining the column type as "BLOB" in the DDL is not sufficient.
 
-        As of version 1.26_06, "unicode" is renamed to "sqlite_unicode" for
-        integrity. Old "unicode" attribute is still accessible but will be
-        deprecated in the near future.
+        This attribute was originally named as "unicode", and renamed to
+        "sqlite_unicode" for integrity since version 1.26_06. Old "unicode"
+        attribute is still accessible but will be deprecated in the near
+        future.
 
 METHODS
   table_info
@@ -676,17 +698,18 @@ COLLATION FUNCTIONS
       SELECT * FROM foo ORDER BY name COLLATE perllocale
 
   Unicode handling
-    If the attribute "$dbh->{unicode}" is set, strings coming from the
-    database and passed to the collation function will be properly tagged
-    with the utf8 flag; but this only works if the "unicode" attribute is
-    set before the first call to a perl collation sequence . The recommended
-    way to activate unicode is to set the parameter at connection time :
+    If the attribute "$dbh->{sqlite_unicode}" is set, strings coming from
+    the database and passed to the collation function will be properly
+    tagged with the utf8 flag; but this only works if the "sqlite_unicode"
+    attribute is set before the first call to a perl collation sequence .
+    The recommended way to activate unicode is to set the parameter at
+    connection time :
 
       my $dbh = DBI->connect(
           "dbi:SQLite:dbname=foo", "", "",
           {
-              RaiseError => 1,
-              unicode    => 1,
+              RaiseError     => 1,
+              sqlite_unicode => 1,
           }
       );
 

@@ -10,14 +10,19 @@ use Test::More;
 use t::lib::Test;
 use Fatal qw(open);
 
-my @c_files = <*.c>, <*.xs>;
+my @c_files = (<*.c>, <*.h>, <*.xs>);
 plan tests => scalar(@c_files);
 
 FILE:
 foreach my $file (@c_files) {
-    open(F, $file);
+    if ($file =~ /ppport.h/) {
+        pass("$file is not ours to be tested");
+        next;
+    }
+
+    open my $fh, '<', $file;
     my $line = 0;
-    while (<F>) {
+    while (<$fh>) {
         $line++;
         if (/^(.*)\/\//) {
             my $m = $1;
@@ -26,7 +31,12 @@ foreach my $file (@c_files) {
                 next FILE;
             }
         }
+
+        if (/#define\s+DBD_SQLITE_CROAK_DEBUG/) {
+            fail("debug macro is enabled in $file line $line");
+            next FILE;
+        }
     }
     pass("$file has no C++ comments");
-    close(F);
+    close $fh;
 }
