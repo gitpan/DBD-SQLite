@@ -1,6 +1,9 @@
 Changes for Perl extension DBD-SQLite
 
-1.26_07 to be released
+1.27 Mon 23 Nov 2009
+    - Switching to a production version
+
+1.26_07 Sun 15 Nov 2009
     *** CHANGES THAT MAY POSSIBLY BREAK YOUR OLD APPLICATIONS ***
     - Foreign keys support is once again disabled by default.
       It seems to have a greater impact than we expected and
@@ -17,7 +20,7 @@ Changes for Perl extension DBD-SQLite
     - Resolved #50935: there remained old "unicode" attribute usage
       in the pod, spotted by ASHLEY. (ISHIGAKI)
 
-1.26_06 Wed 28 Ocr 2009
+1.26_06 Wed 28 Oct 2009
     *** CHANGES THAT MAY POSSIBLY BREAK YOUR OLD APPLICATIONS ***
     - Removed undocumented (and most probably unused) reset method
       from a statement handle (which was only accessible via func().)
