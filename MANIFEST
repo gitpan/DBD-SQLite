@@ -71,5 +71,6 @@ t/rt_36838_unique_and_bus_error.t
 t/rt_40594_nullable.t
 t/rt_48393_debug_panic_with_commit.t
 t/rt_50503_fts3.t
+t/rt_52573_manual_exclusive_lock.t
 util/getsqlite.pl
 META.yml                                 Module meta-data (added by MakeMaker)
