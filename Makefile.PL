@@ -60,7 +60,7 @@ if ( $@ or DBI->VERSION < $DBI_required ) {
 
 # See if we have a C compiler
 # The following code is adapted from Module::Install::Can
-{
+SCOPE: {
 	# Fix Cygwin bug on maybe_command();
 	if ( $^O eq 'cygwin' ) {
 		require ExtUtils::MM_Cygwin;
@@ -82,7 +82,7 @@ if ( $@ or DBI->VERSION < $DBI_required ) {
 		my $_cmd = $cmd;
 		return $_cmd if (-x $_cmd or $_cmd = MM->maybe_command($_cmd));
 
-		for my $dir ((split /$Config::Config{path_sep}/, $ENV{PATH}), '.') {
+		for my $dir ( (split /$Config::Config{path_sep}/, $ENV{PATH}), '.' ) {
 			next if $dir eq '';
 			my $abs = File::Spec->catfile($dir, $_[1]);
 			return $abs if (-x $abs or $abs = MM->maybe_command($abs));
@@ -95,14 +95,14 @@ if ( $@ or DBI->VERSION < $DBI_required ) {
 		my @chunks = split(/ /, $Config::Config{cc}) or return;
 
 		# $Config{cc} may contain args; try to find out the program part
-		while (@chunks) {
+		while ( @chunks ) {
 			return can_run("@chunks") || (pop(@chunks), next);
 		}
 
 		return;
 	}
 
-	unless (can_cc()) {
+	unless ( can_cc() ) {
 		print "We can't locate a C compiler from your Config.pm.\n";
 		exit(0);
 	}
@@ -214,13 +214,12 @@ if ( $sqlite_inc ) {
 }
 
 my @CC_DEFINE = (
-	'-DSQLITE_CORE',
+	# '-DSQLITE_CORE',
 	'-DSQLITE_ENABLE_FTS3',
 	#  Disabled until we have a test for this
 	# '-DSQLITE_ENABLE_FTS3_PARENTHESIS',  # for sqlite >= 3.6.10
 	'-DSQLITE_ENABLE_COLUMN_METADATA',
 	'-DNDEBUG=1',
-	"-DSQLITE_PTR_SZ=$Config{ptrsize}"
 );
 if ( $Config{d_usleep} || $Config{osname} =~ m/linux/ ) {
 	push @CC_DEFINE, '-DHAVE_USLEEP=1';

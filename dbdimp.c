@@ -16,8 +16,8 @@ DBISTATE_DECLARE;
   #define croak_if_db_is_null()   if (!imp_dbh->db)   croak("imp_dbh->db is NULL at line %d in %s", __LINE__, __FILE__)
   #define croak_if_stmt_is_null() if (!imp_sth->stmt) croak("imp_sth->stmt is NULL at line %d in %s", __LINE__, __FILE__)
 #else
-  #define croak_if_db_is_null()
-  #define croak_if_stmt_is_null()
+  #define croak_if_db_is_null() 
+  #define croak_if_stmt_is_null() 
 #endif
 
 /*-----------------------------------------------------*
@@ -415,10 +415,12 @@ sqlite_st_prepare(SV *sth, imp_sth_t *imp_sth, char *statement, SV *attribs)
       return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
 
+#if 0
     if (*statement == '\0') {
       sqlite_error(sth, -2, "attempt to prepare empty statement");
       return FALSE; /* -> undef in lib/DBD/SQLite.pm */
     }
+#endif
 
     sqlite_trace(sth, imp_sth, 3, form("prepare statement: %s", statement));
     imp_sth->nrow      = -1;
@@ -466,6 +468,8 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
         sqlite_error(sth, -2, "attempt to execute on inactive database handle");
         return -2; /* -> undef in SQLite.xsi */
     }
+
+    if (!imp_sth->stmt) return 0;
 
     croak_if_db_is_null();
     croak_if_stmt_is_null();
@@ -553,8 +557,10 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
             (sql[2] == 'G' || sql[2] == 'g') &&
             (sql[3] == 'I' || sql[3] == 'i') &&
             (sql[4] == 'N' || sql[4] == 'n')) {
-            DBIc_on(imp_dbh,  DBIcf_BegunWork);
-            DBIc_off(imp_dbh, DBIcf_AutoCommit);
+            if (DBIc_is(imp_dbh,  DBIcf_AutoCommit)) {
+                DBIc_on(imp_dbh,  DBIcf_BegunWork);
+                DBIc_off(imp_dbh, DBIcf_AutoCommit);
+            }
         }
         else if (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
             sqlite_trace(sth, imp_sth, 3, "BEGIN TRAN");
@@ -562,6 +568,26 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
             if (rc != SQLITE_OK) {
                 return -2; /* -> undef in SQLite.xsi */
             }
+        }
+    }
+    else if (DBIc_is(imp_dbh, DBIcf_BegunWork)) {
+        char *sql = sqlite3_sql(imp_sth->stmt);
+        if (((sql[0] == 'C' || sql[0] == 'c') &&
+             (sql[1] == 'O' || sql[1] == 'o') &&
+             (sql[2] == 'M' || sql[2] == 'm') &&
+             (sql[3] == 'M' || sql[3] == 'm') &&
+             (sql[4] == 'I' || sql[4] == 'i') &&
+             (sql[5] == 'T' || sql[5] == 't')) ||
+            ((sql[0] == 'R' || sql[0] == 'r') &&
+             (sql[1] == 'O' || sql[1] == 'o') &&
+             (sql[2] == 'L' || sql[2] == 'l') &&
+             (sql[3] == 'L' || sql[3] == 'l') &&
+             (sql[4] == 'B' || sql[4] == 'b') &&
+             (sql[5] == 'A' || sql[5] == 'a') &&
+             (sql[6] == 'C' || sql[6] == 'c') &&
+             (sql[7] == 'K' || sql[7] == 'k'))) {
+            DBIc_off(imp_dbh, DBIcf_BegunWork);
+            DBIc_on(imp_dbh,  DBIcf_AutoCommit);
         }
     }
 

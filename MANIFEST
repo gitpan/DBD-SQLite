@@ -52,6 +52,7 @@ t/34_online_backup.t
 t/35_table_info.t
 t/36_hooks.t
 t/37_regexp.t
+t/38_empty_statement.t
 t/97_meta.t
 t/98_pod.t
 t/99_pmv.t
