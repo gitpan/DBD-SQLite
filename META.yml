@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               DBD-SQLite
-version:            1.28_02
+version:            1.29
 abstract:           Self Contained SQLite RDBMS in a DBI Driver
 author:
     - Adam Kennedy <adamk@cpan.org>
