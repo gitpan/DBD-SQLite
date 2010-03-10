@@ -10,7 +10,7 @@ use vars qw{$err $errstr $drh $sqlite_version};
 use vars qw{%COLLATION};
 
 BEGIN {
-    $VERSION = '1.29';
+    $VERSION = '1.30_01';
     @ISA     = 'DynaLoader';
 
     # Initialize errors
@@ -26,11 +26,14 @@ BEGIN {
 
 __PACKAGE__->bootstrap($VERSION);
 
+# New or old API?
+use constant NEWAPI => ($DBI::VERSION >= 1.608);
+
 tie %COLLATION, 'DBD::SQLite::_WriteOnceHash';
 $COLLATION{perl}       = sub { $_[0] cmp $_[1] };
 $COLLATION{perllocale} = sub { use locale; $_[0] cmp $_[1] };
 
-my $methods_are_installed;
+my $methods_are_installed = 0;
 
 sub driver {
     return $drh if $drh;
@@ -60,6 +63,7 @@ sub driver {
         Version     => $VERSION,
         Attribution => 'DBD::SQLite by Matt Sergeant et al',
     } );
+
     return $drh;
 }
 
@@ -116,15 +120,14 @@ sub connect {
     # Hand off to the actual login function
     DBD::SQLite::db::_login($dbh, $real, $user, $auth, $attr) or return undef;
 
-    # Register the on-demand collation installer
-    $DBI::VERSION >= 1.608
-      ? $dbh->sqlite_collation_needed(\&install_collation)
-      : $dbh->func(\&install_collation, "collation_needed");
-
-    # Register the REGEXP function
-    $DBI::VERSION >= 1.608
-      ? $dbh->sqlite_create_function("REGEXP", 2, \&regexp)
-      : $dbh->func("REGEXP", 2, \&regexp, "create_function");
+    # Register the on-demand collation installer and REGEXP function
+    if ( DBD::SQLite::NEWAPI ) {
+        $dbh->sqlite_collation_needed( \&install_collation );
+        $dbh->sqlite_create_function( "REGEXP", 2, \&regexp );
+    } else {
+        $dbh->func( \&install_collation, "collation_needed"  );
+        $dbh->func( "REGEXP", 2, \&regexp, "create_function" );
+    }
 
     # HACK: Since PrintWarn = 0 doesn't seem to actually prevent warnings
     # in DBD::SQLite we set Warn to false if PrintWarn is false.
@@ -135,14 +138,16 @@ sub connect {
     return $dbh;
 }
 
-
 sub install_collation {
-    my ($dbh, $collation_name) = @_;
-    my $collation = $DBD::SQLite::COLLATION{$collation_name}
-        or die "can't install, unknown collation : $collation_name";
-    $DBI::VERSION >= 1.608
-        ? $dbh->sqlite_create_collation($collation_name => $collation)
-        : $dbh->func($collation_name => $collation, "create_collation");
+    my $dbh       = shift;
+    my $name      = shift;
+    my $collation = $DBD::SQLite::COLLATION{$name}
+        or die "can't install, unknown collation : $name";
+    if ( DBD::SQLite::NEWAPI ) {
+        $dbh->sqlite_create_collation( $name => $collation );
+    } else {
+        $dbh->func( $name => $collation, "create_collation" );
+    }
 }
 
 # default implementation for sqlite 'REGEXP' infix operator.
@@ -152,7 +157,6 @@ sub regexp {
     use locale;
     return scalar($_[1] =~ $_[0]);
 }
-
 
 package DBD::SQLite::db;
 
@@ -168,6 +172,25 @@ sub prepare {
     DBD::SQLite::st::_prepare($sth, $sql, @_) or return undef;
 
     return $sth;
+}
+
+sub do {
+    my ($dbh, $statement, $attr, @bind_values) = @_;
+
+    my @copy = @{[@bind_values]};
+    my $rows = 0;
+
+    while ($statement) {
+        my $sth = $dbh->prepare($statement, $attr) or return undef;
+        $sth->execute(splice @copy, 0, $sth->{NUM_OF_PARAMS}) or return undef;
+        $rows += $sth->rows;
+        # XXX: not sure why but $dbh->{sqlite...} wouldn't work here
+        last unless $dbh->FETCH('sqlite_allow_multiple_statements');
+        $statement = $sth->{sqlite_unprepared_statements};
+    }
+
+    # always return true if no error
+    return ($rows == 0) ? "0E0" : $rows;
 }
 
 sub _get_version {
@@ -319,13 +342,15 @@ END_SQL
 }
 
 sub primary_key_info {
-    my ($dbh, $catalog, $schema, $table) = @_;
+    my ($dbh, $catalog, $schema, $table, $attr) = @_;
 
     # Escape the schema and table name
     $schema =~ s/([\\_%])/\\$1/g if defined $schema;
     my $escaped = $table;
     $escaped =~ s/([\\_%])/\\$1/g;
-    my $sth_tables = $dbh->table_info($catalog, $schema, $escaped, undef, {Escape => '\\'});
+    $attr ||= {};
+    $attr->{Escape} = '\\';
+    my $sth_tables = $dbh->table_info($catalog, $schema, $escaped, undef, $attr);
 
     # This is a hack but much simpler than using pragma index_list etc
     # also the pragma doesn't list 'INTEGER PRIMARY KEY' autoinc PKs!
@@ -342,6 +367,7 @@ sub primary_key_info {
         }
         my $key_seq = 0;
         foreach my $pk_field (@pk) {
+            $pk_field =~ s/(["'`])(.+)\1/$2/; # dequote
             push @pk_info, {
                 TABLE_SCHEM => $row->{TABLE_SCHEM},
                 TABLE_NAME  => $row->{TABLE_NAME},
@@ -360,8 +386,8 @@ sub primary_key_info {
         NUM_OF_FIELDS => scalar @names,
         NAME          => \@names,
     }) or return $dbh->DBI::set_err(
-        $sponge->err(),
-        $sponge->errstr()
+        $sponge->err,
+        $sponge->errstr,
     );
     return $sth;
 }
@@ -566,6 +592,8 @@ __END__
 
 =pod
 
+=encoding utf-8
+
 =head1 NAME
 
 DBD::SQLite - Self-contained RDBMS in a DBI Driver
@@ -730,6 +758,23 @@ This is somewhat weird, but works anyway.
 
 =back
 
+=head2 Placeholders
+
+SQLite supports several placeholder expressions, including C<?>
+and C<:AAAA>. Consult the L<DBI> and sqlite documentation for
+details. 
+
+L<http://www.sqlite.org/lang_expr.html#varparam>
+
+Note that a question mark actually means a next unused (numbered)
+placeholder. You're advised not to use it with other (numbered or
+named) placeholders to avoid confusion.
+
+  my $sth = $dbh->prepare(
+    'update TABLE set a=?1 where b=?2 and a IS NOT ?1'
+  );
+  $sth->execute(1, 2); 
+
 =head2 Foreign Keys
 
 B<BE PREPARED! WOLVES APPROACH!!>
@@ -800,7 +845,7 @@ the corresponding statements.
 
 =item When the AutoCommit flag is off
 
-You're supposed to always use the transactinal mode, until you
+You're supposed to always use the transactional mode, until you
 explicitly turn on the AutoCommit flag. You can explicitly issue
 a C<BEGIN> statement (only when an actual transaction has not
 begun yet) but you're not allowed to call C<begin_work> method
@@ -826,9 +871,27 @@ This C<AutoCommit> mode is independent from the autocommit mode
 of the internal SQLite library, which always begins by a C<BEGIN>
 statement, and ends by a C<COMMIT> or a <ROLLBACK>.
 
+=head2 Processing Multiple Statements At A Time
+
+L<DBI>'s statement handle is not supposed to process multiple
+statements at a time. So if you pass a string that contains multiple
+statements (a C<dump>) to a statement handle (via C<prepare> or C<do>),
+L<DBD::SQLite> only processes the first statement, and discards the
+rest.
+
+Since 1.30_01, you can retrieve those ignored (unprepared) statements
+via C<< $sth->{sqlite_unprepared_statements} >>. It usually contains
+nothing but white spaces, but if you really care, you can check this
+attribute to see if there's anything left undone. Also, if you set
+a C<sqlite_allow_multiple_statements> attribute of a database handle
+to true when you connect to a database, C<do> method automatically
+checks the C<sqlite_unprepared_statements> attribute, and if it finds
+anything undone (even if what's left is just a single white space),
+it repeats the process again, to the end.
+
 =head2 Performance
 
-SQLite is fast, very fast. Matt processed my 72MB log file with it,
+SQLite is fast, very fast. Matt processed his 72MB log file with it,
 inserting the data (400,000+ rows) by using transactions and only
 committing every 1000 rows (otherwise the insertion is quite slow),
 and then performing queries on the data.
@@ -903,9 +966,30 @@ This attribute was originally named as C<unicode>, and renamed to
 C<sqlite_unicode> for integrity since version 1.26_06. Old C<unicode>
 attribute is still accessible but will be deprecated in the near future.
 
+=item sqlite_allow_multiple_statements
+
+If you set this to true, C<do> method will process multiple
+statements at one go. This may be handy, but with performance
+penalty. See above for details.
+
+=back
+
+=head2 Statement Handle Attributes
+
+=over 4
+
+=item sqlite_unprepared_statements
+
+Returns an unprepared part of the statement you pass to C<prepare>.
+Typically this contains nothing but white spaces after a semicolon.
+See above for details.
+
 =back
 
 =head1 METHODS
+
+See also to the L<DBI> documentation for the details of other common
+methods.
 
 =head2 table_info
 
@@ -930,6 +1014,17 @@ B<TABLE_NAME>: The name of the table or view.
 
 B<TABLE_TYPE>: The type of object returned. Will be one of 'TABLE', 'VIEW',
 'LOCAL TEMPORARY' or 'SYSTEM TABLE'.
+
+=head2 primary_key, primary_key_info
+
+  @names = $dbh->primary_key(undef, $schema, $table);
+  $sth   = $dbh->primary_key_info(undef, $schema, $table, \%attr);
+
+You can retrieve primary key names or more detailed information.
+As noted above, SQLite does not have the concept of catalogs, so the
+first argument of the mothods is usually C<undef>, and you'll usually
+set C<undef> for the second one (unless you want to know the primary
+keys of temporary tables).
 
 =head1 DRIVER PRIVATE METHODS
 
@@ -1227,7 +1322,8 @@ is the name of the table containing the affected row;
 
 =item $rowid
 
-is the unique 64-bit signed integer key of the affected row within that table.
+is the unique 64-bit signed integer key of the affected row within
+that table.
 
 =back
 
@@ -1499,6 +1595,37 @@ collations in existing database handles: it will only affect new
 I<requests> for collations. In other words, if you want to change
 the behaviour of a collation within an existing C<$dbh>, you
 need to call the L</create_collation> method directly.
+
+=head1 FOR DBD::SQLITE EXTENSION AUTHORS
+
+Since 1.30_01, you can retrieve the bundled sqlite C source and/or
+header like this:
+
+  use File::ShareDir 'dist_dir';
+  use File::Spec::Functions 'catfile';
+  
+  # the whole sqlite3.h header
+  my $sqlite3_h = catfile(dist_dir('DBD-SQLite'), 'sqlite3.h');
+  
+  # or only a particular header, amalgamated in sqlite3.c
+  my $what_i_want = 'parse.h';
+  my $sqlite3_c = catfile(dist_dir('DBD-SQLite'), 'sqlite3.c');
+  open my $fh, '<', $sqlite3_c or die $!;
+  my $code = do { local $/; <$fh> };
+  my ($parse_h) = $code =~ m{(
+    /\*+[ ]Begin[ ]file[ ]$what_i_want[ ]\*+
+    .+?
+    /\*+[ ]End[ ]of[ ]$what_i_want[ ]\*+/
+  )}sx;
+  open my $out, '>', $what_i_want or die $!;
+  print $out $parse_h;
+  close $out;
+
+You usually want to use this in your extension's C<Makefile.PL>,
+and you may want to add DBD::SQLite to your extension's C<CONFIGURE_REQUIRES>
+to ensure your extension users use the same C source/header they use
+to build DBD::SQLite itself (instead of the ones installed in their
+system).
 
 =head1 TO DO
 

@@ -190,10 +190,6 @@ if ( 0 ) {
 
 @ARGV = grep( ! /SQLITE_LOCATION|USE_LOCAL_SQLITE/, @ARGV );
 
-
-
-
-
 #####################################################################
 # Prepare Compiler Options
 
@@ -239,10 +235,6 @@ my @CC_OPTIONS = (
 	) : () ),
 );
 
-
-
-
-
 #####################################################################
 # Hand off to ExtUtils::MakeMaker
 
@@ -251,7 +243,7 @@ WriteMakefile(
 	ABSTRACT         => 'Self Contained SQLite RDBMS in a DBI Driver',
 	VERSION_FROM     => 'lib/DBD/SQLite.pm',
 	AUTHOR           => 'Adam Kennedy <adamk@cpan.org>',
-		# Release manager (can this be an array?)
+	# Release manager (can this be an array?)
 	PREREQ_PM        => {
 		'Tie::Hash'        => 0,
 		'File::Spec'       => (WINLIKE ? '3.27' : '0.82'),
@@ -325,9 +317,20 @@ use Config;
 sub postamble {
 	require DBI;
 	require DBI::DBD;
-	eval {
+	my $postamble = eval {
 		DBI::DBD::dbd_postamble(@_)
 	};
+	my $S = $^O eq 'MSWin32' ? '\\' : '/';  # only Win32 (not cygwin)
+	my $share = "\$(INST_LIB)${S}auto${S}share${S}dist${S}\$(DISTNAME)";
+	my $perm_dir = $ExtUtils::MakeMaker::VERSION >= 6.52 ? '$(PERM_DIR)' : '755';
+	$postamble .= <<"SHARE";
+config ::
+\t\$(NOECHO) \$(MKPATH) "$share"
+\t\$(NOECHO) \$(CHMOD) $perm_dir "$share"
+\t\$(NOECHO) \$(CP) "sqlite3.c" "$share${S}sqlite3.c"
+\t\$(NOECHO) \$(CP) "sqlite3.h" "$share${S}sqlite3.h"
+SHARE
+	return $postamble;
 }
 
 sub libscan {

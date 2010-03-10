@@ -1,5 +1,28 @@
 Changes for Perl extension DBD-SQLite
 
+1.30_01 Wed  10 Mar 2010
+    *** CHANGES THAT MAY POSSIBLY BREAK YOUR OLD APPLICATIONS ***
+    - Resolved #54271: Inserting a string with utf-8 flag on
+      corrupts BLOB data; now BLOB data is always stored as bytes
+      (without the utf-8 flag) even if it has the flag set (ISHIGAKI)
+
+    - Updated to SQLite 3.6.23 (DUNCAND)
+    - Implemented NUM_OF_PARAMS statement handle attribute (ISHIGAKI)
+    - Added experimental "sqlite_allow_multiple_statements"
+      database handle attribute, and "sqlite_unprepared_statements"
+      statement handle attribute, to allow processing a SQL dump.
+      (ISHIGAKI)
+    - Resolved #53579: Added a note and a test of placeholders.
+      (ISHIGAKI)
+    - Resolved #45113, which was actually an issue of dequoting
+      primary key column names (ISHIGAKI)
+    - You can now retrieve some of the statement handle attributes
+      before you execute. (ISHIGAKI)
+    - Added preamble to copy sqlite3.[hc] files into a share
+      directory (where you can access via File::ShareDir) to allow
+      extension authors to use the same C source/header as they
+      used to build DBD::SQLite itself. (ISHIGAKI)
+
 1.29 Fri  8 Jan 2010
     - Updated to SQLite 3.6.22 (DUNCAND)
 
@@ -14,7 +37,7 @@ Changes for Perl extension DBD-SQLite
 
 1.28_01 Tue 22 Dec 2009
     - Updated to SQLite 3.6.21 (ISHIGAKI)
-    - silence warnings on HP-UX (HMBRAND)
+    - Silence warnings on HP-UX (HMBRAND)
     - Resolved #52573: Manual Transaction handling seems to be
       broken (hopefully) (ISHIGAKI)
 
