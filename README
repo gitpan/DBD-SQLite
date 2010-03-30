@@ -240,6 +240,36 @@ NOTABLE DIFFERENCES FROM OTHER DRIVERS
     internal SQLite library, which always begins by a "BEGIN" statement, and
     ends by a "COMMIT" or a <ROLLBACK>.
 
+  Transaction and Database Locking
+    Transaction by "AutoCommit" or "begin_work" is nice and handy, but
+    sometimes you may get an annoying "database is locked" error. This
+    typically happens when someone begins a transaction, and tries to write
+    to a database while other person is reading from the database (in
+    another transaction). You might be surprised but SQLite doesn't lock a
+    database when you just begin a normal (deferred) transaction to maximize
+    concurrency. It reserves a lock when you issue a statement to write, but
+    until you actually try to write with a "commit" statement, it allows
+    other people to read from the database. However, reading from the
+    database also requires "shared lock", and that prevents to give you the
+    "exclusive lock" you reserved, thus you get the "database is locked"
+    error, and other people will get the same error if they try to write
+    afterwards, as you still have a "pending" lock. "busy_timeout" doesn't
+    help in this case.
+
+    To avoid this, set a transaction type explicitly. You can issue a "begin
+    immediate transaction" (or "begin exclusive transaction") for each
+    transaction, or set "sqlite_use_immediate_transaction" database handle
+    attribute to true (since 1.30_02) to always use an immediate transaction
+    (even when you simply use "begin_work" or turn off the "AutoCommit".).
+
+      my $dbh = DBI->connect("dbi:SQLite::memory:", "", "", {
+        sqlite_use_immediate_transaction => 1,
+      });
+
+    Note that this works only when all of the connections use the same
+    (non-deferred) transaction. See <http://sqlite.org/lockingv3.html> for
+    locking details.
+
   Processing Multiple Statements At A Time
     DBI's statement handle is not supposed to process multiple statements at
     a time. So if you pass a string that contains multiple statements (a
@@ -332,6 +362,11 @@ DRIVER PRIVATE ATTRIBUTES
         If you set this to true, "do" method will process multiple
         statements at one go. This may be handy, but with performance
         penalty. See above for details.
+
+    sqlite_use_immediate_transaction
+        If you set this to true, DBD::SQLite tries to issue a "begin
+        immediate transaction" (instead of "begin transaction") when
+        necessary. See above for details.
 
   Statement Handle Attributes
     sqlite_unprepared_statements
