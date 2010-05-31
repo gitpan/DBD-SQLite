@@ -415,7 +415,7 @@ sqlite_db_last_insert_id(SV *dbh, imp_dbh_t *imp_dbh, SV *catalog, SV *schema, S
 
     croak_if_db_is_null();
 
-    return newSViv(sqlite3_last_insert_rowid(imp_dbh->db));
+    return newSViv((IV)sqlite3_last_insert_rowid(imp_dbh->db));
 }
 
 int
@@ -989,6 +989,25 @@ sqlite_bind_col(SV *sth, imp_sth_t *imp_sth, SV *col, SV *ref, IV sql_type, SV *
 /*-----------------------------------------------------*
  * Driver Private Methods
  *-----------------------------------------------------*/
+
+AV *
+sqlite_compile_options()
+{
+    dTHX;
+    int i = 0;
+    const char *option;
+    AV *av = newAV();
+
+#if SQLITE_VERSION_NUMBER >= 3006023
+#ifndef SQLITE_OMIT_COMPILEOPTION_DIAGS
+    while((option = sqlite3_compileoption_get(i++))) {
+        av_push(av, newSVpv(option, 0));
+    }
+#endif
+#endif
+
+    return (AV*)sv_2mortal((SV*)av);
+}
 
 int
 sqlite_db_busy_timeout(pTHX_ SV *dbh, int timeout )
@@ -1617,7 +1636,7 @@ sqlite_db_update_dispatcher( void *callback, int op,
     XPUSHs( sv_2mortal( newSViv( op          ) ) );
     XPUSHs( sv_2mortal( newSVpv( database, 0 ) ) );
     XPUSHs( sv_2mortal( newSVpv( table,    0 ) ) );
-    XPUSHs( sv_2mortal( newSViv( rowid       ) ) );
+    XPUSHs( sv_2mortal( newSViv( (IV)rowid   ) ) );
     PUTBACK;
 
     call_sv( callback, G_VOID );

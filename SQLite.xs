@@ -19,7 +19,7 @@ last_insert_rowid(dbh)
     CODE:
     {
         D_imp_dbh(dbh);
-        RETVAL = sqlite3_last_insert_rowid(imp_dbh->db);
+        RETVAL = (IV)sqlite3_last_insert_rowid(imp_dbh->db);
     }
     OUTPUT:
         RETVAL
@@ -204,6 +204,21 @@ MODULE = DBD::SQLite          PACKAGE = DBD::SQLite
 # a couple of constants exported from sqlite3.h
 
 PROTOTYPES: ENABLE
+
+static int
+compile_options()
+    CODE:
+        int n = 0;
+        AV* av = (AV*)sqlite_compile_options();
+        if (av) {
+            int i;
+            n = av_len(av) + 1;
+            EXTEND(sp, n);
+            for (i = 0; i < n; i++) {
+                PUSHs(AvARRAY(av)[i]);
+            }
+        }
+        XSRETURN(n);
 
 static int
 OK()

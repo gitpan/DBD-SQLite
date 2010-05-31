@@ -10,7 +10,7 @@ use vars qw{$err $errstr $drh $sqlite_version};
 use vars qw{%COLLATION};
 
 BEGIN {
-    $VERSION = '1.30_02';
+    $VERSION = '1.30_03';
     @ISA     = 'DynaLoader';
 
     # Initialize errors
@@ -141,8 +141,11 @@ sub connect {
 sub install_collation {
     my $dbh       = shift;
     my $name      = shift;
-    my $collation = $DBD::SQLite::COLLATION{$name}
-        or die "can't install, unknown collation : $name";
+    my $collation = $DBD::SQLite::COLLATION{$name};
+    unless ($collation) {
+        warn "Can't install unknown collation: $name" if $dbh->{PrintWarn};
+        return;
+    }
     if ( DBD::SQLite::NEWAPI ) {
         $dbh->sqlite_create_collation( $name => $collation );
     } else {
@@ -546,7 +549,7 @@ END_SQL
                 $col{IS_NULLABLE} = 'YES';
             }
 
-+            push @cols, \%col;
+            push @cols, \%col;
         }
         $sth_columns->finish;
     }
@@ -781,7 +784,7 @@ named) placeholders to avoid confusion.
 B<BE PREPARED! WOLVES APPROACH!!>
 
 SQLite has started supporting foreign key constraints since 3.6.19
-(released on Oct 14, 2009; bundled with DBD::SQLite 1.26_05).
+(released on Oct 14, 2009; bundled in DBD::SQLite 1.26_05).
 To be exact, SQLite has long been able to parse a schema with foreign
 keys, but the constraints has not been enforced. Now you can issue
 a pragma actually to enable this feature and enforce the constraints.
@@ -1038,7 +1041,7 @@ methods.
 Returns all tables and schemas (databases) as specified in L<DBI/table_info>.
 The schema and table arguments will do a C<LIKE> search. You can specify an
 ESCAPE character by including an 'Escape' attribute in \%attr. The C<$type>
-argument accepts a comma seperated list of the following types 'TABLE',
+argument accepts a comma separated list of the following types 'TABLE',
 'VIEW', 'LOCAL TEMPORARY' and 'SYSTEM TABLE' (by default all are returned).
 Note that a statement handle is returned, and not a direct list of tables.
 
@@ -1101,7 +1104,7 @@ Set the current busy timeout. The timeout is in milliseconds.
 
 =head2 $dbh->sqlite_create_function( $name, $argc, $code_ref )
 
-This method will register a new function which will be useable in an SQL
+This method will register a new function which will be usable in an SQL
 query. The method's parameters are:
 
 =over
@@ -1145,7 +1148,7 @@ If you want case-insensitive searching, use perl regex flags, like this :
 
   SELECT * from table WHERE column REGEXP '(?i:\bA\w+)'
 
-The default REGEXP implementation can be overriden through the
+The default REGEXP implementation can be overridden through the
 C<create_function> API described above.
 
 Note that regexp matching will B<not> use SQLite indices, but will iterate
@@ -1153,7 +1156,7 @@ over all rows, so it could be quite costly in terms of performance.
 
 =head2 $dbh->sqlite_create_collation( $name, $code_ref )
 
-This method manually registers a new function which will be useable in an SQL
+This method manually registers a new function which will be usable in an SQL
 query as a COLLATE option for sorting. Such functions can also be registered
 automatically on demand: see section L</"COLLATION FUNCTIONS"> below.
 
@@ -1439,6 +1442,12 @@ sqlite3 extensions. After the call, you can load extensions like this:
   $dbh->sqlite_enable_load_extension(1);
   $sth = $dbh->prepare("select load_extension('libsqlitefunctions.so')")
   or die "Cannot prepare: " . $dbh->errstr();
+
+=head2 DBD::SQLite::compile_options()
+
+Returns an array of compile options (available since sqlite 3.6.23,
+bundled in DBD::SQLite 1.30_01), or an empty array if the bundled
+library is old or compiled with SQLITE_OMIT_COMPILEOPTION_DIAGS.
 
 =head1 DRIVER CONSTANTS
 
