@@ -9,7 +9,8 @@ MODULE = DBD::SQLite          PACKAGE = DBD::SQLite::db
 PROTOTYPES: DISABLE
 
 BOOT:
-    sv_setpv(get_sv("DBD::SQLite::sqlite_version", TRUE|GV_ADDMULTI), SQLITE_VERSION);
+    sv_setpv(get_sv("DBD::SQLite::sqlite_version",        TRUE|GV_ADDMULTI), SQLITE_VERSION);
+    sv_setiv(get_sv("DBD::SQLite::sqlite_version_number", TRUE|GV_ADDMULTI), SQLITE_VERSION_NUMBER);
 
 IV
 last_insert_rowid(dbh)
@@ -194,6 +195,22 @@ backup_to_file(dbh, filename)
         RETVAL = sqlite_db_backup_to_file(aTHX_ dbh, filename);
     OUTPUT:
         RETVAL
+
+
+
+
+
+static int
+register_fts3_perl_tokenizer(dbh)
+    SV *dbh
+    ALIAS:
+        DBD::SQLite::db::sqlite_register_fts3_perl_tokenizer = 1
+    CODE:
+        RETVAL = sqlite_db_register_fts3_perl_tokenizer(aTHX_ dbh);
+    OUTPUT:
+        RETVAL
+
+
 
 MODULE = DBD::SQLite          PACKAGE = DBD::SQLite::st
 
@@ -461,7 +478,11 @@ FUNCTION()
 static int
 SAVEPOINT()
     CODE:
+#if SQLITE_VERSION_NUMBER >= 3006011
         RETVAL = SQLITE_SAVEPOINT;
+#else
+		RETVAL = -1;
+#endif
     OUTPUT:
         RETVAL
 

@@ -212,8 +212,14 @@ if ( $sqlite_inc ) {
 my @CC_DEFINE = (
 	# '-DSQLITE_CORE',
 	'-DSQLITE_ENABLE_FTS3',
-	#  Disabled until we have a test for this
-	# '-DSQLITE_ENABLE_FTS3_PARENTHESIS',  # for sqlite >= 3.6.10
+
+        # L. Dami 10.07.2010 : now enabling new FTS3 syntax, because 
+        # that's the recommendation from SQLite for new applications
+	# (used to be "Disabled until we have a test for this").
+        # This change MAY POSSIBLY BREAK OLD APPLICATIONS THAT ALREADY 
+        # USED FTS3 ... but sooner or later that change had to be done !
+	'-DSQLITE_ENABLE_FTS3_PARENTHESIS',  # for sqlite >= 3.6.10
+
 	'-DSQLITE_ENABLE_COLUMN_METADATA',
 	'-DNDEBUG=1',
 );
@@ -323,16 +329,18 @@ sub postamble {
 	my $postamble = eval {
 		DBI::DBD::dbd_postamble(@_)
 	};
-	my $S = $^O eq 'MSWin32' ? '\\' : '/';  # only Win32 (not cygwin)
-	my $share = "\$(INST_LIB)${S}auto${S}share${S}dist${S}\$(DISTNAME)";
-	my $perm_dir = $ExtUtils::MakeMaker::VERSION >= 6.52 ? '$(PERM_DIR)' : '755';
-	$postamble .= <<"SHARE";
+    if (-e 'sqlite3.c' && -e 'sqlite3.h') {
+		my $S = $^O eq 'MSWin32' ? '\\' : '/';  # only Win32 (not cygwin)
+		my $share = "\$(INST_LIB)${S}auto${S}share${S}dist${S}\$(DISTNAME)";
+		my $perm_dir = $ExtUtils::MakeMaker::VERSION >= 6.52 ? '$(PERM_DIR)' : '755';
+		$postamble .= <<"SHARE";
 config ::
 \t\$(NOECHO) \$(MKPATH) "$share"
 \t\$(NOECHO) \$(CHMOD) $perm_dir "$share"
 \t\$(NOECHO) \$(CP) "sqlite3.c" "$share${S}sqlite3.c"
 \t\$(NOECHO) \$(CP) "sqlite3.h" "$share${S}sqlite3.h"
 SHARE
+	}
 	return $postamble;
 }
 

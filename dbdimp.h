@@ -12,6 +12,10 @@
 /* 30 second timeout by default */
 #define SQL_TIMEOUT 30000
 
+#ifndef sqlite3_int64
+#define sqlite3_int64 sqlite_int64
+#endif
+
 /* Driver Handle */
 struct imp_drh_st {
     dbih_drc_t com;
@@ -95,6 +99,8 @@ SV* sqlite_db_rollback_hook( pTHX_ SV *dbh, SV *hook );
 SV* sqlite_db_update_hook( pTHX_ SV *dbh, SV *hook );
 int sqlite_db_set_authorizer( pTHX_ SV *dbh, SV *authorizer );
 AV* sqlite_compile_options();
+
+int sqlite_db_register_fts3_perl_tokenizer(pTHX_ SV *dbh);
 
 #ifdef SvUTF8_on
 

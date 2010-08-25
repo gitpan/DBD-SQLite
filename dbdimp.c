@@ -1,5 +1,7 @@
 #define PERL_NO_GET_CONTEXT
 
+#define NEED_newSVpvn_flags
+
 #include "SQLiteXS.h"
 
 DBISTATE_DECLARE;
@@ -19,6 +21,14 @@ DBISTATE_DECLARE;
   #define croak_if_db_is_null() 
   #define croak_if_stmt_is_null() 
 #endif
+
+
+/*-----------------------------------------------------*
+ * Globals
+ *-----------------------------------------------------*/
+imp_dbh_t *last_executed_dbh; /* needed by perl_tokenizer
+                                 to know if unicode is on/off */
+
 
 /*-----------------------------------------------------*
  * Helper Methods
@@ -122,6 +132,73 @@ sqlite_set_result(pTHX_ sqlite3_context *context, SV *result, int is_error)
         s = SvPV(result, len);
         sqlite3_result_text( context, s, len, SQLITE_TRANSIENT );
     }
+}
+
+/*
+ * see also sqlite3IsNumber, sqlite3_int64 type definition,
+ * applyNumericAffinity, sqlite3Atoi64, etc from sqlite3.c
+ */
+static int
+sqlite_is_number(pTHX_ const char *v)
+{
+    const char *z = v;
+    int i, neg;
+    int digit = 0;
+    int precision = 0;
+    double f;
+    char str[30], format[10];
+
+    if      (*z == '-') { neg = 1; z++; }
+    else if (*z == '+') { neg = 0; z++; }
+    else                { neg = 0; }
+    if (!isdigit(*z)) return 0;
+    z++;
+    while (isdigit(*z)) { digit++; z++; }
+#if defined(USE_64_BIT_INT)
+    if (digit > 19) return 0; /* too large for i64 */
+    if (digit == 19) {
+        int c;
+        char tmp[22];
+        strncpy(tmp, v, z - v + 1);
+        c = memcmp(tmp, "922337203685477580", 18) * 10;
+        if (c == 0) {
+            c = tmp[18] - '8';
+        }
+        if (c < neg) return 0;
+    }
+#else
+    if (digit > 11) return 0; /* too large for i32 */
+    if (digit == 10) {
+        int c;
+        char tmp[14];
+        strncpy(tmp, v, z - v + 1);
+        c = memcmp(tmp, "2147483648", 10) * 10;
+        if (c == 0) {
+            c = tmp[10] - '8';
+        }
+        if (c < neg) return 0;
+    }
+#endif
+    if (*z == '.') {
+        z++;
+        if (!isdigit(*z)) return 0;
+        while (isdigit(*z)) { precision++; z++; }
+    }
+    if (*z == 'e' || *z == 'E') {
+        z++;
+        if (*z == '+' || *z == '-') { z++; }
+        if (!isdigit(*z)) return 0;
+        while (isdigit(*z)) { z++; }
+    }
+
+    sprintf(str, "%i", atoi(v));
+    if (strEQ(str, v)) return 1;
+    if (precision) {
+        sprintf(format, "%%.%df", precision);
+        sprintf(str, format, atof(v));
+        if (strEQ(str, v)) return 2;
+    }
+    return 0;
 }
 
 /*-----------------------------------------------------*
@@ -265,6 +342,7 @@ sqlite_db_disconnect(SV *dbh, imp_dbh_t *imp_dbh)
     ** here) while closing. So we need to find other ways to do the
     ** right thing.
     */
+    /* COMPAT: sqlite3_next_stmt is only available for 3006000 or newer */
     while ( (pStmt = sqlite3_next_stmt(imp_dbh->db, 0)) != NULL ) {
         sqlite3_finalize(pStmt);
     }
@@ -278,6 +356,7 @@ sqlite_db_disconnect(SV *dbh, imp_dbh_t *imp_dbh)
         ** Most probably we still have unfinalized statements.
         ** Let's try to close them.
         */
+        /* COMPAT: sqlite3_next_stmt is only available for 3006000 or newer */
         while ( (pStmt = sqlite3_next_stmt(imp_dbh->db, 0)) != NULL ) {
             sqlite3_finalize(pStmt);
         }
@@ -418,6 +497,309 @@ sqlite_db_last_insert_id(SV *dbh, imp_dbh_t *imp_dbh, SV *catalog, SV *schema, S
     return newSViv((IV)sqlite3_last_insert_rowid(imp_dbh->db));
 }
 
+/* ======================================================================
+ * EXPERIMENTAL bindings for FTS3 TOKENIZERS
+ * ====================================================================== */
+
+typedef struct perl_tokenizer {  
+  sqlite3_tokenizer base;
+  SV *coderef;                 /* the perl tokenizer is a coderef that takes
+                                  a string and returns a cursor coderef */
+} perl_tokenizer;
+
+typedef struct perl_tokenizer_cursor {
+  sqlite3_tokenizer_cursor base;
+  SV *coderef;                 /* ref to the closure that returns terms */
+  char *pToken;                /* storage for a copy of the last token */
+  int nTokenAllocated;         /* space allocated to pToken buffer */
+
+  /* members below are only used if the input string is in utf8 */
+  const char *pInput;          /* input we are tokenizing */
+  const char *lastByteOffset;  /* offset into pInput */
+  int lastCharOffset;          /* char offset corresponding to lastByteOffset */
+
+} perl_tokenizer_cursor;
+
+
+/*
+** Create a new tokenizer instance.
+** Will be called whenever a FTS3 table is created with 
+**   CREATE .. USING fts3( ... , tokenize=perl qualified::function::name)
+** where qualified::function::name is a fully qualified perl function
+*/
+static int perl_tokenizer_Create(
+  int argc, const char * const *argv,
+  sqlite3_tokenizer **ppTokenizer
+){
+  dTHX;
+  dSP;
+  int n_retval;
+  SV *retval;
+
+  perl_tokenizer *t;
+  t = (perl_tokenizer *) sqlite3_malloc(sizeof(*t));
+  if( t==NULL ) return SQLITE_NOMEM;
+  memset(t, 0, sizeof(*t));
+
+  ENTER;
+  SAVETMPS;
+
+  /* call the qualified::function::name */
+  PUSHMARK(SP);
+  PUTBACK;
+  n_retval = call_pv(argv[0], G_SCALAR);
+  SPAGAIN;
+
+  /* store a copy of the returned coderef into the tokenizer structure */
+  if (n_retval != 1) {
+    warn("tokenizer_Create returned %d arguments", n_retval);
+  }
+  retval = POPs;
+  t->coderef   = newSVsv(retval);
+  *ppTokenizer = &t->base;
+
+  PUTBACK;
+  FREETMPS;
+  LEAVE;
+
+  return SQLITE_OK;
+}
+
+
+/*
+** Destroy a tokenizer
+*/
+static int perl_tokenizer_Destroy(sqlite3_tokenizer *pTokenizer){
+  dTHX;
+  perl_tokenizer *t = (perl_tokenizer *) pTokenizer;
+  sv_free(t->coderef);
+  sqlite3_free(t);
+  return SQLITE_OK;
+}
+
+
+/*
+** Prepare to begin tokenizing a particular string.  The input
+** string to be tokenized is supposed to be pInput[0..nBytes-1] .. 
+** except that nBytes passed by fts3 is -1 (don't know why) ! 
+** This is passed to the tokenizer instance, which then returns a 
+** closure implementing the cursor (so the cursor is again a coderef).
+*/
+static int perl_tokenizer_Open(
+  sqlite3_tokenizer *pTokenizer,       /* Tokenizer object */
+  const char *pInput, int nBytes,      /* Input buffer */
+  sqlite3_tokenizer_cursor **ppCursor  /* OUT: Created tokenizer cursor */
+){
+  dTHX;
+  dSP;
+  U32 flags;
+  SV *perl_string;
+  int n_retval;
+
+  perl_tokenizer *t = (perl_tokenizer *)pTokenizer;
+
+  /* allocate and initialize the cursor struct */
+  perl_tokenizer_cursor *c;
+  c = (perl_tokenizer_cursor *) sqlite3_malloc(sizeof(*c));
+  memset(c, 0, sizeof(*c));
+  *ppCursor = &c->base;
+
+  /* flags for creating the Perl SV containing the input string */
+  flags = SVs_TEMP; /* will call sv_2mortal */
+
+  /* special handling if working with utf8 strings */
+  if (last_executed_dbh->unicode) { /* global var ... no better way ! */
+
+    /* data to keep track of byte offsets */
+    c->lastByteOffset = c->pInput = pInput;
+    c->lastCharOffset = 0;
+
+    /* string passed to Perl needs to be flagged as utf8 */
+    flags |= SVf_UTF8;
+  }
+
+  ENTER;
+  SAVETMPS;
+
+  /* build a Perl copy of the input string */
+  if (nBytes < 0) { /* we get -1 from fts3. Don't know why ! */
+    nBytes = strlen(pInput);
+  } 
+  perl_string = newSVpvn_flags(pInput, nBytes, flags); 
+
+  /* call the tokenizer coderef */
+  PUSHMARK(SP);
+  XPUSHs(perl_string);
+  PUTBACK;
+  n_retval = call_sv(t->coderef, G_SCALAR);
+  SPAGAIN;
+
+  /* store the cursor coderef returned by the tokenizer */
+  if (n_retval != 1) {
+    warn("tokenizer returned %d arguments", n_retval);
+  }
+  c->coderef = newSVsv(POPs);
+
+  PUTBACK;
+  FREETMPS;
+  LEAVE;
+  return SQLITE_OK;
+}
+
+/*
+** Close a tokenization cursor previously opened by a call to
+** perl_tokenizer_Open() above.
+*/
+static int perl_tokenizer_Close(sqlite3_tokenizer_cursor *pCursor){
+  perl_tokenizer_cursor *c = (perl_tokenizer_cursor *) pCursor;
+
+  dTHX;
+  sv_free(c->coderef);
+  sqlite3_free(c);
+  return SQLITE_OK;
+}
+
+/*
+** Extract the next token from a tokenization cursor.  The cursor must
+** have been opened by a prior call to perl_tokenizer_Open().
+*/
+static int perl_tokenizer_Next(
+  sqlite3_tokenizer_cursor *pCursor,  /* Cursor returned by perl_tokenizer_Open */
+  const char **ppToken,               /* OUT: *ppToken is the token text */
+  int *pnBytes,                       /* OUT: Number of bytes in token */
+  int *piStartOffset,                 /* OUT: Starting offset of token */
+  int *piEndOffset,                   /* OUT: Ending offset of token */
+  int *piPosition                     /* OUT: Position integer of token */
+){
+  perl_tokenizer_cursor *c = (perl_tokenizer_cursor *) pCursor;
+  int result;
+  int n_retval;
+  STRLEN n_a;
+  char *token;
+  char *byteOffset;
+  I32 hop;
+
+  dTHX;
+  dSP;
+
+  ENTER;
+  SAVETMPS;
+
+  /* call the cursor */
+  PUSHMARK(SP);
+  PUTBACK;
+  n_retval = call_sv(c->coderef, G_ARRAY);
+  SPAGAIN;
+
+  /* if we get back an empty list, there is no more token */
+  if (n_retval == 0) { 
+    result = SQLITE_DONE;
+  }
+  /* otherwise, get token details from the return list */
+  else {
+    if (n_retval != 5) {
+      warn("tokenizer cursor returned %d arguments", n_retval);
+    }
+    *piPosition    = POPi;
+    *piEndOffset   = POPi;
+    *piStartOffset = POPi;
+    *pnBytes       = POPi;
+    token          = POPpx;
+
+    if (c->pInput) { /* if working with utf8 data */
+
+      /* recompute *pnBytes in bytes, not in chars */
+      *pnBytes = strlen(token); 
+
+      /* recompute start/end offsets in bytes, not in chars */
+                   hop = *piStartOffset - c->lastCharOffset;
+            byteOffset = utf8_hop(c->lastByteOffset, hop);
+                   hop = *piEndOffset - *piStartOffset;                
+        *piStartOffset = byteOffset - c->pInput;
+            byteOffset = utf8_hop(byteOffset, hop);
+          *piEndOffset = byteOffset - c->pInput;                                  
+      /* remember where we are for next round */
+      c->lastCharOffset = *piEndOffset,
+      c->lastByteOffset = byteOffset;
+    }
+
+    /* make sure we have enough storage for copying the token */
+    if (*pnBytes > c->nTokenAllocated ){
+      char *pNew;
+      c->nTokenAllocated = *pnBytes + 20;
+      pNew = sqlite3_realloc(c->pToken, c->nTokenAllocated);
+      if( !pNew ) return SQLITE_NOMEM;
+      c->pToken = pNew;
+    }
+
+    /* need to copy the token into the C cursor before perl frees that
+       memory */
+    memcpy(c->pToken, token, *pnBytes);
+    *ppToken  = c->pToken;
+
+    result = SQLITE_OK;
+  }
+
+  PUTBACK;
+  FREETMPS;
+  LEAVE;
+
+  return result;
+}
+
+
+/*
+** The set of routines that implement the perl tokenizer
+*/
+sqlite3_tokenizer_module perl_tokenizer_Module = {
+  0,
+  perl_tokenizer_Create,
+  perl_tokenizer_Destroy,
+  perl_tokenizer_Open,
+  perl_tokenizer_Close,
+  perl_tokenizer_Next
+};
+
+
+/*
+** Register the perl tokenizer with FTS3
+*/
+int sqlite_db_register_fts3_perl_tokenizer(pTHX_ SV *dbh)
+{
+  D_imp_dbh(dbh);
+
+  int rc;
+  sqlite3_stmt *pStmt;
+  const char zSql[] = "SELECT fts3_tokenizer(?, ?)";
+  sqlite3_tokenizer_module *p = &perl_tokenizer_Module;
+
+  rc = sqlite3_prepare_v2(imp_dbh->db, zSql, -1, &pStmt, 0);
+  if( rc!=SQLITE_OK ){
+    return rc;
+  }
+
+  sqlite3_bind_text(pStmt, 1, "perl", -1, SQLITE_STATIC);
+  sqlite3_bind_blob(pStmt, 2, &p, sizeof(p), SQLITE_STATIC);
+  sqlite3_step(pStmt);
+
+  return sqlite3_finalize(pStmt);
+}
+
+
+/* ======================================================================
+ * END # EXPERIMENTAL bindings for FTS3 TOKENIZERS
+ * ====================================================================== */
+
+
+
+
+
+
+
+
+
+
+
 int
 sqlite_st_prepare(SV *sth, imp_sth_t *imp_sth, char *statement, SV *attribs)
 {
@@ -446,6 +828,7 @@ sqlite_st_prepare(SV *sth, imp_sth_t *imp_sth, char *statement, SV *attribs)
 
     croak_if_db_is_null();
 
+    /* COMPAT: sqlite3_prepare_v2 is only available for 3003009 or newer */
     rc = sqlite3_prepare_v2(imp_dbh->db, statement, -1, &(imp_sth->stmt), &extra);
     if (rc != SQLITE_OK) {
         sqlite_error(sth, rc, sqlite3_errmsg(imp_dbh->db));
@@ -496,6 +879,9 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
     croak_if_db_is_null();
     croak_if_stmt_is_null();
 
+    last_executed_dbh = imp_dbh;
+
+    /* COMPAT: sqlite3_sql is only available for 3006000 or newer */
     sqlite_trace(sth, imp_sth, 3, form("executing %s", sqlite3_sql(imp_sth->stmt)));
 
     if (DBIc_ACTIVE(imp_sth)) {
@@ -535,27 +921,27 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
             rc = sqlite3_bind_blob(imp_sth->stmt, i+1, data, len, SQLITE_TRANSIENT);
         }
         else {
+            STRLEN len;
+            const char *data;
+            int numtype;
+            if (imp_dbh->unicode) {
+                sv_utf8_upgrade(value);
+            }
+            data = SvPV(value, len);
 #if 0
-            /* stop guessing until we figure out better way to do this */
-            const int numtype = looks_like_number(value);
-            if ((numtype & (IS_NUMBER_IN_UV|IS_NUMBER_NOT_INT)) == IS_NUMBER_IN_UV) {
+            numtype = sqlite_is_number(aTHX_ data);
+            if (numtype == 1) {
 #if defined(USE_64_BIT_INT)
-                rc = sqlite3_bind_int64(imp_sth->stmt, i+1, SvIV(value));
+                rc = sqlite3_bind_int64(imp_sth->stmt, i+1, atoi(data));
 #else
-                rc = sqlite3_bind_int(imp_sth->stmt, i+1, SvIV(value));
+                rc = sqlite3_bind_int(imp_sth->stmt, i+1, atoi(data));
 #endif
             }
-            else if ((numtype & (IS_NUMBER_NOT_INT|IS_NUMBER_INFINITY|IS_NUMBER_NAN)) == IS_NUMBER_NOT_INT) {
-                rc = sqlite3_bind_double(imp_sth->stmt, i+1, SvNV(value));
+            else if (numtype == 2) {
+                rc = sqlite3_bind_double(imp_sth->stmt, i+1, atof(data));
             }
             else {
 #endif
-                STRLEN len;
-                char *data;
-                if (imp_dbh->unicode) {
-                    sv_utf8_upgrade(value);
-                }
-                data = SvPV(value, len);
                 rc = sqlite3_bind_text(imp_sth->stmt, i+1, data, len, SQLITE_TRANSIENT);
 #if 0
             }
@@ -573,6 +959,7 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
     }
 
     if (sqlite3_get_autocommit(imp_dbh->db)) {
+        /* COMPAT: sqlite3_sql is only available for 3006000 or newer */
         const char *sql = sqlite3_sql(imp_sth->stmt);
         if ((sql[0] == 'B' || sql[0] == 'b') &&
             (sql[1] == 'E' || sql[1] == 'e') &&
@@ -597,6 +984,7 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
         }
     }
     else if (DBIc_is(imp_dbh, DBIcf_BegunWork)) {
+        /* COMPAT: sqlite3_sql is only available for 3006000 or newer */
         const char *sql = sqlite3_sql(imp_sth->stmt);
         if (((sql[0] == 'C' || sql[0] == 'c') &&
              (sql[1] == 'O' || sql[1] == 'o') &&
@@ -707,17 +1095,26 @@ sqlite_st_fetch(SV *sth, imp_sth_t *imp_sth)
         }
         switch(col_type) {
             case SQLITE_INTEGER:
+#if 1
+                sqlite_trace(sth, imp_sth, 5, form("fetch column %d as integer", i));
 #if defined(USE_64_BIT_INT)
                 sv_setiv(AvARRAY(av)[i], sqlite3_column_int64(imp_sth->stmt, i));
 #else
                 sv_setnv(AvARRAY(av)[i], (double)sqlite3_column_int64(imp_sth->stmt, i));
 #endif
                 break;
+#endif
             case SQLITE_FLOAT:
+#if 1
+                /* fetching as float may lose precision info in the perl world */
+                sqlite_trace(sth, imp_sth, 5, form("fetch column %d as float", i));
                 sv_setnv(AvARRAY(av)[i], sqlite3_column_double(imp_sth->stmt, i));
                 break;
+#endif
             case SQLITE_TEXT:
+                sqlite_trace(sth, imp_sth, 5, form("fetch column %d as text", i));
                 val = (char*)sqlite3_column_text(imp_sth->stmt, i);
+
                 len = sqlite3_column_bytes(imp_sth->stmt, i);
                 if (chopBlanks) {
                     while((len > 0) && (val[len-1] == ' ')) {
@@ -732,11 +1129,13 @@ sqlite_st_fetch(SV *sth, imp_sth_t *imp_sth)
                 }
                 break;
             case SQLITE_BLOB:
+                sqlite_trace(sth, imp_sth, 5, form("fetch column %d as blob", i));
                 len = sqlite3_column_bytes(imp_sth->stmt, i);
                 sv_setpvn(AvARRAY(av)[i], sqlite3_column_blob(imp_sth->stmt, i), len);
                 SvUTF8_off(AvARRAY(av)[i]);
                 break;
             default:
+                sqlite_trace(sth, imp_sth, 5, form("fetch column %d as default", i));
                 sv_setsv(AvARRAY(av)[i], &PL_sv_undef);
                 SvUTF8_off(AvARRAY(av)[i]);
                 break;
@@ -799,6 +1198,7 @@ sqlite_st_destroy(SV *sth, imp_sth_t *imp_sth)
     DBIc_ACTIVE_off(imp_sth);
     if (DBIc_ACTIVE(imp_dbh)) {
         if (imp_sth->stmt) {
+            /* COMPAT: sqlite3_sql is only available for 3006000 or newer */
             sqlite_trace(sth, imp_sth, 4, form("destroy statement: %s", sqlite3_sql(imp_sth->stmt)));
 
             croak_if_db_is_null();
@@ -1143,6 +1543,7 @@ sqlite_db_enable_load_extension(pTHX_ SV *dbh, int onoff)
 
     croak_if_db_is_null();
 
+    /* COMPAT: sqlite3_enable_load_extension is only available for 3003006 or newer */
     rc = sqlite3_enable_load_extension( imp_dbh->db, onoff );
     if ( rc != SQLITE_OK ) {
         sqlite_error(dbh, rc, form("sqlite_enable_load_extension failed with error %s", sqlite3_errmsg(imp_dbh->db)));
@@ -1753,11 +2154,12 @@ sqlite_db_set_authorizer(pTHX_ SV *dbh, SV *authorizer)
 int
 sqlite_db_backup_from_file(pTHX_ SV *dbh, char *filename)
 {
+    D_imp_dbh(dbh);
+
+#if SQLITE_VERSION_NUMBER >= 3006011
     int rc;
     sqlite3 *pFrom;
     sqlite3_backup *pBackup;
-
-    D_imp_dbh(dbh);
 
     croak_if_db_is_null();
 
@@ -1766,6 +2168,7 @@ sqlite_db_backup_from_file(pTHX_ SV *dbh, char *filename)
         return FALSE;
     }
 
+    /* COMPAT: sqlite3_backup_* are only available for 3006011 or newer */
     pBackup = sqlite3_backup_init(imp_dbh->db, "main", pFrom, "main");
     if (pBackup) {
         (void)sqlite3_backup_step(pBackup, -1);
@@ -1780,6 +2183,10 @@ sqlite_db_backup_from_file(pTHX_ SV *dbh, char *filename)
     }
 
     return TRUE;
+#else
+    sqlite_error(dbh, SQLITE_ERROR, form("backup feature requires SQLite 3.6.11 and newer"));
+    return FALSE;
+#endif
 }
 
 /* Accesses the SQLite Online Backup API, and copies the currently loaded
@@ -1790,11 +2197,12 @@ sqlite_db_backup_from_file(pTHX_ SV *dbh, char *filename)
 int
 sqlite_db_backup_to_file(pTHX_ SV *dbh, char *filename)
 {
+    D_imp_dbh(dbh);
+
+#if SQLITE_VERSION_NUMBER >= 3006011
     int rc;
     sqlite3 *pTo;
     sqlite3_backup *pBackup;
-
-    D_imp_dbh(dbh);
 
     croak_if_db_is_null();
 
@@ -1803,6 +2211,7 @@ sqlite_db_backup_to_file(pTHX_ SV *dbh, char *filename)
         return FALSE;
     }
 
+    /* COMPAT: sqlite3_backup_* are only available for 3006011 or newer */
     pBackup = sqlite3_backup_init(pTo, "main", imp_dbh->db, "main");
     if (pBackup) {
         (void)sqlite3_backup_step(pBackup, -1);
@@ -1817,6 +2226,10 @@ sqlite_db_backup_to_file(pTHX_ SV *dbh, char *filename)
     }
 
     return TRUE;
+#else
+    sqlite_error(dbh, SQLITE_ERROR, form("backup feature requires SQLite 3.6.11 and newer"));
+    return FALSE;
+#endif
 }
 
 /* end */
