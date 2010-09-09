@@ -954,8 +954,10 @@ FULLTEXT SEARCH
     FTS3 was never advertised in versions prior to 1.31, the change should
     be invisible to the vast majority of "DBD::SQLite" users. If, however,
     there are any applications that nevertheless were built using the
-    "Standard Query" syntax, they have to be migrated; but the conversion
-    function provided in in DBD::SQLite::FTS3Transitional is there to help.
+    "Standard Query" syntax, they have to be migrated, because the
+    precedence of the "OR" operator has changed. Conversion from old to new
+    syntax can be automated through DBD::SQLite::FTS3Transitional, published
+    in a separate distribution.
 
   Tokenizers
     The behaviour of full-text indexes strongly depends on how documents are
