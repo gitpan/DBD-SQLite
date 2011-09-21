@@ -61,6 +61,7 @@ t/42_primary_key_info.t
 t/43_fts3.t
 t/44_rtree.t
 t/45_savepoints.t
+t/cookbook_variance.t
 t/lib/Test.pm
 t/rt_15186_prepcached.t
 t/rt_21406_auto_finish.t

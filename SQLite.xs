@@ -40,6 +40,8 @@ create_function(dbh, name, argc, func)
     OUTPUT:
         RETVAL
 
+#ifndef SQLITE_OMIT_LOAD_EXTENSION
+
 static int
 enable_load_extension(dbh, onoff)
     SV *dbh
@@ -52,6 +54,8 @@ enable_load_extension(dbh, onoff)
     }
     OUTPUT:
         RETVAL
+
+#endif
 
 static int
 create_aggregate(dbh, name, argc, aggr)
@@ -149,7 +153,7 @@ update_hook(dbh, hook)
         RETVAL
 
 
-SV*
+static int
 set_authorizer(dbh, authorizer)
     SV *dbh
     SV *authorizer
@@ -157,7 +161,7 @@ set_authorizer(dbh, authorizer)
         DBD::SQLite::db::sqlite_set_authorizer = 1
     CODE:
     {
-        RETVAL = (SV*) sqlite_db_set_authorizer( aTHX_ dbh, authorizer );
+        RETVAL = sqlite_db_set_authorizer( aTHX_ dbh, authorizer );
     }
     OUTPUT:
         RETVAL

@@ -3,6 +3,7 @@ use 5.006;
 use strict;
 use ExtUtils::MakeMaker;
 use Config;
+use File::Spec;
 
 # Some dependencies need to be more aggressive on Windows
 sub WINLIKE () {
@@ -230,7 +231,11 @@ unless ( $Config{usethreads} ) {
 	push @CC_DEFINE, '-DTHREADSAFE=0';
 }
 if ($^O eq 'hpux' and $Config{osvers} <= 10.20) {
-	push @CC_DEFINE, '-DSQLITE_OMIT_LOAD_EXTENSION';
+	# HP-UX 10.20 does not have pread () at all
+	push @CC_DEFINE, '-DSQLITE_OMIT_LOAD_EXTENSION',
+		'-UUSE_PREAD', '-UUSE_PREAD64',
+		'-USQLITE_ENABLE_LOCKING_STYLE',
+		'-DMAP_FAILED="((void *)-1)"';
 }
 if ($^O eq 'darwin') {
 	push @CC_DEFINE, '-DSQLITE_ENABLE_LOCKING_STYLE=0';
@@ -243,6 +248,14 @@ my @CC_OPTIONS = (
 		LIBS => join( ' ', @CC_LIBS )
 	) : () ),
 );
+
+# RT #70135: These flags are valid only for gcc/g++
+if ($Config{cc} =~ /^g?cc/) {
+	push @CC_OPTIONS,
+		CCFLAGS   => $Config{ccflags}   . '  -Wl,-Bsymbolic',
+		LDFLAGS   => $Config{ldflags}   . '  -Wl,-Bsymbolic',
+		LDDLFLAGS => $Config{lddlflags} . '  -Wl,-Bsymbolic';
+}
 
 #####################################################################
 # Hand off to ExtUtils::MakeMaker
