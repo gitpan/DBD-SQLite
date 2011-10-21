@@ -10,7 +10,7 @@ use vars qw{$err $errstr $drh $sqlite_version $sqlite_version_number};
 use vars qw{%COLLATION};
 
 BEGIN {
-    $VERSION = '1.34_01';
+    $VERSION = '1.34_02';
     @ISA     = 'DynaLoader';
 
     # Initialize errors
@@ -951,6 +951,34 @@ or turn off the C<AutoCommit>.).
 Note that this works only when all of the connections use the same
 (non-deferred) transaction. See L<http://sqlite.org/lockingv3.html>
 for locking details.
+
+=head2 C<< $sth->finish >> and Transaction Rollback
+
+As the L<DBI> doc says, you almost certainly do B<not> need to
+call L<DBI/finish> method if you fetch all rows (probably in a loop).
+However, there are several exceptions to this rule, and rolling-back
+of an unfinished C<SELECT> statement is one of such exceptional
+cases. 
+
+SQLite prohibits C<ROLLBACK> of unfinished C<SELECT> statements in
+a transaction (See L<http://sqlite.org/lang_transaction.html> for
+details). So you need to call C<finish> before you issue a rollback.
+
+  $sth = $dbh->prepare("SELECT * FROM t");
+  $dbh->begin_work;
+  eval {
+      $sth->execute;
+      $row = $sth->fetch;
+      ...
+      die "For some reason";
+      ...
+  };
+  if($@) {
+     $sth->finish;  # You need this for SQLite
+     $dbh->rollback;
+  } else {
+     $dbh->commit;
+  }
 
 =head2 Processing Multiple Statements At A Time
 

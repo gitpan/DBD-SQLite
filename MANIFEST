@@ -61,6 +61,9 @@ t/42_primary_key_info.t
 t/43_fts3.t
 t/44_rtree.t
 t/45_savepoints.t
+t/46_mod_perl.t
+t/47_execute.t
+t/48_bind_param_is_sticky.t
 t/cookbook_variance.t
 t/lib/Test.pm
 t/rt_15186_prepcached.t
@@ -81,6 +84,8 @@ t/rt_50503_fts3.t
 t/rt_52573_manual_exclusive_lock.t
 t/rt_53235_icu_compatibility.t
 t/rt_62370_diconnected_handles_operation.t
+t/rt_67581_bind_params_mismatch.t
+t/rt_71311_bind_col_and_unicode.t
 util/getsqlite.pl
 xt/meta.t
 xt/pmv.t

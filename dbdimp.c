@@ -106,6 +106,26 @@ sqlite_type_to_odbc_type(int type)
     }
 }
 
+static int
+sqlite_type_from_odbc_type(int type)
+{
+    switch(type) {
+        case SQL_INTEGER:
+        case SQL_SMALLINT:
+        case SQL_TINYINT:
+        case SQL_BIGINT:
+            return SQLITE_INTEGER;
+        case SQL_FLOAT:
+        case SQL_REAL:
+        case SQL_DOUBLE:
+            return SQLITE_FLOAT;
+        case SQL_BLOB:
+            return SQLITE_BLOB;
+        default:
+            return SQLITE_TEXT;
+    }
+}
+
 static void
 sqlite_set_result(pTHX_ sqlite3_context *context, SV *result, int is_error)
 {
@@ -140,13 +160,17 @@ sqlite_set_result(pTHX_ sqlite3_context *context, SV *result, int is_error)
  * applyNumericAffinity, sqlite3Atoi64, etc from sqlite3.c
  */
 static int
-sqlite_is_number(pTHX_ const char *v)
+sqlite_is_number(pTHX_ const char *v, bool strict)
 {
     const char *z = v;
     int neg;
     int digit = 0;
     int precision = 0;
     char str[30], format[10];
+
+    if (!strict) {
+        while (*z == ' ') { z++; v++; }
+    }
 
     if      (*z == '-') { neg = 1; z++; }
     else if (*z == '+') { neg = 0; z++; }
@@ -557,6 +581,7 @@ sqlite_st_prepare(SV *sth, imp_sth_t *imp_sth, char *statement, SV *attribs)
         sqlite_error(sth, rc, sqlite3_errmsg(imp_dbh->db));
         if (imp_sth->stmt) {
             rc = sqlite3_finalize(imp_sth->stmt);
+            imp_sth->stmt = NULL;
             if (rc != SQLITE_OK) {
                 sqlite_error(sth, rc, sqlite3_errmsg(imp_dbh->db));
             }
@@ -617,28 +642,18 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
     }
 
     for (i = 0; i < num_params; i++) {
-        SV *value       = av_shift(imp_sth->params);
-        SV *sql_type_sv = av_shift(imp_sth->params);
-        int sql_type    = SvIV(sql_type_sv);
+        SV **pvalue      = av_fetch(imp_sth->params, 2*i,   0);
+        SV **sql_type_sv = av_fetch(imp_sth->params, 2*i+1, 0);
+        SV *value        = pvalue ? *pvalue : &PL_sv_undef;
+        int sql_type     = sqlite_type_from_odbc_type(sql_type_sv ? SvIV(*sql_type_sv) : SQL_UNKNOWN_TYPE);
 
-        sqlite_trace(sth, imp_sth, 4, form("params left in 0x%p: %ld", imp_sth->params, 1+av_len(imp_sth->params)));
         sqlite_trace(sth, imp_sth, 4, form("bind %d type %d as %s", i, sql_type, SvPV_nolen_undef_ok(value)));
 
         if (!SvOK(value)) {
             sqlite_trace(sth, imp_sth, 5, "binding null");
             rc = sqlite3_bind_null(imp_sth->stmt, i+1);
         }
-        else if (sql_type >= SQL_NUMERIC && sql_type <= SQL_SMALLINT) {
-#if defined(USE_64_BIT_INT)
-            rc = sqlite3_bind_int64(imp_sth->stmt, i+1, SvIV(value));
-#else
-            rc = sqlite3_bind_int(imp_sth->stmt, i+1, SvIV(value));
-#endif
-        }
-        else if (sql_type >= SQL_FLOAT && sql_type <= SQL_DOUBLE) {
-            rc = sqlite3_bind_double(imp_sth->stmt, i+1, SvNV(value));
-        }
-        else if (sql_type == SQL_BLOB) {
+        else if (sql_type == SQLITE_BLOB) {
             STRLEN len;
             char * data = SvPVbyte(value, len);
             rc = sqlite3_bind_blob(imp_sth->stmt, i+1, data, len, SQLITE_TRANSIENT);
@@ -653,8 +668,18 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
             }
             data = SvPV(value, len);
 
+            /*
+             *  XXX: For backward compatibility, it'd be better to
+             *  accept a value like " 4" as an integer for an integer
+             *  type column (see t/19_bindparam.t), at least when
+             *  we explicitly specify its type. However, we should
+             *  keep spaces when we just guess.
+             */
             if (imp_dbh->see_if_its_a_number) {
-                numtype = sqlite_is_number(aTHX_ data);
+                numtype = sqlite_is_number(aTHX_ data, TRUE);
+            }
+            else if (sql_type == SQLITE_INTEGER || sql_type == SQLITE_FLOAT) {
+                numtype = sqlite_is_number(aTHX_ data, FALSE);
             }
 
             if (numtype == 1) {
@@ -664,18 +689,19 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
                 rc = sqlite3_bind_int(imp_sth->stmt, i+1, atoi(data));
 #endif
             }
-            else if (numtype == 2) {
+            else if (numtype == 2 && sql_type != SQLITE_INTEGER) {
                 rc = sqlite3_bind_double(imp_sth->stmt, i+1, atof(data));
             }
             else {
+                if (sql_type == SQLITE_INTEGER || sql_type == SQLITE_FLOAT) {
+                    sqlite_error(sth, imp_sth->retval, form("datatype mismatch: bind %d type %d as %s", i, sql_type, SvPV_nolen_undef_ok(value)));
+
+                    return -2; /* -> undef in SQLite.xsi */
+                }
                 rc = sqlite3_bind_text(imp_sth->stmt, i+1, data, len, SQLITE_TRANSIENT);
             }
         }
 
-        if (value) {
-            SvREFCNT_dec(value);
-        }
-        SvREFCNT_dec(sql_type_sv);
         if (rc != SQLITE_OK) {
             sqlite_error(sth, rc, sqlite3_errmsg(imp_dbh->db));
             return -4; /* -> undef in SQLite.xsi */
@@ -802,7 +828,6 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
             if (sqlite3_reset(imp_sth->stmt) != SQLITE_OK) {
                 sqlite_error(sth, imp_sth->retval, sqlite3_errmsg(imp_dbh->db));
             }
-            imp_sth->stmt = NULL;
             return -6; /* -> undef in SQLite.xsi */
     }
 }
@@ -854,7 +879,7 @@ sqlite_st_fetch(SV *sth, imp_sth_t *imp_sth)
         SV **sql_type = av_fetch(imp_sth->col_types, i, 0);
         if (sql_type && SvOK(*sql_type)) {
             if (SvIV(*sql_type)) {
-                col_type = SvIV(*sql_type);
+                col_type = sqlite_type_from_odbc_type(SvIV(*sql_type));
             }
         }
         switch(col_type) {
@@ -966,6 +991,7 @@ sqlite_st_destroy(SV *sth, imp_sth_t *imp_sth)
 
             /* finalize sth when active connection */
             rc = sqlite3_finalize(imp_sth->stmt);
+            imp_sth->stmt = NULL;
             if (rc != SQLITE_OK) {
                 sqlite_error(sth, rc, sqlite3_errmsg(imp_dbh->db));
             }
@@ -1103,6 +1129,11 @@ sqlite_bind_ph(SV *sth, imp_sth_t *imp_sth,
 
     croak_if_stmt_is_null();
 
+    if (is_inout) {
+        sqlite_error(sth, -2, "InOut bind params not implemented");
+        return FALSE; /* -> &sv_no in SQLite.xsi */
+    }
+
     if (!looks_like_number(param)) {
         STRLEN len;
         char *paramstring;
@@ -1121,15 +1152,13 @@ sqlite_bind_ph(SV *sth, imp_sth_t *imp_sth,
         }
     }
     else {
-        if (is_inout) {
-            sqlite_error(sth, -2, "InOut bind params not implemented");
-            return FALSE; /* -> &sv_no in SQLite.xsi */
-        }
+        pos = 2 * (SvIV(param) - 1);
     }
-    pos = 2 * (SvIV(param) - 1);
     sqlite_trace(sth, imp_sth, 3, form("bind into 0x%p: %"IVdf" => %s (%"IVdf") pos %d", imp_sth->params, SvIV(param), SvPV_nolen_undef_ok(value), sql_type, pos));
     av_store(imp_sth->params, pos, SvREFCNT_inc(value));
-    av_store(imp_sth->params, pos+1, newSViv(sql_type));
+    if (sql_type) {
+        av_store(imp_sth->params, pos+1, newSViv(sql_type));
+    }
 
     return TRUE;
 }
@@ -2212,6 +2241,7 @@ static int perl_tokenizer_Close(sqlite3_tokenizer_cursor *pCursor){
 
     dTHX;
     sv_free(c->coderef);
+    if (c->pToken) sqlite3_free(c->pToken);
     sqlite3_free(c);
     return SQLITE_OK;
 }

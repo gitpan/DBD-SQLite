@@ -295,6 +295,32 @@ NOTABLE DIFFERENCES FROM OTHER DRIVERS
     (non-deferred) transaction. See <http://sqlite.org/lockingv3.html> for
     locking details.
 
+  "$sth->finish" and Transaction Rollback
+    As the DBI doc says, you almost certainly do not need to call "finish"
+    in DBI method if you fetch all rows (probably in a loop). However, there
+    are several exceptions to this rule, and rolling-back of an unfinished
+    "SELECT" statement is one of such exceptional cases.
+
+    SQLite prohibits "ROLLBACK" of unfinished "SELECT" statements in a
+    transaction (See <http://sqlite.org/lang_transaction.html> for details).
+    So you need to call "finish" before you issue a rollback.
+
+      $sth = $dbh->prepare("SELECT * FROM t");
+      $dbh->begin_work;
+      eval {
+          $sth->execute;
+          $row = $sth->fetch;
+          ...
+          die "For some reason";
+          ...
+      };
+      if($@) {
+         $sth->finish;  # You need this for SQLite
+         $dbh->rollback;
+      } else {
+         $dbh->commit;
+      }
+
   Processing Multiple Statements At A Time
     DBI's statement handle is not supposed to process multiple statements at
     a time. So if you pass a string that contains multiple statements (a
