@@ -10,6 +10,8 @@ LICENSE
 Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP
+MYMETA.json
+MYMETA.yml
 ppport.h
 README
 SQLite.xs
@@ -90,4 +92,5 @@ util/getsqlite.pl
 xt/meta.t
 xt/pmv.t
 xt/pod.t
-META.yml                                 Module meta-data (added by MakeMaker)
+META.yml                                 Module YAML meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
