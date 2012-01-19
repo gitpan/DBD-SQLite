@@ -1,5 +1,25 @@
 Changes for Perl extension DBD-SQLite
 
+1.36_01 to be released
+    *** CHANGES THAT MAY POSSIBLY BREAK YOUR OLD APPLICATIONS ***
+    - Updated to SQLite 3.7.10 (ISHIGAKI)
+      Note that this release changed the default schema format
+      number, that means newly created database files will be
+      unreadable by SQLite version prior to 3.3.0 (2006-01-10)
+      (or DBD::SQLite prior to 1.12) unless you explicitly issue
+      "PRAGMA legacy_file_format=ON".
+
+    - Enabled SQLITE_ENABLE_FTS4
+    - Enabled SQLITE_ENABLE_STAT3
+    - Resolved #73159: FTS tokenizer segfault (ISHIGAKI)
+    - Resolved #73787: sqlite_see_if_its_a_number causes a buffer
+      overflow (ISHIGAKI)
+    - Resolved #73314 for DBD-SQLite: binding of 64bit integers fail
+      on 1.34_02 (ISHIGAKI)
+    - Implemented sqlite_trace and sqlite_profile methods for simpler
+      tracing/profiling; use DBI_TRACE/DBI_PROFILE for more
+      complicated cases (ISHIGAKI)
+
 1.35 Tue 29 Nov 2011
     - Updated to SQLite 3.7.9 (ISHIGAKI)
     - One small potential break case if you are using FTS4 and ^

@@ -66,6 +66,7 @@ t/45_savepoints.t
 t/46_mod_perl.t
 t/47_execute.t
 t/48_bind_param_is_sticky.t
+t/49_trace_and_profile.t
 t/cookbook_variance.t
 t/lib/Test.pm
 t/rt_15186_prepcached.t
@@ -88,6 +89,8 @@ t/rt_53235_icu_compatibility.t
 t/rt_62370_diconnected_handles_operation.t
 t/rt_67581_bind_params_mismatch.t
 t/rt_71311_bind_col_and_unicode.t
+t/rt_73159_fts_tokenizer_segfault.t
+t/rt_73787_exponential_buffer_overflow.t
 util/getsqlite.pl
 xt/meta.t
 xt/pmv.t
