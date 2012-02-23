@@ -253,7 +253,7 @@ my @CC_OPTIONS = (
 unless ($^O eq 'MSWin32' && $Config{ld} =~ /link/) {
 	for my $path (File::Spec->path) {
 		if (MM->maybe_command("$path/ld")) {
-			my $output = `$path/ld --help`;
+			my $output = `$path/ld --help 2>&1`;
 			if ($output =~ /Bsymbolic/) {
 				push @CC_OPTIONS,
 					CCFLAGS   => $Config{ccflags}   . ' -Wl,-Bsymbolic',
@@ -279,11 +279,11 @@ WriteMakefile(
 	AUTHOR           => 'Adam Kennedy <adamk@cpan.org>',
 	# Release manager (can this be an array?)
 	PREREQ_PM        => {
-		'Tie::Hash'        => 0,
-		'File::Spec'       => (WINLIKE ? '3.27' : '0.82'),
-		'DBI'              => $DBI_required,
-		'Test::More'       => '0.47', # Test::NoWarnings
-		'Test::Builder'    => '0.86', # Test::NoWarnings
+		'Tie::Hash'     => 0,
+		'File::Spec'    => (WINLIKE ? '3.27' : '0.82'),
+		'DBI'           => $DBI_required,
+		'Test::More'    => '0.47', # Test::NoWarnings
+		'Test::Builder' => '0.86', # Test::NoWarnings
 		( WINLIKE ? (
 			'Win32' => '0.30',
 		) : () ),
@@ -292,7 +292,7 @@ WriteMakefile(
 		MIN_PERL_VERSION => '5.006',
 	),
 	OPTIONAL( '6.31',
-		LICENSE => 'perl',	
+		LICENSE => 'perl',
 	),
 	OPTIONAL( '6.46',
 		# Use META_ADD instead of META_MERGE so that we can remove
