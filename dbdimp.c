@@ -142,12 +142,20 @@ sqlite_set_result(pTHX_ sqlite3_context *context, SV *result, int is_error)
     if ( !SvOK(result) ) {
         sqlite3_result_null( context );
     } else if( SvIOK_UV(result) ) {
-        s = SvPV(result, len);
-        sqlite3_result_text( context, s, len, SQLITE_TRANSIENT );
+        if ((UV)(sqlite3_int64)UV_MAX == UV_MAX)
+            sqlite3_result_int64( context, (sqlite3_int64)SvUV(result));
+        else {
+            s = SvPV(result, len);
+            sqlite3_result_text( context, s, len, SQLITE_TRANSIENT );
+        }
     }
     else if ( SvIOK(result) ) {
+#if defined(USE_64_BIT_INT)
+        sqlite3_result_int64( context, SvIV(result));
+#else
         sqlite3_result_int( context, SvIV(result));
-    } else if ( !is_error && SvIOK(result) ) {
+#endif
+    } else if ( SvNOK(result) && ( sizeof(NV) == sizeof(double) || SvNVX(result) == (double) SvNVX(result) ) ) {
         sqlite3_result_double( context, SvNV(result));
     } else {
         s = SvPV(result, len);
@@ -160,68 +168,75 @@ sqlite_set_result(pTHX_ sqlite3_context *context, SV *result, int is_error)
  * applyNumericAffinity, sqlite3Atoi64, etc from sqlite3.c
  */
 static int
-sqlite_is_number(pTHX_ const char *v, bool strict)
+sqlite_is_number(pTHX_ const char *v, int sql_type)
 {
     const char *z = v;
+    const char *d = v;
     int neg;
     int digit = 0;
     int precision = 0;
+    bool has_plus = FALSE;
+    bool maybe_int = TRUE;
     char format[10];
 
-    if (!strict) {
-        while (*z == ' ') { z++; v++; }
+    if (sql_type != SQLITE_NULL) {
+        while (*z == ' ') { z++; v++; d++; }
     }
 
-    if      (*z == '-') { neg = 1; z++; }
-    else if (*z == '+') { neg = 0; z++; }
+    if      (*z == '-') { neg = 1; z++; d++; }
+    else if (*z == '+') { neg = 0; z++; d++; has_plus = TRUE; }
     else                { neg = 0; }
     if (!isdigit(*z)) return 0;
-    z++;
     while (isdigit(*z)) { digit++; z++; }
 #if defined(USE_64_BIT_INT)
-    if (digit > 19) return 0; /* too large for i64 */
+    if (digit > 19) maybe_int = FALSE; /* too large for i64 */
     if (digit == 19) {
         int c;
         char tmp[22];
-        strncpy(tmp, v, z - v + 1);
-        c = memcmp(tmp, "922337203685477580", 18) * 10;
+        strncpy(tmp, d, z - d + 1);
+        c = memcmp(tmp, "922337203685477580", 18);
         if (c == 0) {
-            c = tmp[18] - '8';
+            c = tmp[18] - '7' - neg;
         }
-        if (c < neg) return 0;
+        if (c > 0) maybe_int = FALSE;
     }
 #else
-    if (digit > 11) return 0; /* too large for i32 */
-    if (digit == 11) {
+    if (digit > 10) maybe_int = FALSE; /* too large for i32 */
+    if (digit == 10) {
         int c;
         char tmp[14];
-        strncpy(tmp, v, z - v + 1);
-        c = memcmp(tmp, "2147483648", 10) * 10;
+        strncpy(tmp, d, z - d + 1);
+        c = memcmp(tmp, "214748364", 9);
         if (c == 0) {
-            c = tmp[10] - '8';
+            c = tmp[9] - '7' - neg;
         }
-        if (c < neg) return 0;
+        if (c > 0) maybe_int = FALSE;
     }
 #endif
     if (*z == '.') {
+        maybe_int = FALSE;
         z++;
         if (!isdigit(*z)) return 0;
         while (isdigit(*z)) { precision++; z++; }
     }
     if (*z == 'e' || *z == 'E') {
+        maybe_int = FALSE;
         z++;
         if (*z == '+' || *z == '-') { z++; }
         if (!isdigit(*z)) return 0;
         while (isdigit(*z)) { z++; }
     }
+    if (*z && !isdigit(*z)) return 0;
 
+    if (maybe_int || sql_type == SQLITE_INTEGER) {
 #if defined(USE_64_BIT_INT)
-    if (strEQ(form("%lli", atoll(v)), v)) return 1;
+        if (strEQ(form((has_plus ? "+%lli" : "%lli"), atoll(v)), v)) return 1;
 #else
-    if (strEQ(form("%i", atoi(v)), v)) return 1;
+        if (strEQ(form((has_plus ? "+%i" : "%i"), atoi(v)), v)) return 1;
 #endif
-    if (precision) {
-        sprintf(format, "%%.%df", precision);
+    }
+    if (sql_type != SQLITE_INTEGER) {
+        sprintf(format, (has_plus ? "+%%.%df" : "%%.%df"), precision);
         if (strEQ(form(format, atof(v)), v)) return 2;
     }
     return 0;
@@ -678,15 +693,15 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
              *  keep spaces when we just guess.
              */
             if (imp_dbh->see_if_its_a_number) {
-                numtype = sqlite_is_number(aTHX_ data, TRUE);
+                numtype = sqlite_is_number(aTHX_ data, SQLITE_NULL);
             }
             else if (sql_type == SQLITE_INTEGER || sql_type == SQLITE_FLOAT) {
-                numtype = sqlite_is_number(aTHX_ data, FALSE);
+                numtype = sqlite_is_number(aTHX_ data, sql_type);
             }
 
             if (numtype == 1) {
 #if defined(USE_64_BIT_INT)
-                rc = sqlite3_bind_int64(imp_sth->stmt, i+1, atoi(data));
+                rc = sqlite3_bind_int64(imp_sth->stmt, i+1, atoll(data));
 #else
                 rc = sqlite3_bind_int(imp_sth->stmt, i+1, atoi(data));
 #endif
@@ -696,9 +711,17 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
             }
             else {
                 if (sql_type == SQLITE_INTEGER || sql_type == SQLITE_FLOAT) {
-                    sqlite_error(sth, -2, form("datatype mismatch: bind %d type %d as %s", i, sql_type, SvPV_nolen_undef_ok(value)));
-
-                    return -2; /* -> undef in SQLite.xsi */
+                    /*
+                     * die on datatype mismatch did more harm than good
+                     * especially when DBIC heavily depends on this
+                     * explicit type specification
+                     */
+                    if (DBIc_has(imp_dbh, DBIcf_PrintWarn))
+                        warn(
+                            "datatype mismatch: bind param (%d) %s as %s",
+                            i, SvPV_nolen_undef_ok(value),
+                            (sql_type == SQLITE_INTEGER ? "integer" : "float")
+                        );
                 }
                 rc = sqlite3_bind_text(imp_sth->stmt, i+1, data, len, SQLITE_TRANSIENT);
             }
@@ -890,7 +913,13 @@ sqlite_st_fetch(SV *sth, imp_sth_t *imp_sth)
 #if defined(USE_64_BIT_INT)
                 sv_setiv(AvARRAY(av)[i], sqlite3_column_int64(imp_sth->stmt, i));
 #else
-                sv_setnv(AvARRAY(av)[i], (double)sqlite3_column_int64(imp_sth->stmt, i));
+                val = (char*)sqlite3_column_text(imp_sth->stmt, i);
+                if (sqlite_is_number(aTHX_ val, SQLITE_NULL) == 1) {
+                    sv_setiv(AvARRAY(av)[i], atoi(val));
+                } else {
+                    sv_setpv(AvARRAY(av)[i], val);
+                    SvUTF8_off(AvARRAY(av)[i]);
+                }
 #endif
                 break;
             case SQLITE_FLOAT:
@@ -1237,11 +1266,24 @@ sqlite_db_func_dispatcher(int is_unicode, sqlite3_context *context, int argc, sq
         SV *arg;
         STRLEN len;
         int type = sqlite3_value_type(value[i]);
+        sqlite_int64 iv;
 
         /* warn("func dispatch type: %d, value: %s\n", type, sqlite3_value_text(value[i])); */
         switch(type) {
             case SQLITE_INTEGER:
-                arg = sv_2mortal(newSViv(sqlite3_value_int(value[i])));
+                iv = sqlite3_value_int64(value[i]);
+                if ( iv >= IV_MIN && iv <= IV_MAX ) {
+                    /* ^^^ compile-time constant (= true) when IV == int64 */
+                    arg = sv_2mortal(newSViv((IV)iv));
+                }
+                else if ( iv >= 0 && iv <= UV_MAX ) {
+                    /* warn("integer overflow, cast to UV"); */
+                    arg = sv_2mortal(newSVuv((UV)iv));
+                }
+                else {
+                    /* warn("integer overflow, cast to NV"); */
+                    arg = sv_2mortal(newSVnv((NV)iv));
+                }
                 break;
             case SQLITE_FLOAT:
                 arg = sv_2mortal(newSVnv(sqlite3_value_double(value[i])));

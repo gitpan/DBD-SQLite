@@ -1,5 +1,18 @@
 Changes for Perl extension DBD-SQLite
 
+1.36_03 Mon 7 May 2012
+    - Updated to SQLite 3.7.11 (ISHIGAKI)
+    - Fix >32bit integer truncation and other sqlite_set_result
+      condition issue (Yuriy Kaminskiy)
+    - Fix integer overflow in passing argument to perl function
+      (Yuriy Kaminskiy)
+    - Convert unsigned -> int64 when possible (Yuriy Kaminskiy)
+    - Turned datatype mismatch error (introduced in 1.34_02) into
+      a warning (you can disable this warning by setting PrintWarn
+      attribute to false). (ISHIGAKI)
+    - Refactored sqlite_is_number to fix various corner cases
+      (ISHIGAKI)
+
 1.36_02 Thu 23 Feb 2012
     - Downgraded SQLite to 3.7.9, as 3.7.10 turned out to be
       broken on the latest MacOS X (due to a missing symbol),
