@@ -238,6 +238,10 @@ if ($^O eq 'hpux' and $Config{osvers} <= 10.20) {
 		'-DMAP_FAILED="((void *)-1)"';
 }
 if ($^O eq 'darwin') {
+	my ($osmajor, $osminor) = split /\./, $Config{osvers};
+	if ($osmajor < 8 or ($osmajor == 8 && $osminor <= 11)) {
+		push @CC_DEFINE, '-DSQLITE_WITHOUT_ZONEMALLOC=1';
+	}
 	push @CC_DEFINE, '-DSQLITE_ENABLE_LOCKING_STYLE=0';
 }
 
@@ -253,7 +257,8 @@ my @CC_OPTIONS = (
 unless ($^O eq 'MSWin32' && $Config{ld} =~ /link/) {
 	for my $path (File::Spec->path) {
 		if (MM->maybe_command("$path/ld")) {
-			my $output = `$path/ld --help 2>&1`;
+			my $devnull = File::Spec->devnull;
+			my $output = `$path/ld --help 2>$devnull`;
 			if ($output =~ /Bsymbolic/) {
 				push @CC_OPTIONS,
 					CCFLAGS   => $Config{ccflags}   . ' -Wl,-Bsymbolic',
