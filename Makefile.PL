@@ -293,6 +293,12 @@ WriteMakefile(
 			'Win32' => '0.30',
 		) : () ),
 	},
+	# XXX: VOVKASM suggested to remove this OPTIMIZE line to use
+	# the same optimization as perl itself. However, it turned out
+	# this change broke a test under some environment, and thus, may
+	# break other applications eventually. I'm not sure if this is
+	# worth the trouble.
+	OPTIMIZE => '-O2',
 	OPTIONAL( '6.48',
 		MIN_PERL_VERSION => '5.006',
 	),
@@ -341,7 +347,6 @@ WriteMakefile(
 		? '$(O_FILES)'
 		: 'SQLite.o dbdimp.o'
 	),
-	OPTIMIZE         => '-O2',
 	clean            => {
 		FILES => 'SQLite.xsi config.h tv.log *.old',
 	},
@@ -361,7 +366,7 @@ sub postamble {
 	my $postamble = eval {
 		DBI::DBD::dbd_postamble(@_)
 	};
-    if (-e 'sqlite3.c' && -e 'sqlite3.h') {
+    if (-e 'sqlite3.c' && -e 'sqlite3.h' && -e 'sqlite3ext.h') {
 		my $S = $^O eq 'MSWin32' ? '\\' : '/';  # only Win32 (not cygwin)
 		my $share = "\$(INST_LIB)${S}auto${S}share${S}dist${S}\$(DISTNAME)";
 		my $perm_dir = $ExtUtils::MakeMaker::VERSION >= 6.52 ? '$(PERM_DIR)' : '755';
@@ -371,6 +376,7 @@ config ::
 \t\$(NOECHO) \$(CHMOD) $perm_dir "$share"
 \t\$(NOECHO) \$(CP) "sqlite3.c" "$share${S}sqlite3.c"
 \t\$(NOECHO) \$(CP) "sqlite3.h" "$share${S}sqlite3.h"
+\t\$(NOECHO) \$(CP) "sqlite3ext.h" "$share${S}sqlite3ext.h"
 SHARE
 	}
 	return $postamble;

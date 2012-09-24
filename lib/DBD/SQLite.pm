@@ -5,40 +5,33 @@ use strict;
 use DBI   1.57 ();
 use DynaLoader ();
 
-use vars qw($VERSION @ISA);
-use vars qw{$err $errstr $drh $sqlite_version $sqlite_version_number};
-use vars qw{%COLLATION};
+our $VERSION = '1.38_01';
+our @ISA     = 'DynaLoader';
 
-BEGIN {
-    $VERSION = '1.37';
-    @ISA     = 'DynaLoader';
+# sqlite_version cache (set in the XS bootstrap)
+our ($sqlite_version, $sqlite_version_number);
 
-    # Initialize errors
-    $err     = undef;
-    $errstr  = undef;
-
-    # Driver singleton
-    $drh = undef;
-
-    # sqlite_version cache
-    $sqlite_version = undef;
-}
+# not sure if we still need these...
+our ($err, $errstr);
 
 __PACKAGE__->bootstrap($VERSION);
 
 # New or old API?
 use constant NEWAPI => ($DBI::VERSION >= 1.608);
 
+# global registry of collation functions, initialized with 2 builtins
+our %COLLATION;
 tie %COLLATION, 'DBD::SQLite::_WriteOnceHash';
 $COLLATION{perl}       = sub { $_[0] cmp $_[1] };
 $COLLATION{perllocale} = sub { use locale; $_[0] cmp $_[1] };
 
+our $drh;
 my $methods_are_installed = 0;
 
 sub driver {
     return $drh if $drh;
 
-    if (!$methods_are_installed && $DBI::VERSION >= 1.608) {
+    if (!$methods_are_installed && DBD::SQLite::NEWAPI ) {
         DBI->setup_driver('DBD::SQLite');
 
         DBD::SQLite::db->install_method('sqlite_last_insert_rowid');
@@ -55,9 +48,15 @@ sub driver {
         DBD::SQLite::db->install_method('sqlite_backup_from_file');
         DBD::SQLite::db->install_method('sqlite_backup_to_file');
         DBD::SQLite::db->install_method('sqlite_enable_load_extension');
+        DBD::SQLite::db->install_method('sqlite_load_extension');
         DBD::SQLite::db->install_method('sqlite_register_fts3_perl_tokenizer');
-        DBD::SQLite::db->install_method('sqlite_trace');
-        DBD::SQLite::db->install_method('sqlite_profile');
+        DBD::SQLite::db->install_method('sqlite_trace', { O => 0x0004 });
+        DBD::SQLite::db->install_method('sqlite_profile', { O => 0x0004 });
+        DBD::SQLite::db->install_method('sqlite_table_column_metadata', { O => 0x0004 });
+        DBD::SQLite::db->install_method('sqlite_db_filename', { O => 0x0004 });
+        DBD::SQLite::db->install_method('sqlite_db_status', { O => 0x0004 });
+
+        DBD::SQLite::st->install_method('sqlite_st_status', { O => 0x0004 });
 
         $methods_are_installed++;
     }
@@ -217,6 +216,17 @@ sub do {
     return ($rows == 0) ? "0E0" : $rows;
 }
 
+sub ping {
+    my $dbh = shift;
+
+    # $file may be undef (ie. in-memory/temporary database)
+    my $file = DBD::SQLite::NEWAPI ? $dbh->sqlite_db_filename
+                                   : $dbh->func("db_filename");
+
+    return 0 if $file && !-f $file;
+    return $dbh->FETCH('Active') ? 1 : 0;
+}
+
 sub _get_version {
     return ( DBD::SQLite::db::FETCH($_[0], 'sqlite_version') );
 }
@@ -368,45 +378,46 @@ END_SQL
 sub primary_key_info {
     my ($dbh, $catalog, $schema, $table, $attr) = @_;
 
-    # Escape the schema and table name
-    $schema =~ s/([\\_%])/\\$1/g if defined $schema;
-    my $escaped = $table;
-    $escaped =~ s/([\\_%])/\\$1/g;
-    $attr ||= {};
-    $attr->{Escape} = '\\';
-    my $sth_tables = $dbh->table_info($catalog, $schema, $escaped, undef, $attr);
+    my $databases = $dbh->selectall_arrayref("PRAGMA database_list", {Slice => {}});
 
-    # This is a hack but much simpler than using pragma index_list etc
-    # also the pragma doesn't list 'INTEGER PRIMARY KEY' autoinc PKs!
     my @pk_info;
-    while ( my $row = $sth_tables->fetchrow_hashref ) {
-        my $sql = $row->{sqlite_sql} or next;
-        next unless $sql =~ /(.*?)\s*PRIMARY\s+KEY\s*(?:\(\s*(.*?)\s*\))?/si;
-        my @pk = split /\s*,\s*/, $2 || '';
-        unless ( @pk ) {
-            my $prefix = $1;
-            $prefix =~ s/.*create\s+table\s+.*?\(\s*//si;
-            $prefix = (split /\s*,\s*/, $prefix)[-1];
-            @pk = (split /\s+/, $prefix)[0]; # take first word as name
-        }
-        my $key_seq = 0;
-        foreach my $pk_field (@pk) {
-            $pk_field =~ s/(["'`])(.+)\1/$2/; # dequote
-            $pk_field =~ s/\[(.+)\]/$1/; # dequote
-            push @pk_info, {
-                TABLE_SCHEM => $row->{TABLE_SCHEM},
-                TABLE_NAME  => $row->{TABLE_NAME},
-                COLUMN_NAME => $pk_field,
-                KEY_SEQ     => ++$key_seq,
-                PK_NAME     => 'PRIMARY KEY',
-            };
+    for my $database (@$databases) {
+        my $dbname = $database->{name};
+        next if defined $schema && $schema ne '%' && $schema ne $dbname;
+
+        my $quoted_dbname = $dbh->quote_identifier($dbname);
+
+        my $master_table =
+            ($dbname eq 'main') ? 'sqlite_master' :
+            ($dbname eq 'temp') ? 'sqlite_temp_master' :
+            $quoted_dbname.'.sqlite_master';
+
+        my $sth = $dbh->prepare("SELECT name FROM $master_table WHERE type = ?");
+        $sth->execute("table");
+        while(my $row = $sth->fetchrow_hashref) {
+            my $tbname = $row->{name};
+            next if defined $table && $table ne '%' && $table ne $tbname;
+
+            my $quoted_tbname = $dbh->quote_identifier($tbname);
+            my $t_sth = $dbh->prepare("PRAGMA $quoted_dbname.table_info($quoted_tbname)");
+            $t_sth->execute;
+            while(my $col = $t_sth->fetchrow_hashref) {
+                next unless $col->{pk};
+                push @pk_info, {
+                    TABLE_SCHEM => $dbname,
+                    TABLE_NAME  => $tbname,
+                    COLUMN_NAME => $col->{name},
+                    KEY_SEQ     => scalar @pk_info + 1,
+                    PK_NAME     => 'PRIMARY KEY',
+                };
+            }
         }
     }
 
     my $sponge = DBI->connect("DBI:Sponge:", '','')
         or return $dbh->DBI::set_err($DBI::err, "DBI::Sponge: $DBI::errstr");
     my @names = qw(TABLE_CAT TABLE_SCHEM TABLE_NAME COLUMN_NAME KEY_SEQ PK_NAME);
-    my $sth = $sponge->prepare( "primary_key_info $table", {
+    my $sth = $sponge->prepare( "primary_key_info", {
         rows          => [ map { [ @{$_}{@names} ] } @pk_info ],
         NUM_OF_FIELDS => scalar @names,
         NAME          => \@names,
@@ -415,6 +426,146 @@ sub primary_key_info {
         $sponge->errstr,
     );
     return $sth;
+}
+
+
+our %DBI_code_for_rule = ( # from DBI doc; curiously, they are not exported
+                           # by the DBI module.
+  # codes for update/delete constraints
+  'CASCADE'             => 0,
+  'RESTRICT'            => 1,
+  'SET NULL'            => 2,
+  'NO ACTION'           => 3,
+  'SET DEFAULT'         => 4,
+
+  # codes for deferrability
+  'INITIALLY DEFERRED'  => 5,
+  'INITIALLY IMMEDIATE' => 6,
+  'NOT DEFERRABLE'      => 7,
+ );
+
+
+my @FOREIGN_KEY_INFO_ODBC = (
+  'PKTABLE_CAT',       # The primary (unique) key table catalog identifier.
+  'PKTABLE_SCHEM',     # The primary (unique) key table schema identifier.
+  'PKTABLE_NAME',      # The primary (unique) key table identifier.
+  'PKCOLUMN_NAME',     # The primary (unique) key column identifier.
+  'FKTABLE_CAT',       # The foreign key table catalog identifier.
+  'FKTABLE_SCHEM',     # The foreign key table schema identifier.
+  'FKTABLE_NAME',      # The foreign key table identifier.
+  'FKCOLUMN_NAME',     # The foreign key column identifier.
+  'KEY_SEQ',           # The column sequence number (starting with 1).
+  'UPDATE_RULE',       # The referential action for the UPDATE rule.
+  'DELETE_RULE',       # The referential action for the DELETE rule.
+  'FK_NAME',           # The foreign key name.
+  'PK_NAME',           # The primary (unique) key name.
+  'DEFERRABILITY',     # The deferrability of the foreign key constraint.
+  'UNIQUE_OR_PRIMARY', # qualifies the key referenced by the foreign key
+);
+
+# Column names below are not used, but listed just for completeness's sake.
+# Maybe we could add an option so that the user can choose which field
+# names will be returned; the DBI spec is not very clear about ODBC vs. CLI.
+my @FOREIGN_KEY_INFO_SQL_CLI = qw(
+  UK_TABLE_CAT 
+  UK_TABLE_SCHEM
+  UK_TABLE_NAME
+  UK_COLUMN_NAME
+  FK_TABLE_CAT
+  FK_TABLE_SCHEM
+  FK_TABLE_NAME
+  FK_COLUMN_NAME
+  ORDINAL_POSITION
+  UPDATE_RULE
+  DELETE_RULE
+  FK_NAME
+  UK_NAME
+  DEFERABILITY
+  UNIQUE_OR_PRIMARY
+ );
+
+sub foreign_key_info {
+    my ($dbh, $pk_catalog, $pk_schema, $pk_table, $fk_catalog, $fk_schema, $fk_table) = @_;
+
+    my $databases = $dbh->selectall_arrayref("PRAGMA database_list", {Slice => {}});
+
+    my @fk_info;
+    my %table_info;
+    for my $database (@$databases) {
+        my $dbname = $database->{name};
+        next if defined $fk_schema && $fk_schema ne '%' && $fk_schema ne $dbname;
+
+        my $quoted_dbname = $dbh->quote_identifier($dbname);
+        my $master_table =
+            ($dbname eq 'main') ? 'sqlite_master' :
+            ($dbname eq 'temp') ? 'sqlite_temp_master' :
+            $quoted_dbname.'.sqlite_master';
+
+        my $tables = $dbh->selectall_arrayref("SELECT name FROM $master_table WHERE type = ?", undef, "table");
+        for my $table (@$tables) {
+            my $tbname = $table->[0];
+            next if defined $fk_table && $fk_table ne '%' && $fk_table ne $tbname;
+
+            my $quoted_tbname = $dbh->quote_identifier($tbname);
+            my $sth = $dbh->prepare("PRAGMA $quoted_dbname.foreign_key_list($quoted_tbname)");
+            $sth->execute;
+            while(my $row = $sth->fetchrow_hashref) {
+                next if defined $pk_table && $pk_table ne '%' && $pk_table ne $row->{table};
+
+                unless ($table_info{$row->{table}}) {
+                    my $quoted_tb = $dbh->quote_identifier($row->{table});
+                    for my $db (@$databases) {
+                        my $quoted_db = $dbh->quote_identifier($db->{name});
+                        my $t_sth = $dbh->prepare("PRAGMA $quoted_db.table_info($quoted_tb)");
+                        $t_sth->execute;
+                        my $cols = {};
+                        while(my $r = $t_sth->fetchrow_hashref) {
+                            $cols->{$r->{name}} = $r->{pk};
+                        }
+                        if (keys %$cols) {
+                            $table_info{$row->{table}} = {
+                                schema  => $db->{name},
+                                columns => $cols,
+                            };
+                            last;
+                        }
+                    }
+                }
+
+                next if defined $pk_schema && $pk_schema ne '%' && $pk_schema ne $table_info{$row->{table}}{schema};
+
+                push @fk_info, {
+                    PKTABLE_CAT   => undef,
+                    PKTABLE_SCHEM => $table_info{$row->{table}}{schema},
+                    PKTABLE_NAME  => $row->{table},
+                    PKCOLUMN_NAME => $row->{to},
+                    FKTABLE_CAT   => undef,
+                    FKTABLE_SCHEM => $dbname,
+                    FKTABLE_NAME  => $tbname,
+                    FKCOLUMN_NAME => $row->{from},
+                    KEY_SEQ       => $row->{seq} + 1,
+                    UPDATE_RULE   => $DBI_code_for_rule{$row->{on_update}},
+                    DELETE_RULE   => $DBI_code_for_rule{$row->{on_delete}},
+                    FK_NAME       => undef,
+                    PK_NAME       => undef,
+                    DEFERRABILITY => undef,
+                    UNIQUE_OR_PRIMARY => $table_info{$row->{table}}{columns}{$row->{to}} ? 'PRIMARY' : 'UNIQUE',
+                };
+            }
+        }
+    }
+
+    my $sponge_dbh = DBI->connect("DBI:Sponge:", "", "")
+        or return $dbh->DBI::set_err($DBI::err, "DBI::Sponge: $DBI::errstr");
+    my $sponge_sth = $sponge_dbh->prepare("foreign_key_info", {
+        NAME          => \@FOREIGN_KEY_INFO_ODBC,
+        rows          => [ map { [@{$_}{@FOREIGN_KEY_INFO_ODBC} ] } @fk_info ],
+        NUM_OF_FIELDS => scalar(@FOREIGN_KEY_INFO_ODBC),
+    }) or return $dbh->DBI::set_err(
+        $sponge_dbh->err,
+        $sponge_dbh->errstr,
+    );
+    return $sponge_sth;
 }
 
 sub type_info_all {
@@ -924,36 +1075,24 @@ statement, and ends by a C<COMMIT> or a <ROLLBACK>.
 
 =head2 Transaction and Database Locking
 
-Transaction by C<AutoCommit> or C<begin_work> is nice and handy, but
-sometimes you may get an annoying "database is locked" error.
-This typically happens when someone begins a transaction, and tries
-to write to a database while other person is reading from the
-database (in another transaction). You might be surprised but SQLite
-doesn't lock a database when you just begin a normal (deferred)
-transaction to maximize concurrency. It reserves a lock when you
-issue a statement to write, but until you actually try to write
-with a C<commit> statement, it allows other people to read from
-the database. However, reading from the database also requires
-C<shared lock>, and that prevents to give you the C<exclusive lock>
-you reserved, thus you get the "database is locked" error, and
-other people will get the same error if they try to write afterwards,
-as you still have a C<pending> lock. C<busy_timeout> doesn't help
-in this case.
+The default transaction behavior of SQLite is C<deferred>, that
+means, locks are not acquired until the first read or write
+operation, and thus it is possible that another thread or process
+could create a separate transaction and write to the database after
+the C<BEGIN> on the current thread has executed, and eventually
+cause a "deadlock". To avoid this, DBD::SQLite internally issues
+a C<BEGIN IMMEDIATE> when you begin a transaction by
+C<begin_work> or under the C<AutoCommit> mode (since 1.38_01).
 
-To avoid this, set a transaction type explicitly. You can issue a
-C<begin immediate transaction> (or C<begin exclusive transaction>)
-for each transaction, or set C<sqlite_use_immediate_transaction>
-database handle attribute to true (since 1.30_02) to always use
-an immediate transaction (even when you simply use C<begin_work>
-or turn off the C<AutoCommit>.).
+If you really need to turn off this feature for some reasons,
+set C<sqlite_use_immediate_transaction> database handle attribute
+to false, and the default C<deferred> transaction will be used.
 
   my $dbh = DBI->connect("dbi:SQLite::memory:", "", "", {
-    sqlite_use_immediate_transaction => 1,
+    sqlite_use_immediate_transaction => 0,
   });
 
-Note that this works only when all of the connections use the same
-(non-deferred) transaction. See L<http://sqlite.org/lockingv3.html>
-for locking details.
+See L<http://sqlite.org/lockingv3.html> for locking details.
 
 =head2 C<< $sth->finish >> and Transaction Rollback
 
@@ -1090,6 +1229,10 @@ If you set this to true, DBD::SQLite tries to issue a C<begin
 immediate transaction> (instead of C<begin transaction>) when
 necessary. See above for details.
 
+As of version 1.38_01, this attribute is set to true by default.
+If you really need to use C<deferred> transactions for some reasons,
+set this to false explicitly.
+
 =item sqlite_see_if_its_a_number
 
 If you set this to true, DBD::SQLite tries to see if the bind values
@@ -1150,6 +1293,76 @@ first argument of the mothods is usually C<undef>, and you'll usually
 set C<undef> for the second one (unless you want to know the primary
 keys of temporary tables).
 
+
+=head2 foreign_key_info
+
+  $sth = $dbh->foreign_key_info(undef, $pk_schema, $pk_table,
+                                undef, $fk_schema, $fk_table);
+
+Returns information about foreign key constraints, as specified in
+L<DBI/foreign_key_info>, but with some limitations : 
+
+=over
+
+=item *
+
+information in rows returned by the C<$sth> is incomplete with
+respect to the L<DBI/foreign_key_info> specification. All requested fields
+are present, but the content is C<undef> for some of them.
+
+=back
+
+The following nonempty fields are returned :
+
+B<PKTABLE_NAME>:
+The primary (unique) key table identifier.
+
+B<PKCOLUMN_NAME>:
+The primary (unique) key column identifier.
+
+B<FKTABLE_NAME>:
+The foreign key table identifier.
+
+B<FKCOLUMN_NAME>:
+The foreign key column identifier.
+
+B<KEY_SEQ>:
+The column sequence number (starting with 1), when
+several columns belong to a same constraint.
+
+B<UPDATE_RULE>:
+The referential action for the UPDATE rule.
+The following codes are defined:
+
+  CASCADE              0
+  RESTRICT             1
+  SET NULL             2
+  NO ACTION            3
+  SET DEFAULT          4
+
+Default is 3 ('NO ACTION').
+
+B<DELETE_RULE>:
+The referential action for the DELETE rule.
+The codes are the same as for UPDATE_RULE.
+
+Unfortunately, the B<DEFERRABILITY> field is always C<undef>;
+as a matter of fact, deferrability clauses are supported by SQLite,
+but they can't be reported because the C<PRAGMA foreign_key_list>
+tells nothing about them.
+
+B<UNIQUE_OR_PRIMARY>:
+Whether the column is primary or unique.
+
+B<Note>: foreign key support in SQLite must be explicitly turned on through
+a C<PRAGMA> command; see L</"Foreign keys"> earlier in this manual.
+
+=head2 ping
+
+  my $bool = $dbh->ping;
+
+returns true if the database file exists (or the database is in-memory), and the database connection is active.
+
 =head1 DRIVER PRIVATE METHODS
 
 The following methods can be called via the func() method with a little
@@ -1179,6 +1392,10 @@ method instead. The usage of this is:
 
 Running C<$h-E<gt>last_insert_id("","","","")> is the equivalent of running
 C<$dbh-E<gt>sqlite_last_insert_rowid()> directly.
+
+=head2 $dbh->sqlite_db_filename()
+
+Retrieve the current (main) database filename. If the database is in-memory or temporary, this returns C<undef>.
 
 =head2 $dbh->sqlite_busy_timeout()
 
@@ -1354,7 +1571,7 @@ Here is a simple aggregate function which returns the variance
   
       my $sigma = 0;
       foreach my $v ( @$self ) {
-          $sigma += ($x - $mu)**2;
+          $sigma += ($v - $mu)**2;
       }
       $sigma = $sigma / ($n - 1);
   
@@ -1529,6 +1746,10 @@ sqlite3 extensions. After the call, you can load extensions like this:
   $sth = $dbh->prepare("select load_extension('libsqlitefunctions.so')")
   or die "Cannot prepare: " . $dbh->errstr();
 
+=head2 $dbh->sqlite_load_extension( $file, $proc )
+
+Loading an extension by a select statement (with the "load_extension" sqlite3 function like above) has some limitations. If you need to, say, create other functions from an extension, use this method. $file (a path to the extension) is mandatory, and $proc (an entry point name) is optional. You need to call C<sqlite_enable_load_extension> before calling C<sqlite_load_extension>.
+
 =head2 $dbh->sqlite_trace( $code_ref )
 
 This method registers a trace callback to be invoked whenever
@@ -1582,11 +1803,38 @@ This method is considered experimental and is subject to change in future versio
 
 See also L<DBI::Profile> for better profiling options.
 
+=head2 $dbh->sqlite_table_column_metadata( $dbname, $tablename, $columnname )
+
+is for internal use only.
+
 =head2 DBD::SQLite::compile_options()
 
 Returns an array of compile options (available since sqlite 3.6.23,
 bundled in DBD::SQLite 1.30_01), or an empty array if the bundled
 library is old or compiled with SQLITE_OMIT_COMPILEOPTION_DIAGS.
+
+=head2 DBD::SQLite::sqlite_status()
+
+Returns a hash reference that holds a set of status information of SQLite runtime such as memory usage or page cache usage (see L<http://www.sqlite.org/c3ref/c_status_malloc_count.html> for details). Each of the entry contains the current value and the highwater value.
+
+  my $status = DBD::SQLite::sqlite_status();
+  my $cur  = $status->{memory_used}{current};
+  my $high = $status->{memory_used}{highwater};
+
+You may also pass 0 as an argument to reset the status.
+
+=head2 $dbh->sqlite_db_status()
+
+Returns a hash reference that holds a set of status information of database connection such as cache usage. See L<http://www.sqlite.org/c3ref/c_dbstatus_options.html> for details. You may also pass 0 as an argument to reset the status.
+
+=head2 $sth->sqlite_st_status()
+
+Returns a hash reference that holds a set of status information of SQLite statement handle such as full table scan count. See L<http://www.sqlite.org/c3ref/c_stmtstatus_counter.html> for details. Statement status only holds the current value.
+
+  my $status = $sth->sqlite_st_status();
+  my $cur = $status->{fullscan_step};
+
+You may also pass 0 as an argument to reset the status.
 
 =head1 DRIVER CONSTANTS
 

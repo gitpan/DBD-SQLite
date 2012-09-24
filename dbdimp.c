@@ -230,7 +230,11 @@ sqlite_is_number(pTHX_ const char *v, int sql_type)
 
     if (maybe_int || sql_type == SQLITE_INTEGER) {
 #if defined(USE_64_BIT_INT)
+    #if defined(HAS_ATOLL)
         if (strEQ(form((has_plus ? "+%lli" : "%lli"), atoll(v)), v)) return 1;
+    #else
+        if (strEQ(form((has_plus ? "+%li" : "%li"), atol(v)), v)) return 1;
+    #endif
 #else
         if (strEQ(form((has_plus ? "+%i" : "%i"), atoi(v)), v)) return 1;
 #endif
@@ -281,7 +285,7 @@ sqlite_db_login6(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pa
     imp_dbh->timeout                   = SQL_TIMEOUT;
     imp_dbh->handle_binary_nulls       = FALSE;
     imp_dbh->allow_multiple_statements = FALSE;
-    imp_dbh->use_immediate_transaction = FALSE;
+    imp_dbh->use_immediate_transaction = TRUE;
     imp_dbh->see_if_its_a_number       = FALSE;
 
     sqlite3_busy_timeout(imp_dbh->db, SQL_TIMEOUT);
@@ -701,7 +705,11 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
 
             if (numtype == 1) {
 #if defined(USE_64_BIT_INT)
+    #if defined(HAS_ATOLL)
                 rc = sqlite3_bind_int64(imp_sth->stmt, i+1, atoll(data));
+    #else
+                rc = sqlite3_bind_int64(imp_sth->stmt, i+1, atol(data));
+    #endif
 #else
                 rc = sqlite3_bind_int(imp_sth->stmt, i+1, atoi(data));
 #endif
@@ -1085,7 +1093,10 @@ sqlite_st_FETCH_attrib(SV *sth, imp_sth_t *imp_sth, SV *keysv)
                 /* char *dot = instr(fieldname, ".");     */
                 /* if (dot)  drop table name from field name */
                 /*    fieldname = ++dot;     */
-                av_store(av, n, newSVpv(fieldname, 0));
+                SV *sv_fieldname = newSVpv(fieldname, 0);
+                if (imp_dbh->unicode)
+                    SvUTF8_on(sv_fieldname);
+                av_store(av, n, sv_fieldname);
             }
         }
     }
@@ -1186,7 +1197,7 @@ sqlite_bind_ph(SV *sth, imp_sth_t *imp_sth,
         pos = 2 * (SvIV(param) - 1);
     }
     sqlite_trace(sth, imp_sth, 3, form("bind into 0x%p: %"IVdf" => %s (%"IVdf") pos %d", imp_sth->params, SvIV(param), SvPV_nolen_undef_ok(value), sql_type, pos));
-    av_store(imp_sth->params, pos, SvREFCNT_inc(value));
+    av_store(imp_sth->params, pos, newSVsv(value));
     if (sql_type) {
         av_store(imp_sth->params, pos+1, newSViv(sql_type));
     }
@@ -1227,6 +1238,97 @@ sqlite_compile_options()
 #endif
 
     return (AV*)sv_2mortal((SV*)av);
+}
+
+#define _stores_status(op, key) \
+    if (sqlite3_status(op, &cur, &hi, reset) == SQLITE_OK) { \
+        anon = newHV(); \
+        hv_stores(anon, "current", newSViv(cur)); \
+        hv_stores(anon, "highwater", newSViv(hi)); \
+        hv_stores(hv, key, newRV_noinc((SV*)anon)); \
+    }
+
+#define _stores_dbstatus(op, key) \
+    if (sqlite3_db_status(imp_dbh->db, op, &cur, &hi, reset) == SQLITE_OK) { \
+        anon = newHV(); \
+        hv_stores(anon, "current", newSViv(cur)); \
+        hv_stores(anon, "highwater", newSViv(hi)); \
+        hv_stores(hv, key, newRV_noinc((SV*)anon)); \
+    }
+
+#define _stores_ststatus(op, key) \
+    hv_stores(hv, key, newSViv(sqlite3_stmt_status(imp_sth->stmt, op, reset)))
+
+HV *
+_sqlite_status(int reset)
+{
+    dTHX;
+    int cur, hi;
+    HV *hv = newHV();
+    HV *anon;
+
+    _stores_status(SQLITE_STATUS_MEMORY_USED, "memory_used");
+    _stores_status(SQLITE_STATUS_PAGECACHE_USED, "pagecache_used");
+    _stores_status(SQLITE_STATUS_PAGECACHE_OVERFLOW, "pagecache_overflow");
+    _stores_status(SQLITE_STATUS_SCRATCH_USED, "scratch_used");
+
+    _stores_status(SQLITE_STATUS_SCRATCH_OVERFLOW, "scratch_overflow");
+
+    _stores_status(SQLITE_STATUS_MALLOC_SIZE, "malloc_size");
+    _stores_status(SQLITE_STATUS_PARSER_STACK, "parser_stack");
+    _stores_status(SQLITE_STATUS_PAGECACHE_SIZE, "pagecache_size");
+    _stores_status(SQLITE_STATUS_SCRATCH_SIZE, "scratch_size");
+    _stores_status(SQLITE_STATUS_MALLOC_COUNT, "malloc_count");
+    _stores_status(SQLITE_STATUS_SCRATCH_OVERFLOW, "scratch_overflow");
+
+    return hv;
+}
+
+HV *
+_sqlite_db_status(pTHX_ SV* dbh, int reset)
+{
+    D_imp_dbh(dbh);
+    int cur, hi;
+    HV *hv = newHV();
+    HV *anon;
+
+    _stores_dbstatus(SQLITE_DBSTATUS_LOOKASIDE_USED, "lookaside_used");
+    _stores_dbstatus(SQLITE_DBSTATUS_CACHE_USED, "cache_used");
+    _stores_dbstatus(SQLITE_DBSTATUS_SCHEMA_USED, "schema_used");
+    _stores_dbstatus(SQLITE_DBSTATUS_STMT_USED, "stmt_used");
+    _stores_dbstatus(SQLITE_DBSTATUS_LOOKASIDE_HIT, "lookaside_hit");
+    _stores_dbstatus(SQLITE_DBSTATUS_LOOKASIDE_MISS_SIZE, "lookaside_miss_size");
+    _stores_dbstatus(SQLITE_DBSTATUS_LOOKASIDE_MISS_FULL, "lookaside_miss_full");
+    _stores_dbstatus(SQLITE_DBSTATUS_CACHE_HIT, "cache_hit");
+    _stores_dbstatus(SQLITE_DBSTATUS_CACHE_MISS, "cache_miss");
+    _stores_dbstatus(SQLITE_DBSTATUS_CACHE_WRITE, "cache_write");
+
+    return hv;
+}
+
+HV *
+_sqlite_st_status(pTHX_ SV* sth, int reset)
+{
+    D_imp_sth(sth);
+    HV *hv = newHV();
+
+    _stores_ststatus(SQLITE_STMTSTATUS_FULLSCAN_STEP, "fullscan_step");
+    _stores_ststatus(SQLITE_STMTSTATUS_SORT, "sort");
+    _stores_ststatus(SQLITE_STMTSTATUS_AUTOINDEX, "autoindex");
+
+    return hv;
+}
+
+SV *
+sqlite_db_filename(pTHX_ SV *dbh)
+{
+    D_imp_dbh(dbh);
+    const char *filename;
+
+    croak_if_db_is_null();
+
+    filename = sqlite3_db_filename(imp_dbh->db, "main");
+    return filename ? newSVpv(filename, 0) : &PL_sv_undef;
 }
 
 int
@@ -1402,7 +1504,75 @@ sqlite_db_enable_load_extension(pTHX_ SV *dbh, int onoff)
     return TRUE;
 }
 
+int
+sqlite_db_load_extension(pTHX_ SV *dbh, const char *file, const char *proc)
+{
+    D_imp_dbh(dbh);
+    int rc;
+
+    if (!DBIc_ACTIVE(imp_dbh)) {
+        sqlite_error(dbh, -2, "attempt to load extension on inactive database handle");
+        return FALSE;
+    }
+
+    croak_if_db_is_null();
+
+    /* COMPAT: sqlite3_load_extension is only available for 3003006 or newer */
+    rc = sqlite3_load_extension( imp_dbh->db, file, proc, NULL );
+    if ( rc != SQLITE_OK ) {
+        sqlite_error(dbh, rc, form("sqlite_load_extension failed with error %s", sqlite3_errmsg(imp_dbh->db)));
+        return FALSE;
+    }
+    return TRUE;
+}
+
 #endif
+
+HV*
+sqlite_db_table_column_metadata(pTHX_ SV *dbh, SV *dbname, SV *tablename, SV *columnname)
+{
+    D_imp_dbh(dbh);
+    const char *datatype, *collseq;
+    int notnull, primary, autoinc;
+    int rc;
+    HV *metadata = newHV();
+
+    if (!DBIc_ACTIVE(imp_dbh)) {
+        sqlite_error(dbh, -2, "attempt to fetch table column metadata on inactive database handle");
+        return metadata;
+    }
+
+    croak_if_db_is_null();
+
+    /* dbname may be NULL but (table|column)name may not be NULL */ 
+    if (!tablename || !SvPOK(tablename)) {
+        sqlite_error(dbh, -2, "table_column_metadata requires a table name");
+        return metadata;
+    }
+    if (!columnname || !SvPOK(columnname)) {
+        sqlite_error(dbh, -2, "table_column_metadata requires a column name");
+        return metadata;
+    }
+
+#ifdef SQLITE_ENABLE_COLUMN_METADATA
+    rc = sqlite3_table_column_metadata(
+       imp_dbh->db,
+       (dbname && SvPOK(dbname)) ? SvPV_nolen(dbname) : NULL,
+       SvPV_nolen(tablename),
+       SvPV_nolen(columnname),
+       &datatype, &collseq, &notnull, &primary, &autoinc);
+#endif
+
+    if (rc == SQLITE_OK) {
+        hv_stores(metadata, "data_type", datatype ? newSVpv(datatype, 0) : newSV(0));
+        hv_stores(metadata, "collation_name", collseq ? newSVpv(collseq, 0) : newSV(0));
+        hv_stores(metadata, "not_null", newSViv(notnull));
+        hv_stores(metadata, "primary", newSViv(primary));
+        hv_stores(metadata, "auto_increment", newSViv(autoinc));
+    }
+
+    return metadata;
+}
 
 static void
 sqlite_db_aggr_new_dispatcher(pTHX_ sqlite3_context *context, aggrInfo *aggr_info)

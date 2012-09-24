@@ -1,6 +1,33 @@
 Changes for Perl extension DBD-SQLite
 
-1.37 to be released
+1.38_01 Mon 24 Sep 2012
+    *** CHANGES THAT MAY POSSIBLY BREAK YOUR OLD APPLICATIONS ***
+    - Resolved #56444: immediate transaction should be on by
+      default, and the doc be updated.
+      If you really need the deferred transaction (which had long
+      been the default), set sqlite_use_immediate_transaction
+      to false explicitly. (ISHIGAKI)
+
+    - Updated to SQLite 3.17.14 (ISHIGAKI)
+    - Added support for foreign_key_info (DAMI/ISHIGAKI)
+    - Added several methods to retrieve internal information such as
+      table_column_metadata/db_filename/*_status (ISHIGAKI/VOVKASM)
+    - Added sqlite_load_extension so that extensions can add
+      functions internally (ISHIGAKI)
+    - Resolved #77617: atoll () sometimes just is atol () (GAAS)
+    - Resolved #48084: improper "require utf8" in tests (ISHIGAKI)
+    - Resolved #77724: bug in primary_key_info with regard to column
+      names containing whitespace (ISHIGAKI)
+    - Resolved #79364: variance example of the doc (ISHIGAKI)
+    - Resolved #78833: utf8 flag for column names (JAMADAM)
+      (This hopefully resolved #72418 as well)
+    - Resolved #64177: ping() wipes out the errstr (ISHIGAKI)
+    - Resolved #79576: (patch) bind_param don't work with PADTMP
+      scalars (VOVKASM)
+    - Refactored primary_key_info to support attached databases
+      (ISHIGAKI)
+
+1.37 Thu 12 Jun 2012
     - Updated to SQLite 3.7.12.1 (ISHIGAKI)
 
 1.36_04 Sat 19 May 2012

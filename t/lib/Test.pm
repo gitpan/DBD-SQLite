@@ -7,14 +7,15 @@ use Exporter   ();
 use File::Spec ();
 use Test::More ();
 
-use vars qw{$VERSION @ISA @EXPORT @CALL_FUNCS};
+our $VERSION = '1.38_01';
+our @ISA     = 'Exporter';
+our @EXPORT  = qw/connect_ok dies dbfile @CALL_FUNCS/;
+our @CALL_FUNCS;
+
 my $parent;
 my %dbfiles;
-BEGIN {
-	$VERSION = '1.37';
-	@ISA     = 'Exporter';
-	@EXPORT  = qw/connect_ok dies dbfile @CALL_FUNCS/;
 
+BEGIN {
 	# Allow tests to load modules bundled in /inc
 	unshift @INC, 'inc';
 
@@ -46,8 +47,8 @@ END   { clean() }
 # A simplified connect function for the most common case
 sub connect_ok {
 	my $attr = { @_ };
-	my $dbfile = delete $attr->{dbfile} || ':memory:';
-	$dbfiles{$dbfile} = ($dbfile ne ':memory:') ? $dbfile . $$ : $dbfile;
+	my $dbfile = defined $attr->{dbfile} ? delete $attr->{dbfile} : ':memory:';
+	$dbfiles{$dbfile} = (defined $dbfile && length $dbfile && $dbfile ne ':memory:') ? $dbfile . $$ : $dbfile;
 	my @params = ( "dbi:SQLite:dbname=$dbfiles{$dbfile}", '', '' );
 	if ( %$attr ) {
 		push @params, $attr;

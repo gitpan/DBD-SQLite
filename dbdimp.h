@@ -89,6 +89,7 @@ int sqlite_db_create_function(pTHX_ SV *dbh, const char *name, int argc, SV *fun
 
 #ifndef SQLITE_OMIT_LOAD_EXTENSION
 int sqlite_db_enable_load_extension(pTHX_ SV *dbh, int onoff);
+int sqlite_db_load_extension(pTHX_ SV *dbh, const char *file, const char *proc);
 #endif
 
 int sqlite_db_create_aggregate(pTHX_ SV *dbh, const char *name, int argc, SV *aggr );
@@ -106,8 +107,13 @@ int sqlite_db_set_authorizer( pTHX_ SV *dbh, SV *authorizer );
 AV* sqlite_compile_options();
 int sqlite_db_trace(pTHX_ SV *dbh, SV *func);
 int sqlite_db_profile(pTHX_ SV *dbh, SV *func);
+HV* sqlite_db_table_column_metadata(pTHX_ SV *dbh, SV *dbname, SV *tablename, SV *columnname);
+HV* _sqlite_db_status(pTHX_ SV *dbh, int reset);
+SV* sqlite_db_filename(pTHX_ SV *dbh);
 
 int sqlite_db_register_fts3_perl_tokenizer(pTHX_ SV *dbh);
+HV* _sqlite_status(int reset);
+HV* _sqlite_st_status(pTHX_ SV *sth, int reset);
 
 #ifdef SvUTF8_on
 

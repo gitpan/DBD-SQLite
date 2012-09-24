@@ -55,6 +55,20 @@ enable_load_extension(dbh, onoff)
     OUTPUT:
         RETVAL
 
+static int
+load_extension(dbh, file, proc = 0)
+    SV *dbh
+    const char *file
+    const char *proc
+    ALIAS:
+        DBD::SQLite::db::sqlite_load_extension = 1
+    CODE:
+    {
+        RETVAL = sqlite_db_load_extension(aTHX_ dbh, file, proc);
+    }
+    OUTPUT:
+        RETVAL
+
 #endif
 
 static int
@@ -224,9 +238,28 @@ backup_to_file(dbh, filename)
     OUTPUT:
         RETVAL
 
+HV*
+table_column_metadata(dbh, dbname, tablename, columnname)
+    SV* dbh
+    SV* dbname
+    SV* tablename
+    SV* columnname
+    ALIAS:
+        DBD::SQLite::db::sqlite_table_column_metadata = 1
+    CODE:
+        RETVAL = sqlite_db_table_column_metadata(aTHX_ dbh, dbname, tablename, columnname);
+    OUTPUT:
+        RETVAL
 
-
-
+SV*
+db_filename(dbh)
+    SV* dbh
+    ALIAS:
+        DBD::SQLite::db::sqlite_db_filename = 1
+    CODE:
+        RETVAL = sqlite_db_filename(aTHX_ dbh);
+    OUTPUT:
+        RETVAL
 
 static int
 register_fts3_perl_tokenizer(dbh)
@@ -238,11 +271,32 @@ register_fts3_perl_tokenizer(dbh)
     OUTPUT:
         RETVAL
 
+HV*
+db_status(dbh, reset = 0)
+    SV* dbh
+    int reset
+    ALIAS:
+        DBD::SQLite::db::sqlite_db_status = 1
+    CODE:
+        RETVAL = (HV*)_sqlite_db_status(aTHX_ dbh, reset);
+    OUTPUT:
+        RETVAL
 
 
 MODULE = DBD::SQLite          PACKAGE = DBD::SQLite::st
 
 PROTOTYPES: DISABLE
+
+HV*
+st_status(sth, reset = 0)
+    SV* sth
+    int reset
+    ALIAS:
+        DBD::SQLite::st::sqlite_st_status = 1
+    CODE:
+        RETVAL = (HV*)_sqlite_st_status(aTHX_ sth, reset);
+    OUTPUT:
+        RETVAL
 
 MODULE = DBD::SQLite          PACKAGE = DBD::SQLite
 
@@ -264,6 +318,14 @@ compile_options()
             }
         }
         XSRETURN(n);
+
+HV*
+sqlite_status(reset = 0)
+    int reset
+    CODE:
+        RETVAL = (HV*)_sqlite_status(reset);
+    OUTPUT:
+        RETVAL
 
 static int
 OK()

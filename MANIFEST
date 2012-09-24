@@ -67,6 +67,10 @@ t/46_mod_perl.t
 t/47_execute.t
 t/48_bind_param_is_sticky.t
 t/49_trace_and_profile.t
+t/50_foreign_key_info.t
+t/51_table_column_metadata.t
+t/52_db_filename.t
+t/53_status.t
 t/cookbook_variance.t
 t/lib/Test.pm
 t/rt_15186_prepcached.t
@@ -87,10 +91,14 @@ t/rt_50503_fts3.t
 t/rt_52573_manual_exclusive_lock.t
 t/rt_53235_icu_compatibility.t
 t/rt_62370_diconnected_handles_operation.t
+t/rt_64177_ping_wipes_out_the_errstr.t
 t/rt_67581_bind_params_mismatch.t
 t/rt_71311_bind_col_and_unicode.t
 t/rt_73159_fts_tokenizer_segfault.t
 t/rt_73787_exponential_buffer_overflow.t
+t/rt_77724_primary_key_with_a_whitespace.t
+t/rt_78833_utf8_flag_for_column_names.t
+typemap
 util/getsqlite.pl
 xt/meta.t
 xt/pmv.t
