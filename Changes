@@ -1,5 +1,23 @@
 Changes for Perl extension DBD-SQLite
 
+1.38_02 Thu 4 Apr 2013
+    - Updated to SQLite 3.7.16.1 (ISHIGAKI)
+    - Removed two obsolete pragma calls at login time (ISHIGAKI)
+    - Resolved #80344: Set SQLITE_DISABLE_DIRSYNC on AIX (suggested
+      by Steve Barnsley) (ISHIGAKI)
+    - Resolved #81536: primary_key_info returns the wrong KEY_SEQ
+      (VLYON)
+    - Resolved #84027: Finalizer() not called in (D. Richard Hipp)
+    - Resolved #84372: -Wpointer-sign warnings with utf8_hop
+      (RURBAN)
+    - Resolved #84373: Add test for RT #26775 "name)" key with
+      DISTINCT (RURBAN/ISHIGAKI)
+    - Resolved #70815: DBD::SQLite 1.33 build is broken under
+      Solaris using Sun C (RURBAN)
+    - Resolved #84380: Fix WINLIKE for mingw/msys (RURBAN)
+    - Added a note on DBD::SQLite and File::Temp (suggested by
+      TOKUHIROM) (ISHIGAKI)
+
 1.38_01 Mon 24 Sep 2012
     *** CHANGES THAT MAY POSSIBLY BREAK YOUR OLD APPLICATIONS ***
     - Resolved #56444: immediate transaction should be on by
@@ -8,7 +26,7 @@ Changes for Perl extension DBD-SQLite
       been the default), set sqlite_use_immediate_transaction
       to false explicitly. (ISHIGAKI)
 
-    - Updated to SQLite 3.17.14 (ISHIGAKI)
+    - Updated to SQLite 3.7.14 (ISHIGAKI)
     - Added support for foreign_key_info (DAMI/ISHIGAKI)
     - Added several methods to retrieve internal information such as
       table_column_metadata/db_filename/*_status (ISHIGAKI/VOVKASM)

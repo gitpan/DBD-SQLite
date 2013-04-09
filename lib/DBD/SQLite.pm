@@ -5,7 +5,7 @@ use strict;
 use DBI   1.57 ();
 use DynaLoader ();
 
-our $VERSION = '1.38_01';
+our $VERSION = '1.38_02';
 our @ISA     = 'DynaLoader';
 
 # sqlite_version cache (set in the XS bootstrap)
@@ -392,7 +392,7 @@ sub primary_key_info {
             ($dbname eq 'temp') ? 'sqlite_temp_master' :
             $quoted_dbname.'.sqlite_master';
 
-        my $sth = $dbh->prepare("SELECT name FROM $master_table WHERE type = ?");
+        my $sth = $dbh->prepare("SELECT name, sql FROM $master_table WHERE type = ?");
         $sth->execute("table");
         while(my $row = $sth->fetchrow_hashref) {
             my $tbname = $row->{name};
@@ -401,13 +401,62 @@ sub primary_key_info {
             my $quoted_tbname = $dbh->quote_identifier($tbname);
             my $t_sth = $dbh->prepare("PRAGMA $quoted_dbname.table_info($quoted_tbname)");
             $t_sth->execute;
+            my @pk;
             while(my $col = $t_sth->fetchrow_hashref) {
-                next unless $col->{pk};
+                push @pk, $col->{name} if $col->{pk};
+            }
+
+            # If there're multiple primary key columns, we need to
+            # find their order from one of the auto-generated unique
+            # indices (note that single column integer primary key
+            # doesn't create an index).
+            if (@pk > 1 and $row->{sql} =~ /\bPRIMARY\s+KEY\s*\(\s*
+                (
+                    (?:
+                        (
+                            [a-z_][a-z0-9_]*
+                          | (["'`])(?:\3\3|(?!\3).)+?\3(?!\3)
+                          | \[[^\]]+\]
+                        )
+                        \s*,\s*
+                    )+
+                    (
+                        [a-z_][a-z0-9_]*
+                      | (["'`])(?:\5\5|(?!\5).)+?\5(?!\5)
+                      | \[[^\]]+\]
+                    )
+                )
+                    \s*\)/six) {
+                my $pk_sql = $1;
+                @pk = ();
+                while($pk_sql =~ /
+                    (
+                        [a-z_][a-z0-9_]*
+                      | (["'`])(?:\2\2|(?!\2).)+?\2(?!\2)
+                      | \[([^\]]+)\]
+                    )
+                    (?:\s*,\s*|$)
+                        /sixg) {
+                    my($col, $quote, $brack) = ($1, $2, $3);
+                    if ( defined $quote ) {
+                        # Dequote "'`
+                        $col = substr $col, 1, -1;
+                        $col =~ s/$quote$quote/$quote/g;
+                    } elsif ( defined $brack ) {
+                        # Dequote []
+                        $col = $brack;
+                    }
+                    push @pk, $col;
+                }
+            }
+
+            my $key_seq = 0;
+            foreach my $pk_field (@pk) {
                 push @pk_info, {
                     TABLE_SCHEM => $dbname,
                     TABLE_NAME  => $tbname,
-                    COLUMN_NAME => $col->{name},
-                    KEY_SEQ     => scalar @pk_info + 1,
+                    COLUMN_NAME => $pk_field,
+                    KEY_SEQ     => ++$key_seq,
                     PK_NAME     => 'PRIMARY KEY',
                 };
             }
@@ -851,6 +900,36 @@ ambiguity.
 If the filename C<$dbfile> is an empty string, then a private,
 temporary on-disk database will be created. This private database will
 be automatically deleted as soon as the database connection is closed.
+
+=head2 DBD::SQLite And File::Temp
+
+When you use L<File::Temp> to create a temporary file/directory for
+SQLite databases, you need to remember:
+
+=over 4
+
+=item tempfile may be locked exclusively
+
+You may want to use C<tempfile()> to create a temporary database
+filename for DBD::SQLite, but as noted in L<File::Temp>'s POD,
+this file may have an exclusive lock under some operating systems
+(notably Mac OSX), and result in a "database is locked" error.
+To avoid this, set EXLOCK option to false when you call tempfile().
+
+  ($fh, $filename) = tempfile($template, EXLOCK => 0);
+
+=item CLEANUP may not work unless a database is disconnected
+
+When you set CLEANUP option to true when you create a temporary
+directory with C<tempdir()> or C<newdir()>, you may have to
+disconnect databases explicitly before the temporary directory
+is gone (notably under MS Windows).
+
+=back
+
+If you don't need to keep or share a temporary database,
+use ":memory:" database instead. It's much handier and cleaner
+for ordinary testing.
 
 =head2 Accessing A Database With Other Tools
 
@@ -2034,20 +2113,25 @@ need to call the L</create_collation> method directly.
 
 =head1 FULLTEXT SEARCH
 
-The FTS3 extension module within SQLite allows users to create special
-tables with a built-in full-text index (hereafter "FTS3 tables"). The
+The FTS extension module within SQLite allows users to create special
+tables with a built-in full-text index (hereafter "FTS tables"). The
 full-text index allows the user to efficiently query the database for
 all rows that contain one or more instances of a specified word (hereafter
 a "token"), even if the table contains many large documents.
 
+=head2 Short introduction to FTS
 
-=head2 Short introduction to FTS3
+The first full-text search modules for SQLite were called C<FTS1> and C<FTS2>
+and are now obsolete. The latest recommended module is C<FTS4>; however
+the former module C<FTS3> is still supporter. 
+Detailed documentation for both C<FTS4> and C<FTS3> can be found
+at L<http://www.sqlite.org/fts3.html>, including explanations about the
+differences between these two versions.
 
-The detailed documentation for FTS3 can be found
-at L<http://www.sqlite.org/fts3.html>. Here is a very short example :
+Here is a very short example of using FTS :
 
   $dbh->do(<<"") or die DBI::errstr;
-  CREATE VIRTUAL TABLE fts_example USING fts3(content)
+  CREATE VIRTUAL TABLE fts_example USING fts4(content)
   
   my $sth = $dbh->prepare("INSERT INTO fts_example(content) VALUES (?))");
   $sth->execute($_) foreach @docs_to_insert;
@@ -2062,14 +2146,14 @@ The key points in this example are :
 
 =item *
 
-The syntax for creating FTS3 tables is 
+The syntax for creating FTS tables is 
 
-  CREATE VIRTUAL TABLE <table_name> USING fts3(<columns>)
+  CREATE VIRTUAL TABLE <table_name> USING fts4(<columns>)
 
 where C<< <columns> >> is a list of column names. Columns may be
 typed, but the type information is ignored. If no columns
 are specified, the default is a single column named C<content>.
-In addition, FTS3 tables have an implicit column called C<docid>
+In addition, FTS tables have an implicit column called C<docid>
 (or also C<rowid>) for numbering the stored documents.
 
 =item *
@@ -2082,7 +2166,7 @@ use the same syntax as for regular SQLite tables.
 Full-text searches are specified with the C<MATCH> operator, and an
 operand which may be a single word, a word prefix ending with '*', a
 list of words, a "phrase query" in double quotes, or a boolean combination
-of the above. 
+of the above.
 
 =item *
 
@@ -2092,7 +2176,7 @@ document text, where the words pertaining to the query are highlighted.
 =back
 
 There are many more details to building and searching
-FTS3 tables, so we strongly invite you to read
+FTS tables, so we strongly invite you to read
 the full documentation at at L<http://www.sqlite.org/fts3.html>.
 
 B<Incompatible change> : 
@@ -2113,14 +2197,16 @@ in a separate distribution.
 =head2 Tokenizers
 
 The behaviour of full-text indexes strongly depends on how
-documents are split into I<tokens>; therefore FTS3 table
+documents are split into I<tokens>; therefore FTS table
 declarations can explicitly specify how to perform
 tokenization: 
 
-  CREATE ... USING fts3(<columns>, tokenize=<tokenizer>)
+  CREATE ... USING fts4(<columns>, tokenize=<tokenizer>)
 
 where C<< <tokenizer> >> is a sequence of space-separated
-words that triggers a specific tokenizer, as explained below.
+words that triggers a specific tokenizer. Tokenizers can
+be SQLite builtins, written in C code, or Perl tokenizers.
+Both are as explained below.
 
 =head3 SQLite builtin tokenizers
 
@@ -2158,7 +2244,7 @@ ICU locale identifier as argument (such as "tr_TR" for
 Turkish as used in Turkey, or "en_AU" for English as used in
 Australia). For example:
 
-  CREATE VIRTUAL TABLE thai_text USING fts3(text, tokenize=icu th_TH)
+  CREATE VIRTUAL TABLE thai_text USING fts4(text, tokenize=icu th_TH)
 
 The ICU tokenizer implementation is very simple. It splits the input
 text according to the ICU rules for finding word boundaries and
@@ -2175,14 +2261,14 @@ In addition to the builtin SQLite tokenizers, C<DBD::SQLite>
 implements a I<perl> tokenizer, that can hook to any tokenizing
 algorithm written in Perl. This is specified as follows :
 
-  CREATE ... USING fts3(<columns>, tokenize=perl '<perl_function>')
+  CREATE ... USING fts4(<columns>, tokenize=perl '<perl_function>')
 
 where C<< <perl_function> >> is a fully qualified Perl function name
 (i.e. prefixed by the name of the package in which that function is
 declared). So for example if the function is C<my_func> in the main 
 program, write
 
-  CREATE ... USING fts3(<columns>, tokenize=perl 'main::my_func')
+  CREATE ... USING fts4(<columns>, tokenize=perl 'main::my_func')
 
 That function should return a code reference that takes a string as
 single argument, and returns an iterator (another function), which
@@ -2215,7 +2301,7 @@ because :
 
 =item *
 
-the external, named sub is called whenever accessing a FTS3 table
+the external, named sub is called whenever accessing a FTS table
 with that tokenizer
 
 =item *
@@ -2232,32 +2318,33 @@ all terms within that string.
 =back
 
 Instead of writing tokenizers by hand, you can grab one of those
-already implemented in the L<Search::Tokenizer> module :
+already implemented in the L<Search::Tokenizer> module. For example,
+if you want ignore differences between accented characters, you can
+write :
 
   use Search::Tokenizer;
   $dbh->do(<<"") or die DBI::errstr;
-  CREATE ... USING fts3(<columns>, 
+  CREATE ... USING fts4(<columns>, 
                         tokenize=perl 'Search::Tokenizer::unaccent')
 
-or you can use L<Search::Tokenizer/new> to build
+Alternatively, you can use L<Search::Tokenizer/new> to build
 your own tokenizer.
 
 
 =head2 Incomplete handling of utf8 characters
 
-The current FTS3 implementation in SQLite is far from complete with
+The current FTS implementation in SQLite is far from complete with
 respect to utf8 handling : in particular, variable-length characters
 are not treated correctly by the builtin functions
 C<offsets()> and C<snippet()>.
 
-=head2 Database space for FTS3
+=head2 Database space for FTS
 
-FTS3 stores a complete copy of the indexed documents, together with
+By default, FTS stores a complete copy of the indexed documents, together with
 the fulltext index. On a large collection of documents, this can
-consume quite a lot of disk space. If copies of documents are also
-available as external resources (for example files on the filesystem),
-that space can sometimes be spared --- see the tip in the 
-L<Cookbook|DBD::SQLite::Cookbook/"Sparing database disk space">.
+consume quite a lot of disk space. However, FTS has some options
+for compressing the documents, or even for not storing them at all
+-- see L<http://www.sqlite.org/fts3.html#fts4_options>.
 
 =head1 R* TREE SUPPORT
 
@@ -2390,9 +2477,9 @@ Some parts copyright 2008 Francis J. Lacoste.
 
 Some parts copyright 2008 Wolfgang Sourdeau.
 
-Some parts copyright 2008 - 2012 Adam Kennedy.
+Some parts copyright 2008 - 2013 Adam Kennedy.
 
-Some parts copyright 2009 - 2012 Kenichi Ishigaki.
+Some parts copyright 2009 - 2013 Kenichi Ishigaki.
 
 Some parts derived from L<DBD::SQLite::Amalgamation>
 copyright 2008 Audrey Tang.

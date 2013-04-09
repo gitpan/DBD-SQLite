@@ -39,6 +39,7 @@ imp_dbh_t *last_executed_dbh; /* needed by perl_tokenizer
 #define sqlite_trace(h,xxh,level,what) if ( DBIc_TRACE_LEVEL((imp_xxh_t*)xxh) >= level ) _sqlite_trace(aTHX_ __FILE__, __LINE__, h, (imp_xxh_t*)xxh, what)
 #define sqlite_exec(h,sql) _sqlite_exec(aTHX_ h, imp_dbh->db, sql)
 #define sqlite_open(dbname,db) _sqlite_open(aTHX_ dbh, dbname, db)
+#define _isspace(c) (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' || c == '\f')
 
 static void
 _sqlite_trace(pTHX_ char *file, int line, SV *h, imp_xxh_t *imp_xxh, const char *what)
@@ -289,9 +290,6 @@ sqlite_db_login6(SV *dbh, imp_dbh_t *imp_dbh, char *dbname, char *user, char *pa
     imp_dbh->see_if_its_a_number       = FALSE;
 
     sqlite3_busy_timeout(imp_dbh->db, SQL_TIMEOUT);
-
-    sqlite_exec(dbh, "PRAGMA empty_result_callbacks = ON");
-    sqlite_exec(dbh, "PRAGMA show_datatypes = ON");
 
 #if 0
     /*
@@ -744,6 +742,16 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
     if (sqlite3_get_autocommit(imp_dbh->db)) {
         /* COMPAT: sqlite3_sql is only available for 3006000 or newer */
         const char *sql = sqlite3_sql(imp_sth->stmt);
+        while ( _isspace(sql[0]) || (sql[0] == '-' && sql[1] == '-')) {
+          if ( _isspace(sql[0]) ) {
+            while ( _isspace(sql[0]) ) sql++;
+            continue;
+          }
+          else if (sql[0] == '-') {
+            while ( sql[0] != 0 && sql[0] != '\n' ) sql++;
+            continue;
+          }
+        }
         if ((sql[0] == 'B' || sql[0] == 'b') &&
             (sql[1] == 'E' || sql[1] == 'e') &&
             (sql[2] == 'G' || sql[2] == 'g') &&
@@ -769,12 +777,25 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
     else if (DBIc_is(imp_dbh, DBIcf_BegunWork)) {
         /* COMPAT: sqlite3_sql is only available for 3006000 or newer */
         const char *sql = sqlite3_sql(imp_sth->stmt);
+        while ( _isspace(sql[0]) || (sql[0] == '-' && sql[1] == '-')) {
+          if ( _isspace(sql[0]) ) {
+            while ( _isspace(sql[0]) ) sql++;
+            continue;
+          }
+          else if (sql[0] == '-') {
+            while ( sql[0] != 0 && sql[0] != '\n' ) sql++;
+            continue;
+          }
+        }
         if (((sql[0] == 'C' || sql[0] == 'c') &&
              (sql[1] == 'O' || sql[1] == 'o') &&
              (sql[2] == 'M' || sql[2] == 'm') &&
              (sql[3] == 'M' || sql[3] == 'm') &&
              (sql[4] == 'I' || sql[4] == 'i') &&
-             (sql[5] == 'T' || sql[5] == 't'))) {
+             (sql[5] == 'T' || sql[5] == 't')) ||
+            ((sql[0] == 'E' || sql[0] == 'e') &&
+             (sql[1] == 'N' || sql[1] == 'n') &&
+             (sql[2] == 'D' || sql[2] == 'd'))) {
             DBIc_off(imp_dbh, DBIcf_BegunWork);
             DBIc_on(imp_dbh,  DBIcf_AutoCommit);
         }
@@ -790,7 +811,11 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
             int l = strlen(sql);
             bool is_savepoint = FALSE;
             for(i = 8; i < l; i++) {
-                if (sql[i] == ' ' || sql[i] == '\t') continue;
+                if (_isspace(sql[i])) continue;
+                if (sql[i] == '-' && sql[i+1] == '-') {
+                    while (sql[i] != 0 && sql[i] != '\n') i++;
+                    continue;
+                }
                 if (sql[i] == 'T' || sql[i] == 't') {
                     if ((sql[i+0]  == 'T' || sql[i+0]  == 't') &&
                         (sql[i+1]  == 'R' || sql[i+1]  == 'r') &&
@@ -1704,7 +1729,7 @@ sqlite_db_aggr_finalize_dispatcher( sqlite3_context *context )
     aggrInfo *aggr, myAggr;
     int count = 0;
 
-    aggr = sqlite3_aggregate_context(context, sizeof (aggrInfo));
+    aggr = sqlite3_aggregate_context(context, 0);
 
     ENTER;
     SAVETMPS;
@@ -2642,10 +2667,10 @@ static int perl_tokenizer_Next(
 
             /* recompute start/end offsets in bytes, not in chars */
             hop            = *piStartOffset - c->lastCharOffset;
-            byteOffset     = utf8_hop((U8*)c->lastByteOffset, hop);
+            byteOffset     = (char*)utf8_hop((U8*)c->lastByteOffset, hop);
             hop            = *piEndOffset - *piStartOffset;
             *piStartOffset = byteOffset - c->pInput;
-            byteOffset     = utf8_hop(byteOffset, hop);
+            byteOffset     = (char*)utf8_hop((U8*)byteOffset, hop);
             *piEndOffset   = byteOffset - c->pInput;
 
             /* remember where we are for next round */

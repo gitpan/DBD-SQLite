@@ -9,6 +9,7 @@ use File::Spec;
 sub WINLIKE () {
 	return 1 if $^O eq 'MSWin32';
 	return 1 if $^O eq 'cygwin';
+	return 1 if $^O eq 'msys';
 	return '';
 }
 
@@ -244,6 +245,9 @@ if ($^O eq 'darwin') {
 	}
 	push @CC_DEFINE, '-DSQLITE_ENABLE_LOCKING_STYLE=0';
 }
+if ($^O eq 'aix') {
+	push @CC_DEFINE, '-DSQLITE_DISABLE_DIRSYNC';
+}
 
 my @CC_OPTIONS = (
 	INC          => join( ' ', @CC_INC    ),
@@ -298,7 +302,7 @@ WriteMakefile(
 	# this change broke a test under some environment, and thus, may
 	# break other applications eventually. I'm not sure if this is
 	# worth the trouble.
-	OPTIMIZE => '-O2',
+	OPTIMIZE => $Config{optimize} . (($^O eq 'solaris' and !$Config{gccversion}) ? "" : " -O2"),
 	OPTIONAL( '6.48',
 		MIN_PERL_VERSION => '5.006',
 	),
