@@ -66,30 +66,6 @@ NOTABLE DIFFERENCES FROM OTHER DRIVERS
     on-disk database will be created. This private database will be
     automatically deleted as soon as the database connection is closed.
 
-  DBD::SQLite And File::Temp
-    When you use File::Temp to create a temporary file/directory for SQLite
-    databases, you need to remember:
-
-    tempfile may be locked exclusively
-        You may want to use "tempfile()" to create a temporary database
-        filename for DBD::SQLite, but as noted in File::Temp's POD, this
-        file may have an exclusive lock under some operating systems
-        (notably Mac OSX), and result in a "database is locked" error. To
-        avoid this, set EXLOCK option to false when you call tempfile().
-
-          ($fh, $filename) = tempfile($template, EXLOCK => 0);
-
-    CLEANUP may not work unless a database is disconnected
-        When you set CLEANUP option to true when you create a temporary
-        directory with "tempdir()" or "newdir()", you may have to disconnect
-        databases explicitly before the temporary directory is gone (notably
-        under MS Windows).
-
-    (The above is quoted from the pod of File::Temp.)
-
-    If you don't need to keep or share a temporary database, use ":memory:"
-    database instead. It's much handier and cleaner for ordinary testing.
-
   Accessing A Database With Other Tools
     To access the database from the command line, try using "dbish" which
     comes with the DBI::Shell module. Just type:
@@ -235,54 +211,12 @@ NOTABLE DIFFERENCES FROM OTHER DRIVERS
     See <http://www.sqlite.org/foreignkeys.html> for details.
 
   Pragma
-    SQLite has a set of "Pragma"s to modify its operation or to query for
+    SQLite has a set of "Pragma"s to modifiy its operation or to query for
     its internal data. These are specific to SQLite and are not likely to
     work with other DBD libraries, but you may find some of these are quite
-    useful, including:
-
-    journal_mode
-        You can use this pragma to change the journal mode for SQLite
-        databases, maybe for better performance, or for compatibility.
-
-        Its default mode is "DELETE", which means SQLite uses a rollback
-        journal to implement transactions, and the journal is deleted at the
-        conclusion of each transaction. If you use "TRUNCATE" instead of
-        "DELETE", the journal will be truncated, which is usually much
-        faster.
-
-        A "WAL" (write-ahead log) mode is introduced as of SQLite 3.7.0.
-        This mode is persistent, and it stays in effect even after closing
-        and reopening the database. In other words, once the "WAL" mode is
-        set in an application or in a test script, the database becomes
-        inaccessible by older clients. This tends to be an issue when you
-        use a system "sqlite3" executable under a conservative operating
-        system.
-
-        To fix this, You need to issue "PRAGMA journal_mode = DELETE" (or
-        "TRUNCATE") beforehand, or install a newer version of "sqlite3".
-
-    legacy_file_format
-        If you happen to need to create a SQLite database that will also be
-        accessed by a very old SQLite client (prior to 3.3.0 released in
-        Jan. 2006), you need to set this pragma to ON before you create a
-        database.
-
-    reverse_unordered_selects
-        You can set this pragma to ON to reverse the order of results of
-        SELECT statements without an ORDER BY clause so that you can see if
-        applications are making invalid assumptions about the result order.
-
-        Note that SQLite 3.7.15 (bundled with DBD::SQLite 1.38_02) enhanced
-        its query optimizer and the order of results of a SELECT statement
-        without an ORDER BY clause may be different from the one of the
-        previous versions.
-
-    synchronous
-        You can set set this pragma to OFF to make some of the operations in
-        SQLite faster with a possible risk of database corruption in the
-        worst case. See also "Performance" section below.
-
-    See <http://www.sqlite.org/pragma.html> for more details.
+    useful. DBD::SQLite actually sets some (like "show_datatypes") for you
+    when you connect to a database. See <http://www.sqlite.org/pragma.html>
+    for details.
 
   Transactions
     DBI/DBD::SQLite's transactions may be a bit confusing. They behave
@@ -332,24 +266,34 @@ NOTABLE DIFFERENCES FROM OTHER DRIVERS
     ends by a "COMMIT" or a <ROLLBACK>.
 
   Transaction and Database Locking
-    The default transaction behavior of SQLite is "deferred", that means,
-    locks are not acquired until the first read or write operation, and thus
-    it is possible that another thread or process could create a separate
-    transaction and write to the database after the "BEGIN" on the current
-    thread has executed, and eventually cause a "deadlock". To avoid this,
-    DBD::SQLite internally issues a "BEGIN IMMEDIATE" when you begin a
-    transaction by "begin_work" or under the "AutoCommit" mode (since
-    1.38_01).
+    Transaction by "AutoCommit" or "begin_work" is nice and handy, but
+    sometimes you may get an annoying "database is locked" error. This
+    typically happens when someone begins a transaction, and tries to write
+    to a database while other person is reading from the database (in
+    another transaction). You might be surprised but SQLite doesn't lock a
+    database when you just begin a normal (deferred) transaction to maximize
+    concurrency. It reserves a lock when you issue a statement to write, but
+    until you actually try to write with a "commit" statement, it allows
+    other people to read from the database. However, reading from the
+    database also requires "shared lock", and that prevents to give you the
+    "exclusive lock" you reserved, thus you get the "database is locked"
+    error, and other people will get the same error if they try to write
+    afterwards, as you still have a "pending" lock. "busy_timeout" doesn't
+    help in this case.
 
-    If you really need to turn off this feature for some reasons, set
-    "sqlite_use_immediate_transaction" database handle attribute to false,
-    and the default "deferred" transaction will be used.
+    To avoid this, set a transaction type explicitly. You can issue a "begin
+    immediate transaction" (or "begin exclusive transaction") for each
+    transaction, or set "sqlite_use_immediate_transaction" database handle
+    attribute to true (since 1.30_02) to always use an immediate transaction
+    (even when you simply use "begin_work" or turn off the "AutoCommit".).
 
       my $dbh = DBI->connect("dbi:SQLite::memory:", "", "", {
-        sqlite_use_immediate_transaction => 0,
+        sqlite_use_immediate_transaction => 1,
       });
 
-    See <http://sqlite.org/lockingv3.html> for locking details.
+    Note that this works only when all of the connections use the same
+    (non-deferred) transaction. See <http://sqlite.org/lockingv3.html> for
+    locking details.
 
   "$sth->finish" and Transaction Rollback
     As the DBI doc says, you almost certainly do not need to call "finish"
@@ -475,10 +419,6 @@ DRIVER PRIVATE ATTRIBUTES
         immediate transaction" (instead of "begin transaction") when
         necessary. See above for details.
 
-        As of version 1.38_01, this attribute is set to true by default. If
-        you really need to use "deferred" transactions for some reasons, set
-        this to false explicitly.
-
     sqlite_see_if_its_a_number
         If you set this to true, DBD::SQLite tries to see if the bind values
         are number or not, and does not quote if they are numbers. See above
@@ -525,62 +465,9 @@ METHODS
 
     You can retrieve primary key names or more detailed information. As
     noted above, SQLite does not have the concept of catalogs, so the first
-    argument of the methods is usually "undef", and you'll usually set
+    argument of the mothods is usually "undef", and you'll usually set
     "undef" for the second one (unless you want to know the primary keys of
     temporary tables).
-
-  foreign_key_info
-      $sth = $dbh->foreign_key_info(undef, $pk_schema, $pk_table,
-                                    undef, $fk_schema, $fk_table);
-
-    Returns information about foreign key constraints, as specified in
-    "foreign_key_info" in DBI, but with some limitations :
-
-    *   information in rows returned by the $sth is incomplete with respect
-        to the "foreign_key_info" in DBI specification. All requested fields
-        are present, but the content is "undef" for some of them.
-
-    The following nonempty fields are returned :
-
-    PKTABLE_NAME: The primary (unique) key table identifier.
-
-    PKCOLUMN_NAME: The primary (unique) key column identifier.
-
-    FKTABLE_NAME: The foreign key table identifier.
-
-    FKCOLUMN_NAME: The foreign key column identifier.
-
-    KEY_SEQ: The column sequence number (starting with 1), when several
-    columns belong to a same constraint.
-
-    UPDATE_RULE: The referential action for the UPDATE rule. The following
-    codes are defined:
-
-      CASCADE              0
-      RESTRICT             1
-      SET NULL             2
-      NO ACTION            3
-      SET DEFAULT          4
-
-    Default is 3 ('NO ACTION').
-
-    DELETE_RULE: The referential action for the DELETE rule. The codes are
-    the same as for UPDATE_RULE.
-
-    Unfortunately, the DEFERRABILITY field is always "undef"; as a matter of
-    fact, deferrability clauses are supported by SQLite, but they can't be
-    reported because the "PRAGMA foreign_key_list" tells nothing about them.
-
-    UNIQUE_OR_PRIMARY: Whether the column is primary or unique.
-
-    Note: foreign key support in SQLite must be explicitly turned on through
-    a "PRAGMA" command; see "Foreign keys" earlier in this manual.
-
-  ping
-      my $bool = $dbh->ping;
-
-    returns true if the database file exists (or the database is in-memory),
-    and the database connection is active.
 
 DRIVER PRIVATE METHODS
     The following methods can be called via the func() method with a little
@@ -611,10 +498,6 @@ DRIVER PRIVATE METHODS
 
     Running "$h->last_insert_id("","","","")" is the equivalent of running
     "$dbh->sqlite_last_insert_rowid()" directly.
-
-  $dbh->sqlite_db_filename()
-    Retrieve the current (main) database filename. If the database is
-    in-memory or temporary, this returns "undef".
 
   $dbh->sqlite_busy_timeout()
     Retrieve the current busy timeout.
@@ -758,7 +641,7 @@ DRIVER PRIVATE METHODS
       
       my $sigma = 0;
           foreach my $v ( @$self ) {
-              $sigma += ($v - $mu)**2;
+              $sigma += ($x - $mu)**2;
           }
           $sigma = $sigma / ($n - 1);
       
@@ -845,8 +728,8 @@ DRIVER PRIVATE METHODS
     "DBD::SQLite::IGNORE" to disallow the specific action but allow the SQL
     statement to continue to be compiled, or "DBD::SQLite::DENY" to cause
     the entire SQL statement to be rejected with an error. If the authorizer
-    callback returns any other value, then "prepare" call that triggered the
-    authorizer will fail with an error message.
+    callback returns any other value, then then "prepare" call that
+    triggered the authorizer will fail with an error message.
 
     An authorizer is used when preparing SQL statements from an untrusted
     source, to ensure that the SQL statements do not try to access data they
@@ -899,14 +782,6 @@ DRIVER PRIVATE METHODS
       $sth = $dbh->prepare("select load_extension('libsqlitefunctions.so')")
       or die "Cannot prepare: " . $dbh->errstr();
 
-  $dbh->sqlite_load_extension( $file, $proc )
-    Loading an extension by a select statement (with the "load_extension"
-    sqlite3 function like above) has some limitations. If you need to, say,
-    create other functions from an extension, use this method. $file (a path
-    to the extension) is mandatory, and $proc (an entry point name) is
-    optional. You need to call "sqlite_enable_load_extension" before calling
-    "sqlite_load_extension".
-
   $dbh->sqlite_trace( $code_ref )
     This method registers a trace callback to be invoked whenever SQL
     statements are being run.
@@ -949,42 +824,10 @@ DRIVER PRIVATE METHODS
 
     See also DBI::Profile for better profiling options.
 
-  $dbh->sqlite_table_column_metadata( $dbname, $tablename, $columnname )
-    is for internal use only.
-
   DBD::SQLite::compile_options()
     Returns an array of compile options (available since sqlite 3.6.23,
     bundled in DBD::SQLite 1.30_01), or an empty array if the bundled
     library is old or compiled with SQLITE_OMIT_COMPILEOPTION_DIAGS.
-
-  DBD::SQLite::sqlite_status()
-    Returns a hash reference that holds a set of status information of
-    SQLite runtime such as memory usage or page cache usage (see
-    <http://www.sqlite.org/c3ref/c_status_malloc_count.html> for details).
-    Each of the entry contains the current value and the highwater value.
-
-      my $status = DBD::SQLite::sqlite_status();
-      my $cur  = $status->{memory_used}{current};
-      my $high = $status->{memory_used}{highwater};
-
-    You may also pass 0 as an argument to reset the status.
-
-  $dbh->sqlite_db_status()
-    Returns a hash reference that holds a set of status information of
-    database connection such as cache usage. See
-    <http://www.sqlite.org/c3ref/c_dbstatus_options.html> for details. You
-    may also pass 0 as an argument to reset the status.
-
-  $sth->sqlite_st_status()
-    Returns a hash reference that holds a set of status information of
-    SQLite statement handle such as full table scan count. See
-    <http://www.sqlite.org/c3ref/c_stmtstatus_counter.html> for details.
-    Statement status only holds the current value.
-
-      my $status = $sth->sqlite_st_status();
-      my $cur = $status->{fullscan_step};
-
-    You may also pass 0 as an argument to reset the status.
 
 DRIVER CONSTANTS
     A subset of SQLite C constants are made available to Perl, because they
@@ -1130,7 +973,7 @@ COLLATION FUNCTIONS
       use DBD::SQLite;
       $DBD::SQLite::COLLATION{no_accents} = sub {
         my ( $a, $b ) = map lc, @_;
-        tr[����������������������������]
+        tr[????????????????????????????]
           [aaaaaacdeeeeiiiinoooooouuuuy] for $a, $b;
         $a cmp $b;
       };
@@ -1158,24 +1001,18 @@ COLLATION FUNCTIONS
     "create_collation" method directly.
 
 FULLTEXT SEARCH
-    The FTS extension module within SQLite allows users to create special
-    tables with a built-in full-text index (hereafter "FTS tables"). The
+    The FTS3 extension module within SQLite allows users to create special
+    tables with a built-in full-text index (hereafter "FTS3 tables"). The
     full-text index allows the user to efficiently query the database for
     all rows that contain one or more instances of a specified word
     (hereafter a "token"), even if the table contains many large documents.
 
-  Short introduction to FTS
-    The first full-text search modules for SQLite were called "FTS1" and
-    "FTS2" and are now obsolete. The latest recommended module is "FTS4";
-    however the former module "FTS3" is still supporter. Detailed
-    documentation for both "FTS4" and "FTS3" can be found at
-    <http://www.sqlite.org/fts3.html>, including explanations about the
-    differences between these two versions.
-
-    Here is a very short example of using FTS :
+  Short introduction to FTS3
+    The detailed documentation for FTS3 can be found at
+    <http://www.sqlite.org/fts3.html>. Here is a very short example :
 
       $dbh->do(<<"") or die DBI::errstr;
-      CREATE VIRTUAL TABLE fts_example USING fts4(content)
+      CREATE VIRTUAL TABLE fts_example USING fts3(content)
       
   my $sth = $dbh->prepare("INSERT INTO fts_example(content) VALUES (?))");
       $sth->execute($_) foreach @docs_to_insert;
@@ -1185,13 +1022,13 @@ FULLTEXT SEARCH
 
     The key points in this example are :
 
-    *   The syntax for creating FTS tables is
+    *   The syntax for creating FTS3 tables is
 
-          CREATE VIRTUAL TABLE <table_name> USING fts4(<columns>)
+          CREATE VIRTUAL TABLE <table_name> USING fts3(<columns>)
 
         where "<columns>" is a list of column names. Columns may be typed,
         but the type information is ignored. If no columns are specified,
-        the default is a single column named "content". In addition, FTS
+        the default is a single column named "content". In addition, FTS3
         tables have an implicit column called "docid" (or also "rowid") for
         numbering the stored documents.
 
@@ -1207,8 +1044,8 @@ FULLTEXT SEARCH
         the document text, where the words pertaining to the query are
         highlighted.
 
-    There are many more details to building and searching FTS tables, so we
-    strongly invite you to read the full documentation at
+    There are many more details to building and searching FTS3 tables, so we
+    strongly invite you to read the full documentation at at
     <http://www.sqlite.org/fts3.html>.
 
     Incompatible change : starting from version 1.31, "DBD::SQLite" uses the
@@ -1227,14 +1064,13 @@ FULLTEXT SEARCH
 
   Tokenizers
     The behaviour of full-text indexes strongly depends on how documents are
-    split into *tokens*; therefore FTS table declarations can explicitly
+    split into *tokens*; therefore FTS3 table declarations can explicitly
     specify how to perform tokenization:
 
-      CREATE ... USING fts4(<columns>, tokenize=<tokenizer>)
+      CREATE ... USING fts3(<columns>, tokenize=<tokenizer>)
 
     where "<tokenizer>" is a sequence of space-separated words that triggers
-    a specific tokenizer. Tokenizers can be SQLite builtins, written in C
-    code, or Perl tokenizers. Both are as explained below.
+    a specific tokenizer, as explained below.
 
    SQLite builtin tokenizers
     SQLite comes with three builtin tokenizers :
@@ -1264,7 +1100,7 @@ FULLTEXT SEARCH
         identifier as argument (such as "tr_TR" for Turkish as used in
         Turkey, or "en_AU" for English as used in Australia). For example:
 
-          CREATE VIRTUAL TABLE thai_text USING fts4(text, tokenize=icu th_TH)
+          CREATE VIRTUAL TABLE thai_text USING fts3(text, tokenize=icu th_TH)
 
         The ICU tokenizer implementation is very simple. It splits the input
         text according to the ICU rules for finding word boundaries and
@@ -1279,13 +1115,13 @@ FULLTEXT SEARCH
     *perl* tokenizer, that can hook to any tokenizing algorithm written in
     Perl. This is specified as follows :
 
-      CREATE ... USING fts4(<columns>, tokenize=perl '<perl_function>')
+      CREATE ... USING fts3(<columns>, tokenize=perl '<perl_function>')
 
     where "<perl_function>" is a fully qualified Perl function name (i.e.
     prefixed by the name of the package in which that function is declared).
     So for example if the function is "my_func" in the main program, write
 
-      CREATE ... USING fts4(<columns>, tokenize=perl 'main::my_func')
+      CREATE ... USING fts3(<columns>, tokenize=perl 'main::my_func')
 
     That function should return a code reference that takes a string as
     single argument, and returns an iterator (another function), which
@@ -1314,7 +1150,7 @@ FULLTEXT SEARCH
     There must be three levels of subs, in a kind of "Russian dolls"
     structure, because :
 
-    *   the external, named sub is called whenever accessing a FTS table
+    *   the external, named sub is called whenever accessing a FTS3 table
         with that tokenizer
 
     *   the inner, anonymous sub is called whenever a new string needs to be
@@ -1325,29 +1161,27 @@ FULLTEXT SEARCH
         terms within that string.
 
     Instead of writing tokenizers by hand, you can grab one of those already
-    implemented in the Search::Tokenizer module. For example, if you want
-    ignore differences between accented characters, you can write :
+    implemented in the Search::Tokenizer module :
 
       use Search::Tokenizer;
       $dbh->do(<<"") or die DBI::errstr;
-      CREATE ... USING fts4(<columns>, 
+      CREATE ... USING fts3(<columns>, 
                             tokenize=perl 'Search::Tokenizer::unaccent')
 
-    Alternatively, you can use "new" in Search::Tokenizer to build your own
-    tokenizer.
+    or you can use "new" in Search::Tokenizer to build your own tokenizer.
 
   Incomplete handling of utf8 characters
-    The current FTS implementation in SQLite is far from complete with
+    The current FTS3 implementation in SQLite is far from complete with
     respect to utf8 handling : in particular, variable-length characters are
     not treated correctly by the builtin functions "offsets()" and
     "snippet()".
 
-  Database space for FTS
-    By default, FTS stores a complete copy of the indexed documents,
-    together with the fulltext index. On a large collection of documents,
-    this can consume quite a lot of disk space. However, FTS has some
-    options for compressing the documents, or even for not storing them at
-    all -- see <http://www.sqlite.org/fts3.html#fts4_options>.
+  Database space for FTS3
+    FTS3 stores a complete copy of the indexed documents, together with the
+    fulltext index. On a large collection of documents, this can consume
+    quite a lot of disk space. If copies of documents are also available as
+    external resources (for example files on the filesystem), that space can
+    sometimes be spared --- see the tip in the Cookbook.
 
 R* TREE SUPPORT
     The RTREE extension module within SQLite adds support for creating a
@@ -1472,9 +1306,9 @@ COPYRIGHT
 
     Some parts copyright 2008 Wolfgang Sourdeau.
 
-    Some parts copyright 2008 - 2013 Adam Kennedy.
+    Some parts copyright 2008 - 2012 Adam Kennedy.
 
-    Some parts copyright 2009 - 2013 Kenichi Ishigaki.
+    Some parts copyright 2009 - 2012 Kenichi Ishigaki.
 
     Some parts derived from DBD::SQLite::Amalgamation copyright 2008 Audrey
     Tang.
@@ -1484,4 +1318,3 @@ COPYRIGHT
 
     The full text of the license can be found in the LICENSE file included
     with this module.
-

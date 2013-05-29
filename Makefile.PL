@@ -248,6 +248,9 @@ if ($^O eq 'darwin') {
 if ($^O eq 'aix') {
 	push @CC_DEFINE, '-DSQLITE_DISABLE_DIRSYNC';
 }
+if ($^O =~ /bsd/i) {
+	push @CC_DEFINE, '-D_XOPEN_SOURCE';
+}
 
 my @CC_OPTIONS = (
 	INC          => join( ' ', @CC_INC    ),
@@ -337,7 +340,7 @@ WriteMakefile(
 			resources => {
 				license     => 'http://dev.perl.org/licenses/',
 				bugtracker  => 'http://rt.cpan.org/Public/Dist/Display.html?Name=DBD-SQLite',
-				repository  => 'http://svn.ali.as/cpan/trunk/DBD-SQLite',
+				repository  => 'https://github.com/DBD-SQLite/DBD-SQLite',
 				MailingList => 'http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/dbd-sqlite',
 			},
 			no_index => {
