@@ -4,7 +4,7 @@
       "Adam Kennedy <adamk@cpan.org>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "ExtUtils::MakeMaker version 6.66, CPAN::Meta::Converter version 2.130880",
+   "generated_by" : "ExtUtils::MakeMaker version 6.66, CPAN::Meta::Converter version 2.131560",
    "license" : [
       "perl_5"
    ],
@@ -41,7 +41,7 @@
          }
       }
    },
-   "release_status" : "stable",
+   "release_status" : "testing",
    "resources" : {
       "bugtracker" : {
          "web" : "http://rt.cpan.org/Public/Dist/Display.html?Name=DBD-SQLite"
@@ -54,5 +54,5 @@
       },
       "x_MailingList" : "http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/dbd-sqlite"
    },
-   "version" : "1.40"
+   "version" : "1.41_01"
 }

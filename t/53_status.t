@@ -8,9 +8,9 @@ BEGIN {
 
 use t::lib::Test qw/connect_ok @CALL_FUNCS/;
 use Test::More;
-#use Test::NoWarnings;
+use Test::NoWarnings;
 
-#plan tests => 6 * @CALL_FUNCS + 1;
+plan tests => 8 * @CALL_FUNCS + 1;
 
 my $dbh = connect_ok();
 {
@@ -46,8 +46,6 @@ for my $func (@CALL_FUNCS) {
 		my $num_of_keys = scalar keys %$st_status;
 		ok $num_of_keys, "st status: $num_of_keys indicators";
 		my $sort = $st_status->{sort};
-		ok defined $sort && $sort, "num of sort: $sort";
+		ok defined $sort, "num of sort: $sort";
 	}
 }
-
-done_testing;
