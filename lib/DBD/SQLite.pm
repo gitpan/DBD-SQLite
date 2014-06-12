@@ -5,7 +5,7 @@ use strict;
 use DBI   1.57 ();
 use DynaLoader ();
 
-our $VERSION = '1.43_02';
+our $VERSION = '1.43_03';
 our @ISA     = 'DynaLoader';
 
 # sqlite_version cache (set in the XS bootstrap)
@@ -459,6 +459,7 @@ sub primary_key_info {
                 }
             }
 
+            my $key_name = $row->{sql} =~ /\bCONSTRAINT\s+(\S+|"[^"]+")\s+PRIMARY\s+KEY\s*\(/i ? $1 : 'PRIMARY KEY';
             my $key_seq = 0;
             foreach my $pk_field (@pk) {
                 push @pk_info, {
@@ -466,7 +467,7 @@ sub primary_key_info {
                     TABLE_NAME  => $tbname,
                     COLUMN_NAME => $pk_field,
                     KEY_SEQ     => ++$key_seq,
-                    PK_NAME     => 'PRIMARY KEY',
+                    PK_NAME     => $key_name,
                 };
             }
         }
@@ -1042,6 +1043,30 @@ is gone (notably under MS Windows).
 If you don't need to keep or share a temporary database,
 use ":memory:" database instead. It's much handier and cleaner
 for ordinary testing.
+
+=head2 DBD::SQLite and fork()
+
+Follow the advice in the SQLite FAQ (L<https://sqlite.org/faq.html>).
+
+=over 4
+
+Under Unix, you should not carry an open SQLite database across
+a fork() system call into the child process. Problems will result
+if you do.
+
+=back
+
+You shouldn't (re)use a database handle you created (probably to
+set up a database schema etc) before you fork(). Otherwise, you
+might see a database corruption in the worst case.
+
+If you need to fork(), (re)open a database after you fork().
+You might also want to tweak C<sqlite_busy_timeout> and
+C<sqlite_use_immediate_transaction> (see below), depending
+on your needs.
+
+If you need a higher level of concurrency than SQLite supports,
+consider using other client/server database engines.
 
 =head2 Accessing A Database With Other Tools
 
