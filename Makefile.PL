@@ -217,6 +217,7 @@ if ( $sqlite_inc ) {
 
 my @CC_DEFINE = (
 	'-DSQLITE_ENABLE_FTS4',
+	'-DSQLITE_ENABLE_FTS4_UNICODE61',   # for sqlite >= 3.7.13
 	'-DSQLITE_ENABLE_FTS3_PARENTHESIS', # for sqlite >= 3.6.10
 	'-DSQLITE_ENABLE_RTREE',            # for sqlite >= 3.6.10
 	'-DSQLITE_ENABLE_COLUMN_METADATA',
@@ -366,6 +367,9 @@ WriteMakefile(
 	clean            => {
 		FILES => 'SQLite.xsi config.h tv.log *.old',
 	},
+        test             => {
+                TESTS => 't/*.t t/**/*.t',
+        },
 	PL_FILES         => {},
 	EXE_FILES        => [],
 

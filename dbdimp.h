@@ -64,7 +64,7 @@ struct imp_sth_st {
 #define dbd_db_STORE_attrib     sqlite_db_STORE_attrib
 #define dbd_db_FETCH_attrib     sqlite_db_FETCH_attrib
 #define dbd_db_last_insert_id   sqlite_db_last_insert_id
-#define dbd_st_prepare          sqlite_st_prepare
+#define dbd_st_prepare_sv       sqlite_st_prepare_sv
 #define dbd_st_rows             sqlite_st_rows
 #define dbd_st_execute          sqlite_st_execute
 #define dbd_st_fetch            sqlite_st_fetch
@@ -110,10 +110,11 @@ int sqlite_db_profile(pTHX_ SV *dbh, SV *func);
 HV* sqlite_db_table_column_metadata(pTHX_ SV *dbh, SV *dbname, SV *tablename, SV *columnname);
 HV* _sqlite_db_status(pTHX_ SV *dbh, int reset);
 SV* sqlite_db_filename(pTHX_ SV *dbh);
-
 int sqlite_db_register_fts3_perl_tokenizer(pTHX_ SV *dbh);
 HV* _sqlite_status(int reset);
 HV* _sqlite_st_status(pTHX_ SV *sth, int reset);
+int sqlite_db_create_module(pTHX_ SV *dbh, const char *name, const char *perl_class);
+
 
 #ifdef SvUTF8_on
 
