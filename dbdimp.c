@@ -46,7 +46,21 @@ imp_dbh_t *last_prepared_dbh;   /* see _last_dbh_is_unicode() */
 #define LARGEST_INT64  (0xffffffff|(((sqlite3_int64)0x7fffffff)<<32))
 #define SMALLEST_INT64 (((sqlite3_int64)-1) - LARGEST_INT64)
 
-sqlite3_int64 _sqlite_atoi64(const char *zNum) {
+static int compare2pow63(const char *zNum) {
+  int c = 0;
+  int i;
+                    /* 012345678901234567 */
+  const char *pow63 = "922337203685477580";
+  for(i = 0; c == 0 && i < 18; i++){
+    c = (zNum[i] - pow63[i]) * 10;
+  }
+  if(c == 0){
+    c = zNum[18] - '8';
+  }
+  return c;
+}
+
+int _sqlite_atoi64(const char *zNum, sqlite3_int64 *pNum) {
   sqlite3_uint64 u = 0;
   int neg = 0;
   int i;
@@ -68,11 +82,25 @@ sqlite3_int64 _sqlite_atoi64(const char *zNum) {
     u = u * 10 + c - '0';
   }
   if (u > LARGEST_INT64) {
-    return neg ? SMALLEST_INT64 : LARGEST_INT64;
+    *pNum = neg ? SMALLEST_INT64 : LARGEST_INT64;
   } else if (neg) {
-    return -(sqlite3_int64)u;
+    *pNum = -(sqlite3_int64)u;
   } else {
-    return (sqlite3_int64)u;
+    *pNum = (sqlite3_int64)u;
+  }
+  if ((c != 0 && &zNum[i] < zEnd) || (i == 0 && zStart == zNum) || i > 19) {
+    return 1;
+  } else if (i < 19) {
+    return 0;
+  } else {
+    c = compare2pow63(zNum);
+    if (c < 0) {
+      return 0;
+    } else if (c > 0) {
+      return 1;
+    } else {
+      return neg ? 0 : 2;
+    }
   }
 }
 
@@ -232,6 +260,7 @@ sqlite_set_result(pTHX_ sqlite3_context *context, SV *result, int is_error)
 {
     STRLEN len;
     char *s;
+    sqlite3_int64 iv;
 
     if ( is_error ) {
         s = SvPV(result, len);
@@ -249,8 +278,8 @@ sqlite_set_result(pTHX_ sqlite3_context *context, SV *result, int is_error)
             s = SvPV(result, len);
             sqlite3_result_text( context, s, len, SQLITE_TRANSIENT );
         }
-    } else if ( SvIOK(result) ) {
-        sqlite3_result_int64( context, _sqlite_atoi64(SvPV(result, len)) );
+    } else if ( !_sqlite_atoi64(SvPV(result, len), &iv) ) {
+        sqlite3_result_int64( context, iv );
     } else if ( SvNOK(result) && ( sizeof(NV) == sizeof(double) || SvNVX(result) == (double) SvNVX(result) ) ) {
         sqlite3_result_double( context, SvNV(result));
     } else {
@@ -266,6 +295,7 @@ sqlite_set_result(pTHX_ sqlite3_context *context, SV *result, int is_error)
 static int
 sqlite_is_number(pTHX_ const char *v, int sql_type)
 {
+    sqlite3_int64 iv;
     const char *z = v;
     const char *d = v;
     int neg;
@@ -311,7 +341,7 @@ sqlite_is_number(pTHX_ const char *v, int sql_type)
     if (*z && !isdigit(*z)) return 0;
 
     if (maybe_int && digit) {
-        if (_sqlite_atoi64(v)) return 1;
+        if (!_sqlite_atoi64(v, &iv)) return 1;
     }
     if (sql_type != SQLITE_INTEGER) {
         sprintf(format, (has_plus ? "+%%.%df" : "%%.%df"), precision);
@@ -468,26 +498,12 @@ sqlite_db_disconnect(SV *dbh, imp_dbh_t *imp_dbh)
 {
     dTHX;
     int rc;
-    sqlite3_stmt *pStmt;
     stmt_list_s * s;
 
     if (DBIc_is(imp_dbh, DBIcf_AutoCommit) == FALSE) {
         sqlite_db_rollback(dbh, imp_dbh);
     }
     DBIc_ACTIVE_off(imp_dbh);
-
-#if 0
-    /*
-    ** This cause segfaults when we have virtual tables, as sqlite3
-    ** seems to try to finalize the statements for the tables (freed
-    ** here) while closing. So we need to find other ways to do the
-    ** right thing.
-    */
-    /* COMPAT: sqlite3_next_stmt is only available for 3006000 or newer */
-    while ( (pStmt = sqlite3_next_stmt(imp_dbh->db, 0)) != NULL ) {
-        sqlite3_finalize(pStmt);
-    }
-#endif
 
     croak_if_db_is_null();
 
@@ -742,6 +758,7 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
     int rc = 0;
     int num_params = DBIc_NUM_PARAMS(imp_sth);
     int i;
+    sqlite3_int64 iv;
 
     if (!DBIc_ACTIVE(imp_dbh)) {
         sqlite_error(sth, -2, "attempt to execute on inactive database handle");
@@ -809,8 +826,8 @@ sqlite_st_execute(SV *sth, imp_sth_t *imp_sth)
                 numtype = sqlite_is_number(aTHX_ data, sql_type);
             }
 
-            if (numtype == 1) {
-                rc = sqlite3_bind_int64(imp_sth->stmt, i+1, _sqlite_atoi64(data));
+            if (numtype == 1 && !_sqlite_atoi64(data, &iv)) {
+                rc = sqlite3_bind_int64(imp_sth->stmt, i+1, iv);
             }
             else if (numtype == 2 && sql_type != SQLITE_INTEGER) {
                 rc = sqlite3_bind_double(imp_sth->stmt, i+1, atof(data));
@@ -1046,7 +1063,7 @@ sqlite_st_fetch(SV *sth, imp_sth_t *imp_sth)
                 sqlite_trace(sth, imp_sth, 5, form("fetch column %d as integer", i));
                 iv = sqlite3_column_int64(imp_sth->stmt, i);
                 if ( iv >= IV_MIN && iv <= IV_MAX ) {
-                    sv_setiv(AvARRAY(av)[i], iv);
+                    sv_setiv(AvARRAY(av)[i], (IV)iv);
                 }
                 else {
                     val = (char*)sqlite3_column_text(imp_sth->stmt, i);
@@ -2373,7 +2390,7 @@ sqlite_db_profile_dispatcher(void *callback, const char *sql, sqlite3_uint64 ela
      * in the time are meaningless.
      * (http://sqlite.org/c3ref/profile.html)
      */
-    XPUSHs( sv_2mortal( newSViv( elapsed / 1000000 ) ) );
+    XPUSHs( sv_2mortal( newSViv((IV)( elapsed / 1000000 )) ) );
     PUTBACK;
 
     n_retval = call_sv( callback, G_SCALAR );
@@ -2691,7 +2708,6 @@ static int perl_tokenizer_Next(
     int n_retval;
     char *token;
     char *byteOffset;
-    STRLEN n_a;
     I32 hop;
 
     dTHX;
@@ -3367,7 +3383,7 @@ static int perl_vt_Update( sqlite3_vtab *pVTab,
             else if (SvIOK(rowidsv))
                 *pRowid = SvIV(rowidsv);
             else
-                *pRowid = SvNV(rowidsv);
+                *pRowid = (sqlite3_int64)SvNV(rowidsv);
         }
         rc = SQLITE_OK;
     }
