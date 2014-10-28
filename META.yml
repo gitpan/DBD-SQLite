@@ -10,7 +10,7 @@ configure_requires:
   ExtUtils::MakeMaker: '6.48'
   File::Spec: '0.82'
 dynamic_config: 1
-generated_by: 'ExtUtils::MakeMaker version 6.98, CPAN::Meta::Converter version 2.142060'
+generated_by: 'ExtUtils::MakeMaker version 6.98, CPAN::Meta::Converter version 2.140640'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -30,4 +30,4 @@ resources:
   bugtracker: http://rt.cpan.org/Public/Dist/Display.html?Name=DBD-SQLite
   license: http://dev.perl.org/licenses/
   repository: https://github.com/DBD-SQLite/DBD-SQLite
-version: 1.45_03
+version: 1.45_04

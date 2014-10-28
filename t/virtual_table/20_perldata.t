@@ -6,7 +6,7 @@ BEGIN {
 }
 
 
-use t::lib::Test qw/connect_ok/;
+use t::lib::Test qw/connect_ok $sqlite_call/;
 use Test::More;
 use Test::NoWarnings;
 use FindBin;
@@ -21,7 +21,8 @@ plan tests => 29;
 
 my $dbh = connect_ok( RaiseError => 1, AutoCommit => 1 );
 
-ok $dbh->sqlite_create_module(perl => "DBD::SQLite::VirtualTable::PerlData"),
+ok $dbh->$sqlite_call(create_module =>
+                        perl => "DBD::SQLite::VirtualTable::PerlData"),
    "create_module";
 
 #======================================================================
@@ -48,9 +49,10 @@ is $res->[1]{a}, 1, 'got 1 in second a';
 
 $sql = "SELECT rowid FROM vtb WHERE c = 'six'";
 $res = $dbh->selectall_arrayref($sql, {Slice => {}});
-is_deeply $res, [{rowid => 1}], $sql;
+is_deeply $res, [{rowid => 2}], $sql;
 
-$sql = "SELECT c FROM vtb WHERE c MATCH '^.i' ORDER BY c";
+#$sql = "SELECT c FROM vtb WHERE c MATCH '^.i' ORDER BY c";
+$sql = "SELECT c FROM vtb WHERE c MATCH 'i' ORDER BY c";
 $res = $dbh->selectcol_arrayref($sql);
 is_deeply $res, [qw/nine six/], $sql;
 

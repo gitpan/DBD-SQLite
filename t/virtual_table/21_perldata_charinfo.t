@@ -8,19 +8,29 @@ BEGIN {
 # test the example described in 
 # L<DBD::SQLite::VirtualTable::PerlData/"Hashref example : unicode characters">
 
-use t::lib::Test qw/connect_ok/;
+use t::lib::Test qw/connect_ok $sqlite_call/;
 use Test::More;
-use Test::NoWarnings;
 
-use Unicode::UCD 'charinfo';
+BEGIN {
+  # check for old Perls which did not have Unicode::UCD in core
+  if (eval "use Unicode::UCD 'charinfo'; 1") {
+    plan tests => 10;
+  }
+  else {
+    plan skip_all => "Unicode::UCD does not seem to be installed";
+  }
+}
+
+use Test::NoWarnings;
 
 our $chars = [map {charinfo($_)} 0x300..0x400];
 
-plan tests => 10;
+my $sigma_block = charinfo(0x3A3)->{block};
 
 my $dbh = connect_ok( RaiseError => 1, AutoCommit => 1 );
 
-ok $dbh->sqlite_create_module(perl => "DBD::SQLite::VirtualTable::PerlData"),
+ok $dbh->$sqlite_call(create_module =>
+                        perl => "DBD::SQLite::VirtualTable::PerlData"),
    "create_module";
 
 ok $dbh->do(<<""), "create table";
@@ -31,14 +41,14 @@ ok $dbh->do(<<""), "create table";
 my $sql = "SELECT * FROM charinfo WHERE script='Greek' AND name LIKE '%SIGMA%'";
 my $res = $dbh->selectall_arrayref($sql, {Slice => {}});
 ok scalar(@$res),                        "found sigma letters";
-is $res->[0]{block}, "Greek and Coptic", "letter in proper block";
+is $res->[0]{block}, $sigma_block, "letter in proper block";
 
 # The former example used SQLite's LIKE operator; now do the same with MATCH
 # which gets translated to a Perl regex
 $sql = "SELECT * FROM charinfo WHERE script='Greek' AND name MATCH 'SIGMA'";
 $res = $dbh->selectall_arrayref($sql, {Slice => {}});
 ok scalar(@$res),                        "found sigma letters";
-is $res->[0]{block}, "Greek and Coptic", "letter in proper block";
+is $res->[0]{block}, $sigma_block, "letter in proper block";
 
 # the following does not work because \b gets escaped as a literal
 #$sql = "SELECT * FROM charinfo WHERE script='Greek' AND name MATCH '\\bSIGMA\\b'";
@@ -49,4 +59,4 @@ is $res->[0]{block}, "Greek and Coptic", "letter in proper block";
 $sql = "SELECT * FROM charinfo WHERE script='Greek' AND name REGEXP '\\bSIGMA\\b'";
 $res = $dbh->selectall_arrayref($sql, {Slice => {}});
 ok scalar(@$res),                        "found sigma letters";
-is $res->[0]{block}, "Greek and Coptic", "letter in proper block";
+is $res->[0]{block},  $sigma_block, "letter in proper block";
